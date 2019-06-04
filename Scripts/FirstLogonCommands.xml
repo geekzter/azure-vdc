@@ -1,0 +1,7 @@
+<FirstLogonCommands>
+    <SynchronousCommand>
+        <Order>1</Order>
+        <CommandLine>cmdkey.exe /generic:${host}:${port} /user:${username} /pass:${password}</CommandLine>
+        <Description>Save password for ${host}</Description>
+    </SynchronousCommand>
+</FirstLogonCommands>

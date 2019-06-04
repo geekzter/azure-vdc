@@ -1,0 +1,1 @@
+powershell.exe -File C:\Users\Public\Documents\warmup.ps1

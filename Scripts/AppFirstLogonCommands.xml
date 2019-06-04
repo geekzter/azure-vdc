@@ -1,0 +1,22 @@
+<FirstLogonCommands>
+    <SynchronousCommand>
+        <CommandLine>cmd.exe /c echo powershell.exe -File C:\Users\Public\Documents\warmup.ps1 >C:\Users\Public\Documents\warmup.cmd</CommandLine>
+        <Description>Create warmup.cmd</Description>
+        <Order>1</Order>
+    </SynchronousCommand>    
+    <SynchronousCommand>
+        <CommandLine>cmd.exe /c echo Invoke-WebRequest http://127.0.0.1/default.aspx >C:\Users\Public\Documents\warmup.ps1</CommandLine>
+        <Description>Create warmup.ps1</Description>
+        <Order>2</Order>
+    </SynchronousCommand>
+    <SynchronousCommand>
+        <CommandLine>cmd.exe /c echo schtasks.exe /create /ru "NT AUTHORITY\NETWORKSERVICE" /sc minute /mo 1 /tn "Demo App Warm Up" /tr C:\Users\Public\Documents\warmup.cmd >C:\Users\Public\Documents\schedule-warmup.cmd</CommandLine>
+        <Description>Create schedule-warmup.cmd</Description>
+        <Order>3</Order>
+    </SynchronousCommand>
+    <SynchronousCommand>
+        <CommandLine>cmd.exe /c C:\Users\Public\Documents\schedule-warmup.cmd</CommandLine>
+        <Description>Schedule warm up script</Description>
+        <Order>4</Order>
+    </SynchronousCommand>
+</FirstLogonCommands>
