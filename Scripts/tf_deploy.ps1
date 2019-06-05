@@ -24,6 +24,8 @@ param
     [parameter(Mandatory=$false)][switch]$force=$false,
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace = "default",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
+    [parameter(Mandatory=$false)][string]$backendStorageAccount=$env:TF_VAR_backend_storage_account,
+    [parameter(Mandatory=$false)][string]$backendStorageContainer=$env:TF_VAR_backend_storage_container,
     [parameter(Mandatory=$false)][int]$trace=0
 ) 
 if(-not($Workspace))    { Throw "You must supply a value for Workspace" }
@@ -84,10 +86,11 @@ try {
 
     if ($init) 
     {
-        Write-Host "`nterraform init" -ForegroundColor Green 
-        # TODO: Use custom config
-        # $tfbackendArgs = "-backend-config=`"storage_account_name=${backendStorageAccount}`" -backend-config=`"container_name=${backendStorageContainer}`" -backend=true -reconfigure"
-        terraform init
+        if(-not($backendStorageAccount))   { Throw "You must supply storage account" }
+        if(-not($backendStorageContainer)) { Throw "You must supply storage container" }
+        $tfbackendArgs = "-backend-config=`"container_name=${backendStorageContainer}`" -backend-config=`"storage_account_name=${backendStorageAccount}`""
+        Write-Host "`nterraform init $tfbackendArgs" -ForegroundColor Green 
+        terraform init -backend-config="container_name=${backendStorageContainer}" -backend-config="storage_account_name=${backendStorageAccount}"
     }
     if ($validate) 
     {
@@ -104,7 +107,7 @@ try {
         Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform plan stage may fail" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
 
-        Write-Host "`nterraform plan -out '$planFile'" -ForegroundColor Green 
+        Write-Host "`nterraform plan -out='$planFile'" -ForegroundColor Green 
         terraform plan -out="$planFile" 
     }
     
