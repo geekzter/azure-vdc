@@ -83,6 +83,10 @@ try {
         $properCaseName = "TF_VAR_" + $tfvar.Name.Substring(7).ToLowerInvariant()
         Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
     }
+    if (($trace -gt 0) -or (${env:system.debug} -eq "true"))
+    {
+        Get-ChildItem -Hidden -System Env:TF_VAR_* | Sort-Object
+    }
 
     if ($init) 
     {
