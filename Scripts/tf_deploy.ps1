@@ -90,11 +90,11 @@ try {
 
     if ($init) 
     {
-        if(-not($backendStorageAccount))   { Throw "You must supply storage account" }
-        if(-not($backendStorageContainer)) { Throw "You must supply storage container" }
-        $tfbackendArgs = "-backend-config=`"container_name=${backendStorageContainer}`" -backend-config=`"storage_account_name=${backendStorageAccount}`""
+        if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_account))   { Throw "You must set environment variable TF_VAR_backend_storage_account" }
+        if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_container)) { Throw "You must set environment variable TF_VAR_backend_storage_container" }
+        $tfbackendArgs = "-backend-config=`"container_name=${env:TF_VAR_backend_storage_container}`" -backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
         Write-Host "`nterraform init $tfbackendArgs" -ForegroundColor Green 
-        terraform init -backend-config="container_name=${backendStorageContainer}" -backend-config="storage_account_name=${backendStorageAccount}"
+        terraform init -backend-config="container_name=${env:TF_VAR_backend_storage_container}" -backend-config="storage_account_name=${env:TF_VAR_backend_storage_account}"
     }
     if ($validate) 
     {
