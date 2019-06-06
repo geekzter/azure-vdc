@@ -34,16 +34,16 @@ if(-not($Workspace))    { Throw "You must supply a value for Workspace" }
 Set-PSDebug -trace $trace
 if (($trace -gt 0) -or (${env:system.debug} -eq "true"))
 {
-    $global:warningPreference = "Continue"
-    $global:verbosePreference = "Continue"
-    $global:debugPreference   = "Continue"
+    $warningPreference = "Continue"
+    $verbosePreference = "Continue"
+    $debugPreference   = "Continue"
 
     Get-ChildItem -Hidden -System Env:* | Sort-Object
 }
 else {
-    $global:warningPreference = "SilentlyContinue"
-    $global:verbosePreference = "SilentlyContinue"
-    $global:debugPreference   = "SilentlyContinue"
+    $warningPreference = "SilentlyContinue"
+    $verbosePreference = "SilentlyContinue"
+    $debugPreference   = "SilentlyContinue"
 }
 
 if ([string]::IsNullOrEmpty($env:RELEASE_DEFINITIONID)) {
@@ -88,6 +88,7 @@ try {
         Get-ChildItem -Hidden -System Env:TF_VAR_* | Sort-Object
     }
 
+    $ErrorActionPreference = "Stop"
     if ($init) 
     {
         if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_account))   { Throw "You must set environment variable TF_VAR_backend_storage_account" }
