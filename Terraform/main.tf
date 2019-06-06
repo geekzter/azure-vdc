@@ -28,9 +28,10 @@ locals {
   app_resource_group          = "${lower(var.resource_prefix)}-app-${lower(local.suffix)}"
   app_hostname                = "${lower(var.resource_prefix)}apphost"
   app_dns_name                = "${lower(var.resource_prefix)}app_web_vm"
-  admin_ip_tf                 = ["${chomp(data.http.localpublicip.body)}/32"]
-  admin_ip_ranges_var         = "${var.admin_ip_ranges}"
-  admin_ip_ranges             = "${concat(local.admin_ip_tf,local.admin_ip_ranges_var)}"
+  admin_ip                    = ["${chomp(data.http.localpublicip.body)}"]
+  admin_ip_cidr               = ["${chomp(data.http.localpublicip.body)}/32"]
+  admin_ips                   = "${distinct(concat(local.admin_ip,var.admin_ips))}"
+  admin_ip_ranges             = "${distinct(concat(local.admin_ip_cidr,var.admin_ip_ranges))}"
 }
 
 # Create Azure resource group to be used for VDC resources
