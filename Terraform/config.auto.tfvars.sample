@@ -1,10 +1,14 @@
 admin_ip_ranges = [
     "123.45.67.89/32"
   ]
+# $env:TF_VAR_admin_ip_ranges = '["123.45.67.89/32"]'
+
 
 admin_ips = [
     "123.45.67.89"
   ]
+# $env:TF_VAR_admin_ips = '["123.45.67.89"]'
+
 
 app_web_vm_size                = "Standard_D4s_v3"
 app_web_vm_size                = "Standard_D4s_v3"
@@ -25,3 +29,4 @@ app_devops {
     db_deployment_group        = "DBServers"
     pat                        = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 }
+# $env:TF_VAR_app_devops = '{account="vstsaccount",team_project="VDC",web_deployment_group="AppServers",db_deployment_group="DBServers",pat="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}'

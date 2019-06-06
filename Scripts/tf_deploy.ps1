@@ -24,8 +24,6 @@ param
     [parameter(Mandatory=$false)][switch]$force=$false,
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace = "default",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
-    [parameter(Mandatory=$false)][string]$backendStorageAccount=$env:TF_VAR_backend_storage_account,
-    [parameter(Mandatory=$false)][string]$backendStorageContainer=$env:TF_VAR_backend_storage_container,
     [parameter(Mandatory=$false)][int]$trace=0
 ) 
 if(-not($Workspace))    { Throw "You must supply a value for Workspace" }
@@ -46,15 +44,7 @@ else {
     $debugPreference   = "SilentlyContinue"
 }
 
-if ([string]::IsNullOrEmpty($env:RELEASE_DEFINITIONID)) {
-    $pipeline = $false;
-} 
-else
-{
-    Write-Verbose "Running from Azure Release Pipeline"
-    $pipeline = $true;
-}
-
+$pipeline = ![string]::IsNullOrEmpty($env:RELEASE_DEFINITIONID)
 $workspaceLowercase = $Workspace.ToLower()
 $planFile           = "$Workspace.tfplan".ToLower()
 
@@ -89,6 +79,7 @@ try {
     }
 
     $ErrorActionPreference = "Stop"
+    terraform -version
     if ($init) 
     {
         if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_account))   { Throw "You must set environment variable TF_VAR_backend_storage_account" }
