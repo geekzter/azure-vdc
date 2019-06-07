@@ -27,8 +27,12 @@ Set-AzContext -Subscription $subscription
 try 
 {
     Push-Location $tfdirectory
-    $appResourceGroup = $(terraform output "app_resource_group" 2>$null)
-    $appStorageAccount = $(terraform output "app_storage_account_name" 2>$null)
+
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        $Script:appResourceGroup = $(terraform output "app_resource_group" 2>$null)
+        $Script:appStorageAccount = $(terraform output "app_storage_account_name" 2>$null)
+    }
 
     if ([string]::IsNullOrEmpty($appResourceGroup) -or [string]::IsNullOrEmpty($appStorageAccount)) {
         Write-Output "Resources have not yet been created, nothing to do" 

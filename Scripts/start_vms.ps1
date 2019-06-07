@@ -26,10 +26,13 @@ Set-AzContext -Subscription $subscription
 
 # Retrieve Azure resources config using Terraform
 try 
-{`
+{
     Push-Location $tfdirectory
-    $appResourceGroup = $(terraform output "app_resource_group" 2>$null)
-    $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        $Script:appResourceGroup = $(terraform output "app_resource_group" 2>$null)
+        $Script:vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
+    }
 
     if (![string]::IsNullOrEmpty($appResourceGroup)) 
     {
@@ -47,7 +50,6 @@ try
         # Block until App VM's have started
         Get-AzVM -ResourceGroupName $appResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM
     }
-    
     if (![string]::IsNullOrEmpty($vdcResourceGroup) -and !$nowait) 
     {
         # Block until VDC VM's have started

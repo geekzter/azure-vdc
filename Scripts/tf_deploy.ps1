@@ -43,8 +43,9 @@ else {
     $verbosePreference = "SilentlyContinue"
     $debugPreference   = "SilentlyContinue"
 }
+$ErrorActionPreference = "Stop"
 
-$pipeline = ![string]::IsNullOrEmpty($env:RELEASE_DEFINITIONID)
+#$pipeline = ![string]::IsNullOrEmpty($env:RELEASE_DEFINITIONID)
 $workspaceLowercase = $Workspace.ToLower()
 $planFile           = "$Workspace.tfplan".ToLower()
 
@@ -54,8 +55,8 @@ try {
     Write-Host "`nUsing Terraform workspace '$workspaceLowercase'" -ForegroundColor Green 
     # HACK: Redirecting error doesn't work somehow in a Release Pipeline, 
     #       The release would fail anyway as the next 'workspace select' statement would generate stderr
-    if (!$pipeline)
-    {
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
         terraform workspace new $workspaceLowercase 2>$null
     }
     terraform workspace select $workspaceLowercase
@@ -78,7 +79,6 @@ try {
         Get-ChildItem -Hidden -System Env:TF_VAR_* | Sort-Object
     }
 
-    $ErrorActionPreference = "Stop"
     terraform -version
     if ($init) 
     {
