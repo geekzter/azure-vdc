@@ -32,25 +32,28 @@ try
         $Private:ErrorActionPreference = "Continue"
         $Script:appResourceGroup = $(terraform output "app_resource_group" 2>$null)
         $Script:vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
+
+        $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(Get-AzResourceGroup -Name $appResourceGroup -ErrorAction "SilentlyContinue")))
+        $Script:vdcRGExists = (![string]::IsNullOrEmpty($vdcResourceGroup) -and ($null -ne $(Get-AzResourceGroup -Name $vdcResourceGroup -ErrorAction "SilentlyContinue")))
     }
 
-    if (![string]::IsNullOrEmpty($appResourceGroup)) 
+    if ($appRGExists) 
     {
         # Start App VM's async
         Get-AzVM -ResourceGroupName $appResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM -AsJob
     }    
-    if (![string]::IsNullOrEmpty($vdcResourceGroup)) 
+    if ($vdcRGExists) 
     {
         # Start VDC VM's async
         Get-AzVM -ResourceGroupName $vdcResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM -AsJob
     }
     
-    if (![string]::IsNullOrEmpty($appResourceGroup) -and !$nowait) 
+    if ($appRGExists -and !$nowait) 
     {
         # Block until App VM's have started
         Get-AzVM -ResourceGroupName $appResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM
     }
-    if (![string]::IsNullOrEmpty($vdcResourceGroup) -and !$nowait) 
+    if ($vdcRGExists -and !$nowait) 
     {
         # Block until VDC VM's have started
         Get-AzVM -ResourceGroupName $vdcResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM
