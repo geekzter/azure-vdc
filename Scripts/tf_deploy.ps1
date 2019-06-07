@@ -76,7 +76,7 @@ try {
         if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_container)) { Throw "You must set environment variable TF_VAR_backend_storage_container" }
         $tfbackendArgs = "-backend-config=`"container_name=${env:TF_VAR_backend_storage_container}`" -backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
         Write-Host "`nterraform init $tfbackendArgs" -ForegroundColor Green 
-        terraform init -input="$(!$force.ToString().ToLower())" -backend-config="container_name=${env:TF_VAR_backend_storage_container}" -backend-config="storage_account_name=${env:TF_VAR_backend_storage_account}"
+        terraform init -backend-config="container_name=${env:TF_VAR_backend_storage_container}" -backend-config="storage_account_name=${env:TF_VAR_backend_storage_account}"
     }
 
     # Workspace can only be selected after init 
@@ -104,12 +104,12 @@ try {
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
 
         Write-Host "`nterraform plan -out='$planFile'" -ForegroundColor Green 
-        terraform plan -out="$planFile" -input="$(!$force.ToString().ToLower())" 
+        terraform plan -out="$planFile" #-input="$(!$force.ToString().ToLower())" 
     }
     
     if ($force)
     {
-        $forceArgs = "-auto-approve -input=false"
+        $forceArgs = "-auto-approve"
     }
     if ($apply) 
     {
