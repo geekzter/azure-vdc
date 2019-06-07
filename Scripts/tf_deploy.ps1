@@ -52,16 +52,6 @@ $planFile           = "$Workspace.tfplan".ToLower()
 try {
     Push-Location $tfdirectory
 
-    Write-Host "`nUsing Terraform workspace '$workspaceLowercase'" -ForegroundColor Green 
-    # HACK: Redirecting error doesn't work somehow in a Release Pipeline, 
-    #       The release would fail anyway as the next 'workspace select' statement would generate stderr
-    Invoke-Command -ScriptBlock {
-        $Private:ErrorActionPreference = "Continue"
-        terraform workspace new $workspaceLowercase 2>$null
-    }
-    terraform workspace select $workspaceLowercase
-    terraform workspace list
-
     # Copy any secret files provided as part of an Azure Pipeline
     foreach ($file in $(Get-ChildItem Env:*SECUREFILEPATH))
     {
@@ -88,6 +78,16 @@ try {
         Write-Host "`nterraform init $tfbackendArgs" -ForegroundColor Green 
         terraform init -input="$(!$force.ToString().ToLower())" -backend-config="container_name=${env:TF_VAR_backend_storage_container}" -backend-config="storage_account_name=${env:TF_VAR_backend_storage_account}"
     }
+
+    # Workspace can only be selected after init 
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        terraform workspace new $workspaceLowercase 2>$null
+    }
+    terraform workspace select $workspaceLowercase
+    terraform workspace list
+    Write-Host "`nUsing Terraform workspace '$(terraform workspace show)'" -ForegroundColor Green 
+
     if ($validate) 
     {
         Write-Host "`nterraform validate" -ForegroundColor Green 
