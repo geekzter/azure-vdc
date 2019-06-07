@@ -125,7 +125,7 @@ try {
             }
         }
 
-        Write-Host "`nterraform apply '$planFile'" -ForegroundColor Green 
+        Write-Host "`nterraform apply $forceArgs '$planFile'" -ForegroundColor Green 
         terraform apply $forceArgs "$planFile"
     }
 
