@@ -13,8 +13,7 @@
 
 #> 
 
-param  
-( 
+param ( 
     [parameter(Mandatory=$false)][switch]$init=$false,
     [parameter(Mandatory=$false)][switch]$plan=$false,
     [parameter(Mandatory=$false)][switch]$validate=$false,
@@ -30,8 +29,7 @@ if(-not($Workspace))    { Throw "You must supply a value for Workspace" }
 
 # Configure instrumentation
 Set-PSDebug -trace $trace
-if (${env:system.debug} -eq "true")
-{
+if (${env:system.debug} -eq "true") {
     $trace = 2
 }
 switch ($trace) {
@@ -40,15 +38,15 @@ switch ($trace) {
         $Script:warningPreference = "SilentlyContinue"
         $Script:verbosePreference = "SilentlyContinue"
         $Script:debugPreference   = "SilentlyContinue"    
-        Remove-Item Env:TF_LOG -ErrorAction SilentlyContinue
-    }`
+        #Remove-Item Env:TF_LOG -ErrorAction SilentlyContinue
+    }
     1 {
         $Script:warningPreference = "Continue"
         $Script:informationPreference = "Continue"
         $Script:verbosePreference = "Continue"
         $Script:debugPreference   = "SilentlyContinue"
-        $env:TF_LOG="TRACE"
-        $env:TF_LOG_PATH="terraform.log"
+        #$env:TF_LOG="TRACE"
+        #$env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object
     }
@@ -57,22 +55,21 @@ switch ($trace) {
         $Script:informationPreference = "Continue"
         $Script:verbosePreference = "Continue"
         $Script:debugPreference   = "Continue"      
-        $env:TF_LOG="TRACE"
-        $env:TF_LOG_PATH="terraform.log"
+        #$env:TF_LOG="TRACE"
+        #$env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object
     }
 }
-if ($env:TF_LOG_PATH -and (Test-Path $env:TF_LOG_PATH))
-{
-    # Clear log file
-    Remove-Item $env:TF_LOG_PATH
-}
+#if ($env:TF_LOG_PATH -and (Test-Path $env:TF_LOG_PATH))
+#{
+#    # Clear log file
+#    Remove-Item $env:TF_LOG_PATH
+#}
 $Script:ErrorActionPreference = "Stop"
 
 $pipeline = ![string]::IsNullOrEmpty($env:RELEASE_DEFINITIONID)
-if ($pipeline -or $force)
-{
+if ($pipeline -or $force) {
     $env:TF_IN_AUTOMATION="true"
     $env:TF_INPUT=0
 }
@@ -90,19 +87,16 @@ try {
     }
 
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
-    foreach ($tfvar in $(Get-ChildItem Env:TF_VAR_*))
-    {
+    foreach ($tfvar in $(Get-ChildItem Env:TF_VAR_*)) {
         $properCaseName = "TF_VAR_" + $tfvar.Name.Substring(7).ToLowerInvariant()
         Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
-    }
-    if (($trace -gt 0) -or (${env:system.debug} -eq "true"))
-    {
+    } 
+    if (($trace -gt 0) -or (${env:system.debug} -eq "true")) {
         Get-ChildItem -Hidden -System Env:TF_VAR_* | Sort-Object
     }
 
     terraform -version
-    if ($init) 
-    {
+    if ($init) {
         if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_account))   { Throw "You must set environment variable TF_VAR_backend_storage_account" }
         if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_container)) { Throw "You must set environment variable TF_VAR_backend_storage_container" }
         $tfbackendArgs = "-backend-config=`"container_name=${env:TF_VAR_backend_storage_container}`" -backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
@@ -119,24 +113,20 @@ try {
     terraform workspace list
     Write-Host "`nUsing Terraform workspace '$(terraform workspace show)'" -ForegroundColor Green 
 
-    if ($validate) 
-    {
+    if ($validate) {
         Write-Host "`nterraform validate" -ForegroundColor Green 
         terraform validate
     }
     
     # Prepare common arguments
-    if ($force)
-    {
+    if ($force) {
         $forceArgs = "-auto-approve"
     }
-    if ($(Test-Path $varsFile))
-    {
+    if ($(Test-Path $varsFile)) {
         $varArgs = "-var-file=$varsFile"
     }
 
-    if ($plan -or $apply -or $destroy)
-    {
+    if ($plan -or $apply -or $destroy) {
         # For Terraform apply & plan stages we need access to resources, and for destroy as well sometimes
         Write-Host "`nStart VM's, some operations (e.g. adding VM extensions) may fail if they're not started" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "start_vms.ps1") 
@@ -148,15 +138,12 @@ try {
         terraform plan $varArgs -out="$planFile" #-input="$(!$force.ToString().ToLower())" 
     }
 
-    if ($apply) 
-    {
-        if (!$force)
-        {
+    if ($apply) {
+        if (!$force) {
             # Prompt to continue
             $proceedanswer = Read-Host "If you wish to proceed executing Terraform plan $planFile in workspace $workspaceLowercase, please reply 'yes' - null or N aborts"
 
-            if ($proceedanswer -ne "yes")
-            {
+            if ($proceedanswer -ne "yes") {
                 Write-Host "`nReply is not 'yes' - Aborting " -ForegroundColor Red
                 Exit
             }
@@ -166,19 +153,15 @@ try {
         terraform apply $forceArgs "$planFile"
     }
 
-    if ($output) 
-    {
+    if ($output) {
         Write-Host "`nterraform output" -ForegroundColor Green 
         terraform output
     }
 
-    if ($destroy) 
-    {
+    if ($destroy) {
         Write-Host "`nterraform destroy" -ForegroundColor Green 
         terraform destroy $forceArgs
     }
-}
-finally 
-{
+} finally {
     Pop-Location
 }

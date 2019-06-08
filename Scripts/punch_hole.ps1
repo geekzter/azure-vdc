@@ -1,7 +1,6 @@
 #!/usr/bin/env pwsh
 
-param  
-(    
+param (    
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
@@ -11,8 +10,7 @@ param
 if(-not($subscription)) { Throw "You must supply a value for subscription" }
 
 # Log on to Azure if not already logged on
-if (!(Get-AzContext)) 
-{
+if (!(Get-AzContext)) {
     if(-not($tenantid)) { Throw "You must supply a value for tenantid" }
     if(-not($clientid)) { Throw "You must supply a value for clientid" }
     if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
@@ -24,8 +22,7 @@ if (!(Get-AzContext))
 Set-AzContext -Subscription $subscription
 
 # Retrieve Azure resources config using Terraform
-try 
-{
+try {
     Push-Location $tfdirectory
 
     Invoke-Command -ScriptBlock {
@@ -40,9 +37,7 @@ try
         Write-Output "Resources have not yet been created, nothing to do" 
         exit 
     }
-}
-finally
-{
+} finally {
     Pop-Location
 }
 
