@@ -8,7 +8,7 @@ param
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
     [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
 ) 
-if(-not($subscription)) { Throw "You must supply a value for Workspace" }
+if(-not($subscription)) { Throw "You must supply a value for subscription" }
 
 # Log on to Azure if not already logged on
 if (!(Get-AzContext)) 
@@ -48,6 +48,7 @@ finally
 
 # Get public IP address
 $ipAddress=$(Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip)
+Write-Information "Public IP address is $ipAddress"
 
 # Punch hole in PaaS Firewalls
 Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipAddress" -ErrorAction SilentlyContinue

@@ -30,20 +30,35 @@ if(-not($Workspace))    { Throw "You must supply a value for Workspace" }
 
 # Configure instrumentation
 Set-PSDebug -trace $trace
-if (($trace -gt 0) -or (${env:system.debug} -eq "true"))
+if (${env:system.debug} -eq "true")
 {
-    $warningPreference = "Continue"
-    $verbosePreference = "Continue"
-    $debugPreference   = "Continue"
+    $trace = 2
+}
+switch ($trace) {
+    0 {
+        $Script:informationPreference = "SilentlyContinue"
+        $Script:warningPreference = "SilentlyContinue"
+        $Script:verbosePreference = "SilentlyContinue"
+        $Script:debugPreference   = "SilentlyContinue"        
+    }
+    1 {
+        $Script:warningPreference = "Continue"
+        $Script:informationPreference = "Continue"
+        $Script:verbosePreference = "Continue"
+        $Script:debugPreference   = "SilentlyContinue"
 
-    Get-ChildItem -Hidden -System Env:* | Sort-Object
+        Get-ChildItem -Hidden -System Env:* | Sort-Object
+    }
+    Default {
+        $Script:warningPreference = "Continue"
+        $Script:informationPreference = "Continue"
+        $Script:verbosePreference = "Continue"
+        $Script:debugPreference   = "Continue"      
+
+        Get-ChildItem -Hidden -System Env:* | Sort-Object
+    }
 }
-else {
-    $warningPreference = "SilentlyContinue"
-    $verbosePreference = "SilentlyContinue"
-    $debugPreference   = "SilentlyContinue"
-}
-$ErrorActionPreference = "Stop"
+$Script:ErrorActionPreference = "Stop"
 
 #$pipeline = ![string]::IsNullOrEmpty($env:RELEASE_DEFINITIONID)
 $workspaceLowercase = $Workspace.ToLower()
@@ -96,7 +111,7 @@ try {
 
     if ($plan -or $apply -or $destroy)
     {
-        # For Terraform apply & plan stages we need access to resources
+        # For Terraform apply & plan stages we need access to resources, and for destroy as well sometimes
         Write-Host "`nStart VM's, some operations (e.g. adding VM extensions) may fail if they're not started" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "start_vms.ps1") 
 
