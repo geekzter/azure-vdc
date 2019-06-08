@@ -18,13 +18,12 @@ try {
     Write-Host "Backups will be saved in $backupPath"
     foreach($resource in $(terraform state list)) {
         Write-Host -NoNewline "Removing $resource from Terraform workspace ${workspace}: "
-        terraform state rm -backup=${backupPath} $resource
+        terraform state rm -backup="$backupPath" $resource
     }
 } finally {
     # Ensure this always runs
     if ($currentWorkspace) {
         terraform workspace select $currentWorkspace
     }
+    Pop-Location
 }
-
-Pop-Location
