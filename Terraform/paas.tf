@@ -1,6 +1,6 @@
 resource "azurerm_storage_account" "app_storage" {
   name                         = "${lower(replace(local.app_resource_group,"-",""))}storage"
-  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   location                     = "${var.location}"
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
