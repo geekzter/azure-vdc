@@ -94,7 +94,7 @@ try {
         terraform validate
     }
 
-    if ($plan -or $apply)
+    if ($plan -or $apply -or $destroy)
     {
         # For Terraform apply & plan stages we need access to resources
         Write-Host "`nStart VM's, some operations (e.g. adding VM extensions) may fail if they're not started" -ForegroundColor Green 
