@@ -1,6 +1,6 @@
 resource "azurerm_storage_account" "app_storage" {
   name                         = "${lower(replace(local.app_resource_group,"-",""))}storage"
-  resource_group_name          = "${local.app_resource_group}"
+  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   location                     = "${var.location}"
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
@@ -21,7 +21,7 @@ resource "azurerm_storage_account" "app_storage" {
 
 resource "azurerm_storage_container" "app_storage_container" {
   name                         = "data"
-  resource_group_name          = "${local.app_resource_group}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   storage_account_name         = "${azurerm_storage_account.app_storage.name}"
   container_access_type        = "private"
 }
@@ -29,7 +29,7 @@ resource "azurerm_storage_container" "app_storage_container" {
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
   name                         = "sample.txt"
 
-  resource_group_name          = "${local.app_resource_group}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   storage_account_name         = "${azurerm_storage_account.app_storage.name}"
   storage_container_name       = "${azurerm_storage_container.app_storage_container.name}"
 
@@ -39,7 +39,7 @@ resource "azurerm_storage_blob" "app_storage_blob_sample" {
 
 resource "azurerm_storage_account" "archive_storage" {
   name                         = "${lower(replace(local.app_resource_group,"-",""))}archive"
-  resource_group_name          = "${local.app_resource_group}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   location                     = "${var.location}"
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
@@ -61,14 +61,14 @@ resource "azurerm_storage_account" "archive_storage" {
 
 resource "azurerm_storage_container" "archive_storage_container" {
   name                         = "eventarchive"
-  resource_group_name          = "${local.app_resource_group}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   storage_account_name         = "${azurerm_storage_account.archive_storage.name}"
   container_access_type        = "private"
 }
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {
   name                         = "${lower(replace(local.app_resource_group,"-",""))}eventhubNamespace"
-  resource_group_name          = "${local.app_resource_group}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   location                     = "${var.location}"
   sku                          = "Standard"
   capacity                     = 1
@@ -87,7 +87,7 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
 resource "azurerm_eventhub" "app_eventhub" {
   name                         = "${lower(replace(local.app_resource_group,"-",""))}eventhub"
   namespace_name               = "${azurerm_eventhub_namespace.app_eventhub.name}"
-  resource_group_name          = "${local.app_resource_group}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   partition_count              = 2
   message_retention            = 1
 

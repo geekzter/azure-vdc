@@ -10,7 +10,7 @@ output "admin_password" {
 }
 
 output "vdc_resource_group" {
-  value       = "${local.vdc_resource_group}"
+  value       = "${azurerm_resource_group.vdc_rg.name}"
 }
 
 output "bastion_address" {
@@ -66,7 +66,7 @@ output "app_storage_account_name" {
 }
 
 output "app_resource_group" {
-  value       = "${local.app_resource_group}"
+  value       = "${azurerm_resource_group.app_rg.name}"
 }
 
 /*
