@@ -39,13 +39,16 @@ switch ($trace) {
         $Script:informationPreference = "SilentlyContinue"
         $Script:warningPreference = "SilentlyContinue"
         $Script:verbosePreference = "SilentlyContinue"
-        $Script:debugPreference   = "SilentlyContinue"        
-    }
+        $Script:debugPreference   = "SilentlyContinue"    
+        Remove-Item Env:TF_LOG -ErrorAction SilentlyContinue
+    }`
     1 {
         $Script:warningPreference = "Continue"
         $Script:informationPreference = "Continue"
         $Script:verbosePreference = "Continue"
         $Script:debugPreference   = "SilentlyContinue"
+        $env:TF_LOG="TRACE"
+        $env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object
     }
@@ -54,15 +57,28 @@ switch ($trace) {
         $Script:informationPreference = "Continue"
         $Script:verbosePreference = "Continue"
         $Script:debugPreference   = "Continue"      
+        $env:TF_LOG="TRACE"
+        $env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object
     }
 }
+if ($env:TF_LOG_PATH -and (Test-Path $env:TF_LOG_PATH))
+{
+    # Clear log file
+    Remove-Item $env:TF_LOG_PATH
+}
 $Script:ErrorActionPreference = "Stop"
 
-#$pipeline = ![string]::IsNullOrEmpty($env:RELEASE_DEFINITIONID)
+$pipeline = ![string]::IsNullOrEmpty($env:RELEASE_DEFINITIONID)
+if ($pipeline -or $force)
+{
+    $env:TF_IN_AUTOMATION="true"
+    $env:TF_INPUT=0
+}
 $workspaceLowercase = $Workspace.ToLower()
 $planFile           = "$Workspace.tfplan".ToLower()
+$varsFile           = "$Workspace.tfvars".ToLower()
 
 try {
     Push-Location $tfdirectory
@@ -108,6 +124,16 @@ try {
         Write-Host "`nterraform validate" -ForegroundColor Green 
         terraform validate
     }
+    
+    # Prepare common arguments
+    if ($force)
+    {
+        $forceArgs = "-auto-approve"
+    }
+    if ($(Test-Path $varsFile))
+    {
+        $varArgs = "-var-file=$varsFile"
+    }
 
     if ($plan -or $apply -or $destroy)
     {
@@ -118,14 +144,10 @@ try {
         Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform plan stage may fail" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
 
-        Write-Host "`nterraform plan -out='$planFile'" -ForegroundColor Green 
-        terraform plan -out="$planFile" #-input="$(!$force.ToString().ToLower())" 
+        Write-Host "`nterraform plan $varArgs -out='$planFile'" -ForegroundColor Green 
+        terraform plan $varArgs -out="$planFile" #-input="$(!$force.ToString().ToLower())" 
     }
-    
-    if ($force)
-    {
-        $forceArgs = "-auto-approve"
-    }
+
     if ($apply) 
     {
         if (!$force)

@@ -80,16 +80,13 @@ rcf/
 *.mdf
 *.ldf
 
-#  Local .terraform directories
+#  Terraform
 **/.terraform/*
-
-# .tfstate files
 *.tfstate
 *.tfstate.*
 *.tfplan
-
-# .tfvars files
 *.tfvars
+terraform.log
 
 # Certificates
 *.pfx
