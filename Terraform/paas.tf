@@ -7,7 +7,7 @@ resource "azurerm_storage_account" "app_storage" {
   account_replication_type     = "LRS"
  
   network_rules {
-    bypass                     = ["Logging","Metrics"] # Logging, Metrics, AzureServices, or None.
+    bypass                     = ["Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
   # ip_rules                   = ["${local.admin_ip_ranges}"] # BUG: CIDR notation doesn't work as advertised
     ip_rules                   = ["${local.admin_ips}"] # BUG: CIDR notation doesn't work as advertised

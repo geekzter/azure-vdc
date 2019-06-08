@@ -426,6 +426,8 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   auto_upgrade_minor_version   = true
 }
 
+/* 
+# TODO: Issue with monitoring PaaS services causes deployment to fail
 resource "azurerm_network_connection_monitor" "storage_watcher" {
   name                         = "${azurerm_storage_account.app_storage.name}-watcher"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
@@ -460,7 +462,7 @@ resource "azurerm_network_connection_monitor" "eventhub_watcher" {
   }
 
   depends_on                   = ["azurerm_virtual_machine_extension.bastion_watcher"]
-}
+} */
 
 resource "azurerm_network_connection_monitor" "devops_watcher" {
   name                         = "${azurerm_resource_group.app_rg.name}-db-vm${count.index}-devops-watcher"
