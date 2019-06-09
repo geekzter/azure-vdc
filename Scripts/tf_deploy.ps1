@@ -77,6 +77,18 @@ $workspaceLowercase = $Workspace.ToLower()
 $planFile           = "$Workspace.tfplan".ToLower()
 $varsFile           = "$Workspace.tfvars".ToLower()
 
+# HACK: Make sure we're (still) using Terraform 0.11
+if ($IsMacOS) {
+    $terraformPath = "/usr/local/opt/terraform@0.11/bin"
+    if (!$env:PATH.Contains($terraformPath))
+    {
+        # Insert Terraform 0.11 into path
+        [System.Collections.ArrayList]$pathArray = $env:PATH.Split(":")
+        $pathArray.Insert(1,$terraformPath)
+        $env:PATH = $pathArray -Join ":"
+    }
+}
+
 try {
     Push-Location $tfdirectory
 

@@ -1,3 +1,6 @@
+data "azurerm_client_config" "current" {}
+data "azurerm_subscription" "primary" {}
+
 # Random password generator
 resource "random_string" "password" {
   length                      = 12
@@ -44,15 +47,4 @@ data "http" "localpublicip" {
 # Get public IP address of the machine running this terraform template
 #                         url = "http://icanhazip.com"
                           url = "https://ipinfo.io/ip"
-}
-
-# Automation account, used for runbooks
-resource "azurerm_automation_account" "automation" {
-  name                         = "${azurerm_resource_group.vdc_rg.name}-automation"
-  location                     = "${azurerm_resource_group.vdc_rg.location}"
-  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-
-  sku {
-    name = "Basic"
-  }
 }

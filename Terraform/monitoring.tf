@@ -326,11 +326,15 @@ resource "azurerm_monitor_diagnostic_setting" "waf_pip_logs" {
   }
 }
 
+/*
+# Conflicts with Start/Stop Automation solution
+# TODO: Re-enable 1 by 1, to identify the conflicting setting(s)
 resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
   name                         = "Automation_Logs"
   target_resource_id           = "${azurerm_automation_account.automation.id}"
   storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
   log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+
 
   log {
     category                   = "JobLogs"
@@ -341,6 +345,7 @@ resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
     }
   }
 
+
   log {
     category                   = "JobStreams"
     enabled                    = true
@@ -348,7 +353,7 @@ resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
     retention_policy {
       enabled                  = false
     }
-  }
+  } 
     
   log {
     category                   = "DscNodeStatus"
@@ -367,6 +372,7 @@ resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
     }
   }
 }
+*/
 
 resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
   name                         = "EventHub_Logs"
@@ -401,6 +407,8 @@ resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
   }
 }
 
+# TODO: Issue with monitoring connections can cause deployment to fail when apply is repeatedly run
+/* 
 resource "azurerm_network_watcher" "vdc_watcher" {
   name                         = "${var.resource_prefix}-watcher"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
@@ -418,8 +426,7 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   auto_upgrade_minor_version   = true
 }
 
-# TODO: Issue with monitoring PaaS services can cause deployment to fail when apply is repeatedly run
-/* 
+
 resource "azurerm_network_connection_monitor" "storage_watcher" {
   name                         = "${azurerm_storage_account.app_storage.name}-watcher"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
@@ -454,7 +461,7 @@ resource "azurerm_network_connection_monitor" "eventhub_watcher" {
   }
 
   depends_on                   = ["azurerm_virtual_machine_extension.bastion_watcher"]
-} */
+} 
 
 resource "azurerm_network_connection_monitor" "devops_watcher" {
   name                         = "${azurerm_resource_group.app_rg.name}-db-vm${count.index}-devops-watcher"
@@ -474,6 +481,7 @@ resource "azurerm_network_connection_monitor" "devops_watcher" {
 
   depends_on                   = ["azurerm_virtual_machine_extension.app_db_vm_watcher"]
 }
+*/
 
 # List of solutions: https://docs.microsoft.com/en-us/rest/api/loganalytics/workspaces/listintelligencepacks
 resource "azurerm_log_analytics_solution" "oms_solutions" {
