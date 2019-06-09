@@ -1,6 +1,6 @@
 resource "azurerm_storage_account" "vdc_diag_storage" {
   name                         = "${lower(replace(local.vdc_resource_group,"-",""))}storage"
-  resource_group_name          = "${local.vdc_resource_group}"
+  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   location                     = "${var.location}"
   account_tier                 = "Standard"
   account_replication_type     = "LRS"
@@ -20,14 +20,6 @@ resource "azurerm_log_analytics_linked_service" "automation" {
   workspace_name               = "${azurerm_log_analytics_workspace.vcd_workspace.name}"
   resource_id                  = "${azurerm_automation_account.automation.id}"
 }
-
-# TODO: Add Azure solutions
-# https://registry.terraform.io/modules/avinor/log-analytics/azurerm/1.0.0
-# Network Performance Monitor
-# Service Map
-# Wire Data 2.0
-# (Other) OMS solutions
-# azurerm_log_analytics_solution
 
 resource "azurerm_monitor_diagnostic_setting" "iag_logs" {
   name                         = "${azurerm_firewall.iag.name}-logs"
@@ -426,6 +418,8 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   auto_upgrade_minor_version   = true
 }
 
+# TODO: Issue with monitoring PaaS services can cause deployment to fail when apply is repeatedly run
+/* 
 resource "azurerm_network_connection_monitor" "storage_watcher" {
   name                         = "${azurerm_storage_account.app_storage.name}-watcher"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
@@ -460,7 +454,7 @@ resource "azurerm_network_connection_monitor" "eventhub_watcher" {
   }
 
   depends_on                   = ["azurerm_virtual_machine_extension.bastion_watcher"]
-}
+} */
 
 resource "azurerm_network_connection_monitor" "devops_watcher" {
   name                         = "${azurerm_resource_group.app_rg.name}-db-vm${count.index}-devops-watcher"

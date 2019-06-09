@@ -1,31 +1,29 @@
 #!/usr/bin/env pwsh
 
-param(
+param (
     [parameter(Mandatory=$false)][string]$workspace
 )
 
 Push-Location (Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent "Terraform")
 
 $currentWorkspace = $(terraform workspace list | Select-String -Pattern \* | %{$_ -Replace ".* ",""} 2> $null)
-if ($workspace)
-{
+if ($workspace) {
     terraform workspace select $workspace
+} else {
+    $workspace = $(terraform workspace show)
 }
 
-try 
-{
+try {
+    $backupPath = [system.io.path]::GetTempPath()
+    Write-Host "Backups will be saved in $backupPath"
     foreach($resource in $(terraform state list)) {
-        Write-Host -NoNewline "removing $resource from Terraform state: "
-        terraform state rm $resource
+        Write-Host -NoNewline "Removing $resource from Terraform workspace ${workspace}: "
+        terraform state rm -backup="$backupPath" $resource
     }
-}
-finally
-{
+} finally {
     # Ensure this always runs
-    if ($currentWorkspace)
-    {
+    if ($currentWorkspace) {
         terraform workspace select $currentWorkspace
     }
+    Pop-Location
 }
-
-Pop-Location
