@@ -30,16 +30,18 @@ resource "azurerm_app_service_plan" "vdc_functions" {
   }
 }
 
-resource "azurerm_function_app" "vdc_shutdown_function" {
+resource "azurerm_function_app" "vdc_functions" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-functions"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   app_service_plan_id          = "${azurerm_app_service_plan.vdc_functions.id}"
   storage_connection_string    = "${azurerm_storage_account.automation_storage.primary_connection_string}"
+  enable_builtin_logging       = "true"
 
   app_settings = {
     "app_resource_group"       = "${azurerm_resource_group.app_rg.name}"
     "vdc_resource_group"       = "${azurerm_resource_group.vdc_rg.name}"
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = "${azurerm_application_insights.vdc_insights.instrumentation_key}"
   }
 
   identity {
@@ -76,7 +78,7 @@ resource "azurerm_role_assignment" "app_access" {
   scope                        = "${azurerm_resource_group.app_rg.id}"
   role_definition_id           = "${azurerm_role_definition.vm_stop_start.id}"
 # role_definition_name         = "Virtual Machine Contributor"
-  principal_id                 = "${azurerm_function_app.vdc_shutdown_function.identity.0.principal_id}"
+  principal_id                 = "${azurerm_function_app.vdc_functions.identity.0.principal_id}"
 }
 
 resource "azurerm_role_assignment" "vdc_access" {
@@ -84,7 +86,7 @@ resource "azurerm_role_assignment" "vdc_access" {
   scope                        = "${azurerm_resource_group.vdc_rg.id}"
   role_definition_id           = "${azurerm_role_definition.vm_stop_start.id}"
 # role_definition_name         = "Virtual Machine Contributor"
-  principal_id                 = "${azurerm_function_app.vdc_shutdown_function.identity.0.principal_id}"
+  principal_id                 = "${azurerm_function_app.vdc_functions.identity.0.principal_id}"
 }
 
 # Configure function resources with ARM template as Terraform doesn't (yet) support this
@@ -155,7 +157,7 @@ resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
 DEPLOY
 
   parameters {
-    "functionsAppServiceName"  = "${azurerm_function_app.vdc_shutdown_function.name}"
+    "functionsAppServiceName"  = "${azurerm_function_app.vdc_functions.name}"
     "functionName"             = "VMShutdown"
     "functionFile"             = "${file("../Functions/VMShutdown/run.ps1")}"
     "functionSchedule"         = "0 0 23 * * *" # Every night at 23:00
@@ -165,5 +167,5 @@ DEPLOY
     "proxiesFile"              = "${file("../Functions/proxies.json")}"
   }
 
-  depends_on                   = ["azurerm_function_app.vdc_shutdown_function"] # Explicit dependency for ARM templates
+  depends_on                   = ["azurerm_function_app.vdc_functions"] # Explicit dependency for ARM templates
 }

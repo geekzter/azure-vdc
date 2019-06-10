@@ -326,9 +326,7 @@ resource "azurerm_monitor_diagnostic_setting" "waf_pip_logs" {
   }
 }
 
-/*
 # Conflicts with Start/Stop Automation solution
-# TODO: Re-enable 1 by 1, to identify the conflicting setting(s)
 resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
   name                         = "Automation_Logs"
   target_resource_id           = "${azurerm_automation_account.automation.id}"
@@ -372,7 +370,6 @@ resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
     }
   }
 }
-*/
 
 resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
   name                         = "EventHub_Logs"
@@ -406,6 +403,32 @@ resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
     }
   }
 }
+
+/* 
+# TODO: Not yet available for Azure Functions
+resource "azurerm_monitor_diagnostic_setting" "vdc_function_logs" {
+  name                         = "Function_Logs"
+  target_resource_id           = "${azurerm_function_app.vdc_functions.id}"
+  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
+  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+
+  log {
+    category                   = "FunctionExecutionLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+} */
 
 # TODO: Issue with monitoring connections can cause deployment to fail when apply is repeatedly run
 /* 
@@ -498,3 +521,10 @@ resource "azurerm_log_analytics_solution" "oms_solutions" {
 
   count                         = "${length(var.vdc_oms_solutions)}" 
 } 
+
+resource "azurerm_application_insights" "vdc_insights" {
+  name                          = "${azurerm_resource_group.vdc_rg.name}-insights"
+  location                      = "${azurerm_log_analytics_workspace.vcd_workspace.location}"
+  resource_group_name           = "${azurerm_resource_group.vdc_rg.name}"
+  application_type              = "Web"
+}
