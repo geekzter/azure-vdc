@@ -21,6 +21,24 @@ resource "azurerm_log_analytics_linked_service" "automation" {
   resource_id                  = "${azurerm_automation_account.automation.id}"
 }
 
+# List of solutions: https://docs.microsoft.com/en-us/rest/api/loganalytics/workspaces/listintelligencepacks
+resource "azurerm_log_analytics_solution" "oms_solutions" {
+  solution_name                 = "${element(var.vdc_oms_solutions, count.index)}" 
+  location                      = "${azurerm_log_analytics_workspace.vcd_workspace.location}"
+  resource_group_name           = "${azurerm_resource_group.vdc_rg.name}"
+  workspace_resource_id         = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+  workspace_name                = "${azurerm_log_analytics_workspace.vcd_workspace.name}"
+
+  plan {
+    publisher                   = "Microsoft"
+    product                     = "OMSGallery/${element(var.vdc_oms_solutions, count.index)}"
+  }
+
+  count                         = "${length(var.vdc_oms_solutions)}" 
+
+  depends_on                    = ["azurerm_log_analytics_linked_service.automation"]
+} 
+
 resource "azurerm_monitor_diagnostic_setting" "iag_logs" {
   name                         = "${azurerm_firewall.iag.name}-logs"
   target_resource_id           = "${azurerm_firewall.iag.id}"
@@ -505,22 +523,6 @@ resource "azurerm_network_connection_monitor" "devops_watcher" {
   depends_on                   = ["azurerm_virtual_machine_extension.app_db_vm_watcher"]
 }
 */
-
-# List of solutions: https://docs.microsoft.com/en-us/rest/api/loganalytics/workspaces/listintelligencepacks
-resource "azurerm_log_analytics_solution" "oms_solutions" {
-  solution_name                 = "${element(var.vdc_oms_solutions, count.index)}" 
-  location                      = "${azurerm_log_analytics_workspace.vcd_workspace.location}"
-  resource_group_name           = "${azurerm_resource_group.vdc_rg.name}"
-  workspace_resource_id         = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
-  workspace_name                = "${azurerm_log_analytics_workspace.vcd_workspace.name}"
-
-  plan {
-    publisher                   = "Microsoft"
-    product                     = "OMSGallery/${element(var.vdc_oms_solutions, count.index)}"
-  }
-
-  count                         = "${length(var.vdc_oms_solutions)}" 
-} 
 
 resource "azurerm_application_insights" "vdc_insights" {
   name                          = "${azurerm_resource_group.vdc_rg.name}-insights"
