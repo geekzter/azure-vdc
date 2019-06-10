@@ -19,7 +19,7 @@ resource "azurerm_storage_account" "automation_storage" {
 }
 
 resource "azurerm_app_service_plan" "vdc_functions" {
-  name                         = "${azurerm_resource_group.vdc_rg.name}-functions"
+  name                         = "${azurerm_resource_group.vdc_rg.name}-functions-plan"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   kind                         = "FunctionApp"
@@ -30,8 +30,8 @@ resource "azurerm_app_service_plan" "vdc_functions" {
   }
 }
 
-resource "azurerm_function_app" "vdc_function" {
-  name                         = "${azurerm_resource_group.vdc_rg.name}-function"
+resource "azurerm_function_app" "vdc_shutdown_function" {
+  name                         = "${azurerm_resource_group.vdc_rg.name}-functions"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   app_service_plan_id          = "${azurerm_app_service_plan.vdc_functions.id}"
@@ -76,7 +76,7 @@ resource "azurerm_role_assignment" "app_access" {
   scope                        = "${azurerm_resource_group.app_rg.id}"
   role_definition_id           = "${azurerm_role_definition.vm_stop_start.id}"
 # role_definition_name         = "Virtual Machine Contributor"
-  principal_id                 = "${azurerm_function_app.vdc_function.identity.0.principal_id}"
+  principal_id                 = "${azurerm_function_app.vdc_shutdown_function.identity.0.principal_id}"
 }
 
 resource "azurerm_role_assignment" "vdc_access" {
@@ -84,5 +84,67 @@ resource "azurerm_role_assignment" "vdc_access" {
   scope                        = "${azurerm_resource_group.vdc_rg.id}"
   role_definition_id           = "${azurerm_role_definition.vm_stop_start.id}"
 # role_definition_name         = "Virtual Machine Contributor"
-  principal_id                 = "${azurerm_function_app.vdc_function.identity.0.principal_id}"
+  principal_id                 = "${azurerm_function_app.vdc_shutdown_function.identity.0.principal_id}"
+}
+
+# Configure function resources with ARM template as Terraform doesn't (yet) support this
+# https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
+# https://blog.kloud.com.au/2018/08/16/deploying-azure-functions-with-arm-templates/
+resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
+  name                         = "${azurerm_resource_group.vdc_rg.name}-shutdown-function-arm"
+  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
+  deployment_mode              = "Incremental"
+
+  template_body                = <<DEPLOY
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionsAppServiceName": {
+            "type": "string"
+        },
+        "functionName": {
+            "type": "string"
+        },
+        "functionSchedule": {
+            "type": "string"
+        },
+        "functionFile": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+          "name": "[concat(parameters('functionsAppServiceName'), '/', parameters('functionName'))]",
+          "type": "Microsoft.Web/sites/functions",
+          "apiVersion": "2018-11-01",
+          "properties": {
+              "config": {
+                  "bindings": [
+                      {
+                          "name": "Nightly",
+                          "type": "timerTrigger",
+                          "direction": "in",
+                          "schedule": "[parameters('functionSchedule')]"
+                      }
+                  ],
+                  "disabled": false
+              },
+              "files": {
+                  "run.ps1": "[parameters('functionFile')]"
+              }
+          }
+        }        
+    ]
+}
+DEPLOY
+
+  parameters {
+    "functionsAppServiceName"  = "${azurerm_function_app.vdc_shutdown_function.name}"
+    "functionName"             = "VMShutdown"
+    "functionFile"             = "${file("../Functions/VMShutdown/run.ps1")}"
+    "functionSchedule"         = "0 1 * * *" # Every night at 1:00
+  }
+
+  depends_on                   = ["azurerm_function_app.vdc_shutdown_function"] # Explicit dependency for ARM templates
 }
