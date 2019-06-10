@@ -89,7 +89,6 @@ resource "azurerm_role_assignment" "vdc_access" {
 
 # Configure function resources with ARM template as Terraform doesn't (yet) support this
 # https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
-# https://blog.kloud.com.au/2018/08/16/deploying-azure-functions-with-arm-templates/
 resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-shutdown-function-arm"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
@@ -111,6 +110,18 @@ resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
         },
         "functionFile": {
             "type": "string"
+        },
+        "requirementsFile": {
+            "type": "string"
+        },
+        "profileFile": {
+            "type": "string"
+        },
+        "hostFile": {
+            "type": "string"
+        },
+        "proxiesFile": {
+            "type": "string"
         }
     },
     "resources": [
@@ -122,7 +133,7 @@ resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
               "config": {
                   "bindings": [
                       {
-                          "name": "Nightly",
+                          "name": "Timer",
                           "type": "timerTrigger",
                           "direction": "in",
                           "schedule": "[parameters('functionSchedule')]"
@@ -131,7 +142,11 @@ resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
                   "disabled": false
               },
               "files": {
-                  "run.ps1": "[parameters('functionFile')]"
+                  "run.ps1": "[parameters('functionFile')]",
+                  "../requirements.psd1": "[parameters('requirementsFile')]",
+                  "../profile.ps1": "[parameters('profileFile')]",
+                  "../host.json": "[parameters('hostFile')]",
+                  "../proxies.json": "[parameters('proxiesFile')]"
               }
           }
         }        
@@ -143,7 +158,11 @@ DEPLOY
     "functionsAppServiceName"  = "${azurerm_function_app.vdc_shutdown_function.name}"
     "functionName"             = "VMShutdown"
     "functionFile"             = "${file("../Functions/VMShutdown/run.ps1")}"
-    "functionSchedule"         = "0 1 * * *" # Every night at 1:00
+    "functionSchedule"         = "0 0 23 * * *" # Every night at 23:00
+    "requirementsFile"         = "${file("../Functions/requirements.psd1")}"
+    "profileFile"              = "${file("../Functions/profile.ps1")}"
+    "hostFile"                 = "${file("../Functions/host.json")}"
+    "proxiesFile"              = "${file("../Functions/proxies.json")}"
   }
 
   depends_on                   = ["azurerm_function_app.vdc_shutdown_function"] # Explicit dependency for ARM templates
