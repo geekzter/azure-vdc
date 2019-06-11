@@ -21,11 +21,13 @@ param (
     [parameter(Mandatory=$false)][switch]$destroy=$false,
     [parameter(Mandatory=$false)][switch]$output=$false,
     [parameter(Mandatory=$false)][switch]$force=$false,
-    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace = "default",
+    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $workspace = "default",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
+    [parameter(Mandatory=$false)][string]$backendStorageAccount=$env:TF_VAR_BACKEND_STORAGE_ACCOUNT, # Uppercase so it works in Azure Pipelines (uppercase) as well as in PowerShell Core client (case insensitive)
+    [parameter(Mandatory=$false)][string]$backendStorageContainer="vdc",
     [parameter(Mandatory=$false)][int]$trace=0
 ) 
-if(-not($Workspace))    { Throw "You must supply a value for Workspace" }
+if(-not($workspace))    { Throw "You must supply a value for Workspace" }
 
 # Configure instrumentation
 Set-PSDebug -trace $trace
@@ -73,9 +75,9 @@ if ($pipeline -or $force) {
     $env:TF_IN_AUTOMATION="true"
     $env:TF_INPUT=0
 }
-$workspaceLowercase = $Workspace.ToLower()
-$planFile           = "$Workspace.tfplan".ToLower()
-$varsFile           = "$Workspace.tfvars".ToLower()
+$workspaceLowercase = $workspace.ToLower()
+$planFile           = "$workspace.tfplan".ToLower()
+$varsFile           = "$workspace.tfvars".ToLower()
 
 # HACK: Make sure we're (still) using Terraform 0.11
 if ($IsMacOS) {
@@ -109,11 +111,11 @@ try {
 
     terraform -version
     if ($init) {
-        if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_account))   { Throw "You must set environment variable TF_VAR_backend_storage_account" }
-        if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_container)) { Throw "You must set environment variable TF_VAR_backend_storage_container" }
-        $tfbackendArgs = "-backend-config=`"container_name=${env:TF_VAR_backend_storage_container}`" -backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
+        if([string]::IsNullOrEmpty($backendStorageAccount))   { Throw "You pass argument backendStorageAccount" }
+        if([string]::IsNullOrEmpty($backendStorageContainer)) { Throw "You pass argument backendStorageContainer" }
+        $tfbackendArgs = "-backend-config=`"container_name=${backendStorageContainer}`" -backend-config=`"storage_account_name=${backendStorageAccount}`""
         Write-Host "`nterraform init $tfbackendArgs" -ForegroundColor Green 
-        terraform init -backend-config="container_name=${env:TF_VAR_backend_storage_container}" -backend-config="storage_account_name=${env:TF_VAR_backend_storage_account}"
+        terraform init -backend-config="container_name=${backendStorageContainer}" -backend-config="storage_account_name=${backendStorageAccount}"
     }
 
     # Workspace can only be selected after init 
