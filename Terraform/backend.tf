@@ -5,7 +5,7 @@ terraform {
     resource_group_name  = "automation"
     # Use partial configuration, as we do not want to expose these details
     #storage_account_name = "tfbackend"
-    #container_name       = "tfcontainer" 
+    container_name       = "vdc" 
     key                  = "terraform.tfstate"
   }
 }
