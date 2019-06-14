@@ -13,6 +13,29 @@ variable "resource_environment" {
   default     = "" # Empty string defaults to workspace name
 }
 
+variable "tags" {
+  description = "A map of the tags to use for the resources that are deployed"
+  type        = "map"
+
+  default = {
+    application                = "Automated VDC"
+    provisioner                = "terraform"
+  }
+} 
+
+variable "release_web_url" {
+  description = "The url of the Release Pipeline that deployed this resource"
+  default     = "" 
+}
+variable "release_id" {
+  description = "The ID Release Pipeline that deployed this resource"
+  default     = ""
+}
+variable "release_user_email" {
+  description = "The email address of the user that triggered the pipeline that deployed this resource"
+  default     = ""
+}
+
 ######### Resource Group #########
 variable "location" {
   description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."

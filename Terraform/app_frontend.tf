@@ -1,6 +1,8 @@
 resource "azurerm_resource_group" "app_rg" {
   name                        = "${local.app_resource_group}"
   location                    = "${var.location}"
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_availability_set" "app_web_avset" {
@@ -10,6 +12,8 @@ resource "azurerm_availability_set" "app_web_avset" {
   platform_fault_domain_count = 2
   platform_update_domain_count= 2
   managed                     = true
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_network_interface" "app_web_if" {
@@ -24,6 +28,8 @@ resource "azurerm_network_interface" "app_web_if" {
     private_ip_address        = "${element(var.app_web_vms, count.index)}"
     private_ip_address_allocation           = "Static"
   }
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_virtual_machine" "app_web_vm" {
@@ -81,6 +87,8 @@ resource "azurerm_virtual_machine" "app_web_vm" {
       echo type 'mstsc.exe /v:${element(var.app_web_vms, count.index)}'
     EOF
   }
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
@@ -93,6 +101,8 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   type_handler_version        = "1.4"
   auto_upgrade_minor_version  = true
   count                       = 2
+
+  tags                         = "${local.tags}"
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   name                        = "app_web_vm_bginfo"
@@ -104,6 +114,8 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   type_handler_version        = "2.1"
   auto_upgrade_minor_version  = true
   count                       = 2
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
@@ -130,4 +142,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
       "PATToken": "${var.app_devops["pat"]}" 
     } 
   EOF
+
+  tags                         = "${local.tags}"
 }

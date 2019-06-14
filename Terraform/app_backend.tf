@@ -5,6 +5,8 @@ resource "azurerm_availability_set" "app_db_avset" {
   platform_fault_domain_count = 2
   platform_update_domain_count= 2
   managed                     = true
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_lb" "app_db_lb" {
@@ -17,12 +19,15 @@ resource "azurerm_lb" "app_db_lb" {
     subnet_id                 = "${azurerm_subnet.data_subnet.id}"
     private_ip_address        = "${var.vdc_vnet["app_db_lb_address"]}"
   }
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_lb_backend_address_pool" "app_db_backend_pool" {
   name                        = "BackendPool1"
   resource_group_name         = "${azurerm_resource_group.app_rg.name}"
   loadbalancer_id             = "${azurerm_lb.app_db_lb.id}"
+
 }
 
 resource "azurerm_lb_rule" "app_db_lb_rule_tds" {
@@ -37,7 +42,9 @@ resource "azurerm_lb_rule" "app_db_lb_rule_tds" {
   backend_address_pool_id     = "${azurerm_lb_backend_address_pool.app_db_backend_pool.id}"
   idle_timeout_in_minutes     = 5
   probe_id                    = "${azurerm_lb_probe.app_db_lb_probe_tds.id}"
+
   depends_on                  = ["azurerm_lb_probe.app_db_lb_probe_tds"]
+
 }
 
 resource "azurerm_lb_probe" "app_db_lb_probe_tds" {
@@ -62,6 +69,8 @@ resource "azurerm_network_interface" "app_db_if" {
     private_ip_address        = "${element(var.app_db_vms, count.index)}"
     private_ip_address_allocation           = "Static"
   }
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "app_db_if_backend_pool" {
@@ -126,6 +135,8 @@ resource "azurerm_virtual_machine" "app_db_vm" {
       echo type 'mstsc.exe /v:${element(var.app_db_vms, count.index)}'
     EOF
   }
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
@@ -138,6 +149,8 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
   type_handler_version        = "1.4"
   auto_upgrade_minor_version  = true
   count                       = 2
+
+  tags                         = "${local.tags}"
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   name                        = "app_db_vm_bginfo"
@@ -149,6 +162,8 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   type_handler_version        = "2.1"
   auto_upgrade_minor_version  = true
   count                       = 2
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
@@ -177,4 +192,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
   EOF
 
   depends_on                   = ["azurerm_firewall_application_rule_collection.iag_app_rules"]
+
+  tags                         = "${local.tags}"
 }

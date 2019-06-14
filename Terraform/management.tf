@@ -12,6 +12,8 @@ resource "azurerm_network_interface" "bas_if" {
     private_ip_address        = "${var.vdc_vnet["bastion_address"]}"
     private_ip_address_allocation = "static"
   }
+
+  tags                         = "${local.tags}"
 }
 
 data "template_file" "bastion_first_commands" {
@@ -93,6 +95,8 @@ resource "azurerm_virtual_machine" "bastion" {
     EOF
   }
   */
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
@@ -104,4 +108,6 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
   type                        = "BGInfo"
   type_handler_version        = "2.1"
   auto_upgrade_minor_version  = true
+
+  tags                         = "${local.tags}"
 }

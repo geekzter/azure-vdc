@@ -4,6 +4,8 @@ resource "azurerm_storage_account" "vdc_diag_storage" {
   location                     = "${var.location}"
   account_tier                 = "Standard"
   account_replication_type     = "LRS"
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_log_analytics_workspace" "vcd_workspace" {
@@ -13,12 +15,16 @@ resource "azurerm_log_analytics_workspace" "vcd_workspace" {
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   sku                          = "Standalone"
   retention_in_days            = 90 
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_log_analytics_linked_service" "automation" {
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   workspace_name               = "${azurerm_log_analytics_workspace.vcd_workspace.name}"
   resource_id                  = "${azurerm_automation_account.automation.id}"
+
+  tags                         = "${local.tags}"
 }
 
 # List of solutions: https://docs.microsoft.com/en-us/rest/api/loganalytics/workspaces/listintelligencepacks
@@ -37,6 +43,7 @@ resource "azurerm_log_analytics_solution" "oms_solutions" {
   count                         = "${length(var.vdc_oms_solutions)}" 
 
   depends_on                    = ["azurerm_log_analytics_linked_service.automation"]
+
 } 
 
 resource "azurerm_monitor_diagnostic_setting" "iag_logs" {
@@ -454,6 +461,8 @@ resource "azurerm_network_watcher" "vdc_watcher" {
   name                         = "${var.resource_prefix}-watcher"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_virtual_machine_extension" "bastion_watcher" {
@@ -465,6 +474,8 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   type                         = "NetworkWatcherAgentWindows"
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
+
+  tags                         = "${local.tags}"
 }
 
 
@@ -484,6 +495,8 @@ resource "azurerm_network_connection_monitor" "storage_watcher" {
   }
 
   depends_on                   = ["azurerm_virtual_machine_extension.bastion_watcher"]
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_network_connection_monitor" "eventhub_watcher" {
@@ -502,6 +515,8 @@ resource "azurerm_network_connection_monitor" "eventhub_watcher" {
   }
 
   depends_on                   = ["azurerm_virtual_machine_extension.bastion_watcher"]
+
+  tags                         = "${local.tags}"
 } 
 
 resource "azurerm_network_connection_monitor" "devops_watcher" {
@@ -521,6 +536,8 @@ resource "azurerm_network_connection_monitor" "devops_watcher" {
   count                        = 2
 
   depends_on                   = ["azurerm_virtual_machine_extension.app_db_vm_watcher"]
+
+  tags                         = "${local.tags}"
 }
 */
 
@@ -529,4 +546,6 @@ resource "azurerm_application_insights" "vdc_insights" {
   location                      = "${azurerm_log_analytics_workspace.vcd_workspace.location}"
   resource_group_name           = "${azurerm_resource_group.vdc_rg.name}"
   application_type              = "Web"
+
+  tags                         = "${local.tags}"
 }
