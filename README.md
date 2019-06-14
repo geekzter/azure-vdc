@@ -2,6 +2,8 @@
 This project contains a sample Virtual Network deployment, typically used as part of a Virtual Datacenter (VDC)
 It does not contain all components of a complete VDC (DNS, AD DC's, File Transfer)
 
+[![Build Status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-validate-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=43&branchName=master)
+
 ## Components
 This projects contains the following components
 - A Virtual Network with subnet segregation (dmz, app, data, mgmt)
