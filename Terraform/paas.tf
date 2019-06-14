@@ -17,6 +17,8 @@ resource "azurerm_storage_account" "app_storage" {
 
   # HACK: To prevent 'not provisioned. They are in Updating state..'
   depends_on                   = ["azurerm_subnet.iag_subnet","azurerm_storage_account.archive_storage","azurerm_storage_account.vdc_diag_storage"]
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_storage_container" "app_storage_container" {
@@ -57,6 +59,8 @@ resource "azurerm_storage_account" "archive_storage" {
   }  */
 
   depends_on                   = ["azurerm_subnet.iag_subnet"]
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_storage_container" "archive_storage_container" {
@@ -64,6 +68,7 @@ resource "azurerm_storage_container" "archive_storage_container" {
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   storage_account_name         = "${azurerm_storage_account.archive_storage.name}"
   container_access_type        = "private"
+
 }
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {
@@ -82,6 +87,8 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
     # Allow the Firewall subnet
     virtual_network_subnet_ids = ["${azurerm_subnet.iag_subnet.id}"]
   }  */
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_eventhub" "app_eventhub" {
@@ -102,4 +109,5 @@ resource "azurerm_eventhub" "app_eventhub" {
       blob_container_name      = "${azurerm_storage_container.archive_storage_container.name}"
     }
   }
+
 }

@@ -11,6 +11,8 @@ resource "azurerm_public_ip" "vpn_pip" {
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
 
   allocation_method            = "Dynamic"
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_virtual_network_gateway" "vpn_gw" {
@@ -41,6 +43,7 @@ resource "azurerm_virtual_network_gateway" "vpn_gw" {
 
       public_cert_data         = "${base64encode(file(var.vpn_root_cert_file))}" # load cert from file
     }
-
   }
+
+  tags                         = "${local.tags}"
 }

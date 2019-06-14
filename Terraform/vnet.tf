@@ -197,7 +197,6 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
     source_address_prefix     = "${var.vdc_vnet["mgmt_subnet"]}"
     destination_address_prefix= "VirtualNetwork"
   }
-
 }
 
 # ******************* Routing ******************* #

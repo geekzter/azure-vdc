@@ -18,6 +18,8 @@ resource "azurerm_public_ip" "waf_pip" {
   allocation_method            = "Static"
   sku                          = "Standard"
   domain_name_label            = "${random_string.waf_domain_name_label.result}"
+
+  tags                         = "${local.tags}"
 }
 
 data "azurerm_public_ip" "waf_pip_created" {
@@ -32,6 +34,8 @@ resource "azurerm_dns_cname_record" "waf_pip_cname" {
   ttl                          = 300
   record                       = "${data.azurerm_public_ip.waf_pip_created.fqdn}"
   depends_on                   = ["azurerm_public_ip.waf_pip"]
+
+  tags                         = "${local.tags}"
 } 
 
 resource "azurerm_application_gateway" "waf" {
@@ -118,4 +122,6 @@ resource "azurerm_application_gateway" "waf" {
     rule_set_type              = "OWASP"
     rule_set_version           = "3.0"
   }
+
+  tags                         = "${local.tags}"
 }
