@@ -1,11 +1,16 @@
 variable "resource_prefix" {
   description                  = "The prefix to put in front of resource names created"
-  default                      = "demo"
+  default                      = "vdc"
 }
 
 variable "resource_suffix" {
   description                  = "The suffix to put at the of resource names created"
   default                      = "" # Empty string triggers a random suffix
+}
+
+variable "resource_environment" {
+  description = "The logical environment (tier) resource will be deployed in"
+  default     = "" # Empty string defaults to workspace name
 }
 
 ######### Resource Group #########
