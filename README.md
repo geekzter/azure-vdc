@@ -4,7 +4,9 @@ It does not contain all components of a complete VDC (DNS, AD DC's, File Transfe
 
 [![Build Status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-validate-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=43&branchName=master)
 
-## Components
+![alt text](diagram.png "Architecture")
+
+## Components & Features
 This projects contains the following components
 - A Virtual Network with subnet segregation (dmz, app, data, mgmt)
 - Azure Firewall used as Internet Access Gateway (IAG, e.g. outbound fqdn whitelisting)
@@ -12,8 +14,9 @@ This projects contains the following components
 - Application VM's with IIS enabled, as Azure Pipeline agent deployed
 - A Bastion server that is used as jump server to connect to other VM's. Note this should not be needed in practice as all operation should use Infrastructure as Code (cattle vs. pets) approach
 - Several PaaS services connected as Service Endpoints into the AzureFirewall subnet
-- A Point to Site (P2S VPN), that can be leveraged for transitive access to PaaS services using Service Endpoints (only HTTPS)
-- Terraform, PowerShell & Azure Pipelines to do the automation
+- A Point to Site (P2S VPN), that can be leveraged for transitive access to PaaS services using HTTPS Service Endpoints
+- Infrastructure provisioning through Terraform, PowerShell and (optionally) Azure Pipeline
+- AppServers auto-joined to Azure Pipelines Deployment Group, application deployment from Azure Pipeline
 
 ## Pre-Requisites
 These project uses Terraform, PowerShell Core with Az module, ASP.NET, and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. brew, chocolatey, scoop) to install required components
