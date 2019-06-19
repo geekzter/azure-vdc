@@ -156,15 +156,15 @@ resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
 }
 DEPLOY
 
-  parameters {
-    "functionsAppServiceName"  = "${azurerm_function_app.vdc_functions.name}"
-    "functionName"             = "VMShutdown"
-    "functionFile"             = "${file("../Functions/VMShutdown/run.ps1")}"
-    "functionSchedule"         = "0 0 23 * * *" # Every night at 23:00
-    "requirementsFile"         = "${file("../Functions/requirements.psd1")}"
-    "profileFile"              = "${file("../Functions/profile.ps1")}"
-    "hostFile"                 = "${file("../Functions/host.json")}"
-    "proxiesFile"              = "${file("../Functions/proxies.json")}"
+  parameters                   = {
+    functionsAppServiceName    = "${azurerm_function_app.vdc_functions.name}"
+    functionName               = "VMShutdown"
+    functionFile               = "${file("../Functions/VMShutdown/run.ps1")}"
+    functionSchedule           = "0 0 23 * * *" # Every night at 23:00
+    requirementsFile           = "${file("../Functions/requirements.psd1")}"
+    profileFile                = "${file("../Functions/profile.ps1")}"
+    hostFile                   = "${file("../Functions/host.json")}"
+    proxiesFile                = "${file("../Functions/proxies.json")}"
   }
 
   depends_on                   = ["azurerm_function_app.vdc_functions"] # Explicit dependency for ARM templates

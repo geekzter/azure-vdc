@@ -49,7 +49,7 @@ locals {
     )
   )}"
 
-  lifecycle {
+  lifecycle                    = {
     ignore_changes             = ["tags"]
   }
 }

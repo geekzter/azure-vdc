@@ -22,7 +22,7 @@ vanity_domainname              = "mydomain.com"
 
 vpn_root_cert_file             = "P2SRootCert.cer" 
 
-app_devops {
+app_devops                     = {
     account                    = "vstsaccount"
     team_project               = "VDC"
     web_deployment_group       = "AppServers"

@@ -69,7 +69,7 @@ resource "azurerm_application_gateway" "waf" {
 
   backend_address_pool {
     name                       = "${azurerm_resource_group.app_rg.name}-webservers"
-    ip_addresses               = ["${var.app_web_vms}"]
+    ip_addresses               = "${var.app_web_vms}"
   }
   backend_http_settings {
     name                       = "${azurerm_resource_group.app_rg.name}-config"
@@ -112,7 +112,7 @@ resource "azurerm_application_gateway" "waf" {
 
   ssl_certificate {
     name                       = "${var.vanity_certificate_name}"
-    data                       = "${base64encode(file(var.vanity_certificate_path))}" # load pfx from file
+    data                       = "${filebase64(var.vanity_certificate_path)}" # load pfx from file
     password                   = "${var.vanity_certificate_password}"
   }
 

@@ -9,8 +9,8 @@ resource "azurerm_storage_account" "app_storage" {
   network_rules {
     bypass                     = ["Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
-  # ip_rules                   = ["${local.admin_ip_ranges}"] # BUG: CIDR notation doesn't work as advertised
-    ip_rules                   = ["${local.admin_ips}"] # BUG: CIDR notation doesn't work as advertised
+  # ip_rules                   = "${local.admin_ip_ranges}" # BUG: CIDR notation doesn't work as advertised
+    ip_rules                   = "${local.admin_ips}" # BUG: CIDR notation doesn't work as advertised
     # Allow the Firewall subnet
     virtual_network_subnet_ids = ["${azurerm_subnet.iag_subnet.id}"]
   } 
