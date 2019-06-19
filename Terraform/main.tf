@@ -35,8 +35,8 @@ locals {
   app_dns_name                 = "${lower(var.resource_prefix)}app_web_vm"
   admin_ip                     = ["${chomp(data.http.localpublicip.body)}"]
   admin_ip_cidr                = ["${chomp(data.http.localpublicip.body)}/32"]
-  admin_ips                    = "${distinct(setunion(local.admin_ip,var.admin_ips))}"
-  admin_ip_ranges              = "${distinct(setunion(local.admin_ip_cidr,var.admin_ip_ranges))}"
+  admin_ips                    = "${setunion(local.admin_ip,var.admin_ips)}"
+  admin_ip_ranges              = "${setunion(local.admin_ip_cidr,var.admin_ip_ranges)}"
 
   tags                         = "${merge(
     var.tags,
