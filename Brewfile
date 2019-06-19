@@ -7,8 +7,8 @@ cask "powershell"
 # Visual Studio Code
 cask "visual-studio-code"
 
-# Not yet tested with Terraform 0.12
-brew "terraform@0.11" 
+# Terraform
+brew "terraform" 
 
 # Required for Azure Functions with PowerShell Core
 #cask "powershell@6.2"

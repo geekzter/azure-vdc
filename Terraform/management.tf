@@ -19,7 +19,7 @@ resource "azurerm_network_interface" "bas_if" {
 data "template_file" "bastion_first_commands" {
   template = "${file("../Scripts/FirstLogonCommands.xml")}"
 
-  vars {
+  vars                         = {
     host                       = "${data.azurerm_public_ip.iag_pip_created.ip_address}"
     port                       = "${var.rdp_port}"
     username                   = "${var.admin_username}"

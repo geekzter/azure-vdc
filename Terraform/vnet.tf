@@ -222,7 +222,6 @@ resource "azurerm_route_table" "data_route_table" {
     name                      = "InternetViaIAG"
     address_prefix            = "0.0.0.0/0"
     next_hop_type             = "VirtualAppliance"
-    next_hop_in_ip_address    = "${var.vdc_vnet["iag_address"]}"
     next_hop_in_ip_address    = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}"
   }
 }
@@ -236,7 +235,6 @@ resource "azurerm_route_table" "mgmt_route_table" {
     name                      = "InternetViaIAG"
     address_prefix            = "0.0.0.0/0"
     next_hop_type             = "VirtualAppliance"
-    next_hop_in_ip_address    = "${var.vdc_vnet["iag_address"]}"
     next_hop_in_ip_address    = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}"
   }
 }

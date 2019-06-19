@@ -41,7 +41,7 @@ resource "azurerm_virtual_network_gateway" "vpn_gw" {
     root_certificate {
       name                     = "${var.vpn_root_cert_name}"
 
-      public_cert_data         = "${base64encode(file(var.vpn_root_cert_file))}" # load cert from file
+      public_cert_data         = "${filebase64(var.vpn_root_cert_file)}" # load cert from file
     }
   }
 

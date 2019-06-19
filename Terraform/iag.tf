@@ -170,7 +170,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
   rule {
     name                       = "AllowInbountRDPtoBastion"
 
-    source_addresses           = ["${var.admin_ip_ranges}"]
+    source_addresses           = "${var.admin_ip_ranges}"
 
     destination_ports          = [
     # "3389", # Default port
