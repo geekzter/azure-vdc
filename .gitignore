@@ -97,3 +97,9 @@ terraform.log
 
 # macOS
 *.DS_Store
+
+# Ignore temp files
+tmp*.*
+err.out
+*.~*
+~*.*

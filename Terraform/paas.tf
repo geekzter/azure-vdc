@@ -53,7 +53,7 @@ resource "azurerm_storage_account" "archive_storage" {
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
     ip_rules                   = ["${chomp(data.http.localpublicip.body)}"] # We need this to make changes
   # ip_rules                   = ["${local.admin_ip_ranges}"] # BUG: CIDR notation doesn't work
-  # ip_rules                   = ["${var.admin_ips}"] 
+  # ip_rules                   = ["${local.admin_ips}"] 
     # Allow the Firewall subnet
     virtual_network_subnet_ids = ["${azurerm_subnet.iag_subnet.id}"]
   }  */
