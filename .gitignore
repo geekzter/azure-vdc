@@ -92,7 +92,8 @@ terraform.log
 *.pfx
 *.cer
 
-# VSCode Workspace
+# VSCode
+**/.vscode/*
 *.code-workspace
 
 # macOS
