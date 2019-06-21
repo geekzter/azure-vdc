@@ -258,7 +258,7 @@ resource "azurerm_subnet" "iag_subnet" {
 }
 
 resource "azurerm_subnet" "waf_subnet" {
-  name                        = "WAFSubnet"
+  name                        = "WAFSubnet1"
   virtual_network_name        = "${azurerm_virtual_network.vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix              = "${var.vdc_vnet["waf_subnet"]}"

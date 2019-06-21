@@ -93,7 +93,7 @@ terraform.log
 *.cer
 
 # VSCode
-.vscode
+**/.vscode/*
 *.code-workspace
 
 # macOS

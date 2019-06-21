@@ -58,7 +58,8 @@ variable "vdc_vnet" {
     iag_subnet                 = "10.64.157.0/26"
     waf_subnet                 = "10.64.157.64/26"
     mgmt_subnet                = "10.64.157.128/26"
-    vpn_subnet                 = "10.64.157.192/27"
+    bastion_subnet             = "10.64.157.192/27"
+    vpn_subnet                 = "10.64.157.224/27"
     vpn_range                  = "10.2.0.0/24"
 
     app_web_lb_address         = "10.64.156.4"
