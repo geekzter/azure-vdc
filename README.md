@@ -13,6 +13,7 @@ This projects contains the following components
 - Application Gateway as Web Application Firewall (WAF, inbound HTTP)
 - Application VM's with IIS enabled, as Azure Pipeline agent deployed
 - A Bastion server that is used as jump server to connect to other VM's. Note this should not be needed in practice as all operation should use Infrastructure as Code (cattle vs. pets) approach
+- Additional Managed Bastion (service in preview) as `azurerm_template_deployment` resource (Terraform manages dependencies)
 - Several PaaS services connected as Service Endpoints into the AzureFirewall subnet
 - A Point to Site (P2S VPN), that can be leveraged for transitive access to PaaS services using HTTPS Service Endpoints
 - Infrastructure provisioning through Terraform, PowerShell and (optionally) Azure Pipeline
@@ -43,6 +44,9 @@ These project uses Terraform, PowerShell Core with Az module, ASP.NET, and Azure
 - [Terraform Learning](https://learn.hashicorp.com/terraform/)
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
 - [Visual Studio](https://visualstudio.microsoft.com/free-developer-offers/)
+
+## Limitations & Known Issue's
+- Release Pipelines not yet available in YAML, therefore not included
 
 ## Disclaimer
 This project is provided as-is, and is not intended as blueprint on howa VDC should be deployed, or Azure components and Terraform should be used. It is merely an example on how you can use the technology. The project creates a number of Azure resources, you are responsible for monitoring cost.
