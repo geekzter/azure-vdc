@@ -28,7 +28,6 @@ locals {
   password                     = ".Az9${random_string.password.result}"
   suffix                       = "${var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result}" 
   environment                  = "${var.resource_environment != "" ? lower(var.resource_environment) : terraform.workspace}" 
-# resource_group               = "${lower(var.resource_prefix)}-${lower(local.environment)}-${lower(local.suffix)}"
   vdc_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-${lower(local.suffix)}"
   app_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-app-${lower(local.suffix)}"
   app_hostname                 = "${lower(var.resource_prefix)}apphost"
@@ -64,6 +63,5 @@ resource "azurerm_resource_group" "vdc_rg" {
 
 data "http" "localpublicip" {
 # Get public IP address of the machine running this terraform template
-# url                          = "http://icanhazip.com"
   url                          = "https://ipinfo.io/ip"
 }

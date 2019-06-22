@@ -22,17 +22,12 @@ resource "azurerm_public_ip" "waf_pip" {
   tags                         = "${local.tags}"
 }
 
-data "azurerm_public_ip" "waf_pip_created" {
-  name                         = "${azurerm_public_ip.waf_pip.name}"
-  resource_group_name          = "${azurerm_public_ip.waf_pip.resource_group_name}"
-}
-
 resource "azurerm_dns_cname_record" "waf_pip_cname" {
   name                         = "${lower(var.resource_prefix)}vdcapp"
   zone_name                    = "${data.azurerm_dns_zone.vanity_domain.name}"
   resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.resource_group_name}"
   ttl                          = 300
-  record                       = "${data.azurerm_public_ip.waf_pip_created.fqdn}"
+  record                       = "${azurerm_public_ip.waf_pip.fqdn}"
   depends_on                   = ["azurerm_public_ip.waf_pip"]
 
   tags                         = "${local.tags}"

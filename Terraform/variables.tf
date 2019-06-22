@@ -139,11 +139,6 @@ variable "admin_username" {
   default                      = "vdcadmin"
 }
 
-######### Example App #########
-
-
-# Import TF_VAR_app_vsts_pat environment variable
-
 variable "app_devops" {
   type                         = "map"
 

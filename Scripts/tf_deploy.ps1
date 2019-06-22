@@ -53,8 +53,9 @@ function DeleteArmResources ()
             }
             $stopWatch.Stop()
             if ($removed) {
-                $elapsed = [math]::Round(${stopWatch.Elapsed.TotalSeconds},0)
-                Write-Host "Removed [id=$resourceId, ${elapsed}s elapsed]" -ForegroundColor White
+                # Mimic Terraform formatting
+                $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+                Write-Host "Removed [id=$resourceId, ${elapsed} elapsed]" -ForegroundColor White
             }
         }
     }
@@ -145,8 +146,9 @@ try {
         terraform workspace new $workspaceLowercase 2>$null
     }
     terraform workspace select $workspaceLowercase
+    Write-Host "Terraform workspaces:" -ForegroundColor White
     terraform workspace list
-    Write-Host "`nUsing Terraform workspace '$(terraform workspace show)'" -ForegroundColor Green 
+    Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
 
     if ($validate) {
         Write-Host "`nterraform validate" -ForegroundColor Green 

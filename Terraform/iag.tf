@@ -15,18 +15,12 @@ resource "azurerm_public_ip" "iag_pip" {
   domain_name_label            = "${random_string.iag_domain_name_label.result}"
 }
 
-# Workarlound as azurerm_public_ip.iag_pip.fqdn is not exported
-data "azurerm_public_ip" "iag_pip_created" {
-  name                         = "${azurerm_public_ip.iag_pip.name}"
-  resource_group_name          = "${azurerm_public_ip.iag_pip.resource_group_name}"
-}
-
 resource "azurerm_dns_cname_record" "iag_pip_cname" {
   name                         = "${lower(var.resource_prefix)}vdciag"
   zone_name                    = "${data.azurerm_dns_zone.vanity_domain.name}"
   resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.resource_group_name}"
   ttl                          = 300
-  record                       = "${data.azurerm_public_ip.iag_pip_created.fqdn}"
+  record                       = "${azurerm_public_ip.iag_pip.fqdn}"
   depends_on                   = ["azurerm_public_ip.iag_pip"]
 } 
 
@@ -126,16 +120,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
   }
 }  
 
-# Outbound IP rules
-/* resource "azurerm_firewall_network_rule_collection" "iagnetinrules" {
-  name                         = "${azurerm_firewall.iag.name}-NET-IN-RULES-${}"`
-  azure_firewall_name          = "${azurerm_firewall.iag.name}"
-  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-  priority                     = 100
-  action                       = "Allow"
-
-}  */
-
 # Inbound port forwarding rules
 resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
   name                         = "${azurerm_firewall.iag.name}-fwd-rules"
@@ -157,7 +141,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
       "81"
     ]
     destination_addresses      = [
-      "${data.azurerm_public_ip.iag_pip_created.ip_address}",
+      "${azurerm_public_ip.iag_pip.ip_address}",
     ]
 
     translated_port            = "80"
@@ -177,7 +161,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
       "${var.rdp_port}"
     ]
     destination_addresses      = [
-      "${data.azurerm_public_ip.iag_pip_created.ip_address}",
+      "${azurerm_public_ip.iag_pip.ip_address}",
     ]
 
     translated_port            = "3389"

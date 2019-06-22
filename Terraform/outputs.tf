@@ -21,11 +21,11 @@ output "iag_private_ip" {
   value       = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}"
 }
 output "iag_public_ip" {
-  value       = "${data.azurerm_public_ip.iag_pip_created.ip_address}"
+  value       = "${azurerm_public_ip.iag_pip.ip_address}"
 }
 
 output "iag_fqdn" {
-  value       = "${data.azurerm_public_ip.iag_pip_created.fqdn}"
+  value       = "${azurerm_public_ip.iag_pip.fqdn}"
 }
 
 
@@ -35,7 +35,7 @@ output "app_web_lb_address" {
 }
 
 output "app_url" {
-  value       = "https://${azurerm_dns_cname_record.waf_pip_cname.name}.${azurerm_dns_cname_record.waf_pip_cname.zone_name}/default.aspx"
+  value       = "https://${azurerm_dns_cname_record.waf_pip_cname.name}.${azurerm_dns_cname_record.waf_pip_cname.zone_name}/"
 } 
 
 output "app_storage_fqdns" {
@@ -69,15 +69,8 @@ output "app_resource_group" {
   value       = "${azurerm_resource_group.app_rg.name}"
 }
 
-/*
-# TDODO
-output "vm_fqdn" {
-  value = "${azurerm_public_ip.app_web_lbpip.fqdn}"
-}
-*/
-
 output "bastion_rdp" {
-  value = "mstsc.exe /v:${data.azurerm_public_ip.iag_pip_created.ip_address}:${var.rdp_port}"
+  value = "mstsc.exe /v:${azurerm_public_ip.iag_pip.ip_address}:${var.rdp_port}"
 }
 
 output "bastion_rdp_vpn" {

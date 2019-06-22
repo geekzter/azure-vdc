@@ -20,7 +20,7 @@ data "template_file" "bastion_first_commands" {
   template = "${file("../Scripts/FirstLogonCommands.xml")}"
 
   vars                         = {
-    host                       = "${data.azurerm_public_ip.iag_pip_created.ip_address}"
+    host                       = "${azurerm_public_ip.iag_pip.ip_address}"
     port                       = "${var.rdp_port}"
     username                   = "${var.admin_username}"
     password                   = "${local.password}"
@@ -86,7 +86,7 @@ resource "azurerm_virtual_machine" "bastion" {
   # TODO: Windows only
   provisioner "local-exec" {
     command                   = <<EOF
-      cmdkey.exe /generic:${data.azurerm_public_ip.iag_pip_created.ip_address}:${var.rdp_port} /user:${var.admin_username} /pass:${local.password}
+      cmdkey.exe /generic:${azurerm_public_ip.iag_pip.ip_address}:${var.rdp_port} /user:${var.admin_username} /pass:${local.password}
       cmdkey.exe /generic:${var.vdc_vnet["bastion_address"]} /user:${var.admin_username} /pass:${local.password}
       echo To connect to bastion, type:
       echo type 'mstsc.exe /v:${azurerm_public_ip.bas_pip.ip_address}'
