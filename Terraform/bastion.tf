@@ -20,7 +20,6 @@ resource "azurerm_template_deployment" "managed_bastion" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-managed-bastion-template"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   deployment_mode              = "Incremental"
-
   template_body                = "${file("bastion.json")}"
 
   parameters                   = {
