@@ -14,7 +14,7 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
   sku                          = "Standard"
 }
 
-# Configure function resources with ARM template as Terraform doesn't (yet) support this
+# Configure Managed Bastion with ARM template as Terraform doesn't (yet) support this (preview) service
 # https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
 resource "azurerm_template_deployment" "managed_bastion" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-managed-bastion-template"

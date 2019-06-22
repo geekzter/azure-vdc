@@ -10,7 +10,6 @@
 
 .EXAMPLE
     ./tf_deploy.ps1 -apply
-
 #> 
 
 param ( 
@@ -23,13 +22,50 @@ param (
     [parameter(Mandatory=$false)][switch]$force=$false,
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $workspace = "default",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
+    [parameter(Mandatory=$false)][int]$parallelism=10, # Lower this to 10 if you run into rate limits
     [parameter(Mandatory=$false)][int]$trace=0
 ) 
+function DeleteArmResources ()
+{
+    # Delete resources created with ARM templates, Terraform doesn't know about those
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        $Script:armResourceIDs = terraform output -json arm_resource_ids 2>$null
+    }
+    if ($armResourceIDs) {
+        Write-Host "Removing resources created in embedded ARM templates, this may take a while (no concurrency)..." -ForegroundColor Green
+        # Log on to Azure if not already logged on
+        if (!(Get-AzContext)) {
+            Connect-AzAccount
+        }
+        $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+        
+        $armResourceIDs | ConvertFrom-Json | ForEach-Object {
+            $resourceId = $_[0]
+            Write-Host "Removing [id=$resourceId]..."
+            $removed = $false
+            $stopWatch.Reset()
+            $stopWatch.Start()
+            if ($force) {
+                $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue" -Force
+            } else {
+                $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"
+            }
+            $stopWatch.Stop()
+            if ($removed) {
+                $elapsed = [math]::Round(${stopWatch.Elapsed.TotalSeconds},0)
+                Write-Host "Removed [id=$resourceId, ${elapsed}s elapsed]" -ForegroundColor White
+            }
+        }
+    }
+}
+
 if(-not($workspace))    { Throw "You must supply a value for Workspace" }
 
 # Configure instrumentation
 Set-PSDebug -trace $trace
-if (${env:system.debug} -eq "true") {
+if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
+    # Increase debug information consistent with Azure Pipeline debug setting
     $trace = 2
 }
 switch ($trace) {
@@ -121,20 +157,24 @@ try {
     if ($force) {
         $forceArgs = "-auto-approve"
     }
+
     if ($(Test-Path $varsFile)) {
-        $varArgs = "-var-file=$varsFile"
+        $varArgs = "-var-file='$varsFile'"
     }
 
     if ($plan -or $apply -or $destroy) {
-        # For Terraform apply & plan stages we need access to resources, and for destroy as well sometimes
+        # For Terraform apply, plan & destroy stages we need access to resources, and for destroy as well sometimes
         Write-Host "`nStart VM's, some operations (e.g. adding VM extensions) may fail if they're not started" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "start_vms.ps1") 
 
         Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform plan stage may fail" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
+    }
 
-        Write-Host "`nterraform plan $varArgs -out='$planFile'" -ForegroundColor Green 
-        terraform plan $varArgs -out="$planFile" #-input="$(!$force.ToString().ToLower())" 
+    if ($plan -or $apply) {
+        $planCmd = "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'"
+        Write-Host "`n$planCmd" -ForegroundColor Green 
+        Invoke-Expression "$planCmd"
     }
 
     if ($apply) {
@@ -148,8 +188,9 @@ try {
             }
         }
 
-        Write-Host "`nterraform apply $forceArgs '$planFile'" -ForegroundColor Green 
-        terraform apply $forceArgs "$planFile"
+        $applyCmd = "terraform apply $forceArgs -parallelism=$parallelism '$planFile'"
+        Write-Host "`n$applyCmd" -ForegroundColor Green 
+        Invoke-Expression $applyCmd
     }
 
     if ($output) {
@@ -158,8 +199,13 @@ try {
     }
 
     if ($destroy) {
-        Write-Host "`nterraform destroy" -ForegroundColor Green 
-        terraform destroy $forceArgs
+        # Delete resources created with ARM templates, Terraform doesn't know about those
+        DeleteArmResources
+
+        # Now let Terraform do it's work
+        $destroyCmd = "terraform destroy $forceArgs -parallelism=$parallelism"
+        Write-Host "`n$destroyCmd" -ForegroundColor Green 
+        Invoke-Expression $destroyCmd
     }
 } finally {
     Pop-Location

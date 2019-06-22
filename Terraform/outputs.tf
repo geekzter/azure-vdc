@@ -50,7 +50,7 @@ output "app_eventhub_namespace_key" {
 
 output "app_eventhub_namespace_connection_string" {
   sensitive   = true
-  value       = "${azurerm_eventhub_namespace.app_eventhub.default_primary_connection_string }"
+  value       = "${azurerm_eventhub_namespace.app_eventhub.default_primary_connection_string}"
 }
 
 output "app_eventhub_namespace_fqdn" {
@@ -82,4 +82,13 @@ output "bastion_rdp" {
 
 output "bastion_rdp_vpn" {
   value = "mstsc.exe /v:${var.vdc_vnet["bastion_address"]}"
+}
+
+# Export Resource ID's of resources created in embedded ARM templates
+# This can be used in script to manage (e.g. clean up) these resources as Terraform doesn't know about them
+output "arm_resource_ids" {
+  value       = [
+    # Managed Bastion
+    "${azurerm_resource_group.vdc_rg.id}/providers/Microsoft.Network/bastionHosts/${azurerm_resource_group.vdc_rg.name}-managed-bastion",
+  ]
 }
