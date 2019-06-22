@@ -1,0 +1,57 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionsAppServiceName": {
+            "type": "string"
+        },
+        "functionName": {
+            "type": "string"
+        },
+        "functionSchedule": {
+            "type": "string"
+        },
+        "functionFile": {
+            "type": "string"
+        },
+        "requirementsFile": {
+            "type": "string"
+        },
+        "profileFile": {
+            "type": "string"
+        },
+        "hostFile": {
+            "type": "string"
+        },
+        "proxiesFile": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+          "name": "[concat(parameters('functionsAppServiceName'), '/', parameters('functionName'))]",
+          "type": "Microsoft.Web/sites/functions",
+          "apiVersion": "2018-11-01",
+          "properties": {
+              "config": {
+                  "bindings": [
+                      {
+                          "name": "Timer",
+                          "type": "timerTrigger",
+                          "direction": "in",
+                          "schedule": "[parameters('functionSchedule')]"
+                      }
+                  ],
+                  "disabled": false
+              },
+              "files": {
+                  "run.ps1": "[parameters('functionFile')]",
+                  "../requirements.psd1": "[parameters('requirementsFile')]",
+                  "../profile.ps1": "[parameters('profileFile')]",
+                  "../host.json": "[parameters('hostFile')]",
+                  "../proxies.json": "[parameters('proxiesFile')]"
+              }
+          }
+        }        
+    ]
+}

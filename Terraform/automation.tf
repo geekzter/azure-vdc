@@ -77,7 +77,6 @@ resource "azurerm_role_assignment" "app_access" {
 # name                         = "00000000-0000-0000-0000-000000000000"
   scope                        = "${azurerm_resource_group.app_rg.id}"
   role_definition_id           = "${azurerm_role_definition.vm_stop_start.id}"
-# role_definition_name         = "Virtual Machine Contributor"
   principal_id                 = "${azurerm_function_app.vdc_functions.identity.0.principal_id}"
 }
 
@@ -85,7 +84,6 @@ resource "azurerm_role_assignment" "vdc_access" {
 # name                         = "00000000-0000-0000-0000-000000000000"
   scope                        = "${azurerm_resource_group.vdc_rg.id}"
   role_definition_id           = "${azurerm_role_definition.vm_stop_start.id}"
-# role_definition_name         = "Virtual Machine Contributor"
   principal_id                 = "${azurerm_function_app.vdc_functions.identity.0.principal_id}"
 }
 
@@ -96,65 +94,7 @@ resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   deployment_mode              = "Incremental"
 
-  template_body                = <<DEPLOY
-{
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "functionsAppServiceName": {
-            "type": "string"
-        },
-        "functionName": {
-            "type": "string"
-        },
-        "functionSchedule": {
-            "type": "string"
-        },
-        "functionFile": {
-            "type": "string"
-        },
-        "requirementsFile": {
-            "type": "string"
-        },
-        "profileFile": {
-            "type": "string"
-        },
-        "hostFile": {
-            "type": "string"
-        },
-        "proxiesFile": {
-            "type": "string"
-        }
-    },
-    "resources": [
-        {
-          "name": "[concat(parameters('functionsAppServiceName'), '/', parameters('functionName'))]",
-          "type": "Microsoft.Web/sites/functions",
-          "apiVersion": "2018-11-01",
-          "properties": {
-              "config": {
-                  "bindings": [
-                      {
-                          "name": "Timer",
-                          "type": "timerTrigger",
-                          "direction": "in",
-                          "schedule": "[parameters('functionSchedule')]"
-                      }
-                  ],
-                  "disabled": false
-              },
-              "files": {
-                  "run.ps1": "[parameters('functionFile')]",
-                  "../requirements.psd1": "[parameters('requirementsFile')]",
-                  "../profile.ps1": "[parameters('profileFile')]",
-                  "../host.json": "[parameters('hostFile')]",
-                  "../proxies.json": "[parameters('proxiesFile')]"
-              }
-          }
-        }        
-    ]
-}
-DEPLOY
+  template_body                = "${file("automation-function.json")}"
 
   parameters                   = {
     functionsAppServiceName    = "${azurerm_function_app.vdc_functions.name}"

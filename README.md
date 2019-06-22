@@ -13,7 +13,7 @@ This projects contains the following components
 - Application Gateway as Web Application Firewall (WAF, inbound HTTP)
 - Application VM's with IIS enabled, as Azure Pipeline agent deployed
 - A Bastion server that is used as jump server to connect to other VM's. Note this should not be needed in practice as all operation should use Infrastructure as Code (cattle vs. pets) approach
-- Additional Managed Bastion (service in preview) as `azurerm_template_deployment` resource (Terraform manages dependencies). The Bastion VM will be removed once the Managed Bastion reaches General Availability.
+- Additional Managed Bastion (service in preview) as `azurerm_template_deployment` resource (Terraform manages dependencies). You can access the Managed Bastion using this [Portal link](https://aka.ms/BastionHost). The Bastion VM will be removed once the Managed Bastion reaches General Availability.
 - Several PaaS services connected as Service Endpoints into the AzureFirewall subnet
 - A Point to Site (P2S VPN), that can be leveraged for transitive access to PaaS services using HTTPS Service Endpoints
 - Infrastructure provisioning through Terraform, PowerShell and (optionally) Azure Pipeline

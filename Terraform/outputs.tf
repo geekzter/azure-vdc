@@ -21,11 +21,11 @@ output "iag_private_ip" {
   value       = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}"
 }
 output "iag_public_ip" {
-  value       = "${data.azurerm_public_ip.iag_pip_created.ip_address}"
+  value       = "${azurerm_public_ip.iag_pip.ip_address}"
 }
 
 output "iag_fqdn" {
-  value       = "${data.azurerm_public_ip.iag_pip_created.fqdn}"
+  value       = "${azurerm_public_ip.iag_pip.fqdn}"
 }
 
 
@@ -35,7 +35,7 @@ output "app_web_lb_address" {
 }
 
 output "app_url" {
-  value       = "https://${azurerm_dns_cname_record.waf_pip_cname.name}.${azurerm_dns_cname_record.waf_pip_cname.zone_name}/default.aspx"
+  value       = "https://${azurerm_dns_cname_record.waf_pip_cname.name}.${azurerm_dns_cname_record.waf_pip_cname.zone_name}/"
 } 
 
 output "app_storage_fqdns" {
@@ -50,7 +50,7 @@ output "app_eventhub_namespace_key" {
 
 output "app_eventhub_namespace_connection_string" {
   sensitive   = true
-  value       = "${azurerm_eventhub_namespace.app_eventhub.default_primary_connection_string }"
+  value       = "${azurerm_eventhub_namespace.app_eventhub.default_primary_connection_string}"
 }
 
 output "app_eventhub_namespace_fqdn" {
@@ -69,17 +69,19 @@ output "app_resource_group" {
   value       = "${azurerm_resource_group.app_rg.name}"
 }
 
-/*
-# TDODO
-output "vm_fqdn" {
-  value = "${azurerm_public_ip.app_web_lbpip.fqdn}"
-}
-*/
-
 output "bastion_rdp" {
-  value = "mstsc.exe /v:${data.azurerm_public_ip.iag_pip_created.ip_address}:${var.rdp_port}"
+  value = "mstsc.exe /v:${azurerm_public_ip.iag_pip.ip_address}:${var.rdp_port}"
 }
 
 output "bastion_rdp_vpn" {
   value = "mstsc.exe /v:${var.vdc_vnet["bastion_address"]}"
+}
+
+# Export Resource ID's of resources created in embedded ARM templates
+# This can be used in script to manage (e.g. clean up) these resources as Terraform doesn't know about them
+output "arm_resource_ids" {
+  value       = [
+    # Managed Bastion
+    "${azurerm_resource_group.vdc_rg.id}/providers/Microsoft.Network/bastionHosts/${azurerm_resource_group.vdc_rg.name}-managed-bastion",
+  ]
 }

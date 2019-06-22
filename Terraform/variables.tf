@@ -83,34 +83,34 @@ variable "vdc_oms_solutions" {
     "AzureAutomation",
     "AzureNetworking",
     "AzureNSGAnalytics",
-    "AzureSQLAnalytics",
-    "AzureWebAppsAnalytics",
-    "Backup",
+  # "AzureSQLAnalytics",
+  # "AzureWebAppsAnalytics",
+  # "Backup",
   # "CapacityPerformance",
   # "ChangeTracking",
   # "CompatibilityAssessment",
-    "Containers",
+  # "Containers",
   # "DnsAnalytics",
-    "KeyVault",
-    "KeyVaultAnalytics",
+  # "KeyVault",
+  # "KeyVaultAnalytics",
   # "LogicAppB2B",
   # "LogicAppsManagement",
     "LogManagement",
     "NetworkMonitoring",
-    "ProcessInvestigator",
+  # "ProcessInvestigator",
   # "SCOMAssessment",
-    "Security",
+  # "Security",
     "SecurityCenterFree",
-    "ServiceDesk",
+  # "ServiceDesk",
   # "ServiceFabric",
     "ServiceMap",
-    "SiteRecovery",
-    "SQLAssessment",
+  # "SiteRecovery",
+  # "SQLAssessment",
   # "Start-Stop-VM",
     "Updates",
   # "WireData",
   # "WireData2",
-    ]
+  ]
 }
 
 variable "app_web_vms" {
@@ -138,11 +138,6 @@ variable "admin_username" {
   description                  = "The VDC admin user name"
   default                      = "vdcadmin"
 }
-
-######### Example App #########
-
-
-# Import TF_VAR_app_vsts_pat environment variable
 
 variable "app_devops" {
   type                         = "map"
