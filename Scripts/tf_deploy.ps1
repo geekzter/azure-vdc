@@ -60,6 +60,16 @@ function DeleteArmResources ()
         }
     }
 }
+function SetPipelineVariableFromTerraform (
+    [parameter(Mandatory=$false)][string]$outputVariable
+)
+{
+    $value = $(terraform output $output 2> $null)
+    if ($value) {
+        Write-Host "##vso[task.setvariable variable=$outputVariable;isOutput=true]$value"
+    }
+}
+
 
 if(-not($workspace))    { Throw "You must supply a value for Workspace" }
 
@@ -193,6 +203,13 @@ try {
         $applyCmd = "terraform apply $forceArgs -parallelism=$parallelism '$planFile'"
         Write-Host "`n$applyCmd" -ForegroundColor Green 
         Invoke-Expression $applyCmd
+
+        # Export Terraform output as Pipeline output variables for subsequent tasks
+        if ($pipeline) {
+            SetPipelineVariableFromTerraform "app_resource_group"
+            SetPipelineVariableFromTerraform "vdc_resource_group"
+            SetPipelineVariableFromTerraform "app_url"
+        }
     }
 
     if ($output) {
