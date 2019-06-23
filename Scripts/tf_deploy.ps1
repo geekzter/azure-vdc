@@ -12,6 +12,7 @@
     ./tf_deploy.ps1 -apply
 #> 
 
+### Arguments
 param ( 
     [parameter(Mandatory=$false)][switch]$init=$false,
     [parameter(Mandatory=$false)][switch]$plan=$false,
@@ -25,6 +26,8 @@ param (
     [parameter(Mandatory=$false)][int]$parallelism=10, # Lower this to 10 if you run into rate limits
     [parameter(Mandatory=$false)][int]$trace=0
 ) 
+
+### Internal Functions
 function DeleteArmResources ()
 {
     # Delete resources created with ARM templates, Terraform doesn't know about those
@@ -67,13 +70,17 @@ function SetPipelineVariablesFromTerraform ()
         $outputVariable = $_
         $value = $json[$outputVariable].value
         if ($value) {
+            # Write variable output in the format a Pipeline can understand
+            # https://github.com/Microsoft/azure-pipelines-agent/blob/master/docs/preview/outputvariable.md
             Write-Host "##vso[task.setvariable variable=$outputVariable;isOutput=true]$value"
         }
     }
 }
 
+### Validation
 if(-not($workspace))    { Throw "You must supply a value for Workspace" }
 
+### Main routine
 # Configure instrumentation
 Set-PSDebug -trace $trace
 if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
