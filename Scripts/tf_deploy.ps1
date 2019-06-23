@@ -60,16 +60,17 @@ function DeleteArmResources ()
         }
     }
 }
-function SetPipelineVariableFromTerraform (
-    [parameter(Mandatory=$false)][string]$outputVariable
-)
+function SetPipelineVariablesFromTerraform ()
 {
-    $value = $(terraform output $output 2> $null)
-    if ($value) {
-        Write-Host "##vso[task.setvariable variable=$outputVariable;isOutput=true]$value"
+    $json = terraform output -json | ConvertFrom-Json -AsHashtable
+    $json.keys | ForEach-Object { 
+        $outputVariable = $_
+        $value = $json[$outputVariable].value
+        if ($value) {
+            Write-Host "##vso[task.setvariable variable=$outputVariable;isOutput=true]$value"
+        }
     }
 }
-
 
 if(-not($workspace))    { Throw "You must supply a value for Workspace" }
 
@@ -206,9 +207,7 @@ try {
 
         # Export Terraform output as Pipeline output variables for subsequent tasks
         if ($pipeline) {
-            SetPipelineVariableFromTerraform "app_resource_group"
-            SetPipelineVariableFromTerraform "vdc_resource_group"
-            SetPipelineVariableFromTerraform "app_url"
+            SetPipelineVariablesFromTerraform
         }
     }
 
