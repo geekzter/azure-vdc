@@ -30,5 +30,7 @@ resource "azurerm_template_deployment" "managed_bastion" {
     publicIpAddressName        = "${azurerm_public_ip.managed_bastion_pip.name}"
   }
 
+  count                        = "${var.deploy_managed_bastion ? 1 : 0}"
+
   depends_on                   = ["azurerm_subnet.managed_bastion_subnet","azurerm_public_ip.managed_bastion_pip"] # Explicit dependency for ARM templates
 }

@@ -107,5 +107,7 @@ resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
     proxiesFile                = "${file("../Functions/proxies.json")}"
   }
 
+  count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
+
   depends_on                   = ["azurerm_function_app.vdc_functions"] # Explicit dependency for ARM templates
 }
