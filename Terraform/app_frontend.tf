@@ -133,7 +133,8 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
       "VSTSAccountName": "${var.app_devops["account"]}",        
       "VSTSAccountUrl": "https://${var.app_devops["account"]}.visualstudio.com", 
       "TeamProject": "${var.app_devops["team_project"]}",
-      "DeploymentGroup": "${var.app_devops["web_deployment_group"]}"
+      "DeploymentGroup": "${var.app_devops["web_deployment_group"]}",
+      "AgentName": "${local.app_hostname}${count.index}"
     }
   EOF
 

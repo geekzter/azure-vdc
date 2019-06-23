@@ -30,8 +30,10 @@ locals {
   environment                  = "${var.resource_environment != "" ? lower(var.resource_environment) : terraform.workspace}" 
   vdc_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-${lower(local.suffix)}"
   app_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-app-${lower(local.suffix)}"
-  app_hostname                 = "${lower(var.resource_prefix)}apphost"
-  app_dns_name                 = "${lower(var.resource_prefix)}app_web_vm"
+  app_hostname                 = "${lower(local.environment)}apphost"
+  app_dns_name                 = "${lower(local.environment)}app_web_vm"
+  db_hostname                  = "${lower(local.environment)}dbhost"
+  db_dns_name                  = "${lower(local.environment)}db_web_vm"
   admin_ip                     = ["${chomp(data.http.localpublicip.body)}"]
   admin_ip_cidr                = ["${chomp(data.http.localpublicip.body)}/32"]
   admin_ips                    = "${setunion(local.admin_ip,var.admin_ips)}"

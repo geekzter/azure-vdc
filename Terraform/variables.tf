@@ -230,3 +230,9 @@ variable "deploy_managed_bastion" {
   default                      = true
   type                         = bool
 }
+
+variable "deploy_auto_shutdown" {
+  description                  = "Whether to deploy the Auto shutdown function"
+  default                      = true
+  type                         = bool
+}

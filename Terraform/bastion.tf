@@ -4,8 +4,6 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
   virtual_network_name         = "${azurerm_virtual_network.vnet.name}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix               = "${var.vdc_vnet["bastion_subnet"]}"
-
-  count                        = "${var.deploy_managed_bastion ? 1 : 0}"
 }
 
 resource "azurerm_public_ip" "managed_bastion_pip" {
@@ -14,8 +12,6 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   allocation_method            = "Static"
   sku                          = "Standard"
-
-  count                        = "${var.deploy_managed_bastion ? 1 : 0}"
 }
 
 # Configure Managed Bastion with ARM template as Terraform doesn't (yet) support this (preview) service
@@ -30,8 +26,8 @@ resource "azurerm_template_deployment" "managed_bastion" {
     location                   = "${azurerm_resource_group.vdc_rg.location}"
     resourceGroup              = "${azurerm_resource_group.vdc_rg.name}"
     bastionHostName            = "${azurerm_resource_group.vdc_rg.name}-managed-bastion"
-    subnetId                   = "${azurerm_subnet.managed_bastion_subnet.0.id}"
-    publicIpAddressName        = "${azurerm_public_ip.managed_bastion_pip.0.name}"
+    subnetId                   = "${azurerm_subnet.managed_bastion_subnet.id}"
+    publicIpAddressName        = "${azurerm_public_ip.managed_bastion_pip.name}"
   }
 
   count                        = "${var.deploy_managed_bastion ? 1 : 0}"
