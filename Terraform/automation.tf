@@ -28,13 +28,15 @@ resource "azurerm_app_service_plan" "vdc_functions" {
     tier                       = "Dynamic"
     size                       = "Y1"
   }
+
+  count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
 }
 
 resource "azurerm_function_app" "vdc_functions" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-functions"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-  app_service_plan_id          = "${azurerm_app_service_plan.vdc_functions.id}"
+  app_service_plan_id          = "${azurerm_app_service_plan.vdc_functions.0.id}"
   storage_connection_string    = "${azurerm_storage_account.automation_storage.primary_connection_string}"
   enable_builtin_logging       = "true"
 
@@ -47,6 +49,8 @@ resource "azurerm_function_app" "vdc_functions" {
   identity {
     type                       = "SystemAssigned"
   }
+
+  count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
 
   version                      = "~2" # Required for PowerShell (Core)
 }
@@ -77,14 +81,18 @@ resource "azurerm_role_assignment" "app_access" {
 # name                         = "00000000-0000-0000-0000-000000000000"
   scope                        = "${azurerm_resource_group.app_rg.id}"
   role_definition_id           = "${azurerm_role_definition.vm_stop_start.id}"
-  principal_id                 = "${azurerm_function_app.vdc_functions.identity.0.principal_id}"
+  principal_id                 = "${azurerm_function_app.vdc_functions.0.identity.0.principal_id}"
+
+  count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
 }
 
 resource "azurerm_role_assignment" "vdc_access" {
 # name                         = "00000000-0000-0000-0000-000000000000"
   scope                        = "${azurerm_resource_group.vdc_rg.id}"
   role_definition_id           = "${azurerm_role_definition.vm_stop_start.id}"
-  principal_id                 = "${azurerm_function_app.vdc_functions.identity.0.principal_id}"
+  principal_id                 = "${azurerm_function_app.vdc_functions.0.identity.0.principal_id}"
+
+  count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
 }
 
 # Configure function resources with ARM template as Terraform doesn't (yet) support this
@@ -97,7 +105,7 @@ resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
   template_body                = "${file("automation-function.json")}"
 
   parameters                   = {
-    functionsAppServiceName    = "${azurerm_function_app.vdc_functions.name}"
+    functionsAppServiceName    = "${azurerm_function_app.vdc_functions.0.name}"
     functionName               = "VMShutdown"
     functionFile               = "${file("../Functions/VMShutdown/run.ps1")}"
     functionSchedule           = "0 0 23 * * *" # Every night at 23:00

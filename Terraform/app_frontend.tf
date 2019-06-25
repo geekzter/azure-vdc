@@ -81,8 +81,8 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   }
   
   provisioner "local-exec" {
-    command                   = <<EOF
     # cmdkey.exe /generic:${element(var.app_web_vms, count.index)} /user:${var.admin_username} /pass:${local.password}
+    command                   = <<EOF
       echo To connect to application VM${count.index}, from the Bastion type:
       echo type 'mstsc.exe /v:${element(var.app_web_vms, count.index)}'
     EOF
