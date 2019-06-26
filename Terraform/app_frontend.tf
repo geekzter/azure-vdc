@@ -128,13 +128,15 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
   type_handler_version        = "1.23"
   auto_upgrade_minor_version  = true
   count                       = 2
+  # TODO: add Deployment Group tags
   settings                    = <<EOF
     {
       "VSTSAccountName": "${var.app_devops["account"]}",        
       "VSTSAccountUrl": "https://${var.app_devops["account"]}.visualstudio.com", 
       "TeamProject": "${var.app_devops["team_project"]}",
       "DeploymentGroup": "${var.app_devops["web_deployment_group"]}",
-      "AgentName": "${local.app_hostname}${count.index}"
+      "AgentName": "${local.app_hostname}${count.index}",
+      "Tags": "${var.resource_environment}"
     }
   EOF
 
