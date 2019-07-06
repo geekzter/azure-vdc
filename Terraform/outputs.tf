@@ -35,7 +35,7 @@ output "app_web_lb_address" {
 }
 
 output "app_url" {
-  value       = "https://${azurerm_dns_cname_record.waf_pip_cname.name}.${azurerm_dns_cname_record.waf_pip_cname.zone_name}/"
+  value       = "${var.use_ssl ? "https" : "http"}://${local.app_fqdn}/"
 } 
 
 output "app_storage_fqdns" {

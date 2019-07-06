@@ -5,4 +5,7 @@ resource_prefix                = "vdc"
 location                       = "southcentralus"
 workspace_location             = "southcentralus"
 
-deploy_managed_bastion         = false
+deploy_auto_shutdown           = true
+deploy_managed_bastion         = true
+deploy_vpn                     = true
+use_ssl                        = true

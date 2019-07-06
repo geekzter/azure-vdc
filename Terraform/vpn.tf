@@ -45,5 +45,6 @@ resource "azurerm_virtual_network_gateway" "vpn_gw" {
     }
   }
 
+  count                        = "${var.deploy_vpn ? 1 : 0}"
   tags                         = "${local.tags}"
 }
