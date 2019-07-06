@@ -20,19 +20,22 @@ This projects contains the following components
 - AppServers auto-joined to Azure Pipelines Deployment Group, application deployment from Azure Pipeline
 
 ## Pre-Requisites
-These project uses Terraform, PowerShell Core with Az module, ASP.NET, and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. brew, chocolatey, scoop) to install required components
+These project uses Terraform, PowerShell Core with Az module, ASP.NET (Windows Only), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. brew, chocolatey, scoop) to install required components
 
-## Getting Started
+## Setting up Terraform
 1.	Clone repository (e.g. using Visual Studio Code, GitHub Desktop)
-2.  Set up storage account for Terraform Azure Backend, and configure environment variables `ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`, `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET` accordingly. 
-3.	Initialize Terraform backend `terraform init` or `tf_deploy.ps1 -init`
-4.  Create Azure Pipelines [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/?view=azure-devops), to be used for ASP.NET application
-5.  Customize `variables.tf` or create a `.auto.tfvars` (see `config.auto.tfvars.sample`) file that contains your customized confuguration
-6.  Run `terraform plan` or `tf_deploy.ps1 -plan` to simmulate what happens if terraform would provision resources. 
-7.  Run `terraform apply` or `tf_deploy.ps1 -apply` to create resources. 
-8.  Create build pipeline to build ASP.NET app `SampleIisWebApp`, see `azure-pipelines.yml`
-9.  Create release pipeline to deploy built ASP.NET `SampleIisWebApp` app to VDC app servers
-10.	Run `print_hosts_file_entries.ps1` to get the input for hosts file on the P2S client that is needed for tunneled Service Endpoint access
+2.  Set up storage account and service principal for Terraform Azure Backend, and configure environment variables `ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`, `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET` accordingly as well as `backend.tf`
+3.	Initialize Terraform backend by running `terraform init` or `tf_deploy.ps1 -init`
+4.	Run `create_certs.ps1` (Windows only unfortunately) to create certificates required for VPN
+5.  Also make sure you have certificates to run IIS websites created with HTTPS
+6.  Create Azure Pipelines [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/?view=azure-devops), to be used for ASP.NET application
+7.  Customize `variables.tf` or create a `.auto.tfvars` (see `config.auto.tfvars.sample`) file that contains your customized (e.g. secrets) configuration
+8.  Run `terraform plan` or `tf_deploy.ps1 -plan` to simmulate what happens if terraform would provision resources. 
+9.  Run `terraform apply` or `tf_deploy.ps1 -apply` to create resources. 
+10.  Create build pipeline to build ASP.NET app `SampleIisWebApp`, see `azure-pipelines.yml`
+11.  Create release pipeline to deploy built ASP.NET `SampleIisWebApp` app to VDC app servers
+12.	Run `print_hosts_file_entries.ps1` to get the input for hosts file on the P2S client that is needed for tunneled Service Endpoint access
+
 
 ## Sources
 - [Azure Pipelines](https://azure.microsoft.com/en-us/services/devops/pipelines/)
@@ -46,7 +49,11 @@ These project uses Terraform, PowerShell Core with Az module, ASP.NET, and Azure
 - [Visual Studio](https://visualstudio.microsoft.com/free-developer-offers/)
 
 ## Limitations & Known Issue's
-- Release Pipelines not yet available in YAML, therefore not included
+- Release Pipelines not yet available in YAML
+
+## Extensibility
+- Add any resources created in embedded ARM templates to the Terraform arm_resource_ids output list. This will let `tf_deploy.ps1` know to clean up these resources during a `destroy` operation, as Terraform doesn't know about them.
+- Terraform output is exported as ad-hoc Azure Pipeline variables by `tf_deploy.ps1`
 
 ## Disclaimer
 This project is provided as-is, and is not intended as blueprint on howa VDC should be deployed, or Azure components and Terraform should be used. It is merely an example on how you can use the technology. The project creates a number of Azure resources, you are responsible for monitoring cost.

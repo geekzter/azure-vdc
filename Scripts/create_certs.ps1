@@ -5,7 +5,7 @@ param
 
 if ($PSVersionTable.PSEdition -and ($PSVersionTable.PSEdition -eq "Core"))
 {
-    Write-Output "Not running on Windows PowerShell, PSCore is not supported :-("
+    Write-Host "Not running on Windows PowerShell, Powershell Core can't create certificates :-(" -ForegroundColor Red
     Exit
 }
 

@@ -17,12 +17,12 @@ if (!(Get-AzContext))
     if(-not($tenantid)) { Throw "You must supply a value for tenantid" }
     if(-not($clientid)) { Throw "You must supply a value for clientid" }
     if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
-    # Use Terraform ARM Backend config to authenticate Azure CLI
+    # Use Terraform ARM Backend config to authenticate to Azure
     $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
     $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
     Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
 }
-Set-AzContext -Subscription $subscription
+Set-AzContext -Subscription $subscription -Tenant $tenantid
 
 # Retrieve Azure resources config using Terraform
 try 

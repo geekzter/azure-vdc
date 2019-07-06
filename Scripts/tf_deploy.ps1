@@ -66,8 +66,7 @@ function DeleteArmResources ()
 function SetPipelineVariablesFromTerraform ()
 {
     $json = terraform output -json | ConvertFrom-Json -AsHashtable
-    $json.keys | ForEach-Object { 
-        $outputVariable = $_
+    foreach ($outputVariable in $json.keys) {
         $value = $json[$outputVariable].value
         if ($value) {
             # Write variable output in the format a Pipeline can understand
