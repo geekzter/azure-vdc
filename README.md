@@ -20,14 +20,14 @@ This projects contains the following components
 - AppServers auto-joined to Azure Pipelines Deployment Group, application deployment from Azure Pipeline
 
 ## Pre-Requisites
-These project uses Terraform, PowerShell Core with Az module, ASP.NET (Windows Only), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. brew, chocolatey, scoop) to install required components
+These project uses Terraform, PowerShell Core with Az module, ASP.NET (Windows Only), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. brew, chocolatey, scoop) to install required components.
 
 ## Setting up Terraform
 1.	Clone repository (e.g. using Visual Studio Code, GitHub Desktop).
 2.  Set up storage account and service principal for Terraform Azure Backend, and configure environment variables `ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`, `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET` accordingly as well as `backend.tf`.
 3.	Initialize Terraform backend by running `terraform init` or `tf_deploy.ps1 -init`
 4.	To deploy the VPN, set `deploy_vpn = true` in `variables.tf` or your `.auto.tfvars` file. Run `create_certs.ps1` (Windows only unfortunately) to create the certificates required.
-5.  Toe use HTTPS for the demo app, set `use_ssl = true` in `variables.tf` or your `.auto.tfvars` file. You will need to configure SSL using the `vanity_` variables
+5.  To use HTTPS for the demo app, set `use_ssl = true` in `variables.tf` or your `.auto.tfvars` file. You will need to configure SSL using the `vanity_` variables
 6.  Create Azure Pipelines [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/?view=azure-devops), to be used for ASP.NET application
 7.  Customize `variables.tf` or create a `.auto.tfvars` (see `config.auto.tfvars.sample`) file that contains your customized (e.g. secrets) configuration
 8.  Run `terraform plan` or `tf_deploy.ps1 -plan` to simmulate what happens if terraform would provision resources. 
@@ -52,8 +52,8 @@ These project uses Terraform, PowerShell Core with Az module, ASP.NET (Windows O
 - Release Pipelines not yet available in YAML
 
 ## Extensibility
-- Add any resources created in embedded ARM templates to the Terraform arm_resource_ids output list. This will let `tf_deploy.ps1` know to clean up these resources during a `destroy` operation, as Terraform doesn't know about them.
-- Terraform output is exported as ad-hoc Azure Pipeline variables by `tf_deploy.ps1`
+- Add any resources created in embedded ARM templates to the Terraform `arm_resource_ids` output list. This will let `tf_deploy.ps1` know to clean up these resources during a `destroy` operation, as Terraform doesn't know about them.
+- Terraform output is exported as ad-hoc Azure Pipeline variables by `tf_deploy.ps1`, so they can be used un subsequent tasks
 
 ## Disclaimer
-This project is provided as-is, and is not intended as blueprint on howa VDC should be deployed, or Azure components and Terraform should be used. It is merely an example on how you can use the technology. The project creates a number of Azure resources, you are responsible for monitoring cost.
+This project is provided as-is, and is not intended as a blueprint on how a VDC should be deployed, or Azure components and Terraform should be used. It is merely an example on how you can use the technology. The project creates a number of Azure resources, you are responsible for monitoring and managing cost.
