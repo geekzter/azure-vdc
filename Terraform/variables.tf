@@ -225,14 +225,26 @@ variable "vpn_root_cert_file" {
   description                  = "The relative path to the certificate CER file used for P2S root"
 }
 
+variable "deploy_auto_shutdown" {
+  description                  = "Whether to deploy the Auto shutdown function"
+  default                      = true
+  type                         = bool
+}
+
 variable "deploy_managed_bastion" {
   description                  = "Whether to deploy the Managed Bastion (preview)"
   default                      = true
   type                         = bool
 }
 
-variable "deploy_auto_shutdown" {
-  description                  = "Whether to deploy the Auto shutdown function"
-  default                      = true
+variable "deploy_vpn" {
+  description                  = "Whether to deploy the point to Site VPN"
+  default                      = false
+  type                         = bool
+}
+
+variable "use_ssl" {
+  description                  = "Whether to use SSL (HTTPS) for demo application"
+  default                      = false
   type                         = bool
 }
