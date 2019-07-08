@@ -35,7 +35,8 @@ resource "azurerm_dns_cname_record" "waf_pip_cname" {
 
 locals {
   ssl_count                    = "${var.use_ssl ? 1 : 0}"
-  ssl_range                    = "${range(local.ssl_count)}"
+  ssl_range                    = "${range(local.ssl_count)}" # Contains one item only if var.use_ssl = true
+  ssl_range_inverted           = "${range(1-local.ssl_count)}" # Contains one item only if var.use_ssl = false
   app_fqdn                     = "${azurerm_dns_cname_record.waf_pip_cname.name}.${azurerm_dns_cname_record.waf_pip_cname.zone_name}"
 }
 
@@ -108,12 +109,34 @@ resource "azurerm_application_gateway" "waf" {
     }
   }
 
-  request_routing_rule {
-    name                       = "${azurerm_resource_group.app_rg.name}-http-rule"
-    rule_type                  = "Basic"
-    http_listener_name         = "${azurerm_resource_group.app_rg.name}-http-listener"
-    backend_address_pool_name  = "${azurerm_resource_group.app_rg.name}-webservers"
-    backend_http_settings_name = "${azurerm_resource_group.app_rg.name}-config"
+  # request_routing_rule {
+  #   name                       = "${azurerm_resource_group.app_rg.name}-http-rule"
+  #   rule_type                  = "Basic"
+  #   http_listener_name         = "${azurerm_resource_group.app_rg.name}-http-listener"
+  #   backend_address_pool_name  = "${azurerm_resource_group.app_rg.name}-webservers"
+  #   backend_http_settings_name = "${azurerm_resource_group.app_rg.name}-config"
+  # }
+  dynamic "request_routing_rule" {
+    # Applied when var.use_ssl = false
+    for_each = local.ssl_range_inverted
+    content {
+      name                     = "${azurerm_resource_group.app_rg.name}-http-rule"
+      rule_type                = "Basic"
+      http_listener_name       = "${azurerm_resource_group.app_rg.name}-http-listener"
+      backend_address_pool_name  = "${azurerm_resource_group.app_rg.name}-webservers"
+      backend_http_settings_name = "${azurerm_resource_group.app_rg.name}-config"
+    }
+  }
+  dynamic "request_routing_rule" {
+    # Applied when var.use_ssl = true
+    # Redirect HTTP to HTTPS
+    for_each = local.ssl_range
+    content {
+      name                     = "${azurerm_resource_group.app_rg.name}-http-to-https-rule"
+      rule_type                = "Basic"
+      http_listener_name       = "${azurerm_resource_group.app_rg.name}-http-listener"
+      redirect_configuration_name = "${azurerm_resource_group.app_rg.name}-http-to-https"
+    }
   }
   # request_routing_rule {
   #   name                       = "${azurerm_resource_group.app_rg.name}-https-rule"
@@ -145,6 +168,15 @@ resource "azurerm_application_gateway" "waf" {
       name                     = "${var.vanity_certificate_name}"
       data                     = "${filebase64(var.vanity_certificate_path)}" # load pfx from file
       password                 = "${var.vanity_certificate_password}"
+    }
+  }
+
+  dynamic "redirect_configuration" {
+    for_each = local.ssl_range
+    content {
+      name                     = "${azurerm_resource_group.app_rg.name}-http-to-https"
+      redirect_type            = "Temporary" # HTTP 302
+      target_listener_name     = "${azurerm_resource_group.app_rg.name}-https-listener"
     }
   }
 
