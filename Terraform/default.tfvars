@@ -7,5 +7,5 @@ workspace_location             = "westeurope"
 
 deploy_auto_shutdown           = false
 deploy_managed_bastion         = false
-deploy_vpn                     = true
+deploy_vpn                     = false
 use_ssl                        = true

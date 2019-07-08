@@ -51,7 +51,7 @@ These project uses Terraform, PowerShell Core with Az module, ASP.NET (Windows O
 ## Limitations & Known Issue's
 - Release Pipelines not yet available in YAML
 
-## Extensibility
+## Integration
 - Add any resources created in embedded ARM templates to the Terraform `arm_resource_ids` output list. This will let `tf_deploy.ps1` know to clean up these resources during a `destroy` operation, as Terraform doesn't know about them.
 - Terraform output is exported as ad-hoc Azure Pipeline variables by `tf_deploy.ps1`, so they can be used un subsequent tasks
 
