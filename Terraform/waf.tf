@@ -9,6 +9,7 @@ resource "random_string" "waf_domain_name_label" {
 data "azurerm_dns_zone" "vanity_domain" {
   name                         = "${var.vanity_domainname}"
   resource_group_name          = "Shared"
+  count                        = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
 }
 
 resource "azurerm_public_ip" "waf_pip" {
@@ -24,20 +25,23 @@ resource "azurerm_public_ip" "waf_pip" {
 
 resource "azurerm_dns_cname_record" "waf_pip_cname" {
   name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}app"
-  zone_name                    = "${data.azurerm_dns_zone.vanity_domain.name}"
-  resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.resource_group_name}"
+  zone_name                    = "${data.azurerm_dns_zone.vanity_domain.0.name}"
+  resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.0.resource_group_name}"
   ttl                          = 300
   record                       = "${azurerm_public_ip.waf_pip.fqdn}"
   depends_on                   = ["azurerm_public_ip.waf_pip"]
 
+  count                        = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
   tags                         = "${local.tags}"
 } 
 
 locals {
-  ssl_count                    = "${var.use_ssl ? 1 : 0}"
-  ssl_range                    = "${range(local.ssl_count)}" # Contains one item only if var.use_ssl = true
-  ssl_range_inverted           = "${range(1-local.ssl_count)}" # Contains one item only if var.use_ssl = false
-  app_fqdn                     = "${azurerm_dns_cname_record.waf_pip_cname.name}.${azurerm_dns_cname_record.waf_pip_cname.zone_name}"
+  ssl_count                    = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
+  ssl_range                    = "${range(local.ssl_count)}" # Contains one item only if var.use_vanity_domain_and_ssl = true
+  ssl_range_inverted           = "${range(1-local.ssl_count)}" # Contains one item only if var.use_vanity_domain_and_ssl = false
+  vanity_fqdn                  = "${azurerm_dns_cname_record.waf_pip_cname.0.name}.${azurerm_dns_cname_record.waf_pip_cname.0.zone_name}"
+  app_fqdn                     = "${var.use_vanity_domain_and_ssl ? local.vanity_fqdn : azurerm_public_ip.waf_pip.fqdn}"
+  app_url                      = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.app_fqdn}/"
 }
 
 resource "azurerm_application_gateway" "waf" {
@@ -117,7 +121,7 @@ resource "azurerm_application_gateway" "waf" {
   #   backend_http_settings_name = "${azurerm_resource_group.app_rg.name}-config"
   # }
   dynamic "request_routing_rule" {
-    # Applied when var.use_ssl = false
+    # Applied when var.use_vanity_domain_and_ssl = false
     for_each = local.ssl_range_inverted
     content {
       name                     = "${azurerm_resource_group.app_rg.name}-http-rule"
@@ -128,7 +132,7 @@ resource "azurerm_application_gateway" "waf" {
     }
   }
   dynamic "request_routing_rule" {
-    # Applied when var.use_ssl = true
+    # Applied when var.use_vanity_domain_and_ssl = true
     # Redirect HTTP to HTTPS
     for_each = local.ssl_range
     content {

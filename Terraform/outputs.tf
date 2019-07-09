@@ -35,7 +35,7 @@ output "app_web_lb_address" {
 }
 
 output "app_url" {
-  value       = "${var.use_ssl ? "https" : "http"}://${local.app_fqdn}/"
+  value       = "${local.app_url}"
 } 
 
 output "app_storage_fqdns" {
