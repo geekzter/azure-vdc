@@ -13,15 +13,20 @@ resource "azurerm_public_ip" "iag_pip" {
   allocation_method            = "Static"
   sku                          = "Standard"
   domain_name_label            = "${random_string.iag_domain_name_label.result}"
+
+  tags                         = "${local.tags}"
 }
 
 resource "azurerm_dns_cname_record" "iag_pip_cname" {
   name                         = "${lower(var.resource_prefix)}vdciag"
-  zone_name                    = "${data.azurerm_dns_zone.vanity_domain.name}"
-  resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.resource_group_name}"
+  zone_name                    = "${data.azurerm_dns_zone.vanity_domain.0.name}"
+  resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.0.resource_group_name}"
   ttl                          = 300
   record                       = "${azurerm_public_ip.iag_pip.fqdn}"
   depends_on                   = ["azurerm_public_ip.iag_pip"]
+
+  count                        = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
+  tags                         = "${local.tags}"
 } 
 
 resource "azurerm_firewall" "iag" {

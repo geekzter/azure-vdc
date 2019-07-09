@@ -243,7 +243,7 @@ variable "deploy_vpn" {
   type                         = bool
 }
 
-variable "use_ssl" {
+variable "use_vanity_domain_and_ssl" {
   description                  = "Whether to use SSL (HTTPS) for demo application"
   default                      = false
   type                         = bool

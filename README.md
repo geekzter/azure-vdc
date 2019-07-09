@@ -27,7 +27,7 @@ These project uses Terraform, PowerShell Core with Az module, ASP.NET (Windows O
 2.  Set up storage account and service principal for Terraform Azure Backend, and configure environment variables `ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`, `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET` accordingly as well as `backend.tf`.
 3.	Initialize Terraform backend by running `terraform init` or `tf_deploy.ps1 -init`
 4.	To deploy the VPN, set `deploy_vpn = true` in `variables.tf` or your `.auto.tfvars` file. Run `create_certs.ps1` (Windows only unfortunately) to create the certificates required.
-5.  To use HTTPS for the demo app, set `use_ssl = true` in `variables.tf` or your `.auto.tfvars` file. You will need to configure SSL using the `vanity_` variables
+5.  To use HTTPS for the demo app, set `use_vanity_domain_and_ssl = true` in `variables.tf` or your `.auto.tfvars` file. You will need to configure SSL using the `vanity_` variables
 6.  Create Azure Pipelines [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/?view=azure-devops), to be used for ASP.NET application
 7.  Customize `variables.tf` or create a `.auto.tfvars` (see `config.auto.tfvars.sample`) file that contains your customized (e.g. secrets) configuration
 8.  Run `terraform plan` or `tf_deploy.ps1 -plan` to simmulate what happens if terraform would provision resources. 
