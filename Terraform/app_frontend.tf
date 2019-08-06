@@ -79,6 +79,11 @@ resource "azurerm_virtual_machine" "app_web_vm" {
     provision_vm_agent        = true
     enable_automatic_upgrades = true
   }
+    
+  # Required for AAD Login
+  identity {
+    type                       = "SystemAssigned"
+  }
   
   provisioner "local-exec" {
     # cmdkey.exe /generic:${element(var.app_web_vms, count.index)} /user:${var.admin_username} /pass:${local.password}

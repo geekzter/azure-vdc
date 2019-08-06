@@ -9,12 +9,12 @@ param
     [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET,
     [parameter(Mandatory=$false)][switch]$nowait=$false
 ) 
-if(-not($subscription)) { Throw "You must supply a value for Workspace" }
+if(-not($subscription)) { Throw "You must supply a value for subscription" }
+if(-not($tenantid)) { Throw "You must supply a value for tenant" }
 
 # Log on to Azure if not already logged on
 if (!(Get-AzContext)) 
 {
-    if(-not($tenantid)) { Throw "You must supply a value for tenantid" }
     if(-not($clientid)) { Throw "You must supply a value for clientid" }
     if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
     # Use Terraform ARM Backend config to authenticate to Azure

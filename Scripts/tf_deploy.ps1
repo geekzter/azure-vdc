@@ -77,7 +77,8 @@ function SetPipelineVariablesFromTerraform ()
 }
 
 ### Validation
-if(-not($workspace))    { Throw "You must supply a value for Workspace" }
+if (!($workspace)) { Throw "You must supply a value for Workspace" }
+if (!(Get-Module Az)) { Throw "Az modules not loaded"}
 
 ### Main routine
 # Configure instrumentation

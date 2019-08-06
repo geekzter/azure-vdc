@@ -3,10 +3,7 @@ resource "azurerm_automation_account" "automation" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-automation"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-
-  sku {
-    name = "Basic"
-  }
+  sku_name                     = "Basic"
 }
 
 resource "azurerm_storage_account" "automation_storage" {
