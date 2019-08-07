@@ -123,7 +123,7 @@ switch ($trace) {
 #}
 $Script:ErrorActionPreference = "Stop"
 
-$pipeline = ![string]::IsNullOrEmpty($env:RELEASE_DEFINITIONID)
+$pipeline = ![string]::IsNullOrEmpty($env:AGENT_VERSION)
 if ($pipeline -or $force) {
     $env:TF_IN_AUTOMATION="true"
     $env:TF_INPUT=0
