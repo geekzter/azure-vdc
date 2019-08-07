@@ -1,5 +1,5 @@
-location                       = "centralindia"
-workspace_location             = "centralindia"
+location                       = "westeurope"
+workspace_location             = "westeurope"
 resource_prefix                = "vdc"
 resource_environment           = "demo"
 
