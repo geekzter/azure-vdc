@@ -154,20 +154,20 @@ try {
     }
 
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
-    foreach ($tfvar in $(Get-ChildItem Env:TF_VAR_*)) {
-        $properCaseName = "TF_VAR_" + $tfvar.Name.Substring(7).ToLowerInvariant()
+    foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_CFG_*,TF_VAR_*)) {
+        $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
         Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
     } 
     if (($trace -gt 0) -or (${env:system.debug} -eq "true")) {
-        Get-ChildItem -Hidden -System Env:TF_VAR_* | Sort-Object
+        Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_CFG_*,TF_VAR_* | Sort-Object -Property Name
     }
 
     terraform -version
     if ($init) {
-        if([string]::IsNullOrEmpty($env:TF_backend_storage_account))   { Throw "You must set environment variable TF_backend_storage_account" }
-        $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_backend_storage_account}`""
+        if([string]::IsNullOrEmpty($env:TF_CFG_backend_storage_account))   { Throw "You must set environment variable TF_CFG_backend_storage_account" }
+        $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_CFG_backend_storage_account}`""
         Write-Host "`nterraform init $tfbackendArgs" -ForegroundColor Green 
-        terraform init -backend-config="storage_account_name=${env:TF_backend_storage_account}"
+        terraform init -backend-config="storage_account_name=${env:TF_CFG_backend_storage_account}"
     }
 
     # Workspace can only be selected after init 
