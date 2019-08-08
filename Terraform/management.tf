@@ -43,7 +43,7 @@ resource "azurerm_virtual_machine" "bastion" {
   storage_image_reference {
     publisher                  = "MicrosoftWindowsServer"
     offer                      = "WindowsServer"
-    sku                        = "2016-Datacenter"
+    sku                        = "2019-Datacenter"
     version                    = "latest"
   }
 
@@ -105,19 +105,18 @@ resource "azurerm_virtual_machine" "bastion" {
   tags                         = "${local.tags}"
 }
 
-/* resource "azurerm_virtual_machine_extension" "bastion_aadlogin" {
-# name                         = "${azurerm_virtual_machine.bastion.name}/AADLoginForWindows"
-  name                         = "AADLoginForWindows"
-  location                     = "${azurerm_resource_group.vdc_rg.location}"
-  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-  virtual_machine_name         = "${azurerm_virtual_machine.bastion.name}"
-  publisher                    = "Microsoft.Azure.ActiveDirectory"
-  type                         = "AADLoginForWindows"
-  type_handler_version         = "0.3"
-  auto_upgrade_minor_version   = true
+# resource "azurerm_virtual_machine_extension" "bastion_aadlogin" {
+#   name                         = "${azurerm_virtual_machine.bastion.name}/AADLoginForWindows"
+#   location                     = "${azurerm_resource_group.vdc_rg.location}"
+#   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
+#   virtual_machine_name         = "${azurerm_virtual_machine.bastion.name}"
+#   publisher                    = "Microsoft.Azure.ActiveDirectory"
+#   type                         = "AADLoginForWindows"
+#   type_handler_version         = "0.3"
+#   auto_upgrade_minor_version   = true
 
-  tags                         = "${local.tags}"
-} */
+#   tags                         = "${local.tags}"
+# } 
 
 resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
   name                         = "bastion_bginfo"
