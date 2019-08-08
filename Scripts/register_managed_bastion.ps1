@@ -13,12 +13,13 @@
 #> 
 
 param (    
-    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID
+    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
+    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID
 ) 
 if(-not($subscription)) { Throw "You must supply a value for subscription" }
 
-if (!(Get-AzContext)) {
-    Connect-AzAccount
+if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
+    Connect-AzAccount -Tenant $tenantid
 }
 Set-AzContext -Subscription $subscription
 

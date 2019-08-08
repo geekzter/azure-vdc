@@ -24,12 +24,27 @@ param (
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $workspace = "default",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][int]$parallelism=10, # Lower this to 10 if you run into rate limits
+    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
+    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
+    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
+    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET,
     [parameter(Mandatory=$false)][int]$trace=0
 ) 
 
 ### Internal Functions
-function DeleteArmResources ()
-{
+function AzLogin () {
+    if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
+        if(-not($clientid)) { Throw "You must supply a value for clientid" }
+        if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
+        # Use Terraform ARM Backend config to authenticate to Azure
+        $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
+        Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
+    }
+    Set-AzContext -Subscription $subscription -Tenant $tenantid
+}
+
+function DeleteArmResources () {
     # Delete resources created with ARM templates, Terraform doesn't know about those
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
@@ -38,11 +53,9 @@ function DeleteArmResources ()
     if ($armResourceIDs) {
         Write-Host "Removing resources created in embedded ARM templates, this may take a while (no concurrency)..." -ForegroundColor Green
         # Log on to Azure if not already logged on
-        if (!(Get-AzContext)) {
-            Connect-AzAccount
-        }
-        $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+        AzLogin
         
+        $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch       
         $armResourceIDs | ConvertFrom-Json | ForEach-Object {
             $resourceId = $_[0]
             Write-Host "Removing [id=$resourceId]..."
@@ -63,8 +76,7 @@ function DeleteArmResources ()
         }
     }
 }
-function SetPipelineVariablesFromTerraform ()
-{
+function SetPipelineVariablesFromTerraform () {
     $json = terraform output -json | ConvertFrom-Json -AsHashtable
     foreach ($outputVariable in $json.keys) {
         $value = $json[$outputVariable].value
@@ -152,10 +164,10 @@ try {
 
     terraform -version
     if ($init) {
-        if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_account))   { Throw "You must set environment variable TF_VAR_backend_storage_account" }
-        $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
+        if([string]::IsNullOrEmpty($env:TF_backend_storage_account))   { Throw "You must set environment variable TF_backend_storage_account" }
+        $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_backend_storage_account}`""
         Write-Host "`nterraform init $tfbackendArgs" -ForegroundColor Green 
-        terraform init -backend-config="storage_account_name=${env:TF_VAR_backend_storage_account}"
+        terraform init -backend-config="storage_account_name=${env:TF_backend_storage_account}"
     }
 
     # Workspace can only be selected after init 

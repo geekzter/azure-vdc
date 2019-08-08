@@ -10,7 +10,7 @@ param (
 if(-not($subscription)) { Throw "You must supply a value for subscription" }
 
 # Log on to Azure if not already logged on
-if (!(Get-AzContext)) {
+if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
     if(-not($tenantid)) { Throw "You must supply a value for tenantid" }
     if(-not($clientid)) { Throw "You must supply a value for clientid" }
     if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
