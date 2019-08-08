@@ -178,7 +178,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
   virtual_machine_name         = "${element(azurerm_virtual_machine.app_db_vm.*.name, count.index)}"
   publisher                    = "Microsoft.VisualStudio.Services"
   type                         = "TeamServicesAgent"
-  type_handler_version         = "1.23"
+  type_handler_version         = "1.26"
   auto_upgrade_minor_version   = true
   count                        = 2
   settings                     = <<EOF

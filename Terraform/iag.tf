@@ -113,9 +113,13 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     ]
 
     target_fqdns               = [
+      # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/v2-windows?view=azure-devops
       "vstsagentpackage.azureedge.net",
       "dev.azure.com",
+      "*.dev.azure.com",
+      "login.microsoftonline.com",
       "*.visualstudio.com",
+      "management.core.windows.net"
     ]
 
     protocol {
