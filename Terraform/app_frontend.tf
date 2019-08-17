@@ -133,7 +133,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
   type_handler_version        = "1.26"
   auto_upgrade_minor_version  = true
   count                       = 2
-  # TODO: add Deployment Group tags
   settings                    = <<EOF
     {
       "VSTSAccountName": "${var.app_devops["account"]}",        

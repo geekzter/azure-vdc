@@ -28,6 +28,13 @@ output "iag_fqdn" {
   value       = "${azurerm_public_ip.iag_pip.fqdn}"
 }
 
+output "iag_name" {
+  value       = "${azurerm_firewall.iag.name}"
+}
+
+output "iag_nat_rules" {
+  value       = "${azurerm_firewall_nat_rule_collection.iag_nat_rules.name}"
+}
 
 ######### Example App #########
 output "app_web_lb_address" {
@@ -69,8 +76,16 @@ output "app_resource_group" {
   value       = "${azurerm_resource_group.app_rg.name}"
 }
 
+output "bastion_name" {
+  value = "${azurerm_virtual_machine.bastion.name}"
+}
+
 output "bastion_rdp" {
   value = "mstsc.exe /v:${azurerm_public_ip.iag_pip.ip_address}:${var.rdp_port}"
+}
+
+output "bastion_rdp_port" {
+  value = "${var.rdp_port}"
 }
 
 output "bastion_rdp_vpn" {

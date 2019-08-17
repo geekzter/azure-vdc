@@ -40,31 +40,31 @@ resource "azurerm_network_security_group" "app_nsg" {
     destination_address_prefix= "${var.vdc_vnet["app_subnet"]}"
   }
 
-  # TODO: Via Azure Firewall
-  security_rule {
-    name                      = "AllowHTTPtoInternet"
-    priority                  = 104
-    direction                 = "Outbound"
-    access                    = "Allow"
-    protocol                  = "Tcp"
-    source_port_range         = "*"
-    destination_port_range    = "80"
-    source_address_prefix     = "${var.vdc_vnet["app_subnet"]}"
-    destination_address_prefix= "Internet"
-  }
+  # Via Azure Firewall
+  # security_rule {
+  #   name                      = "AllowHTTPtoInternet"
+  #   priority                  = 104
+  #   direction                 = "Outbound"
+  #   access                    = "Allow"
+  #   protocol                  = "Tcp"
+  #   source_port_range         = "*"
+  #   destination_port_range    = "80"
+  #   source_address_prefix     = "${var.vdc_vnet["app_subnet"]}"
+  #   destination_address_prefix= "Internet"
+  # }
 
-  # TODO: Via Azure Firewall
-  security_rule {
-    name                      = "AllowHTTPStoInternet"
-    priority                  = 105
-    direction                 = "Outbound"
-    access                    = "Allow"
-    protocol                  = "Tcp"
-    source_port_range         = "*"
-    destination_port_range    = "443"
-    source_address_prefix     = "${var.vdc_vnet["app_subnet"]}"
-    destination_address_prefix= "Internet"
-  }
+  # Via Azure Firewall
+  # security_rule {
+  #   name                      = "AllowHTTPStoInternet"
+  #   priority                  = 105
+  #   direction                 = "Outbound"
+  #   access                    = "Allow"
+  #   protocol                  = "Tcp"
+  #   source_port_range         = "*"
+  #   destination_port_range    = "443"
+  #   source_address_prefix     = "${var.vdc_vnet["app_subnet"]}"
+  #   destination_address_prefix= "Internet"
+  # }
 
   security_rule {
     name                      = "AllowMSSQLtoData"
