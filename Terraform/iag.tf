@@ -130,7 +130,7 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
 
   rule {
     name                       = "Allow Packaging tools"
-    description                = "The packaging (e.g. Chocolatey) tools"
+    description                = "The packaging (e.g. Chocolatey, NuGet) tools"
 
     source_addresses           = [
       "${var.vdc_vnet["app_subnet"]}",
@@ -142,7 +142,9 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     target_fqdns               = [
       "chocolatey.org",
       "*chocolatey.org",
-      "*.chocolatey.org"
+      "*.chocolatey.org",
+      "nuget.org",
+      "*.nuget.org"
     ]
 
     protocol {
