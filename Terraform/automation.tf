@@ -72,12 +72,14 @@ resource "azurerm_role_definition" "vm_stop_start" {
     "${azurerm_resource_group.app_rg.id}",
     "${azurerm_resource_group.vdc_rg.id}",
   ]
+
+  count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
 }
 
 resource "azurerm_role_assignment" "app_access" {
 # name                         = "00000000-0000-0000-0000-000000000000"
   scope                        = "${azurerm_resource_group.app_rg.id}"
-  role_definition_id           = "${azurerm_role_definition.vm_stop_start.id}"
+  role_definition_id           = "${azurerm_role_definition.vm_stop_start.0.id}"
   principal_id                 = "${azurerm_function_app.vdc_functions.0.identity.0.principal_id}"
 
   count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
@@ -86,7 +88,7 @@ resource "azurerm_role_assignment" "app_access" {
 resource "azurerm_role_assignment" "vdc_access" {
 # name                         = "00000000-0000-0000-0000-000000000000"
   scope                        = "${azurerm_resource_group.vdc_rg.id}"
-  role_definition_id           = "${azurerm_role_definition.vm_stop_start.id}"
+  role_definition_id           = "${azurerm_role_definition.vm_stop_start.0.id}"
   principal_id                 = "${azurerm_function_app.vdc_functions.0.identity.0.principal_id}"
 
   count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
