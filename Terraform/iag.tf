@@ -141,10 +141,14 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
 
     target_fqdns               = [
       "chocolatey.org",
-      "*chocolatey.org",
       "*.chocolatey.org",
+      "*.hashicorp.com",
+      "download.microsoft.com",
+      "packages.microsoft.com",
       "nuget.org",
-      "*.nuget.org"
+      "*.nuget.org",
+      "onegetcdn.azureedge.net",
+      "*.ubuntu.com"
     ]
 
     protocol {
