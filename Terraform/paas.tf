@@ -7,6 +7,7 @@ resource "azurerm_storage_account" "app_storage" {
   account_replication_type     = "LRS"
  
   network_rules {
+    default_action             = "Deny"
     bypass                     = ["Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
   # ip_rules                   = "${local.admin_ip_ranges}" # BUG: CIDR notation doesn't work as advertised
@@ -54,10 +55,9 @@ resource "azurerm_storage_account" "archive_storage" {
 
 resource "azurerm_storage_container" "archive_storage_container" {
   name                         = "eventarchive"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  #resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   storage_account_name         = "${azurerm_storage_account.archive_storage.name}"
   container_access_type        = "private"
-
 }
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {
@@ -71,6 +71,7 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
   # TODO: Service Endpoint support
 /*   
   network_rules {
+    default_action             = "Deny"
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
     ip_rules                   = ["${chomp(data.http.localpublicip.body)}"] # We need this to make changes
     # Allow the Firewall subnet
