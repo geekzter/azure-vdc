@@ -24,7 +24,6 @@ resource "azurerm_storage_account" "app_storage" {
 
 resource "azurerm_storage_container" "app_storage_container" {
   name                         = "data"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   storage_account_name         = "${azurerm_storage_account.app_storage.name}"
   container_access_type        = "private"
 }
@@ -55,7 +54,6 @@ resource "azurerm_storage_account" "archive_storage" {
 
 resource "azurerm_storage_container" "archive_storage_container" {
   name                         = "eventarchive"
-  #resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   storage_account_name         = "${azurerm_storage_account.archive_storage.name}"
   container_access_type        = "private"
 }

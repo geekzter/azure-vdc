@@ -21,6 +21,7 @@ param (
     [parameter(Mandatory=$false)][switch]$destroy=$false,
     [parameter(Mandatory=$false)][switch]$output=$false,
     [parameter(Mandatory=$false)][switch]$force=$false,
+    [parameter(Mandatory=$false)][switch]$upgrade=$false,
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $workspace = "default",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][int]$parallelism=10, # Lower this to 10 if you run into rate limits
@@ -163,11 +164,15 @@ try {
     }
 
     terraform -version
-    if ($init) {
+    if ($init -or $upgrade) {
         if([string]::IsNullOrEmpty($env:TF_CFG_backend_storage_account))   { Throw "You must set environment variable TF_CFG_backend_storage_account" }
         $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_CFG_backend_storage_account}`""
-        Write-Host "`nterraform init $tfbackendArgs" -ForegroundColor Green 
-        terraform init -backend-config="storage_account_name=${env:TF_CFG_backend_storage_account}"
+        $initCmd = "terraform init $tfbackendArgs"
+        if ($upgrade) {
+            $initCmd += " -upgrade"
+        }
+        Write-Host "`n$initCmd" -ForegroundColor Green 
+        Invoke-Expression $initCmd
     }
 
     # Workspace can only be selected after init 
