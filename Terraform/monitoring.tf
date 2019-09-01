@@ -261,30 +261,6 @@ resource "azurerm_monitor_diagnostic_setting" "vpn_logs" {
 
   count                        = "${var.deploy_vpn ? 1 : 0}"
 }
-resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {
-  name                         = "${azurerm_lb.app_db_lb.name}-logs"
-  target_resource_id           = "${azurerm_lb.app_db_lb.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
-
-  log {
-    category                   = "LoadBalancerAlertEvent"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "LoadBalancerProbeHealthStatus"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
 
 resource "azurerm_monitor_diagnostic_setting" "iag_pip_logs" {
   name                         = "${azurerm_public_ip.iag_pip.name}-logs"

@@ -38,7 +38,7 @@ resource "azurerm_function_app" "vdc_functions" {
   enable_builtin_logging       = "true"
 
   app_settings = {
-    "app_resource_group"       = "${azurerm_resource_group.app_rg.name}"
+    "app_resource_group"       = "${local.app_resource_group}"
     "vdc_resource_group"       = "${azurerm_resource_group.vdc_rg.name}"
     "APPINSIGHTS_INSTRUMENTATIONKEY" = "${azurerm_application_insights.vdc_insights.instrumentation_key}"
   }
@@ -69,7 +69,7 @@ resource "azurerm_role_definition" "vm_stop_start" {
   }
 
   assignable_scopes            = [
-    "${azurerm_resource_group.app_rg.id}",
+    "${module.iis_app.app_resource_group_id}",
     "${azurerm_resource_group.vdc_rg.id}",
   ]
 
@@ -78,7 +78,7 @@ resource "azurerm_role_definition" "vm_stop_start" {
 
 resource "azurerm_role_assignment" "app_access" {
 # name                         = "00000000-0000-0000-0000-000000000000"
-  scope                        = "${azurerm_resource_group.app_rg.id}"
+  scope                        = "${module.iis_app.app_resource_group_id}"
   role_definition_id           = "${azurerm_role_definition.vm_stop_start.0.id}"
   principal_id                 = "${azurerm_function_app.vdc_functions.0.identity.0.principal_id}"
 
