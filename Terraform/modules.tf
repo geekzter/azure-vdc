@@ -1,8 +1,27 @@
+module "auto_shutdown" {
+  source                       = "./modules/auto-shutdown"
+  resource_environment         = "${local.environment}"
+  resource_group               = "${azurerm_resource_group.vdc_rg.name}"
+  app_resource_group           = "${local.app_resource_group}"
+  location                     = "${azurerm_resource_group.vdc_rg.location}"
+  tags                         = "${local.tags}"
+  resource_group_ids           = [
+                                 "${azurerm_resource_group.vdc_rg.id}",
+                                 "${module.iis_app.app_resource_group_id}"
+  ]
+
+  deploy_auto_shutdown         = "${var.deploy_auto_shutdown}"
+
+  app_insights_key             = "${azurerm_application_insights.vdc_insights.instrumentation_key}"
+  diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
+  workspace_id                 = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+}
+
 module "iis_app" {
   source                       = "./modules/iis-app"
   resource_environment         = "${local.environment}"
   resource_group               = "${local.app_resource_group}"
-  location                     = "${var.location}"
+  location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
   admin_username               = "${var.admin_username}"
