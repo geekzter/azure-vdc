@@ -13,6 +13,8 @@ resource "azurerm_public_ip" "iag_pip" {
   allocation_method            = "Static"
   sku                          = "Standard"
   domain_name_label            = "${random_string.iag_domain_name_label.result}"
+  # Zone redundant
+  #zones                        = ["1", "2", "3"]
 
   tags                         = "${local.tags}"
 }
@@ -33,6 +35,8 @@ resource "azurerm_firewall" "iag" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-iag"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
+
+  # TODO: No attribute to make zone redundant
 
   ip_configuration {
     name                       = "iag_ipconfig"

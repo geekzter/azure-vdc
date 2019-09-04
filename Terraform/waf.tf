@@ -19,6 +19,8 @@ resource "azurerm_public_ip" "waf_pip" {
   allocation_method            = "Static"
   sku                          = "Standard"
   domain_name_label            = "${random_string.waf_domain_name_label.result}"
+  # Zone redundant
+  #zones                        = ["1", "2", "3"]
 
   tags                         = "${local.tags}"
 }
@@ -50,6 +52,7 @@ resource "azurerm_application_gateway" "waf" {
   location                     = "${azurerm_resource_group.vdc_rg.location}"
 
   sku {
+    # v2 SKU's are zone redundant
     name                       = "WAF_v2"
     tier                       = "WAF_v2"
     capacity                   = 2
@@ -69,16 +72,16 @@ resource "azurerm_application_gateway" "waf" {
     port                       = 443
   }
   frontend_ip_configuration {
-    name                       = "${azurerm_resource_group.app_rg.name}-ip-configuration"
+    name                       = "${module.iis_app.app_resource_group}-ip-configuration"
     public_ip_address_id       = "${azurerm_public_ip.waf_pip.id}"
   }
 
   backend_address_pool {
-    name                       = "${azurerm_resource_group.app_rg.name}-webservers"
+    name                       = "${module.iis_app.app_resource_group}-webservers"
     ip_addresses               = "${var.app_web_vms}"
   }
   backend_http_settings {
-    name                       = "${azurerm_resource_group.app_rg.name}-config"
+    name                       = "${module.iis_app.app_resource_group}-config"
     cookie_based_affinity      = "Disabled"
     path                       = "/"
     port                       = 80
@@ -87,25 +90,18 @@ resource "azurerm_application_gateway" "waf" {
   }
 
   http_listener {
-    name                       = "${azurerm_resource_group.app_rg.name}-http-listener"
-    frontend_ip_configuration_name = "${azurerm_resource_group.app_rg.name}-ip-configuration"
+    name                       = "${module.iis_app.app_resource_group}-http-listener"
+    frontend_ip_configuration_name = "${module.iis_app.app_resource_group}-ip-configuration"
     frontend_port_name         = "http"
     protocol                   = "Http"
   }
-  # http_listener {
-  #   name                       = "${azurerm_resource_group.app_rg.name}-https-listener"
-  #   frontend_ip_configuration_name = "${azurerm_resource_group.app_rg.name}-ip-configuration"
-  #   frontend_port_name         = "https"
-  #   protocol                   = "Https"
-  #   host_name                  = "${local.app_fqdn}"
-  #   ssl_certificate_name       = "${var.vanity_certificate_name}"
-  # } 
+
   # HACK: This is a way to make HTTPS and SSL optional 
   dynamic "http_listener" {
     for_each = local.ssl_range
     content {
-      name                     = "${azurerm_resource_group.app_rg.name}-https-listener"
-      frontend_ip_configuration_name = "${azurerm_resource_group.app_rg.name}-ip-configuration"
+      name                     = "${module.iis_app.app_resource_group}-https-listener"
+      frontend_ip_configuration_name = "${module.iis_app.app_resource_group}-ip-configuration"
       frontend_port_name       = "https"
       protocol                 = "Https"
       host_name                = "${local.app_fqdn}"
@@ -113,22 +109,16 @@ resource "azurerm_application_gateway" "waf" {
     }
   }
 
-  # request_routing_rule {
-  #   name                       = "${azurerm_resource_group.app_rg.name}-http-rule"
-  #   rule_type                  = "Basic"
-  #   http_listener_name         = "${azurerm_resource_group.app_rg.name}-http-listener"
-  #   backend_address_pool_name  = "${azurerm_resource_group.app_rg.name}-webservers"
-  #   backend_http_settings_name = "${azurerm_resource_group.app_rg.name}-config"
-  # }
+
   dynamic "request_routing_rule" {
     # Applied when var.use_vanity_domain_and_ssl = false
     for_each = local.ssl_range_inverted
     content {
-      name                     = "${azurerm_resource_group.app_rg.name}-http-rule"
+      name                     = "${module.iis_app.app_resource_group}-http-rule"
       rule_type                = "Basic"
-      http_listener_name       = "${azurerm_resource_group.app_rg.name}-http-listener"
-      backend_address_pool_name  = "${azurerm_resource_group.app_rg.name}-webservers"
-      backend_http_settings_name = "${azurerm_resource_group.app_rg.name}-config"
+      http_listener_name       = "${module.iis_app.app_resource_group}-http-listener"
+      backend_address_pool_name  = "${module.iis_app.app_resource_group}-webservers"
+      backend_http_settings_name = "${module.iis_app.app_resource_group}-config"
     }
   }
   dynamic "request_routing_rule" {
@@ -136,35 +126,25 @@ resource "azurerm_application_gateway" "waf" {
     # Redirect HTTP to HTTPS
     for_each = local.ssl_range
     content {
-      name                     = "${azurerm_resource_group.app_rg.name}-http-to-https-rule"
+      name                     = "${module.iis_app.app_resource_group}-http-to-https-rule"
       rule_type                = "Basic"
-      http_listener_name       = "${azurerm_resource_group.app_rg.name}-http-listener"
-      redirect_configuration_name = "${azurerm_resource_group.app_rg.name}-http-to-https"
+      http_listener_name       = "${module.iis_app.app_resource_group}-http-listener"
+      redirect_configuration_name = "${module.iis_app.app_resource_group}-http-to-https"
     }
   }
-  # request_routing_rule {
-  #   name                       = "${azurerm_resource_group.app_rg.name}-https-rule"
-  #   rule_type                  = "Basic"
-  #   http_listener_name         = "${azurerm_resource_group.app_rg.name}-https-listener"
-  #   backend_address_pool_name  = "${azurerm_resource_group.app_rg.name}-webservers"
-  #   backend_http_settings_name = "${azurerm_resource_group.app_rg.name}-config"
-  # }
+
   # HACK: This is a way to make HTTPS and SSL optional 
   dynamic "request_routing_rule" {
     for_each = local.ssl_range
     content {
-      name                     = "${azurerm_resource_group.app_rg.name}-https-rule"
+      name                     = "${module.iis_app.app_resource_group}-https-rule"
       rule_type                = "Basic"
-      http_listener_name       = "${azurerm_resource_group.app_rg.name}-https-listener"
-      backend_address_pool_name = "${azurerm_resource_group.app_rg.name}-webservers"
-      backend_http_settings_name = "${azurerm_resource_group.app_rg.name}-config"
+      http_listener_name       = "${module.iis_app.app_resource_group}-https-listener"
+      backend_address_pool_name = "${module.iis_app.app_resource_group}-webservers"
+      backend_http_settings_name = "${module.iis_app.app_resource_group}-config"
     }
   }
-  # ssl_certificate {
-  #   name                       = "${var.vanity_certificate_name}"
-  #   data                       = "${filebase64(var.vanity_certificate_path)}" # load pfx from file
-  #   password                   = "${var.vanity_certificate_password}"
-  # }
+
   # HACK: This is a way to make HTTPS and SSL optional (for those too lazy to create a certificate)
   dynamic "ssl_certificate" {
     for_each = local.ssl_range
@@ -178,9 +158,9 @@ resource "azurerm_application_gateway" "waf" {
   dynamic "redirect_configuration" {
     for_each = local.ssl_range
     content {
-      name                     = "${azurerm_resource_group.app_rg.name}-http-to-https"
+      name                     = "${module.iis_app.app_resource_group}-http-to-https"
       redirect_type            = "Temporary" # HTTP 302
-      target_listener_name     = "${azurerm_resource_group.app_rg.name}-https-listener"
+      target_listener_name     = "${module.iis_app.app_resource_group}-https-listener"
     }
   }
 
