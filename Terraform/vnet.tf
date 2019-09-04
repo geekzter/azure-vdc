@@ -239,7 +239,7 @@ resource "azurerm_route_table" "mgmt_route_table" {
   }
 }
 # ******************* VNET ******************* #
-resource "azurerm_virtual_network" "vnet" {
+resource "azurerm_virtual_network" "hub_vnet" {
   name                        = "${azurerm_resource_group.vdc_rg.name}-network"
   location                    = "${var.location}"
   address_space               = ["${var.vdc_vnet["vdc_range"]}"]
@@ -248,7 +248,7 @@ resource "azurerm_virtual_network" "vnet" {
 
 resource "azurerm_subnet" "iag_subnet" {
   name                        = "AzureFirewallSubnet"
-  virtual_network_name        = "${azurerm_virtual_network.vnet.name}"
+  virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix              = "${var.vdc_vnet["iag_subnet"]}"
   service_endpoints           = [
@@ -259,14 +259,14 @@ resource "azurerm_subnet" "iag_subnet" {
 
 resource "azurerm_subnet" "waf_subnet" {
   name                        = "WAFSubnet1"
-  virtual_network_name        = "${azurerm_virtual_network.vnet.name}"
+  virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix              = "${var.vdc_vnet["waf_subnet"]}"
 }
 
 resource "azurerm_subnet" "app_subnet" {
   name                        = "Application"
-  virtual_network_name        = "${azurerm_virtual_network.vnet.name}"
+  virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix              = "${var.vdc_vnet["app_subnet"]}"
 }
@@ -283,7 +283,7 @@ resource "azurerm_subnet_network_security_group_association" "app_subnet_nsg" {
 
 resource "azurerm_subnet" "data_subnet" {
   name                        = "Data"
-  virtual_network_name        = "${azurerm_virtual_network.vnet.name}"
+  virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix              = "${var.vdc_vnet["data_subnet"]}"
 }
@@ -300,7 +300,7 @@ resource "azurerm_subnet_network_security_group_association" "data_subnet_nsg" {
 
 resource "azurerm_subnet" "mgmt_subnet" {
   name                         = "Management"
-  virtual_network_name         = "${azurerm_virtual_network.vnet.name}"
+  virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix               = "${var.vdc_vnet["mgmt_subnet"]}"
 }

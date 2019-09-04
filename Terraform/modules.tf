@@ -46,7 +46,7 @@ module "managed_bastion" {
   tags                         = "${local.tags}"
 
   subnet_range                 = "${var.vdc_vnet["bastion_subnet"]}"
-  virtual_network_name         = "${azurerm_virtual_network.vnet.name}"
+  virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
 
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
@@ -60,7 +60,7 @@ module "p2s_vpn" {
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
-  virtual_network_name         = "${azurerm_virtual_network.vnet.name}"
+  virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
   subnet_range                 = "${var.vdc_vnet["vpn_subnet"]}"
   vpn_range                    = "${var.vdc_vnet["vpn_range"]}"
   vpn_root_cert_name           = "${var.vpn_root_cert_name}"
@@ -70,4 +70,24 @@ module "p2s_vpn" {
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 
   deploy_vpn                   = "${var.deploy_vpn}"
+}
+
+module "spoke_vnet" {
+  source                       = "./modules/spoke-vnet"
+  resource_group               = "${azurerm_resource_group.vdc_rg.name}"
+  location                     = "${azurerm_resource_group.vdc_rg.location}"
+  tags                         = "${local.tags}"
+
+  address_space                = "10.1.0.0/16"
+  dns_servers                  = "${azurerm_virtual_network.hub_vnet.dns_servers}"
+  hub_virtual_network_id       = "${azurerm_virtual_network.hub_vnet.id}"
+  hub_virtual_network_name     = "${azurerm_virtual_network.hub_vnet.name}"
+  spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-spoke-network"
+  subnets                      = {
+    app                        = "10.1.1.0/24"
+    data                       = "10.1.2.0/24"
+  }
+
+  diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
+  diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 }

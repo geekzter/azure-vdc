@@ -194,8 +194,8 @@ resource "azurerm_monitor_diagnostic_setting" "mgmt_nsg_logs" {
   }
 }
 resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
-  name                         = "${azurerm_virtual_network.vnet.name}-logs"
-  target_resource_id           = "${azurerm_virtual_network.vnet.id}"
+  name                         = "${azurerm_virtual_network.hub_vnet.name}-logs"
+  target_resource_id           = "${azurerm_virtual_network.hub_vnet.id}"
   storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
   log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 

@@ -5,7 +5,7 @@ resource_environment           = "dev"
 location                       = "westeurope"
 workspace_location             = "westeurope"
 
-deploy_auto_shutdown           = true
-deploy_managed_bastion         = true
-deploy_vpn                     = true
-use_vanity_domain_and_ssl      = true
+deploy_auto_shutdown           = false
+deploy_managed_bastion         = false
+deploy_vpn                     = false
+use_vanity_domain_and_ssl      = false
