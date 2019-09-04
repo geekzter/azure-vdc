@@ -19,6 +19,8 @@ resource "azurerm_public_ip" "waf_pip" {
   allocation_method            = "Static"
   sku                          = "Standard"
   domain_name_label            = "${random_string.waf_domain_name_label.result}"
+  # Zone redundant
+  #zones                        = ["1", "2", "3"]
 
   tags                         = "${local.tags}"
 }
@@ -50,6 +52,7 @@ resource "azurerm_application_gateway" "waf" {
   location                     = "${azurerm_resource_group.vdc_rg.location}"
 
   sku {
+    # v2 SKU's are zone redundant
     name                       = "WAF_v2"
     tier                       = "WAF_v2"
     capacity                   = 2

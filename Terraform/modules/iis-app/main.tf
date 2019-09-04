@@ -47,6 +47,8 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   availability_set_id          = "${azurerm_availability_set.app_web_avset.id}"
   vm_size                      = "${var.app_web_vm_size}"
   network_interface_ids        = ["${element(azurerm_network_interface.app_web_if.*.id, count.index)}"]
+  # Make zone redundant (# VM's > 2, =< 3)
+  #zones                        = ["${count.index}"]
   count                        = 2
 
   storage_image_reference {
@@ -158,6 +160,8 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
     } 
   EOF
 
+  depends_on                   = ["var.devops_firewall_dependency_id"]
+
   tags                         = "${var.tags}"
 }
 
@@ -250,6 +254,8 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   availability_set_id          = "${azurerm_availability_set.app_db_avset.id}"
   vm_size                      = "${var.app_db_vm_size}"
   network_interface_ids        = ["${element(azurerm_network_interface.app_db_if.*.id, count.index)}"]
+  # Make zone redundant (# VM's > 2, =< 3)
+  #zones                        = ["${count.index}"]
   count                        = 2
 
   storage_image_reference {
@@ -361,8 +367,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
     } 
   EOF
 
-  # Let's see if this is needed, this is a cros module dependency
-  #depends_on                   = ["azurerm_firewall_application_rule_collection.iag_app_rules"]
+  depends_on                   = ["var.devops_firewall_dependency_id"]
 
   tags                         = "${var.tags}"
 }

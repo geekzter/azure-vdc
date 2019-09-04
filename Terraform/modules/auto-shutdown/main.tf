@@ -7,6 +7,7 @@ resource "azurerm_storage_account" "automation_storage" {
   resource_group_name          = "${var.resource_group}"
 # account_kind                 = "StorageV2"
   account_tier                 = "Standard"
+  #account_replication_type     = "${var.app_storage_replication_type}"
   account_replication_type     = "LRS"
 }
 

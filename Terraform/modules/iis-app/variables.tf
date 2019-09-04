@@ -160,6 +160,11 @@ variable "app_subnet_id" {
 variable "data_subnet_id" {
   description                  = "The id of the subnet to deploy db tier VM's in"
 }
+variable "devops_firewall_dependency_id" {
+  description                  = "The id of the subnet to deploy db tier VM's in"
+  type = list
+}
+
 variable "vanity_domainname" {
   description                  = "The domain part of the vanity url"
 }

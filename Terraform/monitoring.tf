@@ -3,7 +3,7 @@ resource "azurerm_storage_account" "vdc_diag_storage" {
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   location                     = "${var.location}"
   account_tier                 = "Standard"
-  account_replication_type     = "LRS"
+  account_replication_type     = "${var.app_storage_replication_type}"
 
   tags                         = "${local.tags}"
 }
@@ -207,59 +207,6 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
       enabled                  = false
     }
   }
-}
-resource "azurerm_monitor_diagnostic_setting" "vpn_logs" {
-  name                         = "${azurerm_virtual_network_gateway.vpn_gw.0.name}-logs"
-  target_resource_id           = "${azurerm_virtual_network_gateway.vpn_gw.0.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
-
-  log {
-    category                   = "GatewayDiagnosticLog"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "TunnelDiagnosticLog"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "RouteDiagnosticLog"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "IKEDiagnosticLog"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "P2SDiagnosticLog"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  count                        = "${var.deploy_vpn ? 1 : 0}"
 }
 
 resource "azurerm_monitor_diagnostic_setting" "iag_pip_logs" {

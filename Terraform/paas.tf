@@ -4,7 +4,7 @@ resource "azurerm_storage_account" "app_storage" {
   location                     = "${var.location}"
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
-  account_replication_type     = "LRS"
+  account_replication_type     = "${var.app_storage_replication_type}"
  
   network_rules {
     default_action             = "Deny"
@@ -45,7 +45,7 @@ resource "azurerm_storage_account" "archive_storage" {
   location                     = "${var.location}"
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
-  account_replication_type     = "LRS"
+  account_replication_type     = "${var.app_storage_replication_type}"
 
   depends_on                   = ["azurerm_subnet.iag_subnet"]
 
