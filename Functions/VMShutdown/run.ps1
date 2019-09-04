@@ -9,6 +9,8 @@ if ($Timer.IsPastDue) {
 # Write an information log with the current time
 Write-Host "Starting Shutdown script at UTC $((Get-Date).ToUniversalTime())"
 
+#$resourceGroupIDs = $env:APPSETTING_resource_group_ids.Split(",")
+
 Write-Host "Stopping VM's in resource group $env:APPSETTING_app_resource_group..."
 Get-AzVM -ResourceGroupName $env:APPSETTING_app_resource_group -Status | Where-Object {$_.PowerState -match "running"} | Stop-AzVM -Force
 

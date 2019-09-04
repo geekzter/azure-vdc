@@ -48,7 +48,7 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   vm_size                      = "${var.app_web_vm_size}"
   network_interface_ids        = ["${element(azurerm_network_interface.app_web_if.*.id, count.index)}"]
   # Make zone redundant (# VM's > 2, =< 3)
-  #zones                        = ["${count.index}"]
+  #zones                        = ["${count.index % 3}"]
   count                        = 2
 
   storage_image_reference {
@@ -160,7 +160,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
     } 
   EOF
 
-  depends_on                   = ["var.devops_firewall_dependency_id"]
+  depends_on                   = ["var.release_agent_dependency_id"]
 
   tags                         = "${var.tags}"
 }
@@ -184,7 +184,7 @@ resource "azurerm_lb" "app_db_lb" {
   frontend_ip_configuration {
     name                       = "LoadBalancerFrontEnd"
     subnet_id                  = "${var.data_subnet_id}"
-    private_ip_address         = "${var.vdc_vnet["app_db_lb_address"]}"
+    private_ip_address         = "${var.app_db_lb_address}"
   }
 
   tags                         = "${var.tags}"
@@ -255,7 +255,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   vm_size                      = "${var.app_db_vm_size}"
   network_interface_ids        = ["${element(azurerm_network_interface.app_db_if.*.id, count.index)}"]
   # Make zone redundant (# VM's > 2, =< 3)
-  #zones                        = ["${count.index}"]
+  #zones                        = ["${count.index % 3}"]
   count                        = 2
 
   storage_image_reference {
@@ -367,7 +367,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
     } 
   EOF
 
-  depends_on                   = ["var.devops_firewall_dependency_id"]
+  depends_on                   = ["var.release_agent_dependency_id"]
 
   tags                         = "${var.tags}"
 }
@@ -376,7 +376,7 @@ resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {
   name                         = "${azurerm_lb.app_db_lb.name}-logs"
   target_resource_id           = "${azurerm_lb.app_db_lb.id}"
   storage_account_id           = "${var.diagnostics_storage_id}"
-  log_analytics_workspace_id   = "${var.workspace_id}"
+  log_analytics_workspace_id   = "${var.diagnostics_workspace_id}"
 
   log {
     category                   = "LoadBalancerAlertEvent"

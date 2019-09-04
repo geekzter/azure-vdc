@@ -59,20 +59,25 @@ function DeleteArmResources () {
         $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch       
         $armResourceIDs | ConvertFrom-Json | ForEach-Object {
             $resourceId = $_[0]
-            Write-Host "Removing [id=$resourceId]..."
-            $removed = $false
-            $stopWatch.Reset()
-            $stopWatch.Start()
-            if ($force) {
-                $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue" -Force
+            $resource = Get-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"
+            if ($resource) {
+                Write-Host "Removing [id=$resourceId]..."
+                $removed = $false
+                $stopWatch.Reset()
+                $stopWatch.Start()
+                if ($force) {
+                    $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue" -Force
+                } else {
+                    $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"
+                }
+                $stopWatch.Stop()
+                if ($removed) {
+                    # Mimic Terraform formatting
+                    $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+                    Write-Host "Removed [id=$resourceId, ${elapsed} elapsed]" -ForegroundColor White
+                }
             } else {
-                $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"
-            }
-            $stopWatch.Stop()
-            if ($removed) {
-                # Mimic Terraform formatting
-                $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
-                Write-Host "Removed [id=$resourceId, ${elapsed} elapsed]" -ForegroundColor White
+                Write-Host "Resource [id=$resourceId] does not exist, nothing to remove"
             }
         }
     }

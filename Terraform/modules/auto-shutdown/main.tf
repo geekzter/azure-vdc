@@ -37,7 +37,8 @@ resource "azurerm_function_app" "vdc_functions" {
     # TODO: Make more generic e.g. using list of resource groups
     "app_resource_group"       = "${var.app_resource_group}"
     "vdc_resource_group"       = "${var.resource_group}"
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = "${var.app_insights_key}"
+    #"resource_group_ids"       = "${join(",",var.resource_group_ids)}"
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = "${var.diagnostics_instrumentation_key}"
   }
 
   identity {
@@ -70,7 +71,7 @@ resource "azurerm_role_definition" "vm_stop_start" {
   count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
 }
 
-resource "azurerm_role_assignment" "rg_access" {
+resource "azurerm_role_assignment" "resource_group_access" {
 # name                         = "00000000-0000-0000-0000-000000000000"
   scope                        = "${element(var.resource_group_ids, count.index)}" 
   role_definition_id           = "${azurerm_role_definition.vm_stop_start.0.id}"

@@ -16,27 +16,14 @@ variable "diagnostics_workspace_id" {
   description                  = "The id of the Log Analytics workspace to use"
 }
 
+variable "subnet_range" {}
+
 variable "virtual_network_name" {
     description                = "The name of the Virtual Network to connect the VPN to"
 }
 
-variable "subnet_range" {
-    description                = "The subnet range for the VPN GW subnet"
-}
-variable "vpn_range" {
-    description                = "The client subnet range for VPN"
-}
-
-variable "vpn_root_cert_name" {
-  default                      = "P2SRootCert" 
-}
-
-variable "vpn_root_cert_file" {
-  description                  = "The relative path to the certificate CER file used for P2S root"
-}
-
-
-variable "deploy_vpn" {
-  description                  = "Whether to deploy the point to Site VPN"
+variable "deploy_managed_bastion" {
+  description                  = "Whether to deploy the Managed Bastion (preview)"
+  default                      = true
   type                         = bool
 }

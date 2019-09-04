@@ -2,7 +2,7 @@ resource "azurerm_subnet" "vpn_subnet" {
   name                         = "GatewaySubnet"
   resource_group_name          = "${var.resource_group}"
   virtual_network_name         = "${var.virtual_network_name}"
-  address_prefix               = "${var.vpn_subnet}"
+  address_prefix               = "${var.subnet_range}"
 }
 
 resource "azurerm_public_ip" "vpn_pip" {
@@ -55,7 +55,7 @@ resource "azurerm_monitor_diagnostic_setting" "vpn_logs" {
   name                         = "${azurerm_virtual_network_gateway.vpn_gw.0.name}-logs"
   target_resource_id           = "${azurerm_virtual_network_gateway.vpn_gw.0.id}"
   storage_account_id           = "${var.diagnostics_storage_id}"
-  log_analytics_workspace_id   = "${var.workspace_id}"
+  log_analytics_workspace_id   = "${var.diagnostics_workspace_id}"
 
   log {
     category                   = "GatewayDiagnosticLog"
