@@ -57,10 +57,10 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     name                       = "Allow ${azurerm_storage_account.app_storage.name} Storage"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
-      "${var.vdc_vnet["data_subnet"]}",
-      "${var.vdc_vnet["mgmt_subnet"]}",
-      "${var.vdc_vnet["vpn_range"]}"
+      "${var.vdc_config["app_subnet"]}",
+      "${var.vdc_config["data_subnet"]}",
+      "${var.vdc_config["mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
     ]
 
     target_fqdns               = [
@@ -88,10 +88,10 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     name                       = "Allow ${azurerm_eventhub_namespace.app_eventhub.name} Event Hub HTTPS"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
-      "${var.vdc_vnet["data_subnet"]}",
-      "${var.vdc_vnet["mgmt_subnet"]}",
-      "${var.vdc_vnet["vpn_range"]}"
+      "${var.vdc_config["app_subnet"]}",
+      "${var.vdc_config["data_subnet"]}",
+      "${var.vdc_config["mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
     ]
 
     target_fqdns               = [
@@ -110,10 +110,10 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     description                = "The VSTS/Azure DevOps agent installed on application VM's requires outbound access. This agent is used by Azure Pipelines for application deployment"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
-      "${var.vdc_vnet["data_subnet"]}",
-      "${var.vdc_vnet["mgmt_subnet"]}",
-      "${var.vdc_vnet["vpn_range"]}"
+      "${var.vdc_config["app_subnet"]}",
+      "${var.vdc_config["data_subnet"]}",
+      "${var.vdc_config["mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
     ]
 
     target_fqdns               = [
@@ -137,10 +137,10 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     description                = "The packaging (e.g. Chocolatey, NuGet) tools"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
-      "${var.vdc_vnet["data_subnet"]}",
-      "${var.vdc_vnet["mgmt_subnet"]}",
-      "${var.vdc_vnet["vpn_range"]}"
+      "${var.vdc_config["app_subnet"]}",
+      "${var.vdc_config["data_subnet"]}",
+      "${var.vdc_config["mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
     ]
 
     target_fqdns               = [
@@ -187,7 +187,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
     ]
 
     translated_port            = "80"
-    translated_address         = "${var.vdc_vnet["app_web_lb_address"]}"
+    translated_address         = "${var.vdc_config["app_web_lb_address"]}"
     protocols                  = [
       "TCP",
     ]
@@ -207,7 +207,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
     ]
 
     translated_port            = "3389"
-    translated_address         = "${var.vdc_vnet["bastion_address"]}"
+    translated_address         = "${var.vdc_config["bastion_address"]}"
     protocols                  = [
       "TCP"
     ]
@@ -225,7 +225,7 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     name                       = "AllowDNStoGoogleFromAppSubnet"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
+      "${var.vdc_config["app_subnet"]}",
     ]
 
     destination_ports          = [
@@ -246,7 +246,7 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     name = "AllowAllOutboundFromAppSubnet"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
+      "${var.vdc_config["app_subnet"]}",
     ]
 
     destination_ports          = [
@@ -267,11 +267,11 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     name                       = "Allow all Outbound (DEBUG)"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
-      "${var.vdc_vnet["data_subnet"]}",
-      "${var.vdc_vnet["iag_subnet"]}",
-      "${var.vdc_vnet["mgmt_subnet"]}",
-      "${var.vdc_vnet["vpn_range"]}"
+      "${var.vdc_config["app_subnet"]}",
+      "${var.vdc_config["data_subnet"]}",
+      "${var.vdc_config["iag_subnet"]}",
+      "${var.vdc_config["mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
     ]
 
     destination_ports          = [

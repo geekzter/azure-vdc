@@ -14,7 +14,7 @@ output "vdc_resource_group" {
 }
 
 output "bastion_address" {
-  value       = "${var.vdc_vnet["bastion_address"]}"
+  value       = "${var.vdc_config["bastion_address"]}"
 }
 
 output "iag_private_ip" {
@@ -38,7 +38,7 @@ output "iag_nat_rules" {
 
 ######### Example App #########
 output "app_web_lb_address" {
-  value       = "${var.vdc_vnet["app_web_lb_address"]}"
+  value       = "${var.vdc_config["app_web_lb_address"]}"
 }
 
 output "app_url" {
@@ -89,7 +89,7 @@ output "bastion_rdp_port" {
 }
 
 output "bastion_rdp_vpn" {
-  value = "mstsc.exe /v:${var.vdc_vnet["bastion_address"]}"
+  value = "mstsc.exe /v:${var.vdc_config["bastion_address"]}"
 }
 
 # Export Resource ID's of resources created in embedded ARM templates

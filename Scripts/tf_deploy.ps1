@@ -218,6 +218,10 @@ try {
         $planCmd = "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'"
         Write-Host "`n$planCmd" -ForegroundColor Green 
         Invoke-Expression "$planCmd"
+
+        if ($LASTEXITCODE -ne 0) {
+            exit
+        }
     }
 
     if ($apply) {

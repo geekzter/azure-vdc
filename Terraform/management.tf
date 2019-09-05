@@ -9,7 +9,7 @@ resource "azurerm_network_interface" "bas_if" {
   ip_configuration {
     name                       = "bas_ipconfig"
     subnet_id                  = "${azurerm_subnet.mgmt_subnet.id}"
-    private_ip_address         = "${var.vdc_vnet["bastion_address"]}"
+    private_ip_address         = "${var.vdc_config["bastion_address"]}"
     private_ip_address_allocation = "static"
   }
 
@@ -93,11 +93,11 @@ resource "azurerm_virtual_machine" "bastion" {
   provisioner "local-exec" {
     command                    = <<EOF
       cmdkey.exe /generic:${azurerm_public_ip.iag_pip.ip_address}:${var.rdp_port} /user:${var.admin_username} /pass:${local.password}
-      cmdkey.exe /generic:${var.vdc_vnet["bastion_address"]} /user:${var.admin_username} /pass:${local.password}
+      cmdkey.exe /generic:${var.vdc_config["bastion_address"]} /user:${var.admin_username} /pass:${local.password}
       echo To connect to bastion, type:
       echo type 'mstsc.exe /v:${azurerm_public_ip.bas_pip.ip_address}'
       echo or (if connected via VPN):
-      echo type 'mstsc.exe /v:${var.vdc_vnet["bastion_address"]}'
+      echo type 'mstsc.exe /v:${var.vdc_config["bastion_address"]}'
     EOF
   }
   */

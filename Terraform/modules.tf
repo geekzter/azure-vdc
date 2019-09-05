@@ -30,10 +30,12 @@ module "iis_app" {
   app_devops                   = "${var.app_devops}"
   app_url                      = "${local.app_url}"
   app_web_vms                  = "${var.app_web_vms}"
-  app_db_lb_address            = "${var.vdc_vnet["app_db_lb_address"]}"
+  app_db_lb_address            = "${var.vdc_config["app_db_lb_address"]}"
   app_db_vms                   = "${var.app_db_vms}"
-  app_subnet_id                = "${azurerm_subnet.app_subnet.id}"
-  data_subnet_id               = "${azurerm_subnet.data_subnet.id}"
+  #app_subnet_id                = "${azurerm_subnet.app_subnet.id}"
+  #data_subnet_id               = "${azurerm_subnet.data_subnet.id}"
+  app_subnet_id                = "${module.spoke_vnet.subnet_ids["app"]}"
+  data_subnet_id               = "${module.spoke_vnet.subnet_ids["data"]}"
   release_agent_dependency_id  = ["var.release_agent_dependency_id"]
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
@@ -45,7 +47,7 @@ module "managed_bastion" {
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
-  subnet_range                 = "${var.vdc_vnet["bastion_subnet"]}"
+  subnet_range                 = "${var.vdc_config["bastion_subnet"]}"
   virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
 
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
@@ -61,8 +63,8 @@ module "p2s_vpn" {
   tags                         = "${local.tags}"
 
   virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
-  subnet_range                 = "${var.vdc_vnet["vpn_subnet"]}"
-  vpn_range                    = "${var.vdc_vnet["vpn_range"]}"
+  subnet_range                 = "${var.vdc_config["vpn_subnet"]}"
+  vpn_range                    = "${var.vdc_config["vpn_range"]}"
   vpn_root_cert_name           = "${var.vpn_root_cert_name}"
   vpn_root_cert_file           = "${var.vpn_root_cert_file}"
 
@@ -78,15 +80,17 @@ module "spoke_vnet" {
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
-  address_space                = "10.1.0.0/16"
+  address_space                = "${var.vdc_config["spoke_range"]}"
   dns_servers                  = "${azurerm_virtual_network.hub_vnet.dns_servers}"
+  hub_gateway_dependency       = "${module.p2s_vpn.gateway_id}"
   hub_virtual_network_id       = "${azurerm_virtual_network.hub_vnet.id}"
   hub_virtual_network_name     = "${azurerm_virtual_network.hub_vnet.name}"
   spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-spoke-network"
   subnets                      = {
-    app                        = "10.1.1.0/24"
-    data                       = "10.1.2.0/24"
+    app                        = "${var.vdc_config["app_subnet"]}"
+    data                       = "${var.vdc_config["data_subnet"]}"
   }
+  use_hub_gateway              = "${var.deploy_vpn}"
 
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"

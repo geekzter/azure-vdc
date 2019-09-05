@@ -12,8 +12,8 @@ resource "azurerm_network_security_group" "app_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "3389"
-    source_address_prefix     = "${var.vdc_vnet["mgmt_subnet"]}"
-    destination_address_prefix= "${var.vdc_vnet["app_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["mgmt_subnet"]}"
+    destination_address_prefix= "${var.vdc_config["app_subnet"]}"
   }
 
   security_rule {
@@ -24,8 +24,8 @@ resource "azurerm_network_security_group" "app_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "22"
-    source_address_prefix     = "${var.vdc_vnet["mgmt_subnet"]}"
-    destination_address_prefix= "${var.vdc_vnet["app_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["mgmt_subnet"]}"
+    destination_address_prefix= "${var.vdc_config["app_subnet"]}"
   }
 
   security_rule {
@@ -36,8 +36,8 @@ resource "azurerm_network_security_group" "app_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "*"
-    source_address_prefix     = "${var.vdc_vnet["vpn_range"]}"
-    destination_address_prefix= "${var.vdc_vnet["app_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["vpn_range"]}"
+    destination_address_prefix= "${var.vdc_config["app_subnet"]}"
   }
 
   # Via Azure Firewall
@@ -49,7 +49,7 @@ resource "azurerm_network_security_group" "app_nsg" {
   #   protocol                  = "Tcp"
   #   source_port_range         = "*"
   #   destination_port_range    = "80"
-  #   source_address_prefix     = "${var.vdc_vnet["app_subnet"]}"
+  #   source_address_prefix     = "${var.vdc_config["app_subnet"]}"
   #   destination_address_prefix= "Internet"
   # }
 
@@ -62,7 +62,7 @@ resource "azurerm_network_security_group" "app_nsg" {
   #   protocol                  = "Tcp"
   #   source_port_range         = "*"
   #   destination_port_range    = "443"
-  #   source_address_prefix     = "${var.vdc_vnet["app_subnet"]}"
+  #   source_address_prefix     = "${var.vdc_config["app_subnet"]}"
   #   destination_address_prefix= "Internet"
   # }
 
@@ -74,8 +74,8 @@ resource "azurerm_network_security_group" "app_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "1443"
-    source_address_prefix     = "${var.vdc_vnet["app_subnet"]}"
-    destination_address_prefix= "${var.vdc_vnet["data_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["app_subnet"]}"
+    destination_address_prefix= "${var.vdc_config["data_subnet"]}"
   }
 
   security_rule {
@@ -86,8 +86,8 @@ resource "azurerm_network_security_group" "app_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "1523"
-    source_address_prefix     = "${var.vdc_vnet["app_subnet"]}"
-    destination_address_prefix= "${var.vdc_vnet["data_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["app_subnet"]}"
+    destination_address_prefix= "${var.vdc_config["data_subnet"]}"
   }
 }
 
@@ -104,8 +104,8 @@ resource "azurerm_network_security_group" "data_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "3389"
-    source_address_prefix     = "${var.vdc_vnet["mgmt_subnet"]}"
-    destination_address_prefix= "${var.vdc_vnet["data_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["mgmt_subnet"]}"
+    destination_address_prefix= "${var.vdc_config["data_subnet"]}"
   }
 
   security_rule {
@@ -116,8 +116,8 @@ resource "azurerm_network_security_group" "data_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "22"
-    source_address_prefix     = "${var.vdc_vnet["mgmt_subnet"]}"
-    destination_address_prefix= "${var.vdc_vnet["data_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["mgmt_subnet"]}"
+    destination_address_prefix= "${var.vdc_config["data_subnet"]}"
   }
 
    security_rule {
@@ -128,8 +128,8 @@ resource "azurerm_network_security_group" "data_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "*"
-    source_address_prefix     = "${var.vdc_vnet["vpn_range"]}"
-    destination_address_prefix= "${var.vdc_vnet["data_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["vpn_range"]}"
+    destination_address_prefix= "${var.vdc_config["data_subnet"]}"
   }
 
   security_rule {
@@ -140,8 +140,8 @@ resource "azurerm_network_security_group" "data_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "1433"
-    source_address_prefix     = "${var.vdc_vnet["app_subnet"]}"
-    destination_address_prefix= "${var.vdc_vnet["data_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["app_subnet"]}"
+    destination_address_prefix= "${var.vdc_config["data_subnet"]}"
   }
 
   security_rule {
@@ -152,8 +152,8 @@ resource "azurerm_network_security_group" "data_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "1523"
-    source_address_prefix     = "${var.vdc_vnet["app_subnet"]}"
-    destination_address_prefix= "${var.vdc_vnet["data_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["app_subnet"]}"
+    destination_address_prefix= "${var.vdc_config["data_subnet"]}"
   }
 }
 
@@ -170,8 +170,8 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "*"
-    source_address_prefix     = "${var.vdc_vnet["vpn_range"]}"
-    destination_address_prefix= "${var.vdc_vnet["mgmt_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["vpn_range"]}"
+    destination_address_prefix= "${var.vdc_config["mgmt_subnet"]}"
   }
   
   security_rule {
@@ -182,7 +182,7 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "3389"
-    source_address_prefix     = "${var.vdc_vnet["mgmt_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["mgmt_subnet"]}"
     destination_address_prefix= "VirtualNetwork"
   }
 
@@ -194,7 +194,7 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "22"
-    source_address_prefix     = "${var.vdc_vnet["mgmt_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["mgmt_subnet"]}"
     destination_address_prefix= "VirtualNetwork"
   }
 }
@@ -242,7 +242,7 @@ resource "azurerm_route_table" "mgmt_route_table" {
 resource "azurerm_virtual_network" "hub_vnet" {
   name                        = "${azurerm_resource_group.vdc_rg.name}-network"
   location                    = "${var.location}"
-  address_space               = ["${var.vdc_vnet["vdc_range"]}"]
+  address_space               = ["${var.vdc_config["hub_range"]}"]
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
 }
 
@@ -250,7 +250,7 @@ resource "azurerm_subnet" "iag_subnet" {
   name                        = "AzureFirewallSubnet"
   virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
-  address_prefix              = "${var.vdc_vnet["iag_subnet"]}"
+  address_prefix              = "${var.vdc_config["iag_subnet"]}"
   service_endpoints           = [
                                 "Microsoft.EventHub", 
                                 "Microsoft.Storage"
@@ -261,14 +261,14 @@ resource "azurerm_subnet" "waf_subnet" {
   name                        = "WAFSubnet1"
   virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
-  address_prefix              = "${var.vdc_vnet["waf_subnet"]}"
+  address_prefix              = "${var.vdc_config["waf_subnet"]}"
 }
 
 resource "azurerm_subnet" "app_subnet" {
   name                        = "Application"
   virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
-  address_prefix              = "${var.vdc_vnet["app_subnet"]}"
+  address_prefix              = "${var.vdc_config["app_subnet"]}"
 }
 
 resource "azurerm_subnet_route_table_association" "app_subnet_routes" {
@@ -285,7 +285,7 @@ resource "azurerm_subnet" "data_subnet" {
   name                        = "Data"
   virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
-  address_prefix              = "${var.vdc_vnet["data_subnet"]}"
+  address_prefix              = "${var.vdc_config["data_subnet"]}"
 }
 
 resource "azurerm_subnet_route_table_association" "data_subnet_routes" {
@@ -302,7 +302,7 @@ resource "azurerm_subnet" "mgmt_subnet" {
   name                         = "Management"
   virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-  address_prefix               = "${var.vdc_vnet["mgmt_subnet"]}"
+  address_prefix               = "${var.vdc_config["mgmt_subnet"]}"
 }
 
 resource "azurerm_subnet_route_table_association" "mgmt_subnet_routes" {
