@@ -47,8 +47,8 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   availability_set_id          = "${azurerm_availability_set.app_web_avset.id}"
   vm_size                      = "${var.app_web_vm_size}"
   network_interface_ids        = ["${element(azurerm_network_interface.app_web_if.*.id, count.index)}"]
-  # Make zone redundant (# VM's > 2, =< 3)
-  #zones                        = ["${count.index % 3}"]
+  # Make zone redundant
+# zones                        = ["${count.index % 3}"]
   count                        = 2
 
   storage_image_reference {

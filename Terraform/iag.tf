@@ -267,11 +267,7 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     name                       = "Allow all Outbound (DEBUG)"
 
     source_addresses           = [
-      "${var.vdc_config["app_subnet"]}",
-      "${var.vdc_config["data_subnet"]}",
-      "${var.vdc_config["iag_subnet"]}",
-      "${var.vdc_config["mgmt_subnet"]}",
-      "${var.vdc_config["vpn_range"]}"
+      "${var.vdc_config["hub_range"]}"
     ]
 
     destination_ports          = [

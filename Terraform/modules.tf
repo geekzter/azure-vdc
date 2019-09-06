@@ -41,13 +41,13 @@ module "iis_app" {
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 }
 
-module "managed_bastion" {
+module "managed_bastion_hub" {
   source                       = "./modules/managed-bastion"
   resource_group               = "${azurerm_resource_group.vdc_rg.name}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
-  subnet_range                 = "${var.vdc_config["bastion_subnet"]}"
+  subnet_range                 = "${var.vdc_config["hub_bastion_subnet"]}"
   virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
 
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
@@ -81,7 +81,11 @@ module "spoke_vnet" {
   tags                         = "${local.tags}"
 
   address_space                = "${var.vdc_config["spoke_range"]}"
+  bastion_subnet_range         = "${var.vdc_config["spoke_bastion_subnet"]}"
+  deploy_managed_bastion       = "${var.deploy_managed_bastion}"
   dns_servers                  = "${azurerm_virtual_network.hub_vnet.dns_servers}"
+  gateway_ip_address           = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}" # Delays provisioning to start after Azure FW is provisioned
+# gateway_ip_address           = "${cidrhost(var.vdc_config["iag_subnet"], 4)}" # Azure FW uses the 4th available IP address in the range
   hub_gateway_dependency       = "${module.p2s_vpn.gateway_id}"
   hub_virtual_network_id       = "${azurerm_virtual_network.hub_vnet.id}"
   hub_virtual_network_name     = "${azurerm_virtual_network.hub_vnet.name}"

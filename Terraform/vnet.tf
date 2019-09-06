@@ -268,7 +268,7 @@ resource "azurerm_subnet" "app_subnet" {
   name                        = "Application"
   virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
-  address_prefix              = "${var.vdc_config["app_subnet"]}"
+  address_prefix              = "${var.vdc_config["hub_app_subnet"]}"
 }
 
 resource "azurerm_subnet_route_table_association" "app_subnet_routes" {
@@ -285,7 +285,7 @@ resource "azurerm_subnet" "data_subnet" {
   name                        = "Data"
   virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
-  address_prefix              = "${var.vdc_config["data_subnet"]}"
+  address_prefix              = "${var.vdc_config["hub_data_subnet"]}"
 }
 
 resource "azurerm_subnet_route_table_association" "data_subnet_routes" {

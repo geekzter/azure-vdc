@@ -5,9 +5,14 @@ variable tags {
 }
 
 variable address_space {}
+variable bastion_subnet_range {}
+variable deploy_managed_bastion {
+  type                         = bool
+}
 variable dns_servers {
   default                      = []
 }
+variable gateway_ip_address {}
 variable hub_gateway_dependency {}
 variable hub_virtual_network_id {}
 variable hub_virtual_network_name {}

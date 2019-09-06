@@ -53,18 +53,21 @@ variable vdc_config {
   default = {
     hub_range                  = "10.0.0.0/16"
     spoke_range                = "10.1.0.0/16"
+    vdc_range                  = "10.0.0.0/15"
+    hub_app_subnet             = "10.0.1.0/24"
+    hub_bastion_subnet         = "10.0.157.192/27"
+    hub_data_subnet            = "10.0.2.0/24"
     app_subnet                 = "10.1.1.0/24"
+    spoke_bastion_subnet       = "10.1.157.192/27"
     data_subnet                = "10.1.2.0/24"
     app_web_lb_address         = "10.1.156.4"
     app_db_lb_address          = "10.1.156.141"
     iag_subnet                 = "10.0.157.0/26"
     waf_subnet                 = "10.0.157.64/26"
     mgmt_subnet                = "10.0.157.128/26"
-    bastion_subnet             = "10.0.157.192/27"
     vpn_subnet                 = "10.0.157.224/27"
     vpn_range                  = "10.255.0.0/24"
 
-    iag_address                = "10.0.157.4"
     bastion_address            = "10.0.157.132"
   }
 }
@@ -76,7 +79,6 @@ variable "app_web_vms" {
 variable "app_db_vms" {
   default                      = ["10.1.2.142", "10.1.2.143"]
 }
-
 
 variable "vdc_oms_solutions" {
 # List of solutions: https://docs.microsoft.com/en-us/rest/api/loganalytics/workspaces/listintelligencepacks
