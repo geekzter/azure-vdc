@@ -106,6 +106,7 @@ resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
 }
 
 # TODO: Not yet available for Azure Functions
+/* 
 resource "azurerm_monitor_diagnostic_setting" "vdc_function_logs" {
   name                         = "Function_Logs"
   target_resource_id           = "${azurerm_function_app.vdc_functions.0.id}"
@@ -130,4 +131,4 @@ resource "azurerm_monitor_diagnostic_setting" "vdc_function_logs" {
   }
 
   count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
-} 
+}  */

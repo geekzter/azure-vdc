@@ -67,7 +67,7 @@ variable vdc_config {
 
     vpn_range                  = "192.168.0.0/24"
 
-    hub_bastion_address        = "10.0.255.132"
+    hub_bastion_address        = "10.0.2.132"
   }
 }
 

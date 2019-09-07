@@ -36,8 +36,10 @@ try {
         # Start bastion
         $bastionName = $(terraform output "bastion_name" 2>$null)
         $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
-        Write-Host "`nStarting bastion" -ForegroundColor Green 
-        Get-AzVM -Name $bastionName -ResourceGroupName $vdcResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM -AsJob
+        if ($bastionName) {
+            Write-Host "`nStarting bastion" -ForegroundColor Green 
+            Get-AzVM -Name $bastionName -ResourceGroupName $vdcResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM -AsJob
+        }
     }
 
     if ($All -or $ForceEntry) {
