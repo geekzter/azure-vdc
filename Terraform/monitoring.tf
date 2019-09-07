@@ -121,54 +121,6 @@ resource "azurerm_monitor_diagnostic_setting" "waf_logs" {
   }
 }
 
-resource "azurerm_monitor_diagnostic_setting" "app_nsg_logs" {
-  name                         = "${azurerm_network_security_group.app_nsg.name}-logs"
-  target_resource_id           = "${azurerm_network_security_group.app_nsg.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
-
-  log {
-    category                   = "NetworkSecurityGroupEvent"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "NetworkSecurityGroupRuleCounter"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
-resource "azurerm_monitor_diagnostic_setting" "data_nsg_logs" {
-  name                         = "${azurerm_network_security_group.data_nsg.name}-logs"
-  target_resource_id           = "${azurerm_network_security_group.data_nsg.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
-
-  log {
-    category                   = "NetworkSecurityGroupEvent"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "NetworkSecurityGroupRuleCounter"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
 resource "azurerm_monitor_diagnostic_setting" "mgmt_nsg_logs" {
   name                         = "${azurerm_network_security_group.mgmt_nsg.name}-logs"
   target_resource_id           = "${azurerm_network_security_group.mgmt_nsg.id}"

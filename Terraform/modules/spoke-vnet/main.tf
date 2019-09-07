@@ -8,6 +8,22 @@ resource "azurerm_virtual_network" "spoke_vnet" {
   tags                         = "${var.tags}"
 }
 
+resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-logs"
+  target_resource_id           = "${azurerm_virtual_network.spoke_vnet.id}"
+  storage_account_id           = "${var.diagnostics_storage_id}"
+  log_analytics_workspace_id   = "${var.diagnostics_workspace_id}"
+
+  log {
+    category                   = "VMProtectionAlerts"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+}
+
 resource "azurerm_virtual_network_peering" "spoke_to_hub" {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-spoke2hub"
   resource_group_name          = "${var.resource_group}"
@@ -192,28 +208,37 @@ resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
   count                        = "${length(var.subnets)}"
 }
 
-resource "azurerm_subnet" "subnet" {
-  name                         = "${element(keys(var.subnets),count.index)}"
-  virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
-  resource_group_name          = "${var.resource_group}"
-  address_prefix               = "${element(values(var.subnets),count.index)}"
-  count                        = "${length(var.subnets)}"
-}
-
-resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
-  name                         = "${azurerm_virtual_network.spoke_vnet.name}-logs"
-  target_resource_id           = "${azurerm_virtual_network.spoke_vnet.id}"
+resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
+  name                         = "${azurerm_network_security_group.spoke_nsg.name}-logs"
+  target_resource_id           = "${azurerm_network_security_group.spoke_nsg.id}"
   storage_account_id           = "${var.diagnostics_storage_id}"
   log_analytics_workspace_id   = "${var.diagnostics_workspace_id}"
 
   log {
-    category                   = "VMProtectionAlerts"
+    category                   = "NetworkSecurityGroupEvent"
     enabled                    = true
 
     retention_policy {
       enabled                  = false
     }
   }
+
+  log {
+    category                   = "NetworkSecurityGroupRuleCounter"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+}
+
+resource "azurerm_subnet" "subnet" {
+  name                         = "${element(keys(var.subnets),count.index)}"
+  virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
+  resource_group_name          = "${var.resource_group}"
+  address_prefix               = "${element(values(var.subnets),count.index)}"
+  count                        = "${length(var.subnets)}"
 }
 
 # This is the tempale for Managed Bastion, IaaS bastion is defined in management.tf

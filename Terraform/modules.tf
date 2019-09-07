@@ -34,8 +34,8 @@ module "iis_app" {
   app_db_vms                   = "${var.app_db_vms}"
   #app_subnet_id                = "${azurerm_subnet.app_subnet.id}"
   #data_subnet_id               = "${azurerm_subnet.data_subnet.id}"
-  app_subnet_id                = "${module.spoke_vnet.subnet_ids["app"]}"
-  data_subnet_id               = "${module.spoke_vnet.subnet_ids["data"]}"
+  app_subnet_id                = "${module.iaas_spoke_vnet.subnet_ids["app"]}"
+  data_subnet_id               = "${module.iaas_spoke_vnet.subnet_ids["data"]}"
   release_agent_dependency_id  = ["var.release_agent_dependency_id"]
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
@@ -74,7 +74,7 @@ module "p2s_vpn" {
   deploy_vpn                   = "${var.deploy_vpn}"
 }
 
-module "spoke_vnet" {
+module "iaas_spoke_vnet" {
   source                       = "./modules/spoke-vnet"
   resource_group               = "${azurerm_resource_group.vdc_rg.name}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
