@@ -54,29 +54,16 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
   action                       = "Allow"
 
   rule {
-    name                       = "Allow ${azurerm_storage_account.app_storage.name} Storage"
+    name                       = "Allow ${module.paas_app.storage_account_name} Storage"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
-      "${var.vdc_vnet["data_subnet"]}",
-      "${var.vdc_vnet["mgmt_subnet"]}",
-      "${var.vdc_vnet["vpn_range"]}"
+      "${var.vdc_config["iaas_spoke_app_subnet"]}",
+      "${var.vdc_config["iaas_spoke_data_subnet"]}",
+      "${var.vdc_config["hub_mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
     ]
 
-    target_fqdns               = [
-      "${azurerm_storage_account.app_storage.primary_blob_host}",
-    # "${azurerm_storage_account.app_storage.secondary_blob_host}",
-      "${azurerm_storage_account.app_storage.primary_queue_host}",
-    # "${azurerm_storage_account.app_storage.secondary_queue_host}",
-      "${azurerm_storage_account.app_storage.primary_table_host}",
-    # "${azurerm_storage_account.app_storage.secondary_table_host}",
-      "${azurerm_storage_account.app_storage.primary_file_host}",
-    # "${azurerm_storage_account.app_storage.secondary_file_host}",
-      "${azurerm_storage_account.app_storage.primary_dfs_host}",
-    # "${azurerm_storage_account.app_storage.secondary_dfs_host}",
-      "${azurerm_storage_account.app_storage.primary_web_host}",
-    # "${azurerm_storage_account.app_storage.secondary_web_host}",
-    ]
+    target_fqdns               = "${module.paas_app.storage_fqdns}"
 
     protocol {
         port                   = "443"
@@ -85,18 +72,18 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
   }
 
   rule {
-    name                       = "Allow ${azurerm_eventhub_namespace.app_eventhub.name} Event Hub HTTPS"
+    name                       = "Allow ${module.paas_app.eventhub_name} Event Hub HTTPS"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
-      "${var.vdc_vnet["data_subnet"]}",
-      "${var.vdc_vnet["mgmt_subnet"]}",
-      "${var.vdc_vnet["vpn_range"]}"
+      "${var.vdc_config["iaas_spoke_app_subnet"]}",
+      "${var.vdc_config["iaas_spoke_data_subnet"]}",
+      "${var.vdc_config["hub_mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
     ]
 
     target_fqdns               = [
-    # "${lower(azurerm_eventhub_namespace.app_eventhub.name)}.servicebus.windows.net", # BUG: Not allowed even though it should match exactly
-      "*${lower(azurerm_eventhub_namespace.app_eventhub.name)}.servicebus.windows.net" # HACK: Wildcard does the trick
+    # "${module.paas_app.eventhub_namespace_fqdn}", # BUG:  Not allowed even though it should match exactly
+      "*${module.paas_app.eventhub_namespace_fqdn}" # HACK: Wildcard does the trick
     ]
 
     protocol {
@@ -110,10 +97,10 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     description                = "The VSTS/Azure DevOps agent installed on application VM's requires outbound access. This agent is used by Azure Pipelines for application deployment"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
-      "${var.vdc_vnet["data_subnet"]}",
-      "${var.vdc_vnet["mgmt_subnet"]}",
-      "${var.vdc_vnet["vpn_range"]}"
+      "${var.vdc_config["iaas_spoke_app_subnet"]}",
+      "${var.vdc_config["iaas_spoke_data_subnet"]}",
+      "${var.vdc_config["hub_mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
     ]
 
     target_fqdns               = [
@@ -137,10 +124,10 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     description                = "The packaging (e.g. Chocolatey, NuGet) tools"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
-      "${var.vdc_vnet["data_subnet"]}",
-      "${var.vdc_vnet["mgmt_subnet"]}",
-      "${var.vdc_vnet["vpn_range"]}"
+      "${var.vdc_config["iaas_spoke_app_subnet"]}",
+      "${var.vdc_config["iaas_spoke_data_subnet"]}",
+      "${var.vdc_config["hub_mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
     ]
 
     target_fqdns               = [
@@ -187,7 +174,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
     ]
 
     translated_port            = "80"
-    translated_address         = "${var.vdc_vnet["app_web_lb_address"]}"
+    translated_address         = "${var.vdc_config["iaas_spoke_app_web_lb_address"]}"
     protocols                  = [
       "TCP",
     ]
@@ -207,7 +194,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
     ]
 
     translated_port            = "3389"
-    translated_address         = "${var.vdc_vnet["bastion_address"]}"
+    translated_address         = "${var.vdc_config["hub_bastion_address"]}"
     protocols                  = [
       "TCP"
     ]
@@ -225,7 +212,7 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     name                       = "AllowDNStoGoogleFromAppSubnet"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
+      "${var.vdc_config["iaas_spoke_app_subnet"]}",
     ]
 
     destination_ports          = [
@@ -246,7 +233,7 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     name = "AllowAllOutboundFromAppSubnet"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
+      "${var.vdc_config["iaas_spoke_app_subnet"]}",
     ]
 
     destination_ports          = [
@@ -267,11 +254,7 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     name                       = "Allow all Outbound (DEBUG)"
 
     source_addresses           = [
-      "${var.vdc_vnet["app_subnet"]}",
-      "${var.vdc_vnet["data_subnet"]}",
-      "${var.vdc_vnet["iag_subnet"]}",
-      "${var.vdc_vnet["mgmt_subnet"]}",
-      "${var.vdc_vnet["vpn_range"]}"
+      "${var.vdc_config["vdc_range"]}"
     ]
 
     destination_ports          = [
@@ -285,4 +268,71 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
       "Any"
     ]
   } */
+}
+
+resource "azurerm_monitor_diagnostic_setting" "iag_pip_logs" {
+  name                         = "${azurerm_public_ip.iag_pip.name}-logs"
+  target_resource_id           = "${azurerm_public_ip.iag_pip.id}"
+  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
+  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+
+  log {
+    category                   = "DDoSProtectionNotifications"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "DDoSMitigationFlowLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "DDoSMitigationReports"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "iag_logs" {
+  name                         = "${azurerm_firewall.iag.name}-logs"
+  target_resource_id           = "${azurerm_firewall.iag.id}"
+  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
+  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+
+  log {
+    category                   = "AzureFirewallApplicationRule"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "AzureFirewallNetworkRule"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
 }

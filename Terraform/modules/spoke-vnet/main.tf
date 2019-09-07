@@ -1,0 +1,281 @@
+resource "azurerm_virtual_network" "spoke_vnet" {
+  name                         = "${var.spoke_virtual_network_name}"
+  resource_group_name          = "${var.resource_group}"
+  location                     = "${var.location}"
+  address_space                = ["${var.address_space}"]
+  dns_servers                  = "${var.dns_servers}"
+
+  tags                         = "${var.tags}"
+}
+
+resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-logs"
+  target_resource_id           = "${azurerm_virtual_network.spoke_vnet.id}"
+  storage_account_id           = "${var.diagnostics_storage_id}"
+  log_analytics_workspace_id   = "${var.diagnostics_workspace_id}"
+
+  log {
+    category                   = "VMProtectionAlerts"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+}
+
+resource "azurerm_virtual_network_peering" "spoke_to_hub" {
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-spoke2hub"
+  resource_group_name          = "${var.resource_group}"
+  virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
+  remote_virtual_network_id    = "${var.hub_virtual_network_id}"
+
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = false
+  allow_virtual_network_access = true
+  use_remote_gateways          = "${var.use_hub_gateway}"
+
+  depends_on                   = ["var.hub_gateway_dependency","azurerm_virtual_network_peering.hub_to_spoke"]
+}
+
+resource "azurerm_virtual_network_peering" "hub_to_spoke" {
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-hub2spoke"
+  resource_group_name          = "${var.resource_group}"
+  virtual_network_name         = "${var.hub_virtual_network_name}"
+  remote_virtual_network_id    = "${azurerm_virtual_network.spoke_vnet.id}"
+
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = "${var.use_hub_gateway}"
+  allow_virtual_network_access = true
+  use_remote_gateways          = false
+
+  depends_on                   = ["var.hub_gateway_dependency"]
+}
+
+resource "azurerm_route_table" "spoke_route_table" {
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-routes"
+  resource_group_name          = "${var.resource_group}"
+  location                     = "${var.location}"
+
+  route {
+    name                       = "VnetLocal"
+    address_prefix             = "${var.address_space}"
+    next_hop_type              = "VnetLocal"
+  }
+
+  route {
+    name                       = "AllViaHub"
+    address_prefix             = "0.0.0.0/0"
+    next_hop_type              = "VirtualAppliance"
+    next_hop_in_ip_address     = "${var.gateway_ip_address}"
+  }
+}
+resource "azurerm_subnet_route_table_association" "subnet_routes" {
+  subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
+  route_table_id               = "${azurerm_route_table.spoke_route_table.id}"
+  count                        = "${length(var.subnets)}"
+}
+
+resource "azurerm_network_security_group" "spoke_nsg" {
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-nsg"
+  resource_group_name          = "${var.resource_group}"
+  location                     = "${var.location}"
+
+  security_rule {
+    name                       = "AllowAllfromVDC"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "AllowAllfromRFC1918A"
+    priority                   = 103
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "10.0.0.0/8"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "AllowAllfromRFC1918B"
+    priority                   = 104
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "192.168.0.0/16"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "AllowAllfromRFC1918C"
+    priority                   = 105
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "172.16.0.0/12"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  # security_rule {
+  #   name                       = "DenyAllfromInternet"
+  #   priority                   = 190
+  #   direction                  = "Inbound"
+  #   access                     = "Deny"
+  #   protocol                   = "*"
+  #   source_port_range          = "*"
+  #   destination_port_range     = "*"
+  #   source_address_prefix      = "Internet"
+  #   destination_address_prefix = "VirtualNetwork"
+  # }
+
+  security_rule {
+    name                       = "AllowAlltoVDC"
+    priority                   = 201
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "AllowAlltoRFC1918A"
+    priority                   = 203
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "10.0.0.0/8"
+  }
+
+  security_rule {
+    name                       = "AllowAlltoRFC1918B"
+    priority                   = 204
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "192.168.0.0/16"
+  }
+
+  security_rule {
+    name                       = "AllowAlltoRFC1918C"
+    priority                   = 205
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "172.16.0.0/12"
+  }
+
+  security_rule {
+    name                       = "AllowAlltoInternet"
+    priority                   = 290
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "0-65535"
+    destination_port_range     = "0-65535"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "Internet"
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
+  subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
+  network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}"
+  count                        = "${length(var.subnets)}"
+}
+
+resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
+  name                         = "${azurerm_network_security_group.spoke_nsg.name}-logs"
+  target_resource_id           = "${azurerm_network_security_group.spoke_nsg.id}"
+  storage_account_id           = "${var.diagnostics_storage_id}"
+  log_analytics_workspace_id   = "${var.diagnostics_workspace_id}"
+
+  log {
+    category                   = "NetworkSecurityGroupEvent"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "NetworkSecurityGroupRuleCounter"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+}
+
+resource "azurerm_subnet" "subnet" {
+  name                         = "${element(keys(var.subnets),count.index)}"
+  virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
+  resource_group_name          = "${var.resource_group}"
+  address_prefix               = "${element(values(var.subnets),count.index)}"
+  count                        = "${length(var.subnets)}"
+}
+
+# This is the tempale for Managed Bastion, IaaS bastion is defined in management.tf
+resource "azurerm_subnet" "managed_bastion_subnet" {
+  name                         = "AzureBastionSubnet"
+  virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
+  resource_group_name          = "${var.resource_group}"
+  address_prefix               = "${var.bastion_subnet_range}"
+}
+
+resource "azurerm_public_ip" "managed_bastion_pip" {
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-managed-bastion-pip"
+  location                     = "${var.location}"
+  resource_group_name          = "${var.resource_group}"
+  allocation_method            = "Static"
+  sku                          = "Standard"
+  # Zone redundant
+  #zones                        = ["1", "2", "3"]
+}
+
+# Configure Managed Bastion with ARM template as Terraform doesn't (yet) support this (preview) service
+# https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
+resource "azurerm_template_deployment" "managed_bastion" {
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-managed-bastion-template"
+  resource_group_name          = "${var.resource_group}"
+  deployment_mode              = "Incremental"
+  template_body                = "${file("${path.root}/modules/managed-bastion/bastion.json")}"
+
+  parameters                   = {
+    location                   = "${var.location}"
+    resourceGroup              = "${var.resource_group}"
+    bastionHostName            = "${var.spoke_virtual_network_name}-managed-bastion"
+    subnetId                   = "${azurerm_subnet.managed_bastion_subnet.id}"
+    publicIpAddressName        = "${azurerm_public_ip.managed_bastion_pip.name}"
+  }
+
+  count                        = "${var.deploy_managed_bastion ? 1 : 0}"
+
+  depends_on                   = ["azurerm_subnet.managed_bastion_subnet","azurerm_public_ip.managed_bastion_pip"] # Explicit dependency for ARM templates
+}

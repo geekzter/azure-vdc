@@ -173,3 +173,79 @@ resource "azurerm_application_gateway" "waf" {
 
   tags                         = "${local.tags}"
 }
+
+resource "azurerm_monitor_diagnostic_setting" "waf_pip_logs" {
+  name                         = "${azurerm_public_ip.waf_pip.name}-logs"
+  target_resource_id           = "${azurerm_public_ip.waf_pip.id}"
+  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
+  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+
+  log {
+    category                   = "DDoSProtectionNotifications"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "DDoSMitigationFlowLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "DDoSMitigationReports"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "waf_logs" {
+  name                         = "${azurerm_application_gateway.waf.name}-logs"
+  target_resource_id           = "${azurerm_application_gateway.waf.id}"
+  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
+  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+
+  log {
+    category                   = "ApplicationGatewayAccessLog"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "ApplicationGatewayPerformanceLog"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "ApplicationGatewayFirewallLog"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }  
+  
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+}

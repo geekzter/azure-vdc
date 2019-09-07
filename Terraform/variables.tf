@@ -47,26 +47,36 @@ variable "workspace_location" {
   default                      = "westeurope"
 }
 
-########## VNet #########
-variable "vdc_vnet" {
+variable vdc_config {
   type                         = "map"
 
   default = {
-    vdc_range                 = "10.64.156.0/23"
-    app_subnet                 = "10.64.156.0/25"
-    data_subnet                = "10.64.156.128/25"
-    iag_subnet                 = "10.64.157.0/26"
-    waf_subnet                 = "10.64.157.64/26"
-    mgmt_subnet                = "10.64.157.128/26"
-    bastion_subnet             = "10.64.157.192/27"
-    vpn_subnet                 = "10.64.157.224/27"
-    vpn_range                  = "10.2.0.0/24"
+    vdc_range                  = "10.0.0.0/14"
+    hub_range                  = "10.0.0.0/16"
+    hub_bastion_subnet         = "10.0.255.192/27"
+    hub_iag_subnet             = "10.0.0.0/26"
+    hub_waf_subnet             = "10.0.1.64/26"
+    hub_mgmt_subnet            = "10.0.2.128/26"
+    hub_vpn_subnet             = "10.0.3.224/27"
+    iaas_spoke_range           = "10.1.0.0/16"
+    iaas_spoke_bastion_subnet  = "10.1.255.192/27"
+    iaas_spoke_app_subnet      = "10.1.1.0/24"
+    iaas_spoke_data_subnet     = "10.1.2.0/24"
+    iaas_spoke_app_web_lb_address = "10.1.1.4"
+    iaas_spoke_app_db_lb_address = "10.1.2.4"
 
-    app_web_lb_address         = "10.64.156.4"
-    app_db_lb_address          = "10.64.156.141"
-    iag_address                = "10.64.157.4"
-    bastion_address            = "10.64.157.132"
+    vpn_range                  = "192.168.0.0/24"
+
+    hub_bastion_address        = "10.0.2.132"
   }
+}
+
+variable "app_web_vms" {
+  default                      = ["10.1.1.5", "10.1.1.6"]
+}
+
+variable "app_db_vms" {
+  default                      = ["10.1.2.142", "10.1.2.143"]
 }
 
 variable "vdc_oms_solutions" {
@@ -111,14 +121,6 @@ variable "vdc_oms_solutions" {
   # "WireData",
   # "WireData2",
   ]
-}
-
-variable "app_web_vms" {
-  default                      = ["10.64.156.5", "10.64.156.6"]
-}
-
-variable "app_db_vms" {
-  default                      = ["10.64.156.142", "10.64.156.143"]
 }
 
 variable "admin_ip_ranges" {
