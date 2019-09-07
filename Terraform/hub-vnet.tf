@@ -13,7 +13,7 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
     source_port_range         = "*"
     destination_port_range    = "*"
     source_address_prefix     = "${var.vdc_config["vpn_range"]}"
-    destination_address_prefix= "${var.vdc_config["mgmt_subnet"]}"
+    destination_address_prefix= "${var.vdc_config["hub_mgmt_subnet"]}"
   }
   
   security_rule {
@@ -24,7 +24,7 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "3389"
-    source_address_prefix     = "${var.vdc_config["mgmt_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["hub_mgmt_subnet"]}"
     destination_address_prefix= "VirtualNetwork"
   }
 
@@ -36,7 +36,7 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
     protocol                  = "Tcp"
     source_port_range         = "*"
     destination_port_range    = "22"
-    source_address_prefix     = "${var.vdc_config["mgmt_subnet"]}"
+    source_address_prefix     = "${var.vdc_config["hub_mgmt_subnet"]}"
     destination_address_prefix= "VirtualNetwork"
   }
 }
@@ -66,7 +66,7 @@ resource "azurerm_subnet" "iag_subnet" {
   name                        = "AzureFirewallSubnet"
   virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
-  address_prefix              = "${var.vdc_config["iag_subnet"]}"
+  address_prefix              = "${var.vdc_config["hub_iag_subnet"]}"
   service_endpoints           = [
                                 "Microsoft.EventHub", 
                                 "Microsoft.Storage"
@@ -77,14 +77,14 @@ resource "azurerm_subnet" "waf_subnet" {
   name                        = "WAFSubnet1"
   virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
-  address_prefix              = "${var.vdc_config["waf_subnet"]}"
+  address_prefix              = "${var.vdc_config["hub_waf_subnet"]}"
 }
 
 resource "azurerm_subnet" "mgmt_subnet" {
   name                         = "Management"
   virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-  address_prefix               = "${var.vdc_config["mgmt_subnet"]}"
+  address_prefix               = "${var.vdc_config["hub_mgmt_subnet"]}"
 }
 
 resource "azurerm_subnet_route_table_association" "mgmt_subnet_routes" {

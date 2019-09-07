@@ -14,7 +14,7 @@ output "vdc_resource_group" {
 }
 
 output "bastion_address" {
-  value       = "${var.vdc_config["bastion_address"]}"
+  value       = "${var.vdc_config["hub_bastion_address"]}"
 }
 
 output "iag_private_ip" {
@@ -38,7 +38,7 @@ output "iag_nat_rules" {
 
 ######### Example App #########
 output "app_web_lb_address" {
-  value       = "${var.vdc_config["app_web_lb_address"]}"
+  value       = "${var.vdc_config["iaas_spoke_app_web_lb_address"]}"
 }
 
 output "app_url" {
@@ -52,28 +52,28 @@ output "app_storage_fqdns" {
 }
 output "app_eventhub_namespace_key" {
   sensitive   = true
-  value       = "${azurerm_eventhub_namespace.app_eventhub.default_primary_key}"
+  value       = "${module.paas_app.eventhub_namespace_key}"
 }
 
 output "app_eventhub_namespace_connection_string" {
   sensitive   = true
-  value       = "${azurerm_eventhub_namespace.app_eventhub.default_primary_connection_string}"
+  value       = "${module.paas_app.eventhub_namespace_connection_string}"
 }
 
 output "app_eventhub_namespace_fqdn" {
-  value       = "${lower(azurerm_eventhub_namespace.app_eventhub.name)}.servicebus.windows.net"
+  value       = "${module.paas_app.eventhub_namespace_fqdn}"
 }
 
 output "app_eventhub_name" {
-  value       = "${azurerm_eventhub.app_eventhub.name}"
+  value       = "${module.paas_app.eventhub_name}"
 }
 
 output "app_storage_account_name" {
-  value       = "${azurerm_storage_account.app_storage.name}"
+  value       = "${module.paas_app.storage_account_name}"
 }
 
 output "app_resource_group" {
-  value       = "${module.iis_app.app_resource_group}"
+  value       = "${local.app_resource_group}"
 }
 
 output "bastion_name" {
@@ -89,7 +89,7 @@ output "bastion_rdp_port" {
 }
 
 output "bastion_rdp_vpn" {
-  value = "mstsc.exe /v:${var.vdc_config["bastion_address"]}"
+  value = "mstsc.exe /v:${var.vdc_config["hub_bastion_address"]}"
 }
 
 # Export Resource ID's of resources created in embedded ARM templates

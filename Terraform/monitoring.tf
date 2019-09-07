@@ -46,81 +46,6 @@ resource "azurerm_log_analytics_solution" "oms_solutions" {
 
 } 
 
-resource "azurerm_monitor_diagnostic_setting" "iag_logs" {
-  name                         = "${azurerm_firewall.iag.name}-logs"
-  target_resource_id           = "${azurerm_firewall.iag.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
-
-  log {
-    category                   = "AzureFirewallApplicationRule"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "AzureFirewallNetworkRule"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-  
-  metric {
-    category                   = "AllMetrics"
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
-
-resource "azurerm_monitor_diagnostic_setting" "waf_logs" {
-  name                         = "${azurerm_application_gateway.waf.name}-logs"
-  target_resource_id           = "${azurerm_application_gateway.waf.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
-
-  log {
-    category                   = "ApplicationGatewayAccessLog"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "ApplicationGatewayPerformanceLog"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "ApplicationGatewayFirewallLog"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }  
-  
-  metric {
-    category                   = "AllMetrics"
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
-
 resource "azurerm_monitor_diagnostic_setting" "mgmt_nsg_logs" {
   name                         = "${azurerm_network_security_group.mgmt_nsg.name}-logs"
   target_resource_id           = "${azurerm_network_security_group.mgmt_nsg.id}"
@@ -153,73 +78,6 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
 
   log {
     category                   = "VMProtectionAlerts"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
-
-resource "azurerm_monitor_diagnostic_setting" "iag_pip_logs" {
-  name                         = "${azurerm_public_ip.iag_pip.name}-logs"
-  target_resource_id           = "${azurerm_public_ip.iag_pip.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
-
-  log {
-    category                   = "DDoSProtectionNotifications"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "DDoSMitigationFlowLogs"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "DDoSMitigationReports"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
-resource "azurerm_monitor_diagnostic_setting" "waf_pip_logs" {
-  name                         = "${azurerm_public_ip.waf_pip.name}-logs"
-  target_resource_id           = "${azurerm_public_ip.waf_pip.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
-
-  log {
-    category                   = "DDoSProtectionNotifications"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "DDoSMitigationFlowLogs"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "DDoSMitigationReports"
     enabled                    = true
 
     retention_policy {
@@ -273,64 +131,8 @@ resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
   }
 }
 
-resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
-  name                         = "EventHub_Logs"
-  target_resource_id           = "${azurerm_eventhub_namespace.app_eventhub.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 
-  log {
-    category                   = "ArchiveLogs"
-    enabled                    = true
 
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "OperationalLogs"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-  
-  metric {
-    category                   = "AllMetrics"
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
-
-/* 
-# TODO: Not yet available for Azure Functions
-resource "azurerm_monitor_diagnostic_setting" "vdc_function_logs" {
-  name                         = "Function_Logs"
-  target_resource_id           = "${azurerm_function_app.vdc_functions.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
-
-  log {
-    category                   = "FunctionExecutionLogs"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-  
-  metric {
-    category                   = "AllMetrics"
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-} */
 
 # TODO: Issue with monitoring connections can cause deployment to fail when apply is repeatedly run
 /* 

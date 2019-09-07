@@ -51,24 +51,23 @@ variable vdc_config {
   type                         = "map"
 
   default = {
+    vdc_range                  = "10.0.0.0/14"
     hub_range                  = "10.0.0.0/16"
-    spoke_range                = "10.1.0.0/16"
-    vdc_range                  = "10.0.0.0/15"
-    hub_app_subnet             = "10.0.1.0/24"
-    hub_bastion_subnet         = "10.0.157.192/27"
-    hub_data_subnet            = "10.0.2.0/24"
-    app_subnet                 = "10.1.1.0/24"
-    spoke_bastion_subnet       = "10.1.157.192/27"
-    data_subnet                = "10.1.2.0/24"
-    app_web_lb_address         = "10.1.156.4"
-    app_db_lb_address          = "10.1.156.141"
-    iag_subnet                 = "10.0.157.0/26"
-    waf_subnet                 = "10.0.157.64/26"
-    mgmt_subnet                = "10.0.157.128/26"
-    vpn_subnet                 = "10.0.157.224/27"
-    vpn_range                  = "10.255.0.0/24"
+    hub_bastion_subnet         = "10.0.255.192/27"
+    hub_iag_subnet             = "10.0.0.0/26"
+    hub_waf_subnet             = "10.0.1.64/26"
+    hub_mgmt_subnet            = "10.0.2.128/26"
+    hub_vpn_subnet             = "10.0.3.224/27"
+    iaas_spoke_range           = "10.1.0.0/16"
+    iaas_spoke_bastion_subnet  = "10.1.255.192/27"
+    iaas_spoke_app_subnet      = "10.1.1.0/24"
+    iaas_spoke_data_subnet     = "10.1.2.0/24"
+    iaas_spoke_app_web_lb_address = "10.1.1.4"
+    iaas_spoke_app_db_lb_address = "10.1.2.4"
 
-    bastion_address            = "10.0.157.132"
+    vpn_range                  = "192.168.0.0/24"
+
+    hub_bastion_address        = "10.0.255.132"
   }
 }
 

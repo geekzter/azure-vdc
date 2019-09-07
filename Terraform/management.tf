@@ -9,7 +9,7 @@ resource "azurerm_network_interface" "bas_if" {
   ip_configuration {
     name                       = "bas_ipconfig"
     subnet_id                  = "${azurerm_subnet.mgmt_subnet.id}"
-    private_ip_address         = "${var.vdc_config["bastion_address"]}"
+    private_ip_address         = "${var.vdc_config["hub_bastion_address"]}"
     private_ip_address_allocation = "static"
   }
 
