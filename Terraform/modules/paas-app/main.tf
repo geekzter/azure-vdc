@@ -58,6 +58,67 @@ resource "azurerm_storage_container" "archive_storage_container" {
   container_access_type        = "private"
 }
 
+resource "azurerm_app_service_plan" "paas_plan" {
+  name                         = "${var.resource_group}-appsvc-plan"
+  location                     = "${var.location}"
+  resource_group_name          = "${var.resource_group}"
+
+  sku {
+    tier                       = "PremiumV2"
+    size                       = "P1v2"
+  }
+
+  tags                         = "${var.tags}"
+}
+
+resource "azurerm_app_service" "paas_web_app" {
+  name                         = "${var.resource_group}-appsvc-app"
+  location                     = "${var.location}"
+  resource_group_name          = "${var.resource_group}"
+  app_service_plan_id          = "${azurerm_app_service_plan.paas_plan.id}"
+
+  app_settings = {
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = "${var.diagnostics_instrumentation_key}"
+  }
+
+  identity {
+    type                       = "SystemAssigned"
+  }
+
+  site_config {
+    dotnet_framework_version   = "v4.0"
+    ftps_state                 = "Disabled"
+    scm_type                   = "LocalGit"
+  }
+
+# connection_string {
+#   name                       = "MyDbConnection"
+#   type                       = "SQLAzure"
+# # No secrets in connection string
+#   value                      = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
+# }
+
+  tags                         = "${var.tags}"
+}
+
+resource "azurerm_template_deployment" "app_service_network" {
+  name                         = "${azurerm_app_service.paas_web_app.name}-network"
+  resource_group_name          = "${var.resource_group}"
+  deployment_mode              = "Incremental"
+
+  template_body                = "${file("${path.module}/appsvc-network.json")}"
+
+  parameters                   = {
+    functionsAppServicePlanName  = "${azurerm_app_service_plan.paas_plan.name}"
+    functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
+    wafSubnetId                = "${var.waf_subnet_id}"
+    integratedVNetId           = "${var.integrated_vnet_id}"
+    integratedSubnetName       = "${var.integrated_subnet_name}"
+  }
+
+  depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
+}
+
 resource "azurerm_eventhub_namespace" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group,"-",""))}eventhubNamespace"
   resource_group_name          = "${var.resource_group}"
@@ -131,3 +192,6 @@ resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
     }
   }
 }
+/* 
+Error: Error Creating/Updating Subnet "appservice" (Virtual Network "vdc-dev-xnnm-paas-spoke-network" / Resource Group "vdc-dev-xnnm"): network.SubnetsClient#CreateOrUpdate: Failure sending request: StatusCode=400 -- Original Error: Code="SubnetMissingRequiredDelegation" Message="Subnet /subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/resourceGroups/vdc-dev-xnnm/providers/Microsoft.Network/virtualNetworks/vdc-dev-xnnm-paas-spoke-network/subnets/appservice requires any of the following delegation(s) [Microsoft.Web/serverFarms] to reference service association link /subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/resourceGroups/vdc-dev-xnnm/providers/Microsoft.Network/virtualNetworks/vdc-dev-xnnm-paas-spoke-network/subnets/appservice/serviceAssociationLinks/AppServiceLink." Details=[] 
+*/

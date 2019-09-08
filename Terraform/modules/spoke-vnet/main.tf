@@ -247,6 +247,7 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
   virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
   resource_group_name          = "${var.resource_group}"
   address_prefix               = "${var.bastion_subnet_range}"
+  #service_delegation # needed for AppSvc
 }
 
 resource "azurerm_public_ip" "managed_bastion_pip" {

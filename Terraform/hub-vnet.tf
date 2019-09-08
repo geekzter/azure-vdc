@@ -56,7 +56,7 @@ resource "azurerm_route_table" "mgmt_route_table" {
 }
 # ******************* VNET ******************* #
 resource "azurerm_virtual_network" "hub_vnet" {
-  name                        = "${azurerm_resource_group.vdc_rg.name}-network"
+  name                        = "${azurerm_resource_group.vdc_rg.name}-hub-network"
   location                    = "${var.location}"
   address_space               = ["${var.vdc_config["hub_range"]}"]
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"

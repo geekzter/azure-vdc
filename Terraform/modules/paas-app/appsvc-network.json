@@ -1,0 +1,57 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionsAppServicePlanName": {
+            "type": "string"
+        },
+        "functionsAppServiceAppName": {
+            "type": "string"
+        },
+        "wafSubnetId": {
+            "type": "string"
+        },
+        "integratedVNetId": {
+            "type": "string"
+        },
+        "integratedSubnetName": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "vnetIntegrationName" : "[concat(parameters('functionsAppServicePlanName'), '_', parameters('integratedSubnetName'))]"
+    },
+    "resources": [
+        {
+          "name": "[concat(parameters('functionsAppServicePlanName'), '/', parameters('functionsAppServiceAppName'))]",
+          "type": "Microsoft.Web/sites/functions",
+          "apiVersion": "2018-11-01",
+          "properties": {
+            "ipSecurityRestrictions": [
+                {
+                  "vnetSubnetResourceId": "[parameters('wafSubnetId')]",
+                  "action": "Allow",
+                  "tag": "Default",
+                  "priority": 300,
+                  "name": "AllowWAF"
+                }
+              ],
+              "vnetName": "[variables('vnetIntegrationName')]"
+          }
+        },
+        {
+            "type": "Microsoft.Web/sites/virtualNetworkConnections",
+            "apiVersion": "2016-08-01",
+            "name": "[concat(parameters('functionsAppServiceAppName'), '/',variables('vnetIntegrationName'))]",
+            "location": "West Europe",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('functionsAppServiceAppName'))]"
+            ],
+            "properties": {
+                "vnetResourceId": "[concat(parameters('integratedVNetId'), '/subnets/',parameters('integratedSubnetName'))]",
+                "resyncRequired": false,
+                "isSwift": true
+            }
+        }
+    ]
+}
