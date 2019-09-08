@@ -6,7 +6,11 @@ variable tags {
 
 variable admin_ips {}
 variable endpoint_subnet_id {}
+variable integrated_subnet_name {}
+variable integrated_vnet_id {}
 variable storage_replication_type {}
+variable waf_subnet_id {}
 
+variable diagnostics_instrumentation_key {}
 variable diagnostics_storage_id {}
 variable diagnostics_workspace_id {}
