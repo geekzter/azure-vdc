@@ -2,6 +2,9 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "location": {
+            "type": "string"
+        },
         "functionsAppServicePlanName": {
             "type": "string"
         },
@@ -23,30 +26,27 @@
     },
     "resources": [
         {
-          "name": "[concat(parameters('functionsAppServicePlanName'), '/', parameters('functionsAppServiceAppName'))]",
-          "type": "Microsoft.Web/sites/functions",
-          "apiVersion": "2018-11-01",
-          "properties": {
-            "ipSecurityRestrictions": [
-                {
-                  "vnetSubnetResourceId": "[parameters('wafSubnetId')]",
-                  "action": "Allow",
-                  "tag": "Default",
-                  "priority": 300,
-                  "name": "AllowWAF"
-                }
-              ],
-              "vnetName": "[variables('vnetIntegrationName')]"
-          }
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-02-01",
+            "name": "[concat(parameters('functionsAppServiceAppName'))]",
+            "properties": {
+              "ipSecurityRestrictions": [
+                  {
+                    "vnetSubnetResourceId": "[parameters('wafSubnetId')]",
+                    "action": "Allow",
+                    "tag": "Default",
+                    "priority": 300,
+                    "name": "AllowWAF"
+                  }
+                ],
+                "vnetName": "[variables('vnetIntegrationName')]"
+            }
         },
         {
             "type": "Microsoft.Web/sites/virtualNetworkConnections",
             "apiVersion": "2016-08-01",
             "name": "[concat(parameters('functionsAppServiceAppName'), '/',variables('vnetIntegrationName'))]",
-            "location": "West Europe",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('functionsAppServiceAppName'))]"
-            ],
+            "location": "[parameters('location')]",
             "properties": {
                 "vnetResourceId": "[concat(parameters('integratedVNetId'), '/subnets/',parameters('integratedSubnetName'))]",
                 "resyncRequired": false,
