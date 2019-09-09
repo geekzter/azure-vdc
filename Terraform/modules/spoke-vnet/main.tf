@@ -1,3 +1,7 @@
+locals {
+  subnet_id_map                = "${zipmap(azurerm_subnet.subnet.*.name, azurerm_subnet.subnet.*.id)}"
+}
+
 resource "azurerm_virtual_network" "spoke_vnet" {
   name                         = "${var.spoke_virtual_network_name}"
   resource_group_name          = "${var.resource_group}"
@@ -69,11 +73,6 @@ resource "azurerm_route_table" "spoke_route_table" {
     next_hop_type              = "VirtualAppliance"
     next_hop_in_ip_address     = "${var.gateway_ip_address}"
   }
-}
-resource "azurerm_subnet_route_table_association" "subnet_routes" {
-  subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
-  route_table_id               = "${azurerm_route_table.spoke_route_table.id}"
-  count                        = "${length(var.subnets)}"
 }
 
 resource "azurerm_network_security_group" "spoke_nsg" {
@@ -202,6 +201,32 @@ resource "azurerm_network_security_group" "spoke_nsg" {
   }
 }
 
+resource "azurerm_subnet" "subnet" {
+  name                         = "${element(keys(var.subnets),count.index)}"
+  virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
+  resource_group_name          = "${var.resource_group}"
+  address_prefix               = "${element(values(var.subnets),count.index)}"
+  count                        = "${length(var.subnets)}"
+
+  # Create subnet delegation, if requested
+  dynamic "delegation" {
+    # TODO: Won't work with multiple subnets and multiple delegations, as each delegation will be created for each subnet
+    for_each = var.subnet_delegations
+    content {
+      name                     = "${delegation.key}_delegation"
+      service_delegation {
+        name                   = delegation.value
+      }
+    }
+  }
+}
+
+resource "azurerm_subnet_route_table_association" "subnet_routes" {
+  subnet_id                    = "${local.subnet_id_map[element(var.enable_routetable_for_subnets,count.index)]}"
+  route_table_id               = "${azurerm_route_table.spoke_route_table.id}"
+  count                        = "${length(var.enable_routetable_for_subnets)}"
+}
+
 resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
   subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
   network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}"
@@ -231,14 +256,6 @@ resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
       enabled                  = false
     }
   }
-}
-
-resource "azurerm_subnet" "subnet" {
-  name                         = "${element(keys(var.subnets),count.index)}"
-  virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
-  resource_group_name          = "${var.resource_group}"
-  address_prefix               = "${element(values(var.subnets),count.index)}"
-  count                        = "${length(var.subnets)}"
 }
 
 # This is the tempale for Managed Bastion, IaaS bastion is defined in management.tf

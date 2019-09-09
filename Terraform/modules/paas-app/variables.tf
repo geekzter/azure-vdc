@@ -5,6 +5,7 @@ variable tags {
 }
 
 variable admin_ips {}
+variable appsvc_subnet_id {}
 variable endpoint_subnet_id {}
 variable integrated_subnet_name {}
 variable integrated_vnet_id {}

@@ -3,5 +3,5 @@ output spoke_virtual_network_id {
 }
 
 output subnet_ids {
-  value                        = "${zipmap(azurerm_subnet.subnet.*.name, azurerm_subnet.subnet.*.id)}"
+  value                        = "${local.subnet_id_map}"
 }

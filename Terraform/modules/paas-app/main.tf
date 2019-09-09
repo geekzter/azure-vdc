@@ -13,7 +13,10 @@ resource "azurerm_storage_account" "app_storage" {
   # ip_rules                   = "${var.admin_ip_ranges}" # BUG: CIDR notation doesn't work as advertised
     ip_rules                   = "${var.admin_ips}" # BUG: CIDR notation doesn't work as advertised
     # Allow the Firewall subnet
-    virtual_network_subnet_ids = ["${var.endpoint_subnet_id}"]
+    virtual_network_subnet_ids = [
+                                 "${var.appsvc_subnet_id}",
+                                 "${var.endpoint_subnet_id}"
+    ]
   } 
 
   # HACK: To prevent 'not provisioned. They are in Updating state..'
@@ -109,11 +112,12 @@ resource "azurerm_template_deployment" "app_service_network" {
   template_body                = "${file("${path.module}/appsvc-network.json")}"
 
   parameters                   = {
-    functionsAppServicePlanName  = "${azurerm_app_service_plan.paas_plan.name}"
+    location                   = "${var.location}"
+    functionsAppServicePlanName = "${azurerm_app_service_plan.paas_plan.name}"
     functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
-    wafSubnetId                = "${var.waf_subnet_id}"
     integratedVNetId           = "${var.integrated_vnet_id}"
     integratedSubnetName       = "${var.integrated_subnet_name}"
+    wafSubnetId                = "${var.waf_subnet_id}"
   }
 
   depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
