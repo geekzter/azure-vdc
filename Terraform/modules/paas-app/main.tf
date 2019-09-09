@@ -1,7 +1,14 @@
+resource "azurerm_resource_group" "app_rg" {
+  name                         = "${var.resource_group}"
+  location                     = "${var.location}"
+
+  tags                         = "${var.tags}"
+}
+
 resource "azurerm_storage_account" "app_storage" {
   name                         = "${lower(replace(var.resource_group,"-",""))}storage"
-  resource_group_name          = "${var.resource_group}"
-  location                     = "${var.location}"
+  location                     = "${azurerm_resource_group.app_rg.location}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = "${var.storage_replication_type}"
@@ -19,8 +26,7 @@ resource "azurerm_storage_account" "app_storage" {
     ]
   } 
 
-  # HACK: To prevent 'not provisioned. They are in Updating state..'
-  #depends_on                   = ["var.endpoint_subnet_id","azurerm_storage_account.archive_storage","azurerm_storage_account.vdc_diag_storage"]
+  depends_on                   = ["var.endpoint_subnet_id","var.endpoint_subnet_id"]
 
   tags                         = "${var.tags}"
 }
@@ -33,8 +39,7 @@ resource "azurerm_storage_container" "app_storage_container" {
 
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
   name                         = "sample.txt"
-
-  resource_group_name          = "${var.resource_group}"
+ resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   storage_account_name         = "${azurerm_storage_account.app_storage.name}"
   storage_container_name       = "${azurerm_storage_container.app_storage_container.name}"
 
@@ -44,8 +49,8 @@ resource "azurerm_storage_blob" "app_storage_blob_sample" {
 
 resource "azurerm_storage_account" "archive_storage" {
   name                         = "${lower(replace(var.resource_group,"-",""))}archive"
-  resource_group_name          = "${var.resource_group}"
-  location                     = "${var.location}"
+  location                     = "${azurerm_resource_group.app_rg.location}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = "${var.storage_replication_type}"
@@ -63,8 +68,8 @@ resource "azurerm_storage_container" "archive_storage_container" {
 
 resource "azurerm_app_service_plan" "paas_plan" {
   name                         = "${var.resource_group}-appsvc-plan"
-  location                     = "${var.location}"
-  resource_group_name          = "${var.resource_group}"
+  location                     = "${azurerm_resource_group.app_rg.location}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
 
   sku {
     tier                       = "PremiumV2"
@@ -76,8 +81,8 @@ resource "azurerm_app_service_plan" "paas_plan" {
 
 resource "azurerm_app_service" "paas_web_app" {
   name                         = "${var.resource_group}-appsvc-app"
-  location                     = "${var.location}"
-  resource_group_name          = "${var.resource_group}"
+  location                     = "${azurerm_resource_group.app_rg.location}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   app_service_plan_id          = "${azurerm_app_service_plan.paas_plan.id}"
 
   app_settings = {
@@ -106,13 +111,13 @@ resource "azurerm_app_service" "paas_web_app" {
 
 resource "azurerm_template_deployment" "app_service_network" {
   name                         = "${azurerm_app_service.paas_web_app.name}-network"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   deployment_mode              = "Incremental"
 
   template_body                = "${file("${path.module}/appsvc-network.json")}"
 
   parameters                   = {
-    location                   = "${var.location}"
+    location                   = "${azurerm_resource_group.app_rg.location}"
     functionsAppServicePlanName = "${azurerm_app_service_plan.paas_plan.name}"
     functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
     integratedVNetId           = "${var.integrated_vnet_id}"
@@ -123,10 +128,28 @@ resource "azurerm_template_deployment" "app_service_network" {
   depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
 }
 
+resource "azurerm_template_deployment" "app_service_network_association" {
+  name                         = "${azurerm_app_service.paas_web_app.name}-network-association"
+  resource_group_name          = "${var.vdc_resource_group}"
+  deployment_mode              = "Incremental"
+
+  template_body                = "${file("${path.module}/appsvc-network-association.json")}"
+
+  parameters                   = {
+  # location                   = "${azurerm_resource_group.app_rg.location}"
+    appServicePlanId           = "${azurerm_app_service_plan.paas_plan.id}"
+    # Last element of resource id is resource name
+    integratedVNetName         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
+    integratedSubnetName       = "${var.integrated_subnet_name}"
+  }
+
+  depends_on                   = ["azurerm_app_service.paas_web_app"] 
+}
+
 resource "azurerm_eventhub_namespace" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group,"-",""))}eventhubNamespace"
-  resource_group_name          = "${var.resource_group}"
-  location                     = "${var.location}"
+  location                     = "${azurerm_resource_group.app_rg.location}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   sku                          = "Standard"
   capacity                     = 1
   kafka_enabled                = false
@@ -147,7 +170,7 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
 resource "azurerm_eventhub" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group,"-",""))}eventhub"
   namespace_name               = "${azurerm_eventhub_namespace.app_eventhub.name}"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   partition_count              = 2
   message_retention            = 1
 
@@ -196,6 +219,3 @@ resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
     }
   }
 }
-/* 
-Error: Error Creating/Updating Subnet "appservice" (Virtual Network "vdc-dev-xnnm-paas-spoke-network" / Resource Group "vdc-dev-xnnm"): network.SubnetsClient#CreateOrUpdate: Failure sending request: StatusCode=400 -- Original Error: Code="SubnetMissingRequiredDelegation" Message="Subnet /subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/resourceGroups/vdc-dev-xnnm/providers/Microsoft.Network/virtualNetworks/vdc-dev-xnnm-paas-spoke-network/subnets/appservice requires any of the following delegation(s) [Microsoft.Web/serverFarms] to reference service association link /subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/resourceGroups/vdc-dev-xnnm/providers/Microsoft.Network/virtualNetworks/vdc-dev-xnnm-paas-spoke-network/subnets/appservice/serviceAssociationLinks/AppServiceLink." Details=[] 
-*/

@@ -73,7 +73,7 @@ output "app_storage_account_name" {
 }
 
 output "app_resource_group" {
-  value       = "${local.app_resource_group}"
+  value       = "${local.iaas_app_resource_group}"
 }
 
 output "bastion_name" {
@@ -95,8 +95,5 @@ output "bastion_rdp_vpn" {
 # Export Resource ID's of resources created in embedded ARM templates
 # This can be used in script to manage (e.g. clean up) these resources as Terraform doesn't know about them
 output "arm_resource_ids" {
-  value       = [
-    # Managed Bastion
-    "${azurerm_resource_group.vdc_rg.id}/providers/Microsoft.Network/bastionHosts/${azurerm_resource_group.vdc_rg.name}-managed-bastion",
-  ]
+  value       = "${concat(module.managed_bastion_hub.arm_resource_ids,module.iaas_spoke_vnet.arm_resource_ids)}"
 }

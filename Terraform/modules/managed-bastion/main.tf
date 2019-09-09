@@ -1,3 +1,7 @@
+locals {
+  managed_bastion_name         = "${var.virtual_network_name}-managed-bastion"
+}
+
 # This is the tempale for Managed Bastion, IaaS bastion is defined in management.tf
 resource "azurerm_subnet" "managed_bastion_subnet" {
   name                         = "AzureBastionSubnet"
@@ -27,7 +31,7 @@ resource "azurerm_template_deployment" "managed_bastion" {
   parameters                   = {
     location                   = "${var.location}"
     resourceGroup              = "${var.resource_group}"
-    bastionHostName            = "${var.virtual_network_name}-managed-bastion"
+    bastionHostName            = "${local.managed_bastion_name}"
     subnetId                   = "${azurerm_subnet.managed_bastion_subnet.id}"
     publicIpAddressName        = "${azurerm_public_ip.managed_bastion_pip.name}"
   }

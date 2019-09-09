@@ -5,7 +5,6 @@ locals {
   db_dns_name                  = "${lower(var.resource_environment)}db_web_vm"
 }
 
-
 resource "azurerm_resource_group" "app_rg" {
   name                         = "${var.resource_group}"
   location                     = "${var.location}"
