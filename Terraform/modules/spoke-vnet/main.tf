@@ -1,4 +1,5 @@
 locals {
+  managed_bastion_name         = "${azurerm_virtual_network.spoke_vnet.name}-managed-bastion"
   subnet_id_map                = "${zipmap(azurerm_subnet.subnet.*.name, azurerm_subnet.subnet.*.id)}"
 }
 
@@ -207,18 +208,21 @@ resource "azurerm_subnet" "subnet" {
   resource_group_name          = "${var.resource_group}"
   address_prefix               = "${element(values(var.subnets),count.index)}"
   count                        = "${length(var.subnets)}"
-
+  
   # Create subnet delegation, if requested
   dynamic "delegation" {
     # TODO: Won't work with multiple subnets and multiple delegations, as each delegation will be created for each subnet
-    for_each = var.subnet_delegations
+    for_each = "${var.subnet_delegations}"
     content {
       name                     = "${delegation.key}_delegation"
       service_delegation {
-        name                   = delegation.value
+        name                   = "${delegation.value}"
       }
     }
   }
+
+  # Find list of service endpoints defined for subnet we're iterating over, use empty list if none defined
+  service_endpoints            = "${lookup(var.service_endpoints,element(keys(var.subnets),count.index),null)}"
 }
 
 resource "azurerm_subnet_route_table_association" "subnet_routes" {
@@ -288,7 +292,7 @@ resource "azurerm_template_deployment" "managed_bastion" {
   parameters                   = {
     location                   = "${var.location}"
     resourceGroup              = "${var.resource_group}"
-    bastionHostName            = "${var.spoke_virtual_network_name}-managed-bastion"
+    bastionHostName            = "${local.managed_bastion_name}"
     subnetId                   = "${azurerm_subnet.managed_bastion_subnet.id}"
     publicIpAddressName        = "${azurerm_public_ip.managed_bastion_pip.name}"
   }

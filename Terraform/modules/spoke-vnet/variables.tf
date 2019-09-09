@@ -20,6 +20,9 @@ variable enable_routetable_for_subnets {
   type                         = list
 }
 variable spoke_virtual_network_name {}
+variable service_endpoints {
+  type                         = map
+}
 variable subnets {
   type                         = map
 }

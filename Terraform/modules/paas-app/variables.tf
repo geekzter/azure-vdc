@@ -1,4 +1,5 @@
 variable resource_group {}
+variable vdc_resource_group {}
 variable location {}
 variable tags {
   type                         = map

@@ -26,9 +26,10 @@
     },
     "resources": [
         {
-            "type": "Microsoft.Web/sites",
+            "type": "Microsoft.Web/sites/config",
             "apiVersion": "2018-02-01",
-            "name": "[concat(parameters('functionsAppServiceAppName'))]",
+            "name": "[concat(parameters('functionsAppServiceAppName'),'/web')]",
+            "location": "[parameters('location')]",
             "properties": {
               "ipSecurityRestrictions": [
                   {
