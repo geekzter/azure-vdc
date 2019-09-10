@@ -1,25 +1,25 @@
 resource "azurerm_storage_account" "app_storage" {
-  name                         = "${lower(replace(local.app_resource_group,"-",""))}storage"
-  resource_group_name          = "${module.iis_app.app_resource_group}"
+  name                         = "${lower(replace(var.resource_group,"-",""))}storage"
+  resource_group_name          = "${var.resource_group}"
   location                     = "${var.location}"
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
-  account_replication_type     = "${var.app_storage_replication_type}"
+  account_replication_type     = "${var.storage_replication_type}"
  
   network_rules {
     default_action             = "Deny"
     bypass                     = ["Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
-  # ip_rules                   = "${local.admin_ip_ranges}" # BUG: CIDR notation doesn't work as advertised
-    ip_rules                   = "${local.admin_ips}" # BUG: CIDR notation doesn't work as advertised
+  # ip_rules                   = "${var.admin_ip_ranges}" # BUG: CIDR notation doesn't work as advertised
+    ip_rules                   = "${var.admin_ips}" # BUG: CIDR notation doesn't work as advertised
     # Allow the Firewall subnet
-    virtual_network_subnet_ids = ["${azurerm_subnet.iag_subnet.id}"]
+    virtual_network_subnet_ids = ["${var.endpoint_subnet_id}"]
   } 
 
   # HACK: To prevent 'not provisioned. They are in Updating state..'
-  depends_on                   = ["azurerm_subnet.iag_subnet","azurerm_storage_account.archive_storage","azurerm_storage_account.vdc_diag_storage"]
+  #depends_on                   = ["var.endpoint_subnet_id","azurerm_storage_account.archive_storage","azurerm_storage_account.vdc_diag_storage"]
 
-  tags                         = "${local.tags}"
+  tags                         = "${var.tags}"
 }
 
 resource "azurerm_storage_container" "app_storage_container" {
@@ -31,7 +31,7 @@ resource "azurerm_storage_container" "app_storage_container" {
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
   name                         = "sample.txt"
 
-  resource_group_name          = "${module.iis_app.app_resource_group}"
+  resource_group_name          = "${var.resource_group}"
   storage_account_name         = "${azurerm_storage_account.app_storage.name}"
   storage_container_name       = "${azurerm_storage_container.app_storage_container.name}"
 
@@ -40,16 +40,16 @@ resource "azurerm_storage_blob" "app_storage_blob_sample" {
 }
 
 resource "azurerm_storage_account" "archive_storage" {
-  name                         = "${lower(replace(local.app_resource_group,"-",""))}archive"
-  resource_group_name          = "${module.iis_app.app_resource_group}"
+  name                         = "${lower(replace(var.resource_group,"-",""))}archive"
+  resource_group_name          = "${var.resource_group}"
   location                     = "${var.location}"
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
-  account_replication_type     = "${var.app_storage_replication_type}"
+  account_replication_type     = "${var.storage_replication_type}"
 
-  depends_on                   = ["azurerm_subnet.iag_subnet"]
+  depends_on                   = ["var.endpoint_subnet_id"]
 
-  tags                         = "${local.tags}"
+  tags                         = "${var.tags}"
 }
 
 resource "azurerm_storage_container" "archive_storage_container" {
@@ -59,8 +59,8 @@ resource "azurerm_storage_container" "archive_storage_container" {
 }
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {
-  name                         = "${lower(replace(local.app_resource_group,"-",""))}eventhubNamespace"
-  resource_group_name          = "${module.iis_app.app_resource_group}"
+  name                         = "${lower(replace(var.resource_group,"-",""))}eventhubNamespace"
+  resource_group_name          = "${var.resource_group}"
   location                     = "${var.location}"
   sku                          = "Standard"
   capacity                     = 1
@@ -73,16 +73,16 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
     ip_rules                   = ["${chomp(data.http.localpublicip.body)}"] # We need this to make changes
     # Allow the Firewall subnet
-    virtual_network_subnet_ids = ["${azurerm_subnet.iag_subnet.id}"]
+    virtual_network_subnet_ids = ["${var.endpoint_subnet_id}"]
   }  */
 
-  tags                         = "${local.tags}"
+  tags                         = "${var.tags}"
 }
 
 resource "azurerm_eventhub" "app_eventhub" {
-  name                         = "${lower(replace(local.app_resource_group,"-",""))}eventhub"
+  name                         = "${lower(replace(var.resource_group,"-",""))}eventhub"
   namespace_name               = "${azurerm_eventhub_namespace.app_eventhub.name}"
-  resource_group_name          = "${module.iis_app.app_resource_group}"
+  resource_group_name          = "${var.resource_group}"
   partition_count              = 2
   message_retention            = 1
 
@@ -97,5 +97,37 @@ resource "azurerm_eventhub" "app_eventhub" {
       blob_container_name      = "${azurerm_storage_container.archive_storage_container.name}"
     }
   }
+}
 
+resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
+  name                         = "EventHub_Logs"
+  target_resource_id           = "${azurerm_eventhub_namespace.app_eventhub.id}"
+  storage_account_id           = "${var.diagnostics_storage_id}"
+  log_analytics_workspace_id   = "${var.diagnostics_workspace_id}"
+
+  log {
+    category                   = "ArchiveLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "OperationalLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
 }

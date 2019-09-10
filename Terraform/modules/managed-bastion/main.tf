@@ -7,7 +7,7 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
 }
 
 resource "azurerm_public_ip" "managed_bastion_pip" {
-  name                         = "${var.resource_group}-managed-bastion-pip"
+  name                         = "${var.virtual_network_name}-managed-bastion-pip"
   location                     = "${var.location}"
   resource_group_name          = "${var.resource_group}"
   allocation_method            = "Static"
@@ -19,7 +19,7 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
 # Configure Managed Bastion with ARM template as Terraform doesn't (yet) support this (preview) service
 # https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
 resource "azurerm_template_deployment" "managed_bastion" {
-  name                         = "${var.resource_group}-managed-bastion-template"
+  name                         = "${var.virtual_network_name}-managed-bastion-template"
   resource_group_name          = "${var.resource_group}"
   deployment_mode              = "Incremental"
   template_body                = "${file("${path.module}/bastion.json")}"
@@ -27,7 +27,7 @@ resource "azurerm_template_deployment" "managed_bastion" {
   parameters                   = {
     location                   = "${var.location}"
     resourceGroup              = "${var.resource_group}"
-    bastionHostName            = "${var.resource_group}-managed-bastion"
+    bastionHostName            = "${var.virtual_network_name}-managed-bastion"
     subnetId                   = "${azurerm_subnet.managed_bastion_subnet.id}"
     publicIpAddressName        = "${azurerm_public_ip.managed_bastion_pip.name}"
   }

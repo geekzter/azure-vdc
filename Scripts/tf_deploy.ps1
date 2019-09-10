@@ -82,6 +82,16 @@ function DeleteArmResources () {
         }
     }
 }
+function Invoke (
+    [string]$cmd
+) {
+    Write-Host "`n$cmd" -ForegroundColor Green 
+    Invoke-Expression $cmd
+    if ($LASTEXITCODE -ne 0) {
+        exit
+    }
+}
+
 function SetPipelineVariablesFromTerraform () {
     $json = terraform output -json | ConvertFrom-Json -AsHashtable
     foreach ($outputVariable in $json.keys) {
@@ -176,8 +186,7 @@ try {
         if ($upgrade) {
             $initCmd += " -upgrade"
         }
-        Write-Host "`n$initCmd" -ForegroundColor Green 
-        Invoke-Expression $initCmd
+        Invoke "`n$initCmd" 
     }
 
     # Workspace can only be selected after init 
@@ -191,8 +200,7 @@ try {
     Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
 
     if ($validate) {
-        Write-Host "`nterraform validate" -ForegroundColor Green 
-        terraform validate
+        Invoke "`nterraform validate" 
     }
     
     # Prepare common arguments
@@ -215,9 +223,7 @@ try {
     }
 
     if ($plan -or $apply) {
-        $planCmd = "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'"
-        Write-Host "`n$planCmd" -ForegroundColor Green 
-        Invoke-Expression "$planCmd"
+        Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'"
     }
 
     if ($apply) {
@@ -231,9 +237,7 @@ try {
             }
         }
 
-        $applyCmd = "terraform apply $forceArgs -parallelism=$parallelism '$planFile'"
-        Write-Host "`n$applyCmd" -ForegroundColor Green 
-        Invoke-Expression $applyCmd
+        Invoke "terraform apply $forceArgs -parallelism=$parallelism '$planFile'"
 
         # Export Terraform output as Pipeline output variables for subsequent tasks
         if ($pipeline) {
@@ -251,9 +255,7 @@ try {
         DeleteArmResources
 
         # Now let Terraform do it's work
-        $destroyCmd = "terraform destroy $forceArgs -parallelism=$parallelism"
-        Write-Host "`n$destroyCmd" -ForegroundColor Green 
-        Invoke-Expression $destroyCmd
+        Invoke "terraform destroy $forceArgs -parallelism=$parallelism"
     }
 } finally {
     Pop-Location
