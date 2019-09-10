@@ -14,9 +14,6 @@
         "wafSubnetId": {
             "type": "string"
         },
-        "integratedVNetId": {
-            "type": "string"
-        },
         "integratedSubnetName": {
             "type": "string"
         }
@@ -39,19 +36,7 @@
                     "priority": 300,
                     "name": "AllowWAF"
                   }
-                ],
-                "vnetName": "[variables('vnetIntegrationName')]"
-            }
-        },
-        {
-            "type": "Microsoft.Web/sites/virtualNetworkConnections",
-            "apiVersion": "2016-08-01",
-            "name": "[concat(parameters('functionsAppServiceAppName'), '/',variables('vnetIntegrationName'))]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "vnetResourceId": "[concat(parameters('integratedVNetId'), '/subnets/',parameters('integratedSubnetName'))]",
-                "resyncRequired": false,
-                "isSwift": true
+                ]
             }
         }
     ]

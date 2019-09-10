@@ -1,3 +1,8 @@
+locals {
+  # Last element of resource id is resource name
+  integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
+}
+
 resource "azurerm_resource_group" "app_rg" {
   name                         = "${var.resource_group}"
   location                     = "${var.location}"
@@ -97,6 +102,7 @@ resource "azurerm_app_service" "paas_web_app" {
     dotnet_framework_version   = "v4.0"
     ftps_state                 = "Disabled"
     scm_type                   = "LocalGit"
+  # virtual_network_name       = "${local.integrated_vnet_name}"
   }
 
 # connection_string {
@@ -109,43 +115,60 @@ resource "azurerm_app_service" "paas_web_app" {
   tags                         = "${var.tags}"
 }
 
-/* 
-resource "azurerm_template_deployment" "app_service_network" {
-  name                         = "${azurerm_app_service.paas_web_app.name}-network"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  deployment_mode              = "Incremental"
+# resource "azurerm_template_deployment" "app_service_access_restriction" {
+#   name                         = "${azurerm_app_service.paas_web_app.name}-access-restriction"
+#   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+#   deployment_mode              = "Incremental"
 
-  template_body                = "${file("${path.module}/appsvc-network.json")}"
+#   template_body                = "${file("${path.module}/appsvc-access-restriction.json")}"
 
-  parameters                   = {
-    location                   = "${azurerm_resource_group.app_rg.location}"
-    functionsAppServicePlanName = "${azurerm_app_service_plan.paas_plan.name}"
-    functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
-    integratedVNetId           = "${var.integrated_vnet_id}"
-    integratedSubnetName       = "${var.integrated_subnet_name}"
-    wafSubnetId                = "${var.waf_subnet_id}"
-  }
+#   parameters                   = {
+#     location                   = "${azurerm_resource_group.app_rg.location}"
+#     functionsAppServicePlanName = "${azurerm_app_service_plan.paas_plan.name}"
+#     functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
+#     integratedSubnetName       = "${var.integrated_subnet_name}"
+#     wafSubnetId                = "${var.waf_subnet_id}"
+#   }
 
-  depends_on                   = ["azurerm_app_service.paas_web_app","var.appsvc_subnet_id","var.integrated_vnet_id","var.waf_subnet_id"] # Explicit dependency for ARM templates
-}
+#   depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
+# }
 
-resource "azurerm_template_deployment" "app_service_network_association" {
-  name                         = "${azurerm_app_service.paas_web_app.name}-network-association"
-  resource_group_name          = "${var.vdc_resource_group}"
-  deployment_mode              = "Incremental"
+# resource "azurerm_template_deployment" "app_service_network_association" {
+#   name                         = "${azurerm_app_service.paas_web_app.name}-network-association"
+#   resource_group_name          = "${var.vdc_resource_group}"
+#   deployment_mode              = "Incremental"
 
-  template_body                = "${file("${path.module}/appsvc-network-association.json")}"
+#   template_body                = "${file("${path.module}/appsvc-network-association.json")}"
 
-  parameters                   = {
-  # location                   = "${azurerm_resource_group.app_rg.location}"
-    appServicePlanId           = "${azurerm_app_service_plan.paas_plan.id}"
-    # Last element of resource id is resource name
-    integratedVNetName         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
-    integratedSubnetName       = "${var.integrated_subnet_name}"
-  }
+#   parameters                   = {
+#     addressPrefix              = "${var.appsvc_subnet_range}" # Required parameter when updating subnet to add association
+#     appServicePlanId           = "${azurerm_app_service_plan.paas_plan.id}"
+#     integratedVNetName         = "${local.integrated_vnet_name}"
+#     integratedSubnetId         = "${var.appsvc_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
+#     integratedSubnetName       = "${var.integrated_subnet_name}"
+#   }
 
-  depends_on                   = ["azurerm_app_service.paas_web_app","var.appsvc_subnet_id","var.integrated_vnet_id"] # Explicit dependency for ARM templates
-} */
+#   depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
+# } 
+
+# resource "azurerm_template_deployment" "app_service_network_connection" {
+#   name                         = "${azurerm_app_service.paas_web_app.name}-network-connection"
+#   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+#   deployment_mode              = "Incremental"
+
+#   template_body                = "${file("${path.module}/appsvc-network-connection.json")}"
+
+#   parameters                   = {
+#     location                   = "${azurerm_resource_group.app_rg.location}"
+#     functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
+#     integratedVNetId           = "${var.integrated_vnet_id}"
+#     integratedSubnetId         = "${var.appsvc_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
+#     integratedSubnetName       = "${var.integrated_subnet_name}"
+#     vnetResourceGuid           = "" # TODO: https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
+#   }
+
+#   depends_on                   = ["azurerm_app_service.paas_web_app","azurerm_template_deployment.app_service_network_association"] # Explicit dependency for ARM templates
+# }
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group,"-",""))}eventhubNamespace"

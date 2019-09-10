@@ -2,10 +2,16 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "addressPrefix": {
+            "type": "String"
+        },
         "appServicePlanId": {
             "type": "String"
         },
         "integratedVNetName": {
+            "type": "String"
+        },
+        "integratedSubnetId": {
             "type": "String"
         },
         "integratedSubnetName": {
@@ -18,6 +24,7 @@
             "apiVersion": "2019-06-01",
             "name": "[concat(parameters('integratedVNetName'), '/',parameters('integratedSubnetName'))]",
             "properties": {
+                "addressPrefix": "[parameters('addressPrefix')]",
                 "serviceAssociationLinks": [
                     {
                         "name": "AppServiceLink",
@@ -29,7 +36,20 @@
                             "locations": []
                         }
                     }
-                ]
+                ],
+                "delegations": [
+                    {
+                        "name": "delegation",
+                        "properties": {
+                            "serviceName": "Microsoft.Web/serverfarms",
+                            "actions": [
+                                "Microsoft.Network/virtualNetworks/subnets/action"
+                            ]
+                        }
+                    }
+                ],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
             }
         }
     ]
