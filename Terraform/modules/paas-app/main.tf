@@ -26,7 +26,7 @@ resource "azurerm_storage_account" "app_storage" {
     ]
   } 
 
-  depends_on                   = ["var.endpoint_subnet_id","var.endpoint_subnet_id"]
+  depends_on                   = ["var.endpoint_subnet_id"]
 
   tags                         = "${var.tags}"
 }
@@ -125,7 +125,7 @@ resource "azurerm_template_deployment" "app_service_network" {
     wafSubnetId                = "${var.waf_subnet_id}"
   }
 
-  depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
+  depends_on                   = ["azurerm_app_service.paas_web_app","var.appsvc_subnet_id","var.integrated_vnet_id","var.waf_subnet_id"] # Explicit dependency for ARM templates
 }
 
 resource "azurerm_template_deployment" "app_service_network_association" {
@@ -143,7 +143,7 @@ resource "azurerm_template_deployment" "app_service_network_association" {
     integratedSubnetName       = "${var.integrated_subnet_name}"
   }
 
-  depends_on                   = ["azurerm_app_service.paas_web_app"] 
+  depends_on                   = ["azurerm_app_service.paas_web_app","var.appsvc_subnet_id","var.integrated_vnet_id"] # Explicit dependency for ARM templates
 }
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {
