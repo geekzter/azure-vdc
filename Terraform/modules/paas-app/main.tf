@@ -109,6 +109,7 @@ resource "azurerm_app_service" "paas_web_app" {
   tags                         = "${var.tags}"
 }
 
+/* 
 resource "azurerm_template_deployment" "app_service_network" {
   name                         = "${azurerm_app_service.paas_web_app.name}-network"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
@@ -144,7 +145,7 @@ resource "azurerm_template_deployment" "app_service_network_association" {
   }
 
   depends_on                   = ["azurerm_app_service.paas_web_app","var.appsvc_subnet_id","var.integrated_vnet_id"] # Explicit dependency for ARM templates
-}
+} */
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group,"-",""))}eventhubNamespace"
