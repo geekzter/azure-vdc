@@ -1,6 +1,7 @@
 locals {
   # Last element of resource id is resource name
   integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
+  spoke_vnet_guid_file         = "${path.module}/paas-spoke-vnet-resourceguid.tmp"
 }
 
 resource "azurerm_resource_group" "app_rg" {
@@ -22,8 +23,7 @@ resource "azurerm_storage_account" "app_storage" {
     default_action             = "Deny"
     bypass                     = ["Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
-  # ip_rules                   = "${var.admin_ip_ranges}" # BUG: CIDR notation doesn't work as advertised
-    ip_rules                   = "${var.admin_ips}" # BUG: CIDR notation doesn't work as advertised
+    ip_rules                   = "${var.admin_ip_ranges}"
     # Allow the Firewall subnet
     virtual_network_subnet_ids = [
                                  "${var.appsvc_subnet_id}",
@@ -115,6 +115,23 @@ resource "azurerm_app_service" "paas_web_app" {
   tags                         = "${var.tags}"
 }
 
+# Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
+resource "null_resource" "spoke_vnet_guid" {
+  # Changes to any instance of the cluster requires re-provisioning
+  triggers = {
+    allways                    = "${timestamp()}" # Trigger every run
+  # vnet_name                  = "${local.integrated_vnet_name}"
+  }
+
+  provisioner "local-exec" {
+    # Bootstrap script called with private_ip of each node in the clutser
+    command = "Get-AzVirtualNetwork -Name ${local.integrated_vnet_name} -ResourceGroupName ${var.vdc_resource_group} | Select-Object -ExpandProperty ResourceGuid >${local.spoke_vnet_guid_file}"
+    interpreter = ["pwsh", "-c"]
+  }
+
+  depends_on                   = ["var.integrated_vnet_id"]
+}
+
 # resource "azurerm_template_deployment" "app_service_access_restriction" {
 #   name                         = "${azurerm_app_service.paas_web_app.name}-access-restriction"
 #   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
@@ -164,10 +181,12 @@ resource "azurerm_app_service" "paas_web_app" {
 #     integratedVNetId           = "${var.integrated_vnet_id}"
 #     integratedSubnetId         = "${var.appsvc_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
 #     integratedSubnetName       = "${var.integrated_subnet_name}"
-#     vnetResourceGuid           = "" # TODO: https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
+#     # Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
+#     vnetResourceGuid           = "${file(local.spoke_vnet_guid_file)}"
+#   # vnetResourceGuid           = "erwerwerwer"
 #   }
 
-#   depends_on                   = ["azurerm_app_service.paas_web_app","azurerm_template_deployment.app_service_network_association"] # Explicit dependency for ARM templates
+#   depends_on                   = ["azurerm_app_service.paas_web_app","azurerm_template_deployment.app_service_network_association","null_resource.spoke_vnet_guid"] # Explicit dependency for ARM templates
 # }
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {

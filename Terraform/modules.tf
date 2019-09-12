@@ -112,6 +112,7 @@ module "paas_app" {
   tags                         = "${local.tags}"
 
   admin_ips                    = "${local.admin_ips}"
+  admin_ip_ranges              = "${local.admin_cidr_ranges}"
   appsvc_subnet_range          = "${var.vdc_config["paas_spoke_appsvc_subnet"]}"
   appsvc_subnet_id             = "${module.paas_spoke_vnet.subnet_ids["appservice"]}"
   endpoint_subnet_id           = "${azurerm_subnet.iag_subnet.id}"

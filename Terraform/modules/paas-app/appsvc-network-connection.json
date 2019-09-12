@@ -19,7 +19,7 @@
         },
         "vnetResourceGuid": {
             "type": "string"
-        },
+        }
     },
     "variables": {
         "vnetIntegrationName" : "[concat(parameters('vnetResourceGuid'), '_', parameters('integratedSubnetName'))]"
