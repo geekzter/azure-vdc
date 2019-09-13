@@ -116,21 +116,21 @@ resource "azurerm_app_service" "paas_web_app" {
 }
 
 # Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
-resource "null_resource" "spoke_vnet_guid" {
-  # Changes to any instance of the cluster requires re-provisioning
-  triggers = {
-    allways                    = "${timestamp()}" # Trigger every run
-  # vnet_name                  = "${local.integrated_vnet_name}"
-  }
+# resource "null_resource" "spoke_vnet_guid" {
+#   # Changes to any instance of the cluster requires re-provisioning
+#   triggers = {
+#     allways                    = "${timestamp()}" # Trigger every run
+#   # vnet_name                  = "${local.integrated_vnet_name}"
+#   }
 
-  provisioner "local-exec" {
-    # Bootstrap script called with private_ip of each node in the clutser
-    command = "Get-AzVirtualNetwork -Name ${local.integrated_vnet_name} -ResourceGroupName ${var.vdc_resource_group} | Select-Object -ExpandProperty ResourceGuid >${local.spoke_vnet_guid_file}"
-    interpreter = ["pwsh", "-c"]
-  }
+#   provisioner "local-exec" {
+#     # Bootstrap script called with private_ip of each node in the clutser
+#     command = "Get-AzVirtualNetwork -Name ${local.integrated_vnet_name} -ResourceGroupName ${var.vdc_resource_group} | Select-Object -ExpandProperty ResourceGuid >${local.spoke_vnet_guid_file}"
+#     interpreter = ["pwsh", "-c"]
+#   }
 
-  depends_on                   = ["var.integrated_vnet_id"]
-}
+#   depends_on                   = ["var.integrated_vnet_id"]
+# }
 
 # resource "azurerm_template_deployment" "app_service_access_restriction" {
 #   name                         = "${azurerm_app_service.paas_web_app.name}-access-restriction"
@@ -150,44 +150,44 @@ resource "null_resource" "spoke_vnet_guid" {
 #   depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
 # }
 
-resource "azurerm_template_deployment" "app_service_network_association" {
-  name                         = "${azurerm_app_service.paas_web_app.name}-network-association"
-  resource_group_name          = "${var.vdc_resource_group}"
-  deployment_mode              = "Incremental"
+# resource "azurerm_template_deployment" "app_service_network_association" {
+#   name                         = "${azurerm_app_service.paas_web_app.name}-network-association"
+#   resource_group_name          = "${var.vdc_resource_group}"
+#   deployment_mode              = "Incremental"
 
-  template_body                = "${file("${path.module}/appsvc-network-association.json")}"
+#   template_body                = "${file("${path.module}/appsvc-network-association.json")}"
 
-  parameters                   = {
-    location                   = "${var.location}"
-    addressPrefix              = "${var.appsvc_subnet_range}" # Required parameter when updating subnet to add association
-    appServicePlanId           = "${azurerm_app_service_plan.paas_plan.id}"
-    integratedVNetName         = "${local.integrated_vnet_name}"
-    integratedSubnetId         = "${var.appsvc_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
-    integratedSubnetName       = "${var.integrated_subnet_name}"
-  }
+#   parameters                   = {
+#     location                   = "${var.location}"
+#     addressPrefix              = "${var.appsvc_subnet_range}" # Required parameter when updating subnet to add association
+#     appServicePlanId           = "${azurerm_app_service_plan.paas_plan.id}"
+#     integratedVNetName         = "${local.integrated_vnet_name}"
+#     integratedSubnetId         = "${var.appsvc_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
+#     integratedSubnetName       = "${var.integrated_subnet_name}"
+#   }
 
-  depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
-} 
+#   depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
+# } 
 
-resource "azurerm_template_deployment" "app_service_network_connection" {
-  name                         = "${azurerm_app_service.paas_web_app.name}-network-connection"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  deployment_mode              = "Incremental"
+# resource "azurerm_template_deployment" "app_service_network_connection" {
+#   name                         = "${azurerm_app_service.paas_web_app.name}-network-connection"
+#   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+#   deployment_mode              = "Incremental"
 
-  template_body                = "${file("${path.module}/appsvc-network-connection.json")}"
+#   template_body                = "${file("${path.module}/appsvc-network-connection.json")}"
 
-  parameters                   = {
-    location                   = "${azurerm_resource_group.app_rg.location}"
-    functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
-    integratedVNetId           = "${var.integrated_vnet_id}"
-    integratedSubnetId         = "${var.appsvc_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
-    integratedSubnetName       = "${var.integrated_subnet_name}"
-    # Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
-    vnetResourceGuid           = "${trimspace(file(local.spoke_vnet_guid_file))}"
-  }
+#   parameters                   = {
+#     location                   = "${azurerm_resource_group.app_rg.location}"
+#     functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
+#     integratedVNetId           = "${var.integrated_vnet_id}"
+#     integratedSubnetId         = "${var.appsvc_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
+#     integratedSubnetName       = "${var.integrated_subnet_name}"
+#     # Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
+#     vnetResourceGuid           = "${trimspace(file(local.spoke_vnet_guid_file))}"
+#   }
 
-  depends_on                   = ["azurerm_app_service.paas_web_app","azurerm_template_deployment.app_service_network_association","null_resource.spoke_vnet_guid"] # Explicit dependency for ARM templates
-}
+#   depends_on                   = ["azurerm_app_service.paas_web_app","azurerm_template_deployment.app_service_network_association","null_resource.spoke_vnet_guid"] # Explicit dependency for ARM templates
+# }
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group,"-",""))}eventhubNamespace"
