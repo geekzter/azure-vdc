@@ -57,27 +57,29 @@ function DeleteArmResources () {
         AzLogin
         
         $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch       
-        $armResourceIDs | ConvertFrom-Json | ForEach-Object {
-            $resourceId = $_[0]
-            $resource = Get-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"
-            if ($resource) {
-                Write-Host "Removing [id=$resourceId]..."
-                $removed = $false
-                $stopWatch.Reset()
-                $stopWatch.Start()
-                if ($force) {
-                    $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue" -Force
+        $resourceIds = $armResourceIDs | ConvertFrom-Json
+        foreach ($resourceId in $resourceIds) {
+            if (![string]::IsNullOrEmpty($resourceId)) {
+                $resource = Get-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"
+                if ($resource) {
+                    Write-Host "Removing [id=$resourceId]..."
+                    $removed = $false
+                    $stopWatch.Reset()
+                    $stopWatch.Start()
+                    if ($force) {
+                        $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue" -Force
+                    } else {
+                        $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"
+                    }
+                    $stopWatch.Stop()
+                    if ($removed) {
+                        # Mimic Terraform formatting
+                        $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+                        Write-Host "Removed [id=$resourceId, ${elapsed} elapsed]" -ForegroundColor White
+                    }
                 } else {
-                    $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"
+                    Write-Host "Resource [id=$resourceId] does not exist, nothing to remove"
                 }
-                $stopWatch.Stop()
-                if ($removed) {
-                    # Mimic Terraform formatting
-                    $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
-                    Write-Host "Removed [id=$resourceId, ${elapsed} elapsed]" -ForegroundColor White
-                }
-            } else {
-                Write-Host "Resource [id=$resourceId] does not exist, nothing to remove"
             }
         }
     }
@@ -220,6 +222,14 @@ try {
 
         Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform plan stage may fail" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
+
+        # HACK: Create file to be used in Terraform to capture VNet ResourceGuid (not supported directly)
+        # "modules/paas-app/paas-spoke-vnet-resourceguid.tmp"
+        $paasSpokeResourceGuidFile = $(Join-Path modules paas-app paas-spoke-vnet-resourceguid.tmp)
+        Write-Debug "PaaS Spoke VNet ResourceGuid: $paasSpokeResourceGuidFile"
+        if (!(Test-Path $paasSpokeResourceGuidFile)) {
+            Set-Content -Path ($paasSpokeResourceGuidFile) -Value ($null)
+        }
     }
 
     if ($plan -or $apply) {

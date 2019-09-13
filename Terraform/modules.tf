@@ -3,7 +3,7 @@ module "auto_shutdown" {
   resource_environment         = "${local.environment}"
   resource_group               = "${azurerm_resource_group.vdc_rg.name}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
-  app_resource_group           = "${local.app_resource_group}"
+  app_resource_group           = "${local.iaas_app_resource_group}"
   app_storage_replication_type = "${var.app_storage_replication_type}"
   tags                         = "${local.tags}"
   resource_group_ids           = [
@@ -18,10 +18,42 @@ module "auto_shutdown" {
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 }
 
+module "iaas_spoke_vnet" {
+  source                       = "./modules/spoke-vnet"
+  resource_group               = "${azurerm_resource_group.vdc_rg.name}"
+  location                     = "${azurerm_resource_group.vdc_rg.location}"
+  tags                         = "${local.tags}"
+
+  address_space                = "${var.vdc_config["iaas_spoke_range"]}"
+  bastion_subnet_range         = "${var.vdc_config["iaas_spoke_bastion_subnet"]}"
+  deploy_managed_bastion       = "${var.deploy_managed_bastion}"
+  dns_servers                  = "${azurerm_virtual_network.hub_vnet.dns_servers}"
+  enable_routetable_for_subnets = ["app","data"]
+  gateway_ip_address           = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}" # Delays provisioning to start after Azure FW is provisioned
+# gateway_ip_address           = "${cidrhost(var.vdc_config["iag_subnet"], 4)}" # Azure FW uses the 4th available IP address in the range
+  hub_gateway_dependency       = "${module.p2s_vpn.gateway_id}"
+  hub_virtual_network_id       = "${azurerm_virtual_network.hub_vnet.id}"
+  hub_virtual_network_name     = "${azurerm_virtual_network.hub_vnet.name}"
+  service_endpoints            = {
+    app                        = []
+    data                       = []
+  }
+  spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-iaas-spoke-network"
+  subnets                      = {
+    app                        = "${var.vdc_config["iaas_spoke_app_subnet"]}"
+    data                       = "${var.vdc_config["iaas_spoke_data_subnet"]}"
+  }
+  subnet_delegations           = {}
+  use_hub_gateway              = "${var.deploy_vpn}"
+
+  diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
+  diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+}
+
 module "iis_app" {
   source                       = "./modules/iis-app"
   resource_environment         = "${local.environment}"
-  resource_group               = "${local.app_resource_group}"
+  resource_group               = "${local.iaas_app_resource_group}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
@@ -74,37 +106,51 @@ module "p2s_vpn" {
 
 module "paas_app" {
   source                       = "./modules/paas-app"
-  resource_group               = "${module.iis_app.app_resource_group}"
+  resource_group               = "${local.paas_app_resource_group}"
+  vdc_resource_group           = "${azurerm_resource_group.vdc_rg.name}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
   admin_ips                    = "${local.admin_ips}"
+  admin_ip_ranges              = "${local.admin_cidr_ranges}"
+  appsvc_subnet_range          = "${var.vdc_config["paas_spoke_appsvc_subnet"]}"
+  appsvc_subnet_id             = "${module.paas_spoke_vnet.subnet_ids["appservice"]}"
   endpoint_subnet_id           = "${azurerm_subnet.iag_subnet.id}"
+  integrated_subnet_name       = "appservice"
+  integrated_vnet_id           = "${module.paas_spoke_vnet.spoke_virtual_network_id}"
   storage_replication_type     = "${var.app_storage_replication_type}"
+  waf_subnet_id                = "${azurerm_subnet.waf_subnet.id}"
 
+  diagnostics_instrumentation_key = "${azurerm_application_insights.vdc_insights.instrumentation_key}"
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 }
 
-module "iaas_spoke_vnet" {
+module "paas_spoke_vnet" {
   source                       = "./modules/spoke-vnet"
   resource_group               = "${azurerm_resource_group.vdc_rg.name}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
-  address_space                = "${var.vdc_config["iaas_spoke_range"]}"
-  bastion_subnet_range         = "${var.vdc_config["iaas_spoke_bastion_subnet"]}"
-  deploy_managed_bastion       = "${var.deploy_managed_bastion}"
+  address_space                = "${var.vdc_config["paas_spoke_range"]}"
+  bastion_subnet_range         = "${var.vdc_config["paas_spoke_bastion_subnet"]}"
+  deploy_managed_bastion       = false
   dns_servers                  = "${azurerm_virtual_network.hub_vnet.dns_servers}"
+  enable_routetable_for_subnets = []
   gateway_ip_address           = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}" # Delays provisioning to start after Azure FW is provisioned
-# gateway_ip_address           = "${cidrhost(var.vdc_config["iag_subnet"], 4)}" # Azure FW uses the 4th available IP address in the range
   hub_gateway_dependency       = "${module.p2s_vpn.gateway_id}"
   hub_virtual_network_id       = "${azurerm_virtual_network.hub_vnet.id}"
   hub_virtual_network_name     = "${azurerm_virtual_network.hub_vnet.name}"
-  spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-spoke-network"
+  service_endpoints            = {
+    appservice                 = ["Microsoft.Storage"]
+  }
+  spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-paas-spoke-network"
   subnets                      = {
-    app                        = "${var.vdc_config["iaas_spoke_app_subnet"]}"
-    data                       = "${var.vdc_config["iaas_spoke_data_subnet"]}"
+    appservice                 = "${var.vdc_config["paas_spoke_appsvc_subnet"]}"
+  }
+
+  subnet_delegations           = {
+    appservice                 = "Microsoft.Web/serverFarms"
   }
   use_hub_gateway              = "${var.deploy_vpn}"
 

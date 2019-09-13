@@ -1,0 +1,59 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string"
+        },
+        "addressPrefix": {
+            "type": "String"
+        },
+        "appServicePlanId": {
+            "type": "String"
+        },
+        "integratedVNetName": {
+            "type": "String"
+        },
+        "integratedSubnetId": {
+            "type": "String"
+        },
+        "integratedSubnetName": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(parameters('integratedVNetName'), '/',parameters('integratedSubnetName'))]",
+            "properties": {
+                "addressPrefix": "[parameters('addressPrefix')]",
+                "serviceAssociationLinks": [
+                    {
+                        "name": "AppServiceLink",
+                        "type": "Microsoft.Network/virtualNetworks/subnets/serviceAssociationLinks",
+                        "properties": {
+                            "linkedResourceType": "Microsoft.Web/serverfarms",
+                            "link": "[parameters('appServicePlanId')]",
+                            "allowDelete": false,
+                            "locations": []
+                        }
+                    }
+                ],
+                "delegations": [
+                    {
+                        "name": "delegation",
+                        "properties": {
+                            "serviceName": "Microsoft.Web/serverfarms",
+                            "actions": [
+                                "Microsoft.Network/virtualNetworks/subnets/action"
+                            ]
+                        }
+                    }
+                ],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        }
+    ]
+}

@@ -56,7 +56,7 @@ resource "azurerm_route_table" "mgmt_route_table" {
 }
 # ******************* VNET ******************* #
 resource "azurerm_virtual_network" "hub_vnet" {
-  name                        = "${azurerm_resource_group.vdc_rg.name}-network"
+  name                        = "${azurerm_resource_group.vdc_rg.name}-hub-network"
   location                    = "${var.location}"
   address_space               = ["${var.vdc_config["hub_range"]}"]
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
@@ -68,7 +68,8 @@ resource "azurerm_subnet" "iag_subnet" {
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix              = "${var.vdc_config["hub_iag_subnet"]}"
   service_endpoints           = [
-                                "Microsoft.EventHub", 
+                                "Microsoft.EventHub",
+                                "Microsoft.Sql",
                                 "Microsoft.Storage"
   ]
 }
@@ -78,6 +79,9 @@ resource "azurerm_subnet" "waf_subnet" {
   virtual_network_name        = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix              = "${var.vdc_config["hub_waf_subnet"]}"
+  service_endpoints           = [
+                                "Microsoft.Web"
+  ]
 }
 
 resource "azurerm_subnet" "mgmt_subnet" {

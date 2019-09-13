@@ -29,15 +29,17 @@ locals {
   suffix                       = "${var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result}" 
   environment                  = "${var.resource_environment != "" ? lower(var.resource_environment) : terraform.workspace}" 
   vdc_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-${lower(local.suffix)}"
-  app_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-app-${lower(local.suffix)}"
+  iaas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-iaasapp-${lower(local.suffix)}"
+  paas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-paasapp-${lower(local.suffix)}"
   app_hostname                 = "${lower(local.environment)}apphost"
   app_dns_name                 = "${lower(local.environment)}app_web_vm"
   db_hostname                  = "${lower(local.environment)}dbhost"
   db_dns_name                  = "${lower(local.environment)}db_web_vm"
   admin_ip                     = ["${chomp(data.http.localpublicip.body)}"]
-  admin_ip_cidr                = ["${chomp(data.http.localpublicip.body)}/32"]
+  admin_ip_cidr                = ["${chomp(data.http.localpublicip.body)}/30"] # /32 not allowed in network_rules
   admin_ips                    = "${setunion(local.admin_ip,var.admin_ips)}"
-  admin_ip_ranges              = "${setunion(local.admin_ip_cidr,var.admin_ip_ranges)}"
+  admin_ip_ranges              = "${setunion([for ip in local.admin_ips : format("%s/30", ip)],var.admin_ip_ranges)}" # /32 not allowed in network_rules
+  admin_cidr_ranges            = "${[for range in local.admin_ip_ranges : cidrsubnet(range,0,0)]}" # Make sure ranges have correct base address
 
   tags                         = "${merge(
     var.tags,

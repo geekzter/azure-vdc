@@ -101,6 +101,7 @@ terraform.log
 
 # Ignore temp files
 tmp*.*
+*.tmp
 err.out
 *.~*
 ~*.*

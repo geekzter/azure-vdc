@@ -9,7 +9,8 @@ It does not contain all components of a complete VDC (DNS, AD DC's, File Transfe
 ## Components & Features
 This projects contains the following components
 - A hub network with subnets for shared components (dmz, mgmt, etc)
-- A spoke network for applications with subnet segregation (app, data)
+- A spoke network for IaaS applications with subnet segregation (app, data)
+- A spoke network for PaaS applications, with prepared support for App Service (experimental, with manual steps required for vnet integration)
 - Azure Firewall used as Internet Access Gateway (IAG, e.g. outbound fqdn whitelisting)
 - Application Gateway as Web Application Firewall (WAF, inbound HTTP)
 - Application VM's with IIS enabled, as Azure Pipeline agent deployed
