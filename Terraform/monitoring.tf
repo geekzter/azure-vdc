@@ -6,6 +6,8 @@ resource "azurerm_storage_account" "vdc_diag_storage" {
   account_replication_type     = "${var.app_storage_replication_type}"
 
   tags                         = "${local.tags}"
+
+  depends_on                   = ["azurerm_resource_group.vdc_rg"]
 }
 
 resource "azurerm_log_analytics_workspace" "vcd_workspace" {

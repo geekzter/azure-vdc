@@ -1,5 +1,5 @@
-variable resource_group {}
-variable vdc_resource_group {}
+variable resource_group_name {}
+variable vdc_resource_group_id {}
 variable location {}
 variable tags {
   type                         = map
@@ -7,10 +7,9 @@ variable tags {
 
 variable admin_ips {}
 variable admin_ip_ranges {}
-variable appsvc_subnet_range {}
-variable appsvc_subnet_id {}
-variable endpoint_subnet_id {}
-variable integrated_subnet_name {}
+variable iag_subnet_id {}
+variable integrated_subnet_range {}
+variable integrated_subnet_id {}
 variable integrated_vnet_id {}
 variable storage_replication_type {}
 variable waf_subnet_id {}

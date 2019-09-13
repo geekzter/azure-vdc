@@ -1,5 +1,5 @@
-variable "resource_group" {
-  description                  = "The name of the resource group"
+variable "resource_group_id" {
+  description                  = "The id of the resource group"
 }
 variable "location" {
   description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."
@@ -18,8 +18,8 @@ variable "diagnostics_workspace_id" {
 
 variable "subnet_range" {}
 
-variable "virtual_network_name" {
-    description                = "The name of the Virtual Network to connect the VPN to"
+variable "virtual_network_id" {
+    description                = "The id of the Virtual Network"
 }
 
 variable "deploy_managed_bastion" {

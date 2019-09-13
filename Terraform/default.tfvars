@@ -2,10 +2,10 @@
 
 resource_prefix                = "vdc"
 resource_environment           = "dev"
-location                       = "westeurope"
-workspace_location             = "westeurope"
+location                       = "southcentralus"
+workspace_location             = "southcentralus"
 
-deploy_auto_shutdown           = false
-deploy_managed_bastion         = false
+deploy_auto_shutdown           = true
+deploy_managed_bastion         = true
 deploy_vpn                     = false
 use_vanity_domain_and_ssl      = false

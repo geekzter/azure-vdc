@@ -1,11 +1,13 @@
 locals {
+  hub_virtual_network_name     = "${element(split("/",var.hub_virtual_network_id),length(split("/",var.hub_virtual_network_id))-1)}"
   managed_bastion_name         = "${azurerm_virtual_network.spoke_vnet.name}-managed-bastion"
   subnet_id_map                = "${zipmap(azurerm_subnet.subnet.*.name, azurerm_subnet.subnet.*.id)}"
+  resource_group_name          = "${element(split("/",var.resource_group_id),length(split("/",var.resource_group_id))-1)}"
 }
 
 resource "azurerm_virtual_network" "spoke_vnet" {
   name                         = "${var.spoke_virtual_network_name}"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${local.resource_group_name}"
   location                     = "${var.location}"
   address_space                = ["${var.address_space}"]
   dns_servers                  = "${var.dns_servers}"
@@ -31,7 +33,7 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
 
 resource "azurerm_virtual_network_peering" "spoke_to_hub" {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-spoke2hub"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${local.resource_group_name}"
   virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
   remote_virtual_network_id    = "${var.hub_virtual_network_id}"
 
@@ -45,8 +47,8 @@ resource "azurerm_virtual_network_peering" "spoke_to_hub" {
 
 resource "azurerm_virtual_network_peering" "hub_to_spoke" {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-hub2spoke"
-  resource_group_name          = "${var.resource_group}"
-  virtual_network_name         = "${var.hub_virtual_network_name}"
+  resource_group_name          = "${local.resource_group_name}"
+  virtual_network_name         = "${local.hub_virtual_network_name}"
   remote_virtual_network_id    = "${azurerm_virtual_network.spoke_vnet.id}"
 
   allow_forwarded_traffic      = true
@@ -59,7 +61,7 @@ resource "azurerm_virtual_network_peering" "hub_to_spoke" {
 
 resource "azurerm_route_table" "spoke_route_table" {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-routes"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${local.resource_group_name}"
   location                     = "${var.location}"
 
   route {
@@ -78,7 +80,7 @@ resource "azurerm_route_table" "spoke_route_table" {
 
 resource "azurerm_network_security_group" "spoke_nsg" {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-nsg"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${local.resource_group_name}"
   location                     = "${var.location}"
 
   security_rule {
@@ -205,7 +207,7 @@ resource "azurerm_network_security_group" "spoke_nsg" {
 resource "azurerm_subnet" "subnet" {
   name                         = "${element(keys(var.subnets),count.index)}"
   virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${local.resource_group_name}"
   address_prefix               = "${element(values(var.subnets),count.index)}"
   count                        = "${length(var.subnets)}"
   
@@ -266,7 +268,7 @@ resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
 resource "azurerm_subnet" "managed_bastion_subnet" {
   name                         = "AzureBastionSubnet"
   virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${local.resource_group_name}"
   address_prefix               = "${var.bastion_subnet_range}"
   #service_delegation # needed for AppSvc
 }
@@ -274,7 +276,7 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
 resource "azurerm_public_ip" "managed_bastion_pip" {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-managed-bastion-pip"
   location                     = "${var.location}"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${local.resource_group_name}"
   allocation_method            = "Static"
   sku                          = "Standard"
   # Zone redundant
@@ -285,13 +287,13 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
 # https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
 resource "azurerm_template_deployment" "managed_bastion" {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-managed-bastion-template"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${local.resource_group_name}"
   deployment_mode              = "Incremental"
   template_body                = "${file("${path.root}/modules/managed-bastion/bastion.json")}"
 
   parameters                   = {
     location                   = "${var.location}"
-    resourceGroup              = "${var.resource_group}"
+    resourceGroup              = "${local.resource_group_name}"
     bastionHostName            = "${local.managed_bastion_name}"
     subnetId                   = "${azurerm_subnet.managed_bastion_subnet.id}"
     publicIpAddressName        = "${azurerm_public_ip.managed_bastion_pip.name}"

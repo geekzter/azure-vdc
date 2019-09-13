@@ -1,7 +1,7 @@
 module "auto_shutdown" {
   source                       = "./modules/auto-shutdown"
   resource_environment         = "${local.environment}"
-  resource_group               = "${azurerm_resource_group.vdc_rg.name}"
+  resource_group_id            = "${azurerm_resource_group.vdc_rg.id}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   app_resource_group           = "${local.iaas_app_resource_group}"
   app_storage_replication_type = "${var.app_storage_replication_type}"
@@ -20,7 +20,7 @@ module "auto_shutdown" {
 
 module "iaas_spoke_vnet" {
   source                       = "./modules/spoke-vnet"
-  resource_group               = "${azurerm_resource_group.vdc_rg.name}"
+  resource_group_id            = "${azurerm_resource_group.vdc_rg.id}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
@@ -33,7 +33,6 @@ module "iaas_spoke_vnet" {
 # gateway_ip_address           = "${cidrhost(var.vdc_config["iag_subnet"], 4)}" # Azure FW uses the 4th available IP address in the range
   hub_gateway_dependency       = "${module.p2s_vpn.gateway_id}"
   hub_virtual_network_id       = "${azurerm_virtual_network.hub_vnet.id}"
-  hub_virtual_network_name     = "${azurerm_virtual_network.hub_vnet.name}"
   service_endpoints            = {
     app                        = []
     data                       = []
@@ -73,12 +72,12 @@ module "iis_app" {
 
 module "managed_bastion_hub" {
   source                       = "./modules/managed-bastion"
-  resource_group               = "${azurerm_resource_group.vdc_rg.name}"
+  resource_group_id            = "${azurerm_resource_group.vdc_rg.id}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
   subnet_range                 = "${var.vdc_config["hub_bastion_subnet"]}"
-  virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
+  virtual_network_id           = "${azurerm_virtual_network.hub_vnet.id}"
 
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
@@ -88,11 +87,11 @@ module "managed_bastion_hub" {
 
 module "p2s_vpn" {
   source                       = "./modules/p2s-vpn"
-  resource_group               = "${azurerm_resource_group.vdc_rg.name}"
+  resource_group_id            = "${azurerm_resource_group.vdc_rg.id}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
-  virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
+  virtual_network_id           = "${azurerm_virtual_network.hub_vnet.id}"
   subnet_range                 = "${var.vdc_config["hub_vpn_subnet"]}"
   vpn_range                    = "${var.vdc_config["vpn_range"]}"
   vpn_root_cert_name           = "${var.vpn_root_cert_name}"
@@ -106,17 +105,16 @@ module "p2s_vpn" {
 
 module "paas_app" {
   source                       = "./modules/paas-app"
-  resource_group               = "${local.paas_app_resource_group}"
-  vdc_resource_group           = "${azurerm_resource_group.vdc_rg.name}"
+  resource_group_name          = "${local.paas_app_resource_group}"
+  vdc_resource_group_id        = "${azurerm_resource_group.vdc_rg.id}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
   admin_ips                    = "${local.admin_ips}"
   admin_ip_ranges              = "${local.admin_cidr_ranges}"
-  appsvc_subnet_range          = "${var.vdc_config["paas_spoke_appsvc_subnet"]}"
-  appsvc_subnet_id             = "${module.paas_spoke_vnet.subnet_ids["appservice"]}"
-  endpoint_subnet_id           = "${azurerm_subnet.iag_subnet.id}"
-  integrated_subnet_name       = "appservice"
+  iag_subnet_id                = "${azurerm_subnet.iag_subnet.id}"
+  integrated_subnet_id         = "${module.paas_spoke_vnet.subnet_ids["appservice"]}"
+  integrated_subnet_range      = "${var.vdc_config["paas_spoke_appsvc_subnet"]}"
   integrated_vnet_id           = "${module.paas_spoke_vnet.spoke_virtual_network_id}"
   storage_replication_type     = "${var.app_storage_replication_type}"
   waf_subnet_id                = "${azurerm_subnet.waf_subnet.id}"
@@ -128,7 +126,7 @@ module "paas_app" {
 
 module "paas_spoke_vnet" {
   source                       = "./modules/spoke-vnet"
-  resource_group               = "${azurerm_resource_group.vdc_rg.name}"
+  resource_group_id            = "${azurerm_resource_group.vdc_rg.id}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
@@ -140,7 +138,6 @@ module "paas_spoke_vnet" {
   gateway_ip_address           = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}" # Delays provisioning to start after Azure FW is provisioned
   hub_gateway_dependency       = "${module.p2s_vpn.gateway_id}"
   hub_virtual_network_id       = "${azurerm_virtual_network.hub_vnet.id}"
-  hub_virtual_network_name     = "${azurerm_virtual_network.hub_vnet.name}"
   service_endpoints            = {
     appservice                 = ["Microsoft.Storage"]
   }

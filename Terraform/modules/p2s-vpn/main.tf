@@ -1,14 +1,19 @@
+locals {
+  resource_group_name          = "${element(split("/",var.resource_group_id),length(split("/",var.resource_group_id))-1)}"
+  virtual_network_name         = "${element(split("/",var.virtual_network_id),length(split("/",var.virtual_network_id))-1)}"
+}
+
 resource "azurerm_subnet" "vpn_subnet" {
   name                         = "GatewaySubnet"
-  resource_group_name          = "${var.resource_group}"
-  virtual_network_name         = "${var.virtual_network_name}"
+  resource_group_name          = "${local.resource_group_name}"
+  virtual_network_name         = "${local.virtual_network_name}"
   address_prefix               = "${var.subnet_range}"
 }
 
 resource "azurerm_public_ip" "vpn_pip" {
-  name                         = "${var.resource_group}-vpn-pip"
+  name                         = "${local.resource_group_name}-vpn-pip"
   location                     = "${var.location}"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${local.resource_group_name}"
 
   allocation_method            = "Dynamic"
   # Zone redundant
@@ -18,8 +23,8 @@ resource "azurerm_public_ip" "vpn_pip" {
 }
 
 resource "azurerm_virtual_network_gateway" "vpn_gw" {
-  name                         = "${var.resource_group}-vpn"
-  resource_group_name          = "${var.resource_group}"
+  name                         = "${local.resource_group_name}-vpn"
+  resource_group_name          = "${local.resource_group_name}"
   location                     = "${var.location}"
 
   type                         = "Vpn"

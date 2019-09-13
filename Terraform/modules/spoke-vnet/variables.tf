@@ -1,4 +1,4 @@
-variable resource_group {}
+variable resource_group_id {}
 variable location {}
 variable tags {
   type                         = map
@@ -15,7 +15,6 @@ variable dns_servers {
 variable gateway_ip_address {}
 variable hub_gateway_dependency {}
 variable hub_virtual_network_id {}
-variable hub_virtual_network_name {}
 variable enable_routetable_for_subnets {
   type                         = list
 }

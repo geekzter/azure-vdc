@@ -1,19 +1,21 @@
 locals {
-  managed_bastion_name         = "${var.virtual_network_name}-managed-bastion"
+  managed_bastion_name         = "${local.virtual_network_name}-managed-bastion"
+  resource_group_name          = "${element(split("/",var.resource_group_id),length(split("/",var.resource_group_id))-1)}"
+  virtual_network_name         = "${element(split("/",var.virtual_network_id),length(split("/",var.virtual_network_id))-1)}"
 }
 
 # This is the tempale for Managed Bastion, IaaS bastion is defined in management.tf
 resource "azurerm_subnet" "managed_bastion_subnet" {
   name                         = "AzureBastionSubnet"
-  virtual_network_name         = "${var.virtual_network_name}"
-  resource_group_name          = "${var.resource_group}"
+  virtual_network_name         = "${local.virtual_network_name}"
+  resource_group_name          = "${local.resource_group_name}"
   address_prefix               = "${var.subnet_range}"
 }
 
 resource "azurerm_public_ip" "managed_bastion_pip" {
-  name                         = "${var.virtual_network_name}-managed-bastion-pip"
+  name                         = "${local.virtual_network_name}-managed-bastion-pip"
   location                     = "${var.location}"
-  resource_group_name          = "${var.resource_group}"
+  resource_group_name          = "${local.resource_group_name}"
   allocation_method            = "Static"
   sku                          = "Standard"
   # Zone redundant
@@ -23,14 +25,14 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
 # Configure Managed Bastion with ARM template as Terraform doesn't (yet) support this (preview) service
 # https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
 resource "azurerm_template_deployment" "managed_bastion" {
-  name                         = "${var.virtual_network_name}-managed-bastion-template"
-  resource_group_name          = "${var.resource_group}"
+  name                         = "${local.virtual_network_name}-managed-bastion-template"
+  resource_group_name          = "${local.resource_group_name}"
   deployment_mode              = "Incremental"
   template_body                = "${file("${path.module}/bastion.json")}"
 
   parameters                   = {
     location                   = "${var.location}"
-    resourceGroup              = "${var.resource_group}"
+    resourceGroup              = "${local.resource_group_name}"
     bastionHostName            = "${local.managed_bastion_name}"
     subnetId                   = "${azurerm_subnet.managed_bastion_subnet.id}"
     publicIpAddressName        = "${azurerm_public_ip.managed_bastion_pip.name}"
