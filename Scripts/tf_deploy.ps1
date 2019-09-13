@@ -57,7 +57,7 @@ function DeleteArmResources () {
         AzLogin
         
         $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch       
-        $resourceId = $armResourceIDs | ConvertFrom-Json
+        $resourceIds = $armResourceIDs | ConvertFrom-Json
         foreach ($resourceId in $resourceIds) {
             if (![string]::IsNullOrEmpty($resourceId)) {
                 $resource = Get-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"

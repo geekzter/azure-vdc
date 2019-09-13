@@ -92,6 +92,10 @@ output "bastion_rdp_vpn" {
   value = "mstsc.exe /v:${var.vdc_config["hub_bastion_address"]}"
 }
 
+output spoke_vnet_guid {
+    value     = "${module.paas_app.spoke_vnet_guid}"
+}
+
 # Export Resource ID's of resources created in embedded ARM templates
 # This can be used in script to manage (e.g. clean up) these resources as Terraform doesn't know about them
 output "arm_resource_ids" {
