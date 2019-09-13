@@ -72,8 +72,12 @@ output "app_storage_account_name" {
   value       = "${module.paas_app.storage_account_name}"
 }
 
-output "app_resource_group" {
+output "iaas_app_resource_group" {
   value       = "${local.iaas_app_resource_group}"
+}
+
+output "paas_app_resource_group" {
+  value       = "${local.paas_app_resource_group}"
 }
 
 output "bastion_name" {
