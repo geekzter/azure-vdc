@@ -27,7 +27,8 @@ function AzLogin () {
 
 AzLogin
 
-$resourceGroups = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -like "$prefix-$environment-*$suffix"}
+$wildcard = "*$prefix-$environment-*$suffix"
+$resourceGroups = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -like $wildcard}
 $resourceGroupNames = $resourceGroups | Select-Object -ExpandProperty ResourceGroupName
 
 $proceedanswer = Read-Host "If you wish to proceed removing these resource groups:`n$resourceGroupNames `nplease reply 'yes' - null or N aborts"
@@ -36,3 +37,5 @@ if ($proceedanswer -ne "yes") {
     Exit
 }
 $resourceGroups | Remove-AzResourceGroup -AsJob -Force
+
+Get-Job | Where-Object {$_.Name -like $wildcard} | Format-Table -Property Id, Name, State
