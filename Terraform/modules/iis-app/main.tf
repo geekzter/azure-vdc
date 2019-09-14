@@ -22,7 +22,7 @@ resource "azurerm_availability_set" "app_web_avset" {
 
   tags                         = "${var.tags}"
 
-  depends_on                   = "${azurerm_resource_group.app_rg.id}"
+  depends_on                   = ["azurerm_resource_group.app_rg"]
 }
 
 resource "azurerm_network_interface" "app_web_if" {
@@ -174,7 +174,7 @@ resource "azurerm_availability_set" "app_db_avset" {
   managed                      = true
 
   tags                         = "${var.tags}"
-  depends_on                   = "${azurerm_resource_group.app_rg.id}"
+  depends_on                   = ["azurerm_resource_group.app_rg"]
 }
 
 resource "azurerm_lb" "app_db_lb" {

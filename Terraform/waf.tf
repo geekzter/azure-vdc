@@ -24,7 +24,7 @@ resource "azurerm_public_ip" "waf_pip" {
 
   tags                         = "${local.tags}"
 
-  depends_on                  = "${azurerm_resource_group.vdc_rg.id}"
+  depends_on                   = ["azurerm_resource_group.vdc_rg"]
 }
 
 resource "azurerm_dns_cname_record" "waf_pip_cname" {
