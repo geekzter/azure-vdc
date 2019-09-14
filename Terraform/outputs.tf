@@ -105,3 +105,11 @@ output spoke_vnet_guid {
 output "arm_resource_ids" {
   value       = "${concat(module.managed_bastion_hub.arm_resource_ids,module.iaas_spoke_vnet.arm_resource_ids)}"
 }
+
+output resource_group_ids {
+  value       = [
+                "${azurerm_resource_group.vdc_rg}",
+                "${module.iis_app.app_resource_group_id}",
+                "${module.paas_app.resource_group_id}"
+  ]
+}

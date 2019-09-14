@@ -1,7 +1,7 @@
 # tf_deploy.ps1 loads <terraform-worksopace>.tfvars
 
 resource_prefix                = "vdc"
-resource_environment           = "tst"
+resource_environment           = "test"
 location                       = "southcentralus"
 workspace_location             = "southcentralus"
 

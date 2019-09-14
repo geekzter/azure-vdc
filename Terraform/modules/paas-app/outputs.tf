@@ -58,3 +58,7 @@ output storage_fqdns {
         # "${azurerm_storage_account.app_storage.secondary_web_host}",
     ]
 }
+
+output resource_group_id {
+    value = "${azurerm_resource_group.app_rg.id}"
+}

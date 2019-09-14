@@ -15,7 +15,7 @@ resource "azurerm_resource_group" "app_rg" {
 }
 
 resource "azurerm_storage_account" "app_storage" {
-  name                         = "${lower(replace(var.resource_group_name,"-",""))}storage"
+  name                         = "${substr(lower(replace(var.resource_group_name,"-","")),0,20)}stor"
   location                     = "${azurerm_resource_group.app_rg.location}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   account_kind                 = "StorageV2"
@@ -54,7 +54,7 @@ resource "azurerm_storage_blob" "app_storage_blob_sample" {
 }
 
 resource "azurerm_storage_account" "archive_storage" {
-  name                         = "${lower(replace(var.resource_group_name,"-",""))}archive"
+  name                         = "${substr(lower(replace(var.resource_group_name,"-","")),0,20)}arch"
   location                     = "${azurerm_resource_group.app_rg.location}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   account_kind                 = "StorageV2"
