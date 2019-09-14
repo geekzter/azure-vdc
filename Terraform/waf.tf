@@ -23,6 +23,8 @@ resource "azurerm_public_ip" "waf_pip" {
   #zones                        = ["1", "2", "3"]
 
   tags                         = "${local.tags}"
+
+  depends_on                  = "${azurerm_resource_group.vdc_rg.id}"
 }
 
 resource "azurerm_dns_cname_record" "waf_pip_cname" {

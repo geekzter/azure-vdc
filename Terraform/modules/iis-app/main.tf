@@ -21,6 +21,8 @@ resource "azurerm_availability_set" "app_web_avset" {
   managed                      = true
 
   tags                         = "${var.tags}"
+
+  depends_on                   = "${azurerm_resource_group.app_rg.id}"
 }
 
 resource "azurerm_network_interface" "app_web_if" {
@@ -159,9 +161,8 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
     } 
   EOF
 
-  depends_on                   = ["var.release_agent_dependency_id"]
-
   tags                         = "${var.tags}"
+  depends_on                   = ["var.release_agent_dependency_id"]
 }
 
 resource "azurerm_availability_set" "app_db_avset" {
@@ -173,6 +174,7 @@ resource "azurerm_availability_set" "app_db_avset" {
   managed                      = true
 
   tags                         = "${var.tags}"
+  depends_on                   = "${azurerm_resource_group.app_rg.id}"
 }
 
 resource "azurerm_lb" "app_db_lb" {

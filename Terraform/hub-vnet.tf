@@ -39,6 +39,8 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
     source_address_prefix     = "${var.vdc_config["hub_mgmt_subnet"]}"
     destination_address_prefix= "VirtualNetwork"
   }
+
+  depends_on                  = "${azurerm_resource_group.vdc_rg.id}"
 }
 
 # ******************* Routing ******************* #
@@ -60,6 +62,8 @@ resource "azurerm_virtual_network" "hub_vnet" {
   location                    = "${var.location}"
   address_space               = ["${var.vdc_config["hub_range"]}"]
   resource_group_name         = "${azurerm_resource_group.vdc_rg.name}"
+
+  depends_on                  = "${azurerm_resource_group.vdc_rg.id}"
 }
 
 resource "azurerm_subnet" "iag_subnet" {

@@ -17,6 +17,8 @@ resource "azurerm_public_ip" "iag_pip" {
   #zones                        = ["1", "2", "3"]
 
   tags                         = "${local.tags}"
+
+  depends_on                  = "${azurerm_resource_group.vdc_rg.id}"
 }
 
 resource "azurerm_dns_cname_record" "iag_pip_cname" {
