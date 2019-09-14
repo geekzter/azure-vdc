@@ -14,14 +14,15 @@
 
 ### Arguments
 param ( 
-    [parameter(Mandatory=$false)][switch]$init=$false,
-    [parameter(Mandatory=$false)][switch]$plan=$false,
-    [parameter(Mandatory=$false)][switch]$validate=$false,
-    [parameter(Mandatory=$false)][switch]$apply=$false,
-    [parameter(Mandatory=$false)][switch]$destroy=$false,
-    [parameter(Mandatory=$false)][switch]$output=$false,
-    [parameter(Mandatory=$false)][switch]$force=$false,
-    [parameter(Mandatory=$false)][switch]$upgrade=$false,
+    [parameter(Mandatory=$false,HelpMessage="Initialize Terraform backend, modules & provider")][switch]$init=$false,
+    [parameter(Mandatory=$false,HelpMessage="Perform Terraform plan stage")][switch]$plan=$false,
+    [parameter(Mandatory=$false,HelpMessage="Perform Terraform validate stage")][switch]$validate=$false,
+    [parameter(Mandatory=$false,HelpMessage="Perform Terraform apply stage (implies plan)")][switch]$apply=$false,
+    [parameter(Mandatory=$false,HelpMessage="Perform Terraform destroy stage")][switch]$destroy=$false,
+    [parameter(Mandatory=$false,HelpMessage="Show Terraform output variables")][switch]$output=$false,
+    [parameter(Mandatory=$false,HelpMessage="Don't show prompts")][switch]$force=$false,
+    [parameter(Mandatory=$false,HelpMessage="Initialize Terraform backend, upgrade modules & provider")][switch]$upgrade=$false,
+    [parameter(Mandatory=$false,HelpMessage="Clears Terraform worksoace before starting")][switch]$clear=$false,
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $workspace = "default",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][int]$parallelism=10, # Lower this to 10 if you run into rate limits
@@ -213,6 +214,12 @@ try {
     if (!(Get-ChildItem Env:TF_VAR_*) -and (Test-Path $varsFile)) {
         # Load variables from file, if it exists and environment variables have not been set
         $varArgs = "-var-file='$varsFile'"
+    }
+
+    if ($clear) {
+        # Clear Terraform workspace
+        Write-Host "`nClearing workspace $workspace" -ForegroundColor Green 
+        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "clear_tfstate.ps1") 
     }
 
     if ($plan -or $apply -or $destroy) {
