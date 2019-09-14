@@ -2,8 +2,7 @@
 This project contains a sample Virtual Network deployment, typically used as part of a Virtual Datacenter (VDC)
 It does not contain all components of a complete VDC (DNS, AD DC's, File Transfer)
 
-[![Build Status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-validate-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=43&branchName=master)
-
+[![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-plan-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=45&branchName=master)
 ![alt text](diagram.png "Architecture")
 
 ## Components & Features
