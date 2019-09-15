@@ -108,7 +108,7 @@ output "arm_resource_ids" {
 
 output resource_group_ids {
   value       = [
-                "${azurerm_resource_group.vdc_rg}",
+                "${azurerm_resource_group.vdc_rg.id}",
                 "${module.iis_app.app_resource_group_id}",
                 "${module.paas_app.resource_group_id}"
   ]

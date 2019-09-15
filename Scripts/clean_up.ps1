@@ -24,7 +24,7 @@ function AzLogin () {
 }
 
 function RemoveResourceGroups (
-    [parameter(Mandatory=$false)][string[]]$resourceGroups
+    [parameter(Mandatory=$false)][object[]]$resourceGroups
 ) {
     if ($resourceGroups) {
         $resourceGroupNames = $resourceGroups | Select-Object -ExpandProperty ResourceGroupName
@@ -55,7 +55,7 @@ try {
     {
         if ($workspace.StartsWith("*") -or $workspace -notmatch "\w") {
             # Skip active workspace
-            Write-Host "Skipping workspace with illegal name '$workspace'"
+            Write-Information "Skipping workspace with illegal name '$workspace'"
             continue
         }
 
@@ -75,7 +75,7 @@ try {
             $Script:suffix           = $(terraform output "resource_suffix" 2>$null)
             if ($suffix) {
                 $suffixes += $suffix
-                Write-Host "Added $suffix to $suffixes"
+                Write-Host "Added $suffix to suffix list $suffixes"
             }
 
             $Script:outputAvailable  = (![string]::IsNullOrEmpty($prefix) -and ![string]::IsNullOrEmpty($environment) -and ![string]::IsNullOrEmpty($suffix))
@@ -90,7 +90,6 @@ try {
         }
      
         $resourceGroups = $null
-        $resourceGroupNames = $null
         if ($isWorkspaceEmpty) {
             # Remove everything according to known conventions
             $prefix = "vdc"
@@ -99,7 +98,6 @@ try {
 
             Write-Host "Workspace $workspace is empty, looking for resource groups that match $matchWildcard.."
             $resourceGroups = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -like $matchWildcard}
-            $resourceGroupNames = $resourceGroups | Select-Object -ExpandProperty ResourceGroupName
         } else {
             if ($outputAvailable) {
                 $matchWildcard = "*$prefix-$environment-*"
@@ -113,7 +111,6 @@ try {
         if (!(RemoveResourceGroups $resourceGroups)) {
             Write-Host "Nothing found to delete for workspace '$workspace'"
         }
-
     }
 
     $notMatchSuffixes = $suffixes -join '|'
