@@ -218,7 +218,7 @@ try {
 
     if ($clear) {
         # Clear Terraform workspace
-        Write-Host "`nClearing workspace $workspace" -ForegroundColor Green 
+        Write-Host "`nClearing workspace..." -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "clear_tfstate.ps1") 
     }
 

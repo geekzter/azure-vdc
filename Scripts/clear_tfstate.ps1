@@ -6,7 +6,7 @@ param (
 
 Push-Location (Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent "Terraform")
 
-$currentWorkspace = $(terraform workspace list | Select-String -Pattern \* | %{$_ -Replace ".* ",""} 2> $null)
+$currentWorkspace = $(terraform workspace show)
 if ($workspace) {
     terraform workspace select $workspace
 } else {

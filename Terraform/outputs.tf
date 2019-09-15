@@ -113,3 +113,13 @@ output resource_group_ids {
                 "${module.paas_app.resource_group_id}"
   ]
 }
+
+output resource_prefix {
+  value       = "${var.resource_prefix}"
+}
+output resource_environment {
+  value       = "${local.environment}"
+}
+output resource_suffix {
+  value       = "${local.suffix}"
+}
