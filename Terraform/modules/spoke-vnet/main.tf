@@ -214,7 +214,7 @@ resource "azurerm_subnet" "subnet" {
   # Create subnet delegation, if requested
   dynamic "delegation" {
     # TODO: Won't work with multiple subnets and multiple delegations, as each delegation will be created for each subnet
-    for_each = "${var.subnet_delegations}"
+    for_each                   = "${var.subnet_delegations}"
     content {
       name                     = "${delegation.key}_delegation"
       service_delegation {

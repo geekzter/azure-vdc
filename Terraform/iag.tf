@@ -107,6 +107,11 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
 
     target_fqdns               = [
       # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/v2-windows?view=azure-devops
+      "app.vssps.visualstudio.com",
+      "*.visualstudio.com",
+      "*.vsrm.visualstudio.com",
+      "*.pkgs.visualstudio.com",
+      "*.vssps.visualstudio.com",
       "vstsagentpackage.azureedge.net",
       "dev.azure.com",
       "*.dev.azure.com",
@@ -138,10 +143,13 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.hashicorp.com",
       "download.microsoft.com",
       "packages.microsoft.com",
+      "update.microsoft.com",
+      "*.update.microsoft.com",
       "nuget.org",
       "*.nuget.org",
       "onegetcdn.azureedge.net",
-      "*.ubuntu.com"
+      "*.ubuntu.com",
+      "*.windowsupdate.com"
     ]
 
     protocol {

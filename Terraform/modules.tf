@@ -49,6 +49,15 @@ module "iaas_spoke_vnet" {
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 }
 
+locals {
+  release_agent_dependencies   = [
+                                 "${azurerm_firewall_application_rule_collection.iag_app_rules.id}",
+                                 "${module.iaas_spoke_vnet.route_dependency}"
+  ]
+  # HACK: This value is dependent on all elements of the list being created
+  release_agent_dependency     = "${join("|",[for dep in local.release_agent_dependencies : substr(dep,0,1)])}"
+}
+
 module "iis_app" {
   source                       = "./modules/iis-app"
   resource_environment         = "${local.environment}"
@@ -65,7 +74,7 @@ module "iis_app" {
   app_db_vms                   = "${var.app_db_vms}"
   app_subnet_id                = "${module.iaas_spoke_vnet.subnet_ids["app"]}"
   data_subnet_id               = "${module.iaas_spoke_vnet.subnet_ids["data"]}"
-  release_agent_dependency_id  = ["var.release_agent_dependency_id"]
+  release_agent_dependency     = "${local.release_agent_dependency}"
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 }

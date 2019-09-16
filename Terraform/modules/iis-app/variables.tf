@@ -101,7 +101,6 @@ variable "app_subnet_id" {
 variable "data_subnet_id" {
   description                  = "The id of the subnet to deploy db tier VM's in"
 }
-variable "release_agent_dependency_id" {
-  description                  = "The id of the subnet to deploy db tier VM's in"
-  type = list
+variable "release_agent_dependency" {
+  description                  = "A dummy value that is used to force dependency"
 }

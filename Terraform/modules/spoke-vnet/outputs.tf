@@ -1,5 +1,5 @@
 output "arm_resource_ids" {
-  value       = [
+  value                        = [
     # Managed Bastion
     "${azurerm_template_deployment.managed_bastion.0.outputs["resourceGroupId"]}/providers/Microsoft.Network/bastionHosts/${local.managed_bastion_name}",
   ]
@@ -11,5 +11,8 @@ output spoke_virtual_network_id {
 
 output subnet_ids {
   value                        = "${zipmap(azurerm_subnet.subnet.*.name, azurerm_subnet.subnet.*.id)}"
-# value                        = "${local.subnet_id_map}"
+}
+
+output route_dependency {
+  value                        = "${join("|",azurerm_subnet_route_table_association.subnet_routes.*.id)}"
 }
