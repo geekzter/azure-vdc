@@ -50,10 +50,11 @@ module "iaas_spoke_vnet" {
 }
 
 locals {
-  release_agent_dependencies   = [
+  release_agent_dependencies   = concat(module.iaas_spoke_vnet.access_dependencies,
+                                 [
                                  "${azurerm_firewall_application_rule_collection.iag_app_rules.id}",
-                                 "${module.iaas_spoke_vnet.route_dependency}"
-  ]
+                                 "${module.p2s_vpn.gateway_id}"
+  ])
   # HACK: This value is dependent on all elements of the list being created
   release_agent_dependency     = "${join("|",[for dep in local.release_agent_dependencies : substr(dep,0,1)])}"
 }

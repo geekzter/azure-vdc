@@ -13,6 +13,10 @@ output subnet_ids {
   value                        = "${zipmap(azurerm_subnet.subnet.*.name, azurerm_subnet.subnet.*.id)}"
 }
 
-output route_dependency {
-  value                        = "${join("|",azurerm_subnet_route_table_association.subnet_routes.*.id)}"
+output access_dependencies {
+  value                        = concat(azurerm_subnet_route_table_association.subnet_routes.*.id,
+                                 [
+                                 "${azurerm_virtual_network_peering.spoke_to_hub.id}",
+                                 "${azurerm_virtual_network_peering.hub_to_spoke.id}"
+  ])
 }
