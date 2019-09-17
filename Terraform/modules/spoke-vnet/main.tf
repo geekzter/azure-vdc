@@ -233,11 +233,11 @@ resource "azurerm_subnet_route_table_association" "subnet_routes" {
   count                        = "${length(var.enable_routetable_for_subnets)}"
 }
 
-resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
-  subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
-  network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}"
-  count                        = "${length(var.subnets)}"
-}
+# resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
+#   subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
+#   network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}"
+#   count                        = "${length(var.subnets)}"
+# }
 
 resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
   name                         = "${azurerm_network_security_group.spoke_nsg.name}-logs"
