@@ -147,7 +147,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
   settings                    = <<EOF
     {
       "VSTSAccountName": "${var.app_devops["account"]}",        
-      "VSTSAccountUrl": "https://${var.app_devops["account"]}.visualstudio.com", 
       "TeamProject": "${var.app_devops["team_project"]}",
       "DeploymentGroup": "${var.app_devops["web_deployment_group"]}",
       "AgentName": "${local.app_hostname}${count.index}",
@@ -161,8 +160,12 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
     } 
   EOF
 
-  tags                         = "${var.tags}"
-  depends_on                   = ["var.release_agent_dependency_id"]
+  tags                         = "${merge(
+    var.tags,
+    map(
+      "dummy-dependency",        "${var.release_agent_dependency}"
+    )
+  )}"
 }
 
 resource "azurerm_availability_set" "app_db_avset" {
@@ -354,7 +357,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
   settings                     = <<EOF
     {
       "VSTSAccountName": "${var.app_devops["account"]}",        
-      "VSTSAccountUrl": "https://${var.app_devops["account"]}.visualstudio.com", 
       "TeamProject": "${var.app_devops["team_project"]}",
       "DeploymentGroup": "${var.app_devops["db_deployment_group"]}",
       "AgentName": "${local.db_hostname}${count.index}",
@@ -368,9 +370,12 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
     } 
   EOF
 
-  depends_on                   = ["var.release_agent_dependency_id"]
-
-  tags                         = "${var.tags}"
+  tags                         = "${merge(
+    var.tags,
+    map(
+      "dummy-dependency",        "${var.release_agent_dependency}"
+    )
+  )}"
 }
 
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {

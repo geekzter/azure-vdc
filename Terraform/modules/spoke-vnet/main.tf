@@ -214,7 +214,7 @@ resource "azurerm_subnet" "subnet" {
   # Create subnet delegation, if requested
   dynamic "delegation" {
     # TODO: Won't work with multiple subnets and multiple delegations, as each delegation will be created for each subnet
-    for_each = "${var.subnet_delegations}"
+    for_each                   = "${var.subnet_delegations}"
     content {
       name                     = "${delegation.key}_delegation"
       service_delegation {
@@ -231,13 +231,17 @@ resource "azurerm_subnet_route_table_association" "subnet_routes" {
   subnet_id                    = "${local.subnet_id_map[element(var.enable_routetable_for_subnets,count.index)]}"
   route_table_id               = "${azurerm_route_table.spoke_route_table.id}"
   count                        = "${length(var.enable_routetable_for_subnets)}"
+
+  depends_on                   = ["azurerm_virtual_network_peering.spoke_to_hub"]
 }
 
-resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
-  subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
-  network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}"
-  count                        = "${length(var.subnets)}"
-}
+# resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
+#   subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
+#   network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}"
+#   count                        = "${length(var.subnets)}"
+
+#   depends_on                   = ["azurerm_virtual_network_peering.spoke_to_hub"]
+# }
 
 resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
   name                         = "${azurerm_network_security_group.spoke_nsg.name}-logs"

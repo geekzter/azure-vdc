@@ -53,7 +53,7 @@ function DeleteArmResources () {
         $Script:armResourceIDs = terraform output -json arm_resource_ids 2>$null
     }
     if ($armResourceIDs) {
-        Write-Host "Removing resources created in embedded ARM templates, this may take a while (no concurrency)..." -ForegroundColor Green
+        Write-Host "`nRemoving resources created in embedded ARM templates, this may take a while (no concurrency)..." -ForegroundColor Green
         # Log on to Azure if not already logged on
         AzLogin
         
