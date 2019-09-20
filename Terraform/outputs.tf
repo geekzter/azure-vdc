@@ -41,36 +41,36 @@ output "app_web_lb_address" {
   value       = "${var.vdc_config["iaas_spoke_app_web_lb_address"]}"
 }
 
-output "app_url" {
-  value       = "${local.app_url}"
-} 
+# output "app_url" {
+#   value       = "${local.app_url}"
+# } 
 
 output "app_storage_fqdns" {
   value       = [
     "${azurerm_firewall_application_rule_collection.iag_app_rules.rule.0.target_fqdns}"
     ]
 }
-output "app_eventhub_namespace_key" {
-  sensitive   = true
-  value       = "${module.paas_app.eventhub_namespace_key}"
-}
+# output "app_eventhub_namespace_key" {
+#   sensitive   = true
+#   value       = "${module.paas_app.eventhub_namespace_key}"
+# }
 
-output "app_eventhub_namespace_connection_string" {
-  sensitive   = true
-  value       = "${module.paas_app.eventhub_namespace_connection_string}"
-}
+# output "app_eventhub_namespace_connection_string" {
+#   sensitive   = true
+#   value       = "${module.paas_app.eventhub_namespace_connection_string}"
+# }
 
-output "app_eventhub_namespace_fqdn" {
-  value       = "${module.paas_app.eventhub_namespace_fqdn}"
-}
+# output "app_eventhub_namespace_fqdn" {
+#   value       = "${module.paas_app.eventhub_namespace_fqdn}"
+# }
 
-output "app_eventhub_name" {
-  value       = "${module.paas_app.eventhub_name}"
-}
+# output "app_eventhub_name" {
+#   value       = "${module.paas_app.eventhub_name}"
+# }
 
-output "app_storage_account_name" {
-  value       = "${module.paas_app.storage_account_name}"
-}
+# output "app_storage_account_name" {
+#   value       = "${module.paas_app.storage_account_name}"
+# }
 
 output "iaas_app_resource_group" {
   value       = "${local.iaas_app_resource_group}"
@@ -96,7 +96,7 @@ output "bastion_rdp_vpn" {
   value = "mstsc.exe /v:${var.vdc_config["hub_bastion_address"]}"
 }
 
-output spoke_vnet_guid {
+/* output spoke_vnet_guid {
     value     = "${module.paas_app.spoke_vnet_guid}"
 }
 
@@ -112,7 +112,7 @@ output resource_group_ids {
                 "${module.iis_app.app_resource_group_id}",
                 "${module.paas_app.resource_group_id}"
   ]
-}
+} */
 
 output resource_prefix {
   value       = "${var.resource_prefix}"

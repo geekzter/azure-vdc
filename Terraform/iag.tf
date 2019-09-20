@@ -21,17 +21,17 @@ resource "azurerm_public_ip" "iag_pip" {
   depends_on                   = ["azurerm_resource_group.vdc_rg"]
 }
 
-resource "azurerm_dns_cname_record" "iag_pip_cname" {
-  name                         = "${lower(var.resource_prefix)}vdciag"
-  zone_name                    = "${data.azurerm_dns_zone.vanity_domain.0.name}"
-  resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.0.resource_group_name}"
-  ttl                          = 300
-  record                       = "${azurerm_public_ip.iag_pip.fqdn}"
-  depends_on                   = ["azurerm_public_ip.iag_pip"]
+# resource "azurerm_dns_cname_record" "iag_pip_cname" {
+#   name                         = "${lower(var.resource_prefix)}vdciag"
+#   zone_name                    = "${data.azurerm_dns_zone.vanity_domain.0.name}"
+#   resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.0.resource_group_name}"
+#   ttl                          = 300
+#   record                       = "${azurerm_public_ip.iag_pip.fqdn}"
+#   depends_on                   = ["azurerm_public_ip.iag_pip"]
 
-  count                        = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
-  tags                         = "${local.tags}"
-} 
+#   count                        = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
+#   tags                         = "${local.tags}"
+# } 
 
 resource "azurerm_firewall" "iag" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-iag"
@@ -55,44 +55,44 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
   priority                     = 200
   action                       = "Allow"
 
-  rule {
-    name                       = "Allow ${module.paas_app.storage_account_name} Storage"
+  # rule {
+  #   name                       = "Allow ${module.paas_app.storage_account_name} Storage"
 
-    source_addresses           = [
-      "${var.vdc_config["iaas_spoke_app_subnet"]}",
-      "${var.vdc_config["iaas_spoke_data_subnet"]}",
-      "${var.vdc_config["hub_mgmt_subnet"]}",
-      "${var.vdc_config["vpn_range"]}"
-    ]
+  #   source_addresses           = [
+  #     "${var.vdc_config["iaas_spoke_app_subnet"]}",
+  #     "${var.vdc_config["iaas_spoke_data_subnet"]}",
+  #     "${var.vdc_config["hub_mgmt_subnet"]}",
+  #     "${var.vdc_config["vpn_range"]}"
+  #   ]
 
-    target_fqdns               = "${module.paas_app.storage_fqdns}"
+  #   target_fqdns               = "${module.paas_app.storage_fqdns}"
 
-    protocol {
-        port                   = "443"
-        type                   = "Https"
-    }
-  }
+  #   protocol {
+  #       port                   = "443"
+  #       type                   = "Https"
+  #   }
+  # }
 
-  rule {
-    name                       = "Allow ${module.paas_app.eventhub_name} Event Hub HTTPS"
+  # rule {
+  #   name                       = "Allow ${module.paas_app.eventhub_name} Event Hub HTTPS"
 
-    source_addresses           = [
-      "${var.vdc_config["iaas_spoke_app_subnet"]}",
-      "${var.vdc_config["iaas_spoke_data_subnet"]}",
-      "${var.vdc_config["hub_mgmt_subnet"]}",
-      "${var.vdc_config["vpn_range"]}"
-    ]
+  #   source_addresses           = [
+  #     "${var.vdc_config["iaas_spoke_app_subnet"]}",
+  #     "${var.vdc_config["iaas_spoke_data_subnet"]}",
+  #     "${var.vdc_config["hub_mgmt_subnet"]}",
+  #     "${var.vdc_config["vpn_range"]}"
+  #   ]
 
-    target_fqdns               = [
-    # "${module.paas_app.eventhub_namespace_fqdn}", # BUG:  Not allowed even though it should match exactly
-      "*${module.paas_app.eventhub_namespace_fqdn}" # HACK: Wildcard does the trick
-    ]
+  #   target_fqdns               = [
+  #   # "${module.paas_app.eventhub_namespace_fqdn}", # BUG:  Not allowed even though it should match exactly
+  #     "*${module.paas_app.eventhub_namespace_fqdn}" # HACK: Wildcard does the trick
+  #   ]
 
-    protocol {
-        port                   = "443"
-        type                   = "Https"
-    }
-  }
+  #   protocol {
+  #       port                   = "443"
+  #       type                   = "Https"
+  #   }
+  # }
 
   rule {
     name                       = "Allow Azure DevOps"
