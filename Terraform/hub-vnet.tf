@@ -99,7 +99,7 @@ resource "azurerm_subnet_route_table_association" "mgmt_subnet_routes" {
   subnet_id                   = "${azurerm_subnet.mgmt_subnet.id}"
   route_table_id              = "${azurerm_route_table.mgmt_route_table.id}"
 
-  depends_on                   = "${azurerm_firewall.iag}"
+  depends_on                   = ["azurerm_firewall.iag"]
 }
 
 resource "azurerm_subnet_network_security_group_association" "mgmt_subnet_nsg" {
