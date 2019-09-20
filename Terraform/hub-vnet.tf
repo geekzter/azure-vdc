@@ -105,4 +105,9 @@ resource "azurerm_subnet_route_table_association" "mgmt_subnet_routes" {
 resource "azurerm_subnet_network_security_group_association" "mgmt_subnet_nsg" {
   subnet_id                    = "${azurerm_subnet.mgmt_subnet.id}"
   network_security_group_id    = "${azurerm_network_security_group.mgmt_nsg.id}"
+
+  depends_on                   = ["azurerm_subnet_route_table_association.mgmt_subnet_routes",
+                                  "azurerm_firewall_application_rule_collection.iag_app_rules",
+                                  "azurerm_firewall_network_rule_collection.iag_net_outbound_rules"
+  ]
 }
