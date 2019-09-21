@@ -156,6 +156,28 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
         type                   = "Https"
     }
   }
+
+  rule {
+    name                       = "Allow Management traffic"
+    description                = "Azure Backup, Management, Windwos Update"
+
+    source_addresses           = [
+      "${var.vdc_config["vdc_range"]}",
+      "${var.vdc_config["vpn_range"]}"
+    ]
+
+    fqdn_tags                  = [
+      "AzureBackup",
+      "MicrosoftActiveProtectionService",
+      "WindowsDiagnostics",
+      "WindowsUpdate"
+    ]
+
+    protocol {
+        port                   = "443"
+        type                   = "Https"
+    }
+  }
 } 
 
 # Inbound port forwarding rules
