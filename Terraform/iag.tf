@@ -116,7 +116,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "dev.azure.com",
       "*.dev.azure.com",
       "login.microsoftonline.com",
-      "*.visualstudio.com",
       "management.core.windows.net"
     ]
 

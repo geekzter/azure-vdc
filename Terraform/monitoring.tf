@@ -137,7 +137,6 @@ resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
 
 
 # TODO: Issue with monitoring connections can cause deployment to fail when apply is repeatedly run
-/* 
 resource "azurerm_network_watcher" "vdc_watcher" {
   name                         = "${var.resource_prefix}-watcher"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
@@ -146,6 +145,7 @@ resource "azurerm_network_watcher" "vdc_watcher" {
   tags                         = "${local.tags}"
 }
 
+/*
 resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   name                         = "bastion_watcher"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
@@ -200,26 +200,6 @@ resource "azurerm_network_connection_monitor" "eventhub_watcher" {
   tags                         = "${local.tags}"
 } 
 
-resource "azurerm_network_connection_monitor" "devops_watcher" {
-  name                         = "${azurerm_resource_group.app_rg.name}-db-vm${count.index}-devops-watcher"
-  location                     = "${azurerm_resource_group.vdc_rg.location}"
-  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-  network_watcher_name         = "${azurerm_network_watcher.vdc_watcher.name}"
-
-  source {
-    virtual_machine_id         = "${element(azurerm_virtual_machine.app_db_vm.*.id, count.index)}"
-  }
-
-  destination {
-    address                    = "vstsagentpackage.azureedge.net"
-    port                       = 443
-  }
-  count                        = 2
-
-  depends_on                   = ["azurerm_virtual_machine_extension.app_db_vm_watcher"]
-
-  tags                         = "${local.tags}"
-}
 */
 
 resource "azurerm_application_insights" "vdc_insights" {

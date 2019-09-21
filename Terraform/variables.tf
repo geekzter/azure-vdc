@@ -236,6 +236,12 @@ variable "deploy_auto_shutdown" {
   type                         = bool
 }
 
+variable "deploy_connection_monitors" {
+  description                  = "Whether to deploy connection monitors"
+  default                      = false
+  type                         = bool
+}
+
 variable "deploy_managed_bastion" {
   description                  = "Whether to deploy the Managed Bastion (preview)"
   default                      = true
