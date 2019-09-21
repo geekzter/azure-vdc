@@ -42,7 +42,8 @@ resource "azurerm_virtual_network_peering" "spoke_to_hub" {
   allow_virtual_network_access = true
   use_remote_gateways          = "${var.use_hub_gateway}"
 
-  depends_on                   = ["var.hub_gateway_dependency","azurerm_virtual_network_peering.hub_to_spoke"]
+# depends_on                   = ["var.hub_gateway_dependency","azurerm_virtual_network_peering.hub_to_spoke"]
+  depends_on                   = ["azurerm_virtual_network_peering.hub_to_spoke"]
 }
 
 resource "azurerm_virtual_network_peering" "hub_to_spoke" {
@@ -56,7 +57,7 @@ resource "azurerm_virtual_network_peering" "hub_to_spoke" {
   allow_virtual_network_access = true
   use_remote_gateways          = false
 
-  depends_on                   = ["var.hub_gateway_dependency"]
+# depends_on                   = ["var.hub_gateway_dependency"]
 }
 
 resource "azurerm_route_table" "spoke_route_table" {
