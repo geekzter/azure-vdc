@@ -173,10 +173,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "WindowsUpdate"
     ]
 
-    protocol {
-        port                   = "443"
-        type                   = "Https"
-    }
   }
 } 
 
