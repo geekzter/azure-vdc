@@ -43,8 +43,7 @@ resource "azurerm_virtual_network_peering" "spoke_to_hub" {
   use_remote_gateways          = "${var.use_hub_gateway}"
 
 # Dependency must include gateway if use_remote_gateways = true
-# depends_on                   = ["var.hub_gateway_dependency","azurerm_virtual_network_peering.hub_to_spoke"]
-  depends_on                   = ["azurerm_virtual_network_peering.hub_to_spoke"]
+  depends_on                   = ["var.hub_gateway_dependency","azurerm_virtual_network_peering.hub_to_spoke"]
 }
 
 resource "azurerm_virtual_network_peering" "hub_to_spoke" {
@@ -59,7 +58,7 @@ resource "azurerm_virtual_network_peering" "hub_to_spoke" {
   use_remote_gateways          = false
 
 # Dependency must include gateway if use_remote_gateways = true
-# depends_on                   = ["var.hub_gateway_dependency"]
+  depends_on                   = ["var.hub_gateway_dependency"]
 }
 
 resource "azurerm_route_table" "spoke_route_table" {

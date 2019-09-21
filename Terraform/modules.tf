@@ -43,7 +43,7 @@ module "iaas_spoke_vnet" {
     data                       = "${var.vdc_config["iaas_spoke_data_subnet"]}"
   }
   subnet_delegations           = {}
-  use_hub_gateway              = false # "${var.deploy_vpn}"
+  use_hub_gateway              = "${var.deploy_vpn}"
 
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
@@ -163,7 +163,7 @@ module "paas_spoke_vnet" {
   subnet_delegations           = {
     appservice                 = "Microsoft.Web/serverFarms"
   }
-  use_hub_gateway              = false # "${var.deploy_vpn}"
+  use_hub_gateway              = "${var.deploy_vpn}"
 
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
