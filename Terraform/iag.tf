@@ -159,7 +159,7 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
 
   rule {
     name                       = "Allow Management traffic"
-    description                = "Azure Backup, Management, Windwos Update"
+    description                = "Azure Backup, Management, Windwows Update"
 
     source_addresses           = [
       "${var.vdc_config["vdc_range"]}",

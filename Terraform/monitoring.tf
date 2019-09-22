@@ -142,6 +142,7 @@ resource "azurerm_network_watcher" "vdc_watcher" {
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
 
+  count                        = "${var.deploy_connection_monitors ? 1 : 0}"  
   tags                         = "${local.tags}"
 }
 

@@ -80,7 +80,7 @@ module "iis_app" {
   deploy_connection_monitors   = "${var.deploy_connection_monitors}"
   release_agent_dependency     = "${local.release_agent_dependency}"
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
-  diagnostics_watcher_id       = "${azurerm_network_watcher.vdc_watcher.id}"
+  diagnostics_watcher_id       = "${azurerm_network_watcher.vdc_watcher.0.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 }
 
