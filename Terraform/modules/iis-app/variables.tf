@@ -1,6 +1,9 @@
 variable resource_group {
   description                  = "The name of the resource group"
 }
+variable vdc_resource_group_id {
+  description                  = "The ID of the resource group"
+}
 variable location {
   description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."
 }
@@ -13,12 +16,20 @@ variable "tags" {
   type        = "map"
 } 
 
+variable "deploy_connection_monitors" {
+  description                  = "Whether to deploy connection monitors"
+  default                      = false
+  type                         = bool
+}
 
 variable "diagnostics_storage_id" {
   description                  = "The id of the diagnostics storage account to use"
 }
 variable "diagnostics_workspace_id" {
   description                  = "The id of the Log Analytics workspace to use"
+}
+variable "diagnostics_watcher_id" {
+  description                  = "The id of the network watcher to use"
 }
 
 variable "app_web_vms" {}

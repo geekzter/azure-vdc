@@ -3,6 +3,8 @@ locals {
   app_dns_name                 = "${lower(var.resource_environment)}app_web_vm"
   db_hostname                  = "${lower(var.resource_environment)}dbhost"
   db_dns_name                  = "${lower(var.resource_environment)}db_web_vm"
+  vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
+  watcher_name                 = "${element(split("/",var.diagnostics_watcher_id),length(split("/",var.diagnostics_watcher_id))-1)}"
 }
 
 resource "azurerm_resource_group" "app_rg" {
@@ -166,6 +168,30 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
       "dummy-dependency",        "${var.release_agent_dependency}"
     )
   )}"
+}
+
+resource "azurerm_network_connection_monitor" "devops_watcher" {
+# name                         = "${element(azurerm_virtual_machine.app_web_vm.*.name, count.index)}-devops-watcher"
+  name                         = "${local.app_hostname}${count.index}-${var.app_devops["account"]}.visualstudio.com"
+  location                     = "${var.location}"
+  resource_group_name          = "${local.vdc_resource_group_name}"
+  network_watcher_name         = "${local.watcher_name}"
+
+  auto_start                   = true
+  interval_in_seconds          = 60
+  source {
+    virtual_machine_id         = "${element(azurerm_virtual_machine.app_db_vm.*.id, count.index)}"
+  }
+
+  destination {
+    address                    = "${var.app_devops["account"]}.visualstudio.com"
+    port                       = 443
+  }
+  count                        = "${var.deploy_connection_monitors ? 2 : 0}"  
+
+  depends_on                   = ["azurerm_virtual_machine_extension.app_web_vm_watcher"]
+
+  tags                         = "${var.tags}"
 }
 
 resource "azurerm_availability_set" "app_db_avset" {

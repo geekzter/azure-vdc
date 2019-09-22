@@ -53,7 +53,8 @@ locals {
   release_agent_dependencies   = concat(module.iaas_spoke_vnet.access_dependencies,
                                  [
                                  "${azurerm_firewall_application_rule_collection.iag_app_rules.id}",
-                                 "${module.p2s_vpn.gateway_id}"
+                                 "${azurerm_firewall_network_rule_collection.iag_net_outbound_rules.id}"
+#                                "${module.p2s_vpn.gateway_id}"
   ])
   # HACK: This value is dependent on all elements of the list being created
   release_agent_dependency     = "${join("|",[for dep in local.release_agent_dependencies : substr(dep,0,1)])}"
@@ -63,6 +64,7 @@ module "iis_app" {
   source                       = "./modules/iis-app"
   resource_environment         = "${local.environment}"
   resource_group               = "${local.iaas_app_resource_group}"
+  vdc_resource_group_id        = "${azurerm_resource_group.vdc_rg.id}"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   tags                         = "${local.tags}"
 
@@ -75,8 +77,10 @@ module "iis_app" {
   app_db_vms                   = "${var.app_db_vms}"
   app_subnet_id                = "${module.iaas_spoke_vnet.subnet_ids["app"]}"
   data_subnet_id               = "${module.iaas_spoke_vnet.subnet_ids["data"]}"
+  deploy_connection_monitors   = "${var.deploy_connection_monitors}"
   release_agent_dependency     = "${local.release_agent_dependency}"
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
+  diagnostics_watcher_id       = "${azurerm_network_watcher.vdc_watcher.0.id}"
   diagnostics_workspace_id     = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 }
 

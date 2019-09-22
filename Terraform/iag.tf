@@ -116,7 +116,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "dev.azure.com",
       "*.dev.azure.com",
       "login.microsoftonline.com",
-      "*.visualstudio.com",
       "management.core.windows.net"
     ]
 
@@ -156,6 +155,24 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
         port                   = "443"
         type                   = "Https"
     }
+  }
+
+  rule {
+    name                       = "Allow Management traffic"
+    description                = "Azure Backup, Management, Windwows Update"
+
+    source_addresses           = [
+      "${var.vdc_config["vdc_range"]}",
+      "${var.vdc_config["vpn_range"]}"
+    ]
+
+    fqdn_tags                  = [
+      "AzureBackup",
+      "MicrosoftActiveProtectionService",
+      "WindowsDiagnostics",
+      "WindowsUpdate"
+    ]
+
   }
 } 
 
