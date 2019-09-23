@@ -10,7 +10,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: 'Apps/IaaS-ASP.NET/SampleIisWebApp.sln'
+  solution: 'Apps/PaaS-ASP.NET-SQLDB/DotNetAppSqlDb.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
@@ -51,8 +51,4 @@ steps:
     PathtoPublish: '$(build.artifactstagingdirectory)'
     ArtifactName: '$(Parameters.ArtifactName)'
 
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: scripts'
-  inputs:
-    PathtoPublish: Apps/IaaS-ASP.NET/scripts
-    ArtifactName: scripts
+
