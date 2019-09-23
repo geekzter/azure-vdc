@@ -51,8 +51,3 @@ steps:
     PathtoPublish: '$(build.artifactstagingdirectory)'
     ArtifactName: '$(Parameters.ArtifactName)'
 
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: scripts'
-  inputs:
-    PathtoPublish: SampleIisWebApp/scripts
-    ArtifactName: scripts
