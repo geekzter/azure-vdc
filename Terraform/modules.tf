@@ -126,6 +126,10 @@ module "paas_app" {
 
   admin_ips                    = "${local.admin_ips}"
   admin_ip_ranges              = "${local.admin_cidr_ranges}"
+  admin_username               = "${var.admin_username}"
+  database_template_storage_key= "${var.app_database_template_storage_key}"
+  dba_login                    = "${var.dba_login}"
+  dba_object_id                = "${var.dba_object_id}"
   iag_subnet_id                = "${azurerm_subnet.iag_subnet.id}"
   integrated_subnet_id         = "${module.paas_spoke_vnet.subnet_ids["appservice"]}"
   integrated_subnet_range      = "${var.vdc_config["paas_spoke_appsvc_subnet"]}"

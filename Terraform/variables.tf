@@ -132,6 +132,8 @@ variable "admin_ip_ranges" {
 variable "admin_ips" {
   default                      = []
 }
+variable dba_login {}
+variable dba_object_id {}
 
 variable "rdp_port" {
 # default                      = "3389" # Default for protocol
@@ -207,6 +209,7 @@ variable "app_db_image_version" {
   description                  = "version of the DB image to apply (az vm image list)"
   default                      = "latest"
 }
+variable app_database_template_storage_key {}
 variable "vanity_domainname" {
   description                  = "The domain part of the vanity url"
 }

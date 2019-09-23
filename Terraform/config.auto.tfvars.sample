@@ -30,3 +30,7 @@ app_devops                     = {
     pat                        = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 }
 # $env:TF_VAR_app_devops = '{account="vstsaccount",team_project="VDC",web_deployment_group="AppServers",db_deployment_group="DBServers",pat="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}'
+
+app_database_template_storage_key = "aaaaaaaaaaaaaaaaaaaaa/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+dba_login                      = "user@tenant.onmicrosoft.com"
+dba_object_id                  = "00000000-0000-0000-0000-000000000000"
