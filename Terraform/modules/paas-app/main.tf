@@ -68,7 +68,6 @@ resource "azurerm_storage_container" "app_storage_container" {
 
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
   name                         = "sample.txt"
- resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   storage_account_name         = "${azurerm_storage_account.app_storage.name}"
   storage_container_name       = "${azurerm_storage_container.app_storage_container.name}"
 
@@ -129,12 +128,12 @@ resource "azurerm_app_service" "paas_web_app" {
   # virtual_network_name       = "${local.integrated_vnet_name}"
   }
 
-# connection_string {
-#   name                       = "MyDbConnection"
-#   type                       = "SQLAzure"
-# # No secrets in connection string
-#   value                      = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
-# }
+  connection_string {
+    name                       = "MyDbConnection"
+    type                       = "SQLAzure"
+  # No secrets in connection string
+    value                      = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
+  }
 
   tags                         = "${var.tags}"
 }
@@ -295,7 +294,7 @@ resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
 
 ### SQL Database
 
-resource "azurerm_sql_server" "paas_app_sqlserver" {
+resource "azurerm_sql_server" "app_sqlserver" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}sqlserver"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   location                     = "${azurerm_resource_group.app_rg.location}"
@@ -310,7 +309,7 @@ resource "azurerm_sql_server" "paas_app_sqlserver" {
 resource "azurerm_sql_firewall_rule" "tfclient" {
   name                         = "TerraformClientRule"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  server_name                  = "${azurerm_sql_server.paas_app_sqlserver.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
   start_ip_address             = "${chomp(data.http.localpublicip.body)}"
   end_ip_address               = "${chomp(data.http.localpublicip.body)}"
 }
@@ -318,7 +317,7 @@ resource "azurerm_sql_firewall_rule" "tfclient" {
 resource "azurerm_sql_firewall_rule" "adminclient" {
   name                         = "AdminClientRule${count.index}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  server_name                  = "${azurerm_sql_server.paas_app_sqlserver.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
   start_ip_address             = "${element(local.admin_ips, count.index)}"
   end_ip_address               = "${element(local.admin_ips, count.index)}"
   count                        = "${length(local.admin_ips)}"
@@ -328,32 +327,28 @@ resource "azurerm_sql_firewall_rule" "adminclient" {
 resource "azurerm_sql_firewall_rule" "azure1" {
   name                         = "AzureRule1"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  server_name                  = "${azurerm_sql_server.paas_app_sqlserver.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
   start_ip_address             = "65.52.129.125"
   end_ip_address               = "65.52.129.125"
 }
 
-# Add rule for ${azurerm_app_service.paas_app_appservice.outbound_ip_addresses} array
+# Add rule for ${azurerm_app_service.paas_web_app.outbound_ip_addresses} array
 # Note these are shared addresses, hence does not fully constrain access
-/* 
-resource "azurerm_sql_firewall_rule" "webapp" {
-  name                         = "AllowWebApp${count.index}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  server_name                  = "${azurerm_sql_server.paas_app_sqlserver.name}"
-  start_ip_address             = "${element(split(",", azurerm_app_service.paas_app_appservice.outbound_ip_addresses), count.index)}"
-# start_ip_address             = "${element(split(",", azurerm_app_service.paas_app_appservice.outbound_ip_addresses), min(count.index,length(split(",", azurerm_app_service.paas_app_appservice.outbound_ip_addresses))))}"
-  end_ip_address               = "${element(split(",", azurerm_app_service.paas_app_appservice.outbound_ip_addresses), count.index)}"
-# end_ip_address               = "${element(split(",", azurerm_app_service.paas_app_appservice.outbound_ip_addresses), min(count.index,length(split(",", azurerm_app_service.paas_app_appservice.outbound_ip_addresses))))}"
-# BUG: terraform bug. Throws as an error on first creation: "value of 'count' cannot be computed". Subsequent executions do work.
-  count                        = "${length(split(",", azurerm_app_service.paas_app_appservice.outbound_ip_addresses))}"
-# count                        = "10"
-  depends_on                   = ["azurerm_app_service.paas_app_appservice"]
-} */
+# resource "azurerm_sql_firewall_rule" "webapp" {
+#   name                         = "AllowWebApp${count.index}"
+#   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+#   server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+#   start_ip_address             = "${element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)}"
+#   end_ip_address               = "${element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)}"
+# # BUG: terraform bug. Throws as an error on first creation: "value of 'count' cannot be computed". Subsequent executions do work.
+#   count                        = "${length(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses))}"
+#   depends_on                   = ["azurerm_app_service.paas_web_app"]
+# } 
 
 resource "azurerm_sql_firewall_rule" "azureall" {
   name                         = "AllowAllWindowsAzureIPs" # Same name as Azure generated one
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  server_name                  = "${azurerm_sql_server.paas_app_sqlserver.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
 # 0.0.0.0 represents Azure addresses, see https://docs.microsoft.com/en-us/rest/api/sql/firewallrules/createorupdate
   start_ip_address             = "0.0.0.0"
   end_ip_address               = "0.0.0.0"
@@ -361,7 +356,7 @@ resource "azurerm_sql_firewall_rule" "azureall" {
 
 # TODO: Use AAD group for DBA's, add DBA and TF to that group
 resource "azurerm_sql_active_directory_administrator" "dba" {
-  server_name                  = "${azurerm_sql_server.paas_app_sqlserver.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   login                        = "${var.dba_login}"
   tenant_id                    = "${data.azurerm_client_config.current.tenant_id}"
@@ -370,7 +365,7 @@ resource "azurerm_sql_active_directory_administrator" "dba" {
 
 # Required for SQLCMD
 /* resource "azurerm_sql_active_directory_administrator" "tf" {
-  server_name                  = "${azurerm_sql_server.paas_app_sqlserver.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   login                        = "tfadmin"
   tenant_id                    = "${data.azurerm_client_config.current.tenant_id}"
@@ -379,44 +374,43 @@ resource "azurerm_sql_active_directory_administrator" "dba" {
 
 /* 
 resource "azurerm_sql_active_directory_administrator" "client" {
-  server_name                  = "${azurerm_sql_server.paas_app_sqlserver.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  login                        = "${azurerm_app_service.paas_app_appservice.name}"
+  login                        = "${azurerm_app_service.app_appservice.name}"
   tenant_id                    = "${data.azurerm_client_config.current.tenant_id}"
-  object_id                    = "${azurerm_app_service.paas_app_appservice.identity.0.principal_id}"
+  object_id                    = "${azurerm_app_service.app_appservice.identity.0.principal_id}"
 } */
 
-resource "azurerm_sql_database" "paas_app_sqldb" {
+resource "azurerm_sql_database" "app_sqldb" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}sqldb"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   location                     = "${azurerm_resource_group.app_rg.location}"
-  server_name                  = "${azurerm_sql_server.paas_app_sqlserver.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
   edition                      = "Premium"
 
-  import {
-    storage_uri                = "${var.database_template_storage_uri}"
-    storage_key                = "${var.database_template_storage_key}"
-    storage_key_type           = "StorageAccessKey"
-    administrator_login        = "${azurerm_sql_server.paas_app_sqlserver.administrator_login}"
-    administrator_login_password = "${azurerm_sql_server.paas_app_sqlserver.administrator_login_password}"
-    authentication_type        = "SQL"
-  # depends_on                 = ["azurerm_sql_firewall_rule.azure1"]
-  }
+  # Import only works once, this is better moved to an Azure Pipeline Job
+  # Error: sql.DatabasesClient#CreateImportOperation: Failure sending request: StatusCode=400 -- Original Error: Code="Failed" Message="The async operation failed." InnerError={"unmarshalError":"json: cannot unmarshal array into Go struct field serviceError2.details of type map[string]interface {}"} AdditionalInfo=[{"code":"0","details":[{"code":"0","message":"There was an error that occurred during this operation : '\u003cstring xmlns=\"http://schemas.microsoft.com/2003/10/Serialization/\"\u003eError encountered during the service operation. ; Exception Microsoft.SqlServer.Management.Dac.Services.ServiceException:Target database is not empty. The import operation can only be performed on an empty database.; \u003c/string\u003e'","severity":"16","target":null}],"innererror":[],"message":"There was an error that occurred during this operation : '\u003cstring xmlns=\"http://schemas.microsoft.com/2003/10/Serialization/\"\u003eError encountered during the service operation. ; Exception Microsoft.SqlServer.Management.Dac.Services.ServiceException:Target database is not empty. The import operation can only be performed on an empty database.; \u003c/string\u003e'","target":null}]
+  # import {
+  #   storage_uri                = "${var.database_template_storage_uri}"
+  #   storage_key                = "${var.database_template_storage_key}"
+  #   storage_key_type           = "StorageAccessKey"
+  #   administrator_login        = "${azurerm_sql_server.app_sqlserver.administrator_login}"
+  #   administrator_login_password = "${azurerm_sql_server.app_sqlserver.administrator_login_password}"
+  #   authentication_type        = "SQL"
+  # }
 
-# Enable this through policy instead
-/* Leave it up to Azure Policy to enbale advanced thread detection
+# Can be enabled through Azure policy instead
   threat_detection_policy {
     state                     = "Enabled"
     use_server_default        = "Enabled"
   }
-  */
 
 /* 
 # Configure least privilege access for MSI/SPN accessing database
   provisioner "local-exec" {
-  # TODO: pass MSI name as argument (${azurerm_app_service.paas_app_appservice.name})
+  # TODO: pass MSI name as argument (${azurerm_app_service.app_appservice.name})
   # Requires AAD auth in order to grant access to (other) AAD objects
-    command = "sqlcmd -S ${azurerm_sql_server.paas_app_sqlserver.fully_qualified_domain_name} -d paas_app_paassqldb -U ${var.admin_username} -P ${local.password} -G -i grant-database-access.sql"
+    command = "sqlcmd -S ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name} -d app_paassqldb -U ${var.admin_username} -P ${local.password} -G -i grant-database-access.sql"
   }
 */
 
