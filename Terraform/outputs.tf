@@ -41,6 +41,10 @@ output "app_web_lb_address" {
   value       = "${var.vdc_config["iaas_spoke_app_web_lb_address"]}"
 }
 
+output app_service_name {
+    value = "${module.paas_app.app_service_name}"
+}
+
 output "app_url" {
   value       = "${local.app_url}"
 } 
@@ -66,6 +70,14 @@ output "app_eventhub_namespace_fqdn" {
 
 output "app_eventhub_name" {
   value       = "${module.paas_app.eventhub_name}"
+}
+
+output "app_sql_database" {
+  value       = "${module.paas_app.sql_database}"
+}
+
+output "app_sql_server" {
+  value       = "${module.paas_app.sql_server}"
 }
 
 output "app_storage_account_name" {

@@ -1,4 +1,6 @@
-
+output app_service_name {
+    value = "${azurerm_app_service.paas_web_app.name}"
+}
 output eventhub_name {
     value = "${azurerm_eventhub.app_eventhub.name}"
 }
@@ -36,6 +38,14 @@ output primary_dfs_host {
 }
 output primary_web_host {
     value = "${azurerm_storage_account.app_storage.primary_web_host}"
+}
+
+output sql_database {
+    value = "${azurerm_sql_database.app_sqldb.name}"
+}
+
+output sql_server {
+    value = "${azurerm_sql_server.app_sqlserver.name}"
 }
 
 output storage_account_name {

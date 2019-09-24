@@ -116,7 +116,7 @@ variable "vdc_oms_solutions" {
     "SecurityCenterFree",
   # "ServiceDesk",
   # "ServiceFabric",
-    "ServiceMap",
+    "ServiceMap"
   # "SiteRecovery",
   # "SQLAssessment",
   # "Start-Stop-VM",
