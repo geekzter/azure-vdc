@@ -255,21 +255,16 @@ try {
         }
 
         Invoke "terraform apply $forceArgs -parallelism=$parallelism '$planFile'"
-
-        # Export Terraform output as Pipeline output variables for subsequent tasks
-        if ($pipeline) {
-            SetPipelineVariablesFromTerraform
-        }
     }
 
     if ($output) {
         Write-Host "`nterraform output" -ForegroundColor Green 
         terraform output
+    }
 
+    if (($apply -or $output) -and $pipeline) {
         # Export Terraform output as Pipeline output variables for subsequent tasks
-        if ($pipeline) {
-            SetPipelineVariablesFromTerraform
-        }
+        SetPipelineVariablesFromTerraform
     }
 
     if ($destroy) {

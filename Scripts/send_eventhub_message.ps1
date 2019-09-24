@@ -10,9 +10,9 @@ param
 
 # Retrieve config using Terraform
 Push-Location $tfdirectory
-$eventHubNameSpaceFqdn = $(terraform output app_eventhub_namespace_fqdn)
-$eventHubName = $(terraform output app_eventhub_name)
-$eventHubKey = $(terraform output app_eventhub_namespace_key)
+$eventHubNameSpaceFqdn = $(terraform output paas_app_eventhub_namespace_fqdn)
+$eventHubName = $(terraform output paas_app_eventhub_name)
+$eventHubKey = $(terraform output paas_app_eventhub_namespace_key)
 #$resourceGroup = $(terraform output app_resource_group)
 Pop-Location
 
