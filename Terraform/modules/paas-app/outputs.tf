@@ -1,5 +1,11 @@
+output app_service_fqdn {
+    value = "${azurerm_app_service.paas_web_app.default_site_hostname}"
+}
 output app_service_name {
     value = "${azurerm_app_service.paas_web_app.name}"
+}
+output app_service_msi {
+  value       = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
 }
 output eventhub_name {
     value = "${azurerm_eventhub.app_eventhub.name}"
@@ -43,11 +49,12 @@ output primary_web_host {
 output sql_database {
     value = "${azurerm_sql_database.app_sqldb.name}"
 }
-
 output sql_server {
     value = "${azurerm_sql_server.app_sqlserver.name}"
 }
-
+output sql_server_fqdn {
+  value       = "${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
+}
 output storage_account_name {
     value = "${azurerm_storage_account.app_storage.name}"
 }
