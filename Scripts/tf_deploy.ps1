@@ -265,6 +265,11 @@ try {
     if ($output) {
         Write-Host "`nterraform output" -ForegroundColor Green 
         terraform output
+
+        # Export Terraform output as Pipeline output variables for subsequent tasks
+        if ($pipeline) {
+            SetPipelineVariablesFromTerraform
+        }
     }
 
     if ($destroy) {
