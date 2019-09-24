@@ -135,6 +135,22 @@ resource "azurerm_app_service" "paas_web_app" {
     value                      = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
   }
 
+  # application_logs {
+  #   azure_blob_storage {
+  #     level                    = "Error"
+  #     retention_in_days        = 90
+  #     # there is currently no means of generating Service SAS tokens with the azurerm provider
+  #     sas_url                  = ""
+  #   }
+  # }
+  # http_logs {
+  #   azure_blob_storage {
+  #     retention_in_days        = 90
+  #     # there is currently no means of generating Service SAS tokens with the azurerm provider
+  #     sas_url                  = ""
+  #   }
+  # }
+  
   tags                         = "${var.tags}"
 }
 
