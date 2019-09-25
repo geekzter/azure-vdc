@@ -102,7 +102,6 @@ output paas_app_service_name {
     value = "${module.paas_app.app_service_name}"
 }
 
-
 output "paas_app_sql_database" {
   value       = "${module.paas_app.sql_database}"
 }
@@ -117,6 +116,10 @@ output "paas_app_storage_account_name" {
 
 output "paas_app_resource_group" {
   value       = "${local.paas_app_resource_group}"
+}
+
+output paas_app_url {
+    value = "http://${module.paas_app.app_service_fqdn}/"
 }
 
 output spoke_vnet_guid {

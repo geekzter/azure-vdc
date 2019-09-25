@@ -115,6 +115,7 @@ resource "azurerm_app_service" "paas_web_app" {
 
   app_settings = {
     "APPINSIGHTS_INSTRUMENTATIONKEY" = "${var.diagnostics_instrumentation_key}"
+    "WEBSITE_HTTPLOGGING_RETENTION_DAYS" = "90"
   }
 
   identity {
@@ -122,6 +123,11 @@ resource "azurerm_app_service" "paas_web_app" {
   }
 
   site_config {
+    default_documents          = [
+                                 "default.aspx",
+                                 "default.htm",
+                                 "index.html"
+                                 ]
     dotnet_framework_version   = "v4.0"
     ftps_state                 = "Disabled"
     scm_type                   = "LocalGit"
