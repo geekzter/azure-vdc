@@ -118,22 +118,6 @@ resource "azurerm_app_service" "paas_web_app" {
     "WEBSITE_HTTPLOGGING_RETENTION_DAYS" = "90"
   }
 
-  identity {
-    type                       = "SystemAssigned"
-  }
-
-  site_config {
-    default_documents          = [
-                                 "default.aspx",
-                                 "default.htm",
-                                 "index.html"
-                                 ]
-    dotnet_framework_version   = "v4.0"
-    ftps_state                 = "Disabled"
-    scm_type                   = "LocalGit"
-  # virtual_network_name       = "${local.integrated_vnet_name}"
-  }
-
   connection_string {
     name                       = "MyDbConnection"
     type                       = "SQLAzure"
@@ -141,22 +125,48 @@ resource "azurerm_app_service" "paas_web_app" {
     value                      = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
   }
 
-  # application_logs {
-  #   azure_blob_storage {
-  #     level                    = "Error"
-  #     retention_in_days        = 90
-  #     # there is currently no means of generating Service SAS tokens with the azurerm provider
-  #     sas_url                  = ""
-  #   }
-  # }
-  # http_logs {
-  #   azure_blob_storage {
-  #     retention_in_days        = 90
-  #     # there is currently no means of generating Service SAS tokens with the azurerm provider
-  #     sas_url                  = ""
-  #   }
-  # }
-  
+  identity {
+    type                       = "SystemAssigned"
+  }
+
+  logs {
+    # application_logs {
+    #   azure_blob_storage {
+    #     level                    = "Error"
+    #     retention_in_days        = 90
+    #     # there is currently no means of generating Service SAS tokens with the azurerm provider
+    #     sas_url                  = ""
+    #   }
+    # }
+    http_logs {
+      # azure_blob_storage {
+      #   retention_in_days        = 90
+      #   # there is currently no means of generating Service SAS tokens with the azurerm provider
+      #   sas_url                  = ""
+      # }
+      file_system {
+        retention_in_days        = 90
+        retention_in_mb          = 100
+      }
+    }
+  }
+
+  site_config {
+    always_on                  = false
+    default_documents          = [
+                                 "default.aspx",
+                                 "default.htm",
+                                 "index.html"
+                                 ]
+    dotnet_framework_version   = "v4.0"
+    ftps_state                 = "Disabled"
+    # ip_restriction {
+    #   virtual_network_subnet_id = "${var.waf_subnet_id}"
+    # }
+    scm_type                   = "LocalGit"
+  # virtual_network_name       = "${local.integrated_vnet_name}"
+  }
+
   tags                         = "${var.tags}"
 }
 
@@ -175,27 +185,6 @@ resource "azurerm_app_service" "paas_web_app" {
 #   }
 
 #   depends_on                   = ["var.integrated_vnet_id"]
-# }
-
-/*
-Error: web.AppsClient#CreateOrUpdate: Failure sending request: StatusCode=400 -- Original Error: Code="BadRequest" Message="IpSecurityRestriction.IpAddress is invalid.  It must be in CIDR format." Details=[{"Message":"IpSecurityRestriction.IpAddress is invalid.  It must be in CIDR format."},{"Code":"BadRequest"},{"ErrorEntity":{"Code":"BadRequest","ExtendedCode":"51021","Message":"IpSecurityRestriction.IpAddress is invalid.  It must be in CIDR format.","MessageTemplate":"{0} is invalid.  {1}","Parameters":["IpSecurityRestriction.IpAddress","It must be in CIDR format."]}}]
-*/
-# resource "azurerm_template_deployment" "app_service_access_restriction" {
-#   name                         = "${azurerm_app_service.paas_web_app.name}-access-restriction"
-#   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-#   deployment_mode              = "Incremental"
-
-#   template_body                = "${file("${path.module}/appsvc-access-restriction.json")}"
-
-#   parameters                   = {
-#     location                   = "${azurerm_resource_group.app_rg.location}"
-#     functionsAppServicePlanName = "${azurerm_app_service_plan.paas_plan.name}"
-#     functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
-#     integratedSubnetName       = "${local.integrated_subnet_name}"
-#     wafSubnetId                = "${var.waf_subnet_id}"
-#   }
-
-#   depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
 # }
 
 # resource "azurerm_template_deployment" "app_service_network_association" {
