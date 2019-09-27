@@ -127,6 +127,7 @@ module "paas_app" {
   admin_ips                    = "${local.admin_ips}"
   admin_ip_ranges              = "${local.admin_cidr_ranges}"
   admin_username               = "${var.admin_username}"
+  database_import              = "${var.paas_app_database_import}"
   database_template_storage_key= "${var.app_database_template_storage_key}"
   dba_login                    = "${var.dba_login}"
   dba_object_id                = "${var.dba_object_id}"

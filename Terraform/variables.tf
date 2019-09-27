@@ -245,6 +245,9 @@ variable "app_db_image_version" {
   default                      = "latest"
 }
 variable app_database_template_storage_key {}
+variable paas_app_database_import {
+  type                         = bool
+}
 variable "vanity_domainname" {
   description                  = "The domain part of the vanity url"
 }

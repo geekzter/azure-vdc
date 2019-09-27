@@ -85,6 +85,24 @@ function DeleteArmResources () {
         }
     }
 }
+
+function SetDatabaseImport () {
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        $script:sqlDatabase = $(terraform output "paas_app_sql_database" 2>$null)
+    }
+
+    if ([string]::IsNullOrEmpty($sqlDatabase)) {
+        # Database does not exist, import on create
+        $env:TF_VAR_paas_app_database_import="true"
+        Write-Host "Database paas_app_sql_database does not exist. TF_VAR_paas_app_database_import=$env:TF_VAR_paas_app_database_import"
+    } else {
+        # Database already exists, don't import anything
+        $env:TF_VAR_paas_app_database_import="false"
+        Write-Host "Database $sqlDatabase already exists. TF_VAR_paas_app_database_import=$env:TF_VAR_paas_app_database_import"
+    }
+}
+
 function Invoke (
     [string]$cmd
 ) {
@@ -211,7 +229,7 @@ try {
         $forceArgs = "-auto-approve"
     }
 
-    if (!(Get-ChildItem Env:TF_VAR_*) -and (Test-Path $varsFile)) {
+    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_paas_app_database_import) -and (Test-Path $varsFile)) {
         # Load variables from file, if it exists and environment variables have not been set
         $varArgs = "-var-file='$varsFile'"
     }
@@ -240,6 +258,7 @@ try {
     }
 
     if ($plan -or $apply) {
+        SetDatabaseImport
         Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'"
     }
 

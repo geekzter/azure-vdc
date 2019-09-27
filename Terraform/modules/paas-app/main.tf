@@ -401,6 +401,20 @@ resource "azurerm_sql_database" "app_sqldb" {
 
   # Import only works once, this is better moved to an Azure Pipeline Job
   # Error: sql.DatabasesClient#CreateImportOperation: Failure sending request: StatusCode=400 -- Original Error: Code="Failed" Message="The async operation failed." InnerError={"unmarshalError":"json: cannot unmarshal array into Go struct field serviceError2.details of type map[string]interface {}"} AdditionalInfo=[{"code":"0","details":[{"code":"0","message":"There was an error that occurred during this operation : '\u003cstring xmlns=\"http://schemas.microsoft.com/2003/10/Serialization/\"\u003eError encountered during the service operation. ; Exception Microsoft.SqlServer.Management.Dac.Services.ServiceException:Target database is not empty. The import operation can only be performed on an empty database.; \u003c/string\u003e'","severity":"16","target":null}],"innererror":[],"message":"There was an error that occurred during this operation : '\u003cstring xmlns=\"http://schemas.microsoft.com/2003/10/Serialization/\"\u003eError encountered during the service operation. ; Exception Microsoft.SqlServer.Management.Dac.Services.ServiceException:Target database is not empty. The import operation can only be performed on an empty database.; \u003c/string\u003e'","target":null}]
+  # database_import
+
+  dynamic "import" {
+    for_each = range(var.database_import ? 1 : 0)
+    content {
+      storage_uri              = "${var.database_template_storage_uri}"
+      storage_key              = "${var.database_template_storage_key}"
+      storage_key_type         = "StorageAccessKey"
+      administrator_login      = "${azurerm_sql_server.app_sqlserver.administrator_login}"
+      administrator_login_password = "${azurerm_sql_server.app_sqlserver.administrator_login_password}"
+      authentication_type      = "SQL"
+    }
+  }
+
   # import {
   #   storage_uri                = "${var.database_template_storage_uri}"
   #   storage_key                = "${var.database_template_storage_key}"
