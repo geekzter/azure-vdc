@@ -9,7 +9,6 @@ variable admin_ip_ranges {}
 variable admin_username {}
 variable database_import {
   type                         = bool
-  default                      = false
 }
 variable database_template_storage_key {
 }
