@@ -46,7 +46,7 @@ output "iaas_app_resource_group" {
 }
 
 output "iaas_app_url" {
-  value       = "${local.app_url}"
+  value       = "${local.iaas_app_url}"
 } 
 
 output "iaas_app_web_lb_address" {
@@ -128,9 +128,13 @@ output "paas_app_resource_group" {
   value       = "${local.paas_app_resource_group}"
 }
 
-output paas_app_url {
+output paas_app_internal_url {
     value = "http://${module.paas_app.app_service_fqdn}/"
 }
+
+output "paas_app_url" {
+  value       = "${local.paas_app_url}"
+} 
 
 output spoke_vnet_guid {
     value     = "${module.paas_app.spoke_vnet_guid}"

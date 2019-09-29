@@ -71,7 +71,7 @@ module "iis_app" {
   admin_username               = "${var.admin_username}"
   admin_password               = "${local.password}"
   app_devops                   = "${var.app_devops}"
-  app_url                      = "${local.app_url}"
+  app_url                      = "${local.iaas_app_url}"
   app_web_vms                  = "${var.app_web_vms}"
   app_db_lb_address            = "${var.vdc_config["iaas_spoke_app_db_lb_address"]}"
   app_db_vms                   = "${var.app_db_vms}"

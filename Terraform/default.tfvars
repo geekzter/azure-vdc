@@ -9,4 +9,4 @@ deploy_auto_shutdown           = false
 deploy_connection_monitors     = false
 deploy_managed_bastion         = false
 deploy_vpn                     = false
-use_vanity_domain_and_ssl      = false
+use_vanity_domain_and_ssl      = true

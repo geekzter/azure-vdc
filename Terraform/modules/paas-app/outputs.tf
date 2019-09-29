@@ -1,3 +1,6 @@
+output app_resource_group {
+  value       = "${azurerm_resource_group.app_rg.name}"
+}
 output app_service_fqdn {
     value = "${azurerm_app_service.paas_web_app.default_site_hostname}"
 }
