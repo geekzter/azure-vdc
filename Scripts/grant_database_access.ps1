@@ -2,8 +2,9 @@
 
 ### Arguments
 param ( 
-    [parameter(Mandatory=$false)][string]$sqlDatabase="vdcdemopaasappkmfdsqldb",
-    [parameter(Mandatory=$false)][string]$sqlServerFQDN="vdcdemopaasappkmfdsqlserver.database.windows.net",
+    [parameter(Mandatory=$false)][string]$spName,
+    [parameter(Mandatory=$false)][string]$sqlDatabase,
+    [parameter(Mandatory=$false)][string]$sqlServerFQDN,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
     [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
@@ -40,8 +41,8 @@ $conn.AccessToken = $token
 
 Write-Host "Connecting to database $sqlServerFQDN/$sqlDatabase..."
 $conn.Open()
-$query = 'select @@version'
+$query = (Get-Content grant-database-access.sql) -replace "sqldbname",$sqlDatabase -replace "spname",$spName
 $command = New-Object -TypeName System.Data.SqlClient.SqlCommand($query, $conn) 	
-$Result = $command.ExecuteScalar()
+$Result = $command.ExecuteNonQuery()
 $Result
 $conn.Close()
