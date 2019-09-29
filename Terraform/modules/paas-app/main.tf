@@ -152,7 +152,7 @@ resource "azurerm_app_service" "paas_web_app" {
   }
 
   site_config {
-    always_on                  = false
+    always_on                  = true # Better demo experience, no warmup needed
     default_documents          = [
                                  "default.aspx",
                                  "default.htm",
@@ -169,6 +169,13 @@ resource "azurerm_app_service" "paas_web_app" {
 
   tags                         = "${var.tags}"
 }
+
+# data "azuread_application" "app_service_msi" {
+#   object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
+# }
+# data "azuread_service_principal" "app_service_msi" {
+#   object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
+# }
 
 # Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
 # resource "null_resource" "spoke_vnet_guid" {
@@ -399,10 +406,7 @@ resource "azurerm_sql_database" "app_sqldb" {
   server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
   edition                      = "Premium"
 
-  # Import only works once, this is better moved to an Azure Pipeline Job
-  # Error: sql.DatabasesClient#CreateImportOperation: Failure sending request: StatusCode=400 -- Original Error: Code="Failed" Message="The async operation failed." InnerError={"unmarshalError":"json: cannot unmarshal array into Go struct field serviceError2.details of type map[string]interface {}"} AdditionalInfo=[{"code":"0","details":[{"code":"0","message":"There was an error that occurred during this operation : '\u003cstring xmlns=\"http://schemas.microsoft.com/2003/10/Serialization/\"\u003eError encountered during the service operation. ; Exception Microsoft.SqlServer.Management.Dac.Services.ServiceException:Target database is not empty. The import operation can only be performed on an empty database.; \u003c/string\u003e'","severity":"16","target":null}],"innererror":[],"message":"There was an error that occurred during this operation : '\u003cstring xmlns=\"http://schemas.microsoft.com/2003/10/Serialization/\"\u003eError encountered during the service operation. ; Exception Microsoft.SqlServer.Management.Dac.Services.ServiceException:Target database is not empty. The import operation can only be performed on an empty database.; \u003c/string\u003e'","target":null}]
-  # database_import
-
+  # Import is not re-entrant
   dynamic "import" {
     for_each = range(var.database_import ? 1 : 0)
     content {
@@ -415,19 +419,10 @@ resource "azurerm_sql_database" "app_sqldb" {
     }
   }
 
-  # import {
-  #   storage_uri                = "${var.database_template_storage_uri}"
-  #   storage_key                = "${var.database_template_storage_key}"
-  #   storage_key_type           = "StorageAccessKey"
-  #   administrator_login        = "${azurerm_sql_server.app_sqlserver.administrator_login}"
-  #   administrator_login_password = "${azurerm_sql_server.app_sqlserver.administrator_login_password}"
-  #   authentication_type        = "SQL"
-  # }
-
 # Can be enabled through Azure policy instead
   threat_detection_policy {
-    state                     = "Enabled"
-    use_server_default        = "Enabled"
+    state                      = "Enabled"
+    use_server_default         = "Enabled"
   }
 
 /* 

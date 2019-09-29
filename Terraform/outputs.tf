@@ -94,8 +94,14 @@ output paas_app_service_fqdn {
     value = "${module.paas_app.app_service_fqdn}"
 }
 
-output paas_app_service_msi {
-    value = "${module.paas_app.app_service_msi}"
+# output paas_app_service_msi_application_id1 {
+#     value = "${module.paas_app.app_service_msi_application_id1}"
+# }
+# output paas_app_service_msi_application_id2 {
+#     value = "${module.paas_app.app_service_msi_application_id2}"
+# }
+output paas_app_service_msi_object_id {
+    value = "${module.paas_app.app_service_msi_object_id}"
 }
 
 output paas_app_service_name {
@@ -108,6 +114,10 @@ output "paas_app_sql_database" {
 
 output "paas_app_sql_server" {
   value       = "${module.paas_app.sql_server}"
+}
+
+output "paas_app_sql_server_fqdn" {
+  value       = "${module.paas_app.sql_server_fqdn}"
 }
 
 output "paas_app_storage_account_name" {
