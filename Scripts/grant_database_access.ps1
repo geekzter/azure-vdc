@@ -2,8 +2,8 @@
 
 ### Arguments
 param ( 
-    [parameter(Mandatory=$false)][string]$sqlDatabase="vdcdevpaasappfxausqlserver.database.windows.net",
-    [parameter(Mandatory=$false)][string]$sqlServerFQDN="vdcdevpaasappfxausqldb",
+    [parameter(Mandatory=$false)][string]$sqlDatabase="vdcdevpaasappfxausqldb",
+    [parameter(Mandatory=$false)][string]$sqlServerFQDN="vdcdevpaasappfxausqlserver.database.windows.net",
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
     [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
@@ -22,8 +22,9 @@ function GetAccessToken () {
         } -ContentType 'application/x-www-form-urlencoded'
 
     if ($tokenResponse) {
-        Write-debug "Access token type is $($tokenResponse.token_type), expires $($tokenResponse.expires_on)"
+        Write-Host "Access token type is $($tokenResponse.token_type), expires $($tokenResponse.expires_on)"
         $token = $tokenResponse.access_token
+        Write-Host "Access token is $token"
     } else {
         throw "Unable to obtain access token"
     }
@@ -33,9 +34,10 @@ function GetAccessToken () {
 
 $token = GetAccessToken
 
-$conn = new-object System.Data.SqlClient.SqlConnection
-$conn.ConnectionString = "Server=tcp:$($sqlServerFQDN),1433;Initial Catalog=$($sqlDatabase);Persist Security Info=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;" 
+$conn = New-Object System.Data.SqlClient.SqlConnection
+$conn.ConnectionString = "Data Source=tcp:$($sqlServerFQDN),1433;Initial Catalog=$($sqlDatabase);Connection Timeout=30;" 
 $conn.AccessToken = $token
 
 Write-Host "Connecting to database $sqlServerFQDN/$sqlDatabase..."
 $conn.Open()
+$conn.Close()
