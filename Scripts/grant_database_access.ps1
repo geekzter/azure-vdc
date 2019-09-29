@@ -2,9 +2,9 @@
 
 ### Arguments
 param ( 
-    [parameter(Mandatory=$false)][string]$spName,
-    [parameter(Mandatory=$false)][string]$sqlDatabase,
-    [parameter(Mandatory=$false)][string]$sqlServerFQDN,
+    [parameter(Mandatory=$true)][string]$spName,
+    [parameter(Mandatory=$true)][string]$sqlDatabase,
+    [parameter(Mandatory=$true)][string]$sqlServerFQDN,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
     [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
@@ -23,11 +23,11 @@ function GetAccessToken () {
         } -ContentType 'application/x-www-form-urlencoded'
 
     if ($tokenResponse) {
-        Write-Host "Access token type is $($tokenResponse.token_type), expires $($tokenResponse.expires_on)"
+        Write-Debug "Access token type is $($tokenResponse.token_type), expires $($tokenResponse.expires_on)"
         $token = $tokenResponse.access_token
-        Write-Host "Access token is $token"
+        Write-Debug "Access token is $token"
     } else {
-        throw "Unable to obtain access token"
+        Write-Error "Unable to obtain access token"
     }
 
     return $token
@@ -42,7 +42,9 @@ $conn.AccessToken = $token
 Write-Host "Connecting to database $sqlServerFQDN/$sqlDatabase..."
 $conn.Open()
 $query = (Get-Content grant-database-access.sql) -replace "sqldbname",$sqlDatabase -replace "spname",$spName
+Write-Debug "Executing query:`n$query"
 $command = New-Object -TypeName System.Data.SqlClient.SqlCommand($query, $conn) 	
+# Problem: 'AADSTS65002: Consent between first party applications and resources must be configured via preauthorization
 $Result = $command.ExecuteNonQuery()
 $Result
 $conn.Close()

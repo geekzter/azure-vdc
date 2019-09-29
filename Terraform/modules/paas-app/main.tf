@@ -372,32 +372,17 @@ resource "azurerm_sql_firewall_rule" "azureall" {
   end_ip_address               = "0.0.0.0"
 } 
 
-# TODO: Use AAD group for DBA's, add DBA and TF to that group
+# If you have AD permissions it is better to use an AAD group for DBA's, and add DBA and TF to that group
 resource "azurerm_sql_active_directory_administrator" "dba" {
   server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  login                        = "${var.dba_login}"
+# login                        = "${var.dba_login}"
   tenant_id                    = "${data.azurerm_client_config.current.tenant_id}"
-  object_id                    = "${var.dba_object_id}" 
-}
-
-# Required for SQLCMD
-/* resource "azurerm_sql_active_directory_administrator" "tf" {
-  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  login                        = "tfadmin"
-  tenant_id                    = "${data.azurerm_client_config.current.tenant_id}"
-  object_id                    = "${data.azurerm_client_config.current.service_principal_object_id}"
-} */
-
-/* 
-resource "azurerm_sql_active_directory_administrator" "client" {
-  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  login                        = "${azurerm_app_service.app_appservice.name}"
-  tenant_id                    = "${data.azurerm_client_config.current.tenant_id}"
-  object_id                    = "${azurerm_app_service.app_appservice.identity.0.principal_id}"
-} */
+# object_id                    = "${var.dba_object_id}" 
+# HACK: Not least privilege, but req'd as automation SP does not have sufficient permissions
+  login                        = "client"
+  object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
+} 
 
 resource "azurerm_sql_database" "app_sqldb" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}sqldb"
