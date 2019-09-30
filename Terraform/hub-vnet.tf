@@ -93,6 +93,9 @@ resource "azurerm_subnet" "mgmt_subnet" {
   virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix               = "${var.vdc_config["hub_mgmt_subnet"]}"
+  service_endpoints            = [
+                                 "Microsoft.Web"
+  ]
 }
 
 resource "azurerm_subnet_route_table_association" "mgmt_subnet_routes" {

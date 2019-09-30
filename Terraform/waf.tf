@@ -190,6 +190,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     port                       = 80
     protocol                   = "Http"
     request_timeout            = 1
+    pick_host_name_from_backend_address = true
   }
   http_listener {
     name                       = "${module.paas_app.app_resource_group}-http-listener"

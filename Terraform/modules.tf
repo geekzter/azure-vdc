@@ -127,6 +127,7 @@ module "paas_app" {
   admin_ips                    = "${local.admin_ips}"
   admin_ip_ranges              = "${local.admin_cidr_ranges}"
   admin_username               = "${var.admin_username}"
+  management_subnet_ids        = ["${module.paas_spoke_vnet.bastion_subnet_id}","${azurerm_subnet.mgmt_subnet.id}"]
   database_import              = "${var.paas_app_database_import}"
   database_template_storage_key= "${var.app_database_template_storage_key}"
   dba_login                    = "Terraform"
@@ -153,7 +154,7 @@ module "paas_spoke_vnet" {
 
   address_space                = "${var.vdc_config["paas_spoke_range"]}"
   bastion_subnet_range         = "${var.vdc_config["paas_spoke_bastion_subnet"]}"
-  deploy_managed_bastion       = false
+  deploy_managed_bastion       = "${var.deploy_managed_bastion}"
   dns_servers                  = "${azurerm_virtual_network.hub_vnet.dns_servers}"
   enable_routetable_for_subnets = []
   gateway_ip_address           = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}" # Delays provisioning to start after Azure FW is provisioned

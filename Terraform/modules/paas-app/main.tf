@@ -160,9 +160,16 @@ resource "azurerm_app_service" "paas_web_app" {
                                  ]
     dotnet_framework_version   = "v4.0"
     ftps_state                 = "Disabled"
-    # ip_restriction {
-    #   virtual_network_subnet_id = "${var.waf_subnet_id}"
-    # }
+
+    ip_restriction {
+      virtual_network_subnet_id = "${var.waf_subnet_id}"
+    }
+    dynamic "ip_restriction" {
+      for_each = var.management_subnet_ids
+      content {
+        virtual_network_subnet_id = "${ip_restriction.value}"
+      }
+    }
     scm_type                   = "LocalGit"
   # virtual_network_name       = "${local.integrated_vnet_name}"
   }

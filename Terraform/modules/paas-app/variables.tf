@@ -7,6 +7,9 @@ variable tags {
 variable admin_ips {}
 variable admin_ip_ranges {}
 variable admin_username {}
+variable management_subnet_ids {
+  type                         = list
+}
 variable database_import {
   type                         = bool
 }
