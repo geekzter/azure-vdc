@@ -84,6 +84,7 @@ variable "app_db_vms" {
 
 variable "vdc_oms_solutions" {
 # List of solutions: https://docs.microsoft.com/en-us/rest/api/loganalytics/workspaces/listintelligencepacks
+# Get-AzOperationalInsightsIntelligencePack
   default                      = [
   # "ADAssessment",
   # "ADReplication",
@@ -91,38 +92,72 @@ variable "vdc_oms_solutions" {
   # "AlertManagement",
   # "AntiMalware",
     "ApplicationInsights",
+  # "ASRAnalytics",
     "AzureActivity",
     "AzureAppGatewayAnalytics",
     "AzureAutomation",
+  # "AzureCdnCoreAnalytics",
+  # "AzureDataFactoryAnalytics",
     "AzureNetworking",
     "AzureNSGAnalytics",
+  # "AzureSecurityOfThings",
   # "AzureSQLAnalytics",
   # "AzureWebAppsAnalytics",
   # "Backup",
   # "CapacityPerformance",
   # "ChangeTracking",
   # "CompatibilityAssessment",
+  # "ContainerInsights",
   # "Containers",
+  # "DeviceHealthProd",
+  # "DHCPActivity",
   # "DnsAnalytics",
+  # "HDInsight",
+  # "HDInsightHadoop",
+  # "HDInsightInteractiveQuery",
+  # "HDInsightKafka",
+  # "HDInsightSpark",
+  # "HDInsightStorm",
+  # "InfrastructureInsights",
+  # "InternalWindowsEvent",
   # "KeyVault",
   # "KeyVaultAnalytics",
   # "LogicAppB2B",
   # "LogicAppsManagement",
   # "LogManagement",
+  # "Microsoft365Analytics",
   # "NetworkMonitoring",
+  # "Office365",
   # "ProcessInvestigator",
   # "SCOMAssessment",
   # "Security",
     "SecurityCenterFree",
+  # "SecurityCenterNetworkTraffic",
+  # "SecurityInsights",
   # "ServiceDesk",
   # "ServiceFabric",
     "ServiceMap",
   # "SiteRecovery",
+  # "SQLAdvancedThreatProtection",
   # "SQLAssessment",
-  # "Start-Stop-VM",
+  # "SQLThreatDetection",
+  # "SQLVulnerabilityAssessment",
+  # "SurfaceHub",
   # "Updates",
+  # "VMInsights",
+  # "VMware",
+  # "WaaSUpdateInsights",
+  # "WEF_10x",
+  # "WEF_10xDSRE",
+  # "WEFInternal",
+  # "WEFInternalUat",
+  # "WindowsDefenderATP",
+  # "WindowsDefenderATPStable",
+  # "WindowsEventForwarding",
+  # "WindowsFirewall",
+  # "WinLog",
   # "WireData",
-  # "WireData2",
+  # "WireData2"
   ]
 }
 
@@ -132,6 +167,8 @@ variable "admin_ip_ranges" {
 variable "admin_ips" {
   default                      = []
 }
+variable dba_login {}
+variable dba_object_id {}
 
 variable "rdp_port" {
 # default                      = "3389" # Default for protocol
@@ -206,6 +243,11 @@ variable "app_db_image_sku" {
 variable "app_db_image_version" {
   description                  = "version of the DB image to apply (az vm image list)"
   default                      = "latest"
+}
+variable app_database_template_storage_key {}
+variable paas_app_database_import {
+  type                         = bool
+  default                      = false
 }
 variable "vanity_domainname" {
   description                  = "The domain part of the vanity url"

@@ -27,8 +27,20 @@ resource "azurerm_public_ip" "waf_pip" {
   depends_on                   = ["azurerm_resource_group.vdc_rg"]
 }
 
-resource "azurerm_dns_cname_record" "waf_pip_cname" {
-  name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}app"
+resource "azurerm_dns_cname_record" "waf_iaas_app_cname" {
+  name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}iisapp"
+  zone_name                    = "${data.azurerm_dns_zone.vanity_domain.0.name}"
+  resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.0.resource_group_name}"
+  ttl                          = 300
+  record                       = "${azurerm_public_ip.waf_pip.fqdn}"
+  depends_on                   = ["azurerm_public_ip.waf_pip"]
+
+  count                        = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
+  tags                         = "${local.tags}"
+} 
+
+resource "azurerm_dns_cname_record" "waf_paas_app_cname" {
+  name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}webapp"
   zone_name                    = "${data.azurerm_dns_zone.vanity_domain.0.name}"
   resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.0.resource_group_name}"
   ttl                          = 300
@@ -40,12 +52,12 @@ resource "azurerm_dns_cname_record" "waf_pip_cname" {
 } 
 
 locals {
-  ssl_count                    = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
-  ssl_range                    = "${range(local.ssl_count)}" # Contains one item only if var.use_vanity_domain_and_ssl = true
-  ssl_range_inverted           = "${range(1-local.ssl_count)}" # Contains one item only if var.use_vanity_domain_and_ssl = false
-  vanity_fqdn                  = "${azurerm_dns_cname_record.waf_pip_cname.0.name}.${azurerm_dns_cname_record.waf_pip_cname.0.zone_name}"
-  app_fqdn                     = "${var.use_vanity_domain_and_ssl ? local.vanity_fqdn : azurerm_public_ip.waf_pip.fqdn}"
-  app_url                      = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.app_fqdn}/"
+  ssl_range                    = "${range(var.use_vanity_domain_and_ssl ? 1 : 0)}" # Contains one item only if var.use_vanity_domain_and_ssl = true
+  ssl_range_inverted           = "${range(var.use_vanity_domain_and_ssl ? 0 : 1)}" # Contains one item only if var.use_vanity_domain_and_ssl = false
+  iaas_app_fqdn                = "${azurerm_dns_cname_record.waf_iaas_app_cname.0.name}.${azurerm_dns_cname_record.waf_iaas_app_cname.0.zone_name}"
+  iaas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.iaas_app_fqdn}/"
+  paas_app_fqdn                = "${azurerm_dns_cname_record.waf_paas_app_cname.0.name}.${azurerm_dns_cname_record.waf_paas_app_cname.0.zone_name}"
+  paas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.paas_app_fqdn}/"
 }
 
 resource "azurerm_application_gateway" "waf" {
@@ -64,7 +76,10 @@ resource "azurerm_application_gateway" "waf" {
     name                       = "waf-ip-configuration"
     subnet_id                  = "${azurerm_subnet.waf_subnet.id}"
   }
-
+  frontend_ip_configuration {
+    name                       = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
+    public_ip_address_id       = "${azurerm_public_ip.waf_pip.id}"
+  }
   frontend_port {
     name                       = "http"
     port                       = 80
@@ -73,11 +88,23 @@ resource "azurerm_application_gateway" "waf" {
     name                       = "https"
     port                       = 443
   }
-  frontend_ip_configuration {
-    name                       = "${module.iis_app.app_resource_group}-ip-configuration"
-    public_ip_address_id       = "${azurerm_public_ip.waf_pip.id}"
+
+  # This is a way to make HTTPS and SSL optional (for those too lazy to create a certificate)
+  dynamic "ssl_certificate" {
+    for_each = local.ssl_range
+    content {
+      name                     = "${var.vanity_certificate_name}"
+      data                     = "${filebase64(var.vanity_certificate_path)}" # load pfx from file
+      password                 = "${var.vanity_certificate_password}"
+    }
   }
 
+/*
+  BUG: when use_vanity_domain_and_ssl = false
+Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource Group "vdc-dev-uegl"): network.ApplicationGatewaysClient#CreateOrUpdate: Failure sending request: StatusCode=400 -- Original Error: Code="ApplicationGatewayHttpListenersUsingSameFrontendPort" Message="Two Http Listeners of Application Gateway /resourceGroups/vdc-dev-uegl/providers/Microsoft.Network/applicationGateways/vdc-dev-uegl-waf are using the same Frontend Port /providers/Microsoft.Network/applicationGateways/vdc-dev-uegl-waf/frontendPorts/http." Details=[]
+*/
+
+  #### IaaS IIS App
   backend_address_pool {
     name                       = "${module.iis_app.app_resource_group}-webservers"
     ip_addresses               = "${var.app_web_vms}"
@@ -90,28 +117,25 @@ resource "azurerm_application_gateway" "waf" {
     protocol                   = "Http"
     request_timeout            = 1
   }
-
   http_listener {
     name                       = "${module.iis_app.app_resource_group}-http-listener"
-    frontend_ip_configuration_name = "${module.iis_app.app_resource_group}-ip-configuration"
+    frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
     frontend_port_name         = "http"
+    host_name                  = "${local.iaas_app_fqdn}"
     protocol                   = "Http"
   }
-
-  # HACK: This is a way to make HTTPS and SSL optional 
+  # This is a way to make HTTPS and SSL optional 
   dynamic "http_listener" {
     for_each = local.ssl_range
     content {
       name                     = "${module.iis_app.app_resource_group}-https-listener"
-      frontend_ip_configuration_name = "${module.iis_app.app_resource_group}-ip-configuration"
+      frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
       frontend_port_name       = "https"
       protocol                 = "Https"
-      host_name                = "${local.app_fqdn}"
+      host_name                = "${local.iaas_app_fqdn}"
       ssl_certificate_name     = "${var.vanity_certificate_name}"
     }
   }
-
-
   dynamic "request_routing_rule" {
     # Applied when var.use_vanity_domain_and_ssl = false
     for_each = local.ssl_range_inverted
@@ -134,8 +158,7 @@ resource "azurerm_application_gateway" "waf" {
       redirect_configuration_name = "${module.iis_app.app_resource_group}-http-to-https"
     }
   }
-
-  # HACK: This is a way to make HTTPS and SSL optional 
+  # This is a way to make HTTPS and SSL optional 
   dynamic "request_routing_rule" {
     for_each = local.ssl_range
     content {
@@ -146,23 +169,87 @@ resource "azurerm_application_gateway" "waf" {
       backend_http_settings_name = "${module.iis_app.app_resource_group}-config"
     }
   }
-
-  # HACK: This is a way to make HTTPS and SSL optional (for those too lazy to create a certificate)
-  dynamic "ssl_certificate" {
-    for_each = local.ssl_range
-    content {
-      name                     = "${var.vanity_certificate_name}"
-      data                     = "${filebase64(var.vanity_certificate_path)}" # load pfx from file
-      password                 = "${var.vanity_certificate_password}"
-    }
-  }
-
   dynamic "redirect_configuration" {
     for_each = local.ssl_range
     content {
       name                     = "${module.iis_app.app_resource_group}-http-to-https"
       redirect_type            = "Temporary" # HTTP 302
       target_listener_name     = "${module.iis_app.app_resource_group}-https-listener"
+    }
+  }
+
+  #### PaaS App Service App
+  backend_address_pool {
+    name                       = "${module.paas_app.app_resource_group}-webservers"
+    fqdns                      = ["${module.paas_app.app_service_fqdn}"]
+  }
+  backend_http_settings {
+    name                       = "${module.paas_app.app_resource_group}-config"
+    cookie_based_affinity      = "Disabled"
+    path                       = "/"
+    port                       = 80
+    protocol                   = "Http"
+    request_timeout            = 1
+    pick_host_name_from_backend_address = true
+  }
+  http_listener {
+    name                       = "${module.paas_app.app_resource_group}-http-listener"
+    frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
+    frontend_port_name         = "http"
+    host_name                  = "${local.paas_app_fqdn}"
+    protocol                   = "Http"
+  }
+  # This is a way to make HTTPS and SSL optional 
+  dynamic "http_listener" {
+    for_each = local.ssl_range
+    content {
+      name                     = "${module.paas_app.app_resource_group}-https-listener"
+      frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
+      frontend_port_name       = "https"
+      protocol                 = "Https"
+      host_name                = "${local.paas_app_fqdn}"
+      ssl_certificate_name     = "${var.vanity_certificate_name}"
+    }
+  }
+  dynamic "request_routing_rule" {
+    # Applied when var.use_vanity_domain_and_ssl = false
+    for_each = local.ssl_range_inverted
+    content {
+      name                     = "${module.paas_app.app_resource_group}-http-rule"
+      rule_type                = "Basic"
+      http_listener_name       = "${module.paas_app.app_resource_group}-http-listener"
+      backend_address_pool_name  = "${module.paas_app.app_resource_group}-webservers"
+      backend_http_settings_name = "${module.paas_app.app_resource_group}-config"
+    }
+  }
+  dynamic "request_routing_rule" {
+    # Applied when var.use_vanity_domain_and_ssl = true
+    # Redirect HTTP to HTTPS
+    for_each = local.ssl_range
+    content {
+      name                     = "${module.paas_app.app_resource_group}-http-to-https-rule"
+      rule_type                = "Basic"
+      http_listener_name       = "${module.paas_app.app_resource_group}-http-listener"
+      redirect_configuration_name = "${module.paas_app.app_resource_group}-http-to-https"
+    }
+  }
+  # This is a way to make HTTPS and SSL optional 
+  dynamic "request_routing_rule" {
+    for_each = local.ssl_range
+    content {
+      name                     = "${module.paas_app.app_resource_group}-https-rule"
+      rule_type                = "Basic"
+      http_listener_name       = "${module.paas_app.app_resource_group}-https-listener"
+      backend_address_pool_name = "${module.paas_app.app_resource_group}-webservers"
+      backend_http_settings_name = "${module.paas_app.app_resource_group}-config"
+    }
+  }
+  dynamic "redirect_configuration" {
+    for_each = local.ssl_range
+    content {
+      name                     = "${module.paas_app.app_resource_group}-http-to-https"
+      redirect_type            = "Temporary" # HTTP 302
+      target_listener_name     = "${module.paas_app.app_resource_group}-https-listener"
     }
   }
 
@@ -176,7 +263,7 @@ resource "azurerm_application_gateway" "waf" {
   tags                         = "${local.tags}"
 }
 
-resource "azurerm_monitor_diagnostic_setting" "waf_pip_logs" {
+resource "azurerm_monitor_diagnostic_setting" "waf_iaas_app_pip_logs" {
   name                         = "${azurerm_public_ip.waf_pip.name}-logs"
   target_resource_id           = "${azurerm_public_ip.waf_pip.id}"
   storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"

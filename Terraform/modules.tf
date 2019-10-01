@@ -71,7 +71,7 @@ module "iis_app" {
   admin_username               = "${var.admin_username}"
   admin_password               = "${local.password}"
   app_devops                   = "${var.app_devops}"
-  app_url                      = "${local.app_url}"
+  app_url                      = "${local.iaas_app_url}"
   app_web_vms                  = "${var.app_web_vms}"
   app_db_lb_address            = "${var.vdc_config["iaas_spoke_app_db_lb_address"]}"
   app_db_vms                   = "${var.app_db_vms}"
@@ -126,6 +126,14 @@ module "paas_app" {
 
   admin_ips                    = "${local.admin_ips}"
   admin_ip_ranges              = "${local.admin_cidr_ranges}"
+  admin_username               = "${var.admin_username}"
+  management_subnet_ids        = ["${module.paas_spoke_vnet.bastion_subnet_id}","${azurerm_subnet.mgmt_subnet.id}"]
+  database_import              = "${var.paas_app_database_import}"
+  database_template_storage_key= "${var.app_database_template_storage_key}"
+  dba_login                    = "Terraform"
+  dba_object_id                = "${data.azurerm_client_config.current.service_principal_object_id}"
+# dba_login                    = "${var.dba_login}"
+# dba_object_id                = "${var.dba_object_id}"
   iag_subnet_id                = "${azurerm_subnet.iag_subnet.id}"
   integrated_subnet_id         = "${module.paas_spoke_vnet.subnet_ids["appservice"]}"
   integrated_subnet_range      = "${var.vdc_config["paas_spoke_appsvc_subnet"]}"
@@ -146,7 +154,7 @@ module "paas_spoke_vnet" {
 
   address_space                = "${var.vdc_config["paas_spoke_range"]}"
   bastion_subnet_range         = "${var.vdc_config["paas_spoke_bastion_subnet"]}"
-  deploy_managed_bastion       = false
+  deploy_managed_bastion       = "${var.deploy_managed_bastion}"
   dns_servers                  = "${azurerm_virtual_network.hub_vnet.dns_servers}"
   enable_routetable_for_subnets = []
   gateway_ip_address           = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}" # Delays provisioning to start after Azure FW is provisioned

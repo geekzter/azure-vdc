@@ -28,7 +28,7 @@ try {
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
         $Script:appResourceGroup = $(terraform output "paas_app_resource_group" 2>$null)
-        $Script:appStorageAccount = $(terraform output "app_storage_account_name" 2>$null)
+        $Script:appStorageAccount = $(terraform output "paas_app_storage_account_name" 2>$null)
 
         $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(Get-AzResourceGroup -Name $appResourceGroup -ErrorAction "SilentlyContinue")))
     }

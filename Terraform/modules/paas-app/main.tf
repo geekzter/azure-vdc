@@ -1,11 +1,32 @@
+resource "random_string" "password" {
+  length                       = 12
+  upper                        = true
+  lower                        = true
+  number                       = true
+  special                      = true
+# override_special             = "!@#$%&*()-_=+[]{}<>:?" # default
+# Avoid characters that may cause shell scripts to break
+  override_special             = "." 
+}
+
 locals {
+  admin_ips                    = "${tolist(var.admin_ips)}"
   # Last element of resource id is resource name
   integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
   spoke_vnet_guid_file         = "${path.module}/paas-spoke-vnet-resourceguid.tmp"
+
+  password                     = ".Az9${random_string.password.result}"
   vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
 
 }
+
+data "http" "localpublicip" {
+# Get public IP address of the machine running this terraform template
+  url                          = "https://ipinfo.io/ip"
+}
+
+data "azurerm_client_config" "current" {}
 
 resource "azurerm_resource_group" "app_rg" {
   name                         = "${var.resource_group_name}"
@@ -37,6 +58,8 @@ resource "azurerm_storage_account" "app_storage" {
   tags                         = "${var.tags}"
 }
 
+### App Service
+
 resource "azurerm_storage_container" "app_storage_container" {
   name                         = "data"
   storage_account_name         = "${azurerm_storage_account.app_storage.name}"
@@ -45,7 +68,6 @@ resource "azurerm_storage_container" "app_storage_container" {
 
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
   name                         = "sample.txt"
- resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   storage_account_name         = "${azurerm_storage_account.app_storage.name}"
   storage_container_name       = "${azurerm_storage_container.app_storage_container.name}"
 
@@ -93,28 +115,74 @@ resource "azurerm_app_service" "paas_web_app" {
 
   app_settings = {
     "APPINSIGHTS_INSTRUMENTATIONKEY" = "${var.diagnostics_instrumentation_key}"
+    "WEBSITE_HTTPLOGGING_RETENTION_DAYS" = "90"
+  }
+
+  connection_string {
+    name                       = "MyDbConnection"
+    type                       = "SQLAzure"
+  # No secrets in connection string
+    value                      = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
   }
 
   identity {
     type                       = "SystemAssigned"
   }
 
+  logs {
+    # application_logs {
+    #   azure_blob_storage {
+    #     level                    = "Error"
+    #     retention_in_days        = 90
+    #     # there is currently no means of generating Service SAS tokens with the azurerm provider
+    #     sas_url                  = ""
+    #   }
+    # }
+    http_logs {
+      # azure_blob_storage {
+      #   retention_in_days        = 90
+      #   # there is currently no means of generating Service SAS tokens with the azurerm provider
+      #   sas_url                  = ""
+      # }
+      file_system {
+        retention_in_days        = 90
+        retention_in_mb          = 100
+      }
+    }
+  }
+
   site_config {
+    always_on                  = true # Better demo experience, no warmup needed
+    default_documents          = [
+                                 "default.aspx",
+                                 "default.htm",
+                                 "index.html"
+                                 ]
     dotnet_framework_version   = "v4.0"
     ftps_state                 = "Disabled"
+
+    ip_restriction {
+      virtual_network_subnet_id = "${var.waf_subnet_id}"
+    }
+    dynamic "ip_restriction" {
+      for_each = var.management_subnet_ids
+      content {
+        virtual_network_subnet_id = "${ip_restriction.value}"
+      }
+    }
     scm_type                   = "LocalGit"
   # virtual_network_name       = "${local.integrated_vnet_name}"
   }
 
-# connection_string {
-#   name                       = "MyDbConnection"
-#   type                       = "SQLAzure"
-# # No secrets in connection string
-#   value                      = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
-# }
-
   tags                         = "${var.tags}"
 }
+
+# data "azuread_application" "app_service_msi" {
+#   object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
+# }
+# data "azuread_service_principal" "app_service_msi" {
+#   object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
+# }
 
 # Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
 # resource "null_resource" "spoke_vnet_guid" {
@@ -131,27 +199,6 @@ resource "azurerm_app_service" "paas_web_app" {
 #   }
 
 #   depends_on                   = ["var.integrated_vnet_id"]
-# }
-
-/*
-Error: web.AppsClient#CreateOrUpdate: Failure sending request: StatusCode=400 -- Original Error: Code="BadRequest" Message="IpSecurityRestriction.IpAddress is invalid.  It must be in CIDR format." Details=[{"Message":"IpSecurityRestriction.IpAddress is invalid.  It must be in CIDR format."},{"Code":"BadRequest"},{"ErrorEntity":{"Code":"BadRequest","ExtendedCode":"51021","Message":"IpSecurityRestriction.IpAddress is invalid.  It must be in CIDR format.","MessageTemplate":"{0} is invalid.  {1}","Parameters":["IpSecurityRestriction.IpAddress","It must be in CIDR format."]}}]
-*/
-# resource "azurerm_template_deployment" "app_service_access_restriction" {
-#   name                         = "${azurerm_app_service.paas_web_app.name}-access-restriction"
-#   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-#   deployment_mode              = "Incremental"
-
-#   template_body                = "${file("${path.module}/appsvc-access-restriction.json")}"
-
-#   parameters                   = {
-#     location                   = "${azurerm_resource_group.app_rg.location}"
-#     functionsAppServicePlanName = "${azurerm_app_service_plan.paas_plan.name}"
-#     functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
-#     integratedSubnetName       = "${local.integrated_subnet_name}"
-#     wafSubnetId                = "${var.waf_subnet_id}"
-#   }
-
-#   depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
 # }
 
 # resource "azurerm_template_deployment" "app_service_network_association" {
@@ -192,6 +239,8 @@ Error: web.AppsClient#CreateOrUpdate: Failure sending request: StatusCode=400 --
 
 #   depends_on                   = ["azurerm_app_service.paas_web_app","azurerm_template_deployment.app_service_network_association","null_resource.spoke_vnet_guid"] # Explicit dependency for ARM templates
 # }
+
+### Event Hub
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}eventhubNamespace"
@@ -267,3 +316,115 @@ resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
     }
   }
 }
+
+### SQL Database
+
+resource "azurerm_sql_server" "app_sqlserver" {
+  name                         = "${lower(replace(var.resource_group_name,"-",""))}sqlserver"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  location                     = "${azurerm_resource_group.app_rg.location}"
+  version                      = "12.0"
+# TODO: Remove credentials, and/or store in Key Vault
+  administrator_login          = "${var.admin_username}"
+  administrator_login_password = "${local.password}"
+  
+  tags                         = "${var.tags}"
+}
+
+resource "azurerm_sql_firewall_rule" "tfclient" {
+  name                         = "TerraformClientRule"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+  start_ip_address             = "${chomp(data.http.localpublicip.body)}"
+  end_ip_address               = "${chomp(data.http.localpublicip.body)}"
+}
+
+resource "azurerm_sql_firewall_rule" "adminclient" {
+  name                         = "AdminClientRule${count.index}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+  start_ip_address             = "${element(local.admin_ips, count.index)}"
+  end_ip_address               = "${element(local.admin_ips, count.index)}"
+  count                        = "${length(local.admin_ips)}"
+}
+
+# HACK: Not sure why backup restores are initated from this address
+resource "azurerm_sql_firewall_rule" "azure1" {
+  name                         = "AzureRule1"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+  start_ip_address             = "65.52.129.125"
+  end_ip_address               = "65.52.129.125"
+}
+
+# Add rule for ${azurerm_app_service.paas_web_app.outbound_ip_addresses} array
+# Note these are shared addresses, hence does not fully constrain access
+# resource "azurerm_sql_firewall_rule" "webapp" {
+#   name                         = "AllowWebApp${count.index}"
+#   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+#   server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+#   start_ip_address             = "${element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)}"
+#   end_ip_address               = "${element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)}"
+# # BUG: terraform bug. Throws as an error on first creation: "value of 'count' cannot be computed". Subsequent executions do work.
+#   count                        = "${length(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses))}"
+#   depends_on                   = ["azurerm_app_service.paas_web_app"]
+# } 
+
+resource "azurerm_sql_firewall_rule" "azureall" {
+  name                         = "AllowAllWindowsAzureIPs" # Same name as Azure generated one
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+# 0.0.0.0 represents Azure addresses, see https://docs.microsoft.com/en-us/rest/api/sql/firewallrules/createorupdate
+  start_ip_address             = "0.0.0.0"
+  end_ip_address               = "0.0.0.0"
+} 
+
+# If you have AD permissions it is better to use an AAD group for DBA's, and add DBA and TF to that group
+resource "azurerm_sql_active_directory_administrator" "dba" {
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+# login                        = "${var.dba_login}"
+  tenant_id                    = "${data.azurerm_client_config.current.tenant_id}"
+# object_id                    = "${var.dba_object_id}" 
+# HACK: Not least privilege, but req'd as automation SP does not have sufficient permissions
+  login                        = "client"
+  object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
+} 
+
+resource "azurerm_sql_database" "app_sqldb" {
+  name                         = "${lower(replace(var.resource_group_name,"-",""))}sqldb"
+  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  location                     = "${azurerm_resource_group.app_rg.location}"
+  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+  edition                      = "Premium"
+
+  # Import is not re-entrant
+  dynamic "import" {
+    for_each = range(var.database_import ? 1 : 0)
+    content {
+      storage_uri              = "${var.database_template_storage_uri}"
+      storage_key              = "${var.database_template_storage_key}"
+      storage_key_type         = "StorageAccessKey"
+      administrator_login      = "${azurerm_sql_server.app_sqlserver.administrator_login}"
+      administrator_login_password = "${azurerm_sql_server.app_sqlserver.administrator_login_password}"
+      authentication_type      = "SQL"
+    }
+  }
+
+# Can be enabled through Azure policy instead
+  threat_detection_policy {
+    state                      = "Enabled"
+    use_server_default         = "Enabled"
+  }
+
+/* 
+# Configure least privilege access for MSI/SPN accessing database
+  provisioner "local-exec" {
+  # TODO: pass MSI name as argument (${azurerm_app_service.app_appservice.name})
+  # Requires AAD auth in order to grant access to (other) AAD objects
+    command = "sqlcmd -S ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name} -d app_paassqldb -U ${var.admin_username} -P ${local.password} -G -i grant-database-access.sql"
+  }
+*/
+
+  tags                         = "${var.tags}"
+} 

@@ -10,7 +10,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '**/SampleIisWebApp/*.sln'
+  solution: 'Apps/IaaS-ASP.NET/SampleIisWebApp.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
@@ -49,5 +49,10 @@ steps:
   displayName: 'Publish Artifact'
   inputs:
     PathtoPublish: '$(build.artifactstagingdirectory)'
-    ArtifactName: '$(Parameters.ArtifactName)'
+    ArtifactName: aspnet
 
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: scripts'
+  inputs:
+    PathtoPublish: Apps/IaaS-ASP.NET/scripts
+    ArtifactName: aspnetscripts

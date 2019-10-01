@@ -49,6 +49,8 @@ if ($suffixes) {
         $prefix = "vdc"
         $matchWildcard = "$prefix-*-$suffix"
 
+        Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -like "$prefix-*-*"} | Select-Object -Property ResourceGroupName, Location | Format-Table
+
         Write-Host "Looking for resource groups that match $matchWildcard.."
         $resourceGroups = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -like $matchWildcard}
 
