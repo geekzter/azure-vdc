@@ -42,9 +42,14 @@ variable "location" {
   default                      = "westeurope"
 }
 
+variable "automation_location" {
+  description                  = "The location/region where the monitoring workspaces will be created."
+  default                      = "" # Empty string defaults to workspace_location
+}
+
 variable "workspace_location" {
   description                  = "The location/region where the monitoring workspaces will be created."
-  default                      = "westeurope"
+  default                      = "" # Empty string defaults to location
 }
 
 variable vdc_config {

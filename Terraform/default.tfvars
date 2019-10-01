@@ -2,8 +2,9 @@
 
 resource_prefix                = "vdc"
 resource_environment           = "dev"
-location                       = "northeurope"
-workspace_location             = "northeurope"
+location                       = "eastus"
+#automation_location            = "westeurope"
+workspace_location             = "westeurope"
 
 deploy_auto_shutdown           = false
 deploy_connection_monitors     = false

@@ -10,10 +10,22 @@ resource "azurerm_storage_account" "vdc_diag_storage" {
   depends_on                   = ["azurerm_resource_group.vdc_rg"]
 }
 
+resource "azurerm_storage_account" "vdc_automation_storage" {
+  name                         = "${lower(replace(local.vdc_resource_group,"-",""))}autstorage"
+  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
+  location                     = "${local.automation_location}"
+  account_tier                 = "Standard"
+  account_replication_type     = "${var.app_storage_replication_type}"
+
+  tags                         = "${local.tags}"
+
+  depends_on                   = ["azurerm_resource_group.vdc_rg"]
+}
+
 resource "azurerm_log_analytics_workspace" "vcd_workspace" {
   name                         = "${local.vdc_resource_group}-loganalytics"
   # Doesn't deploy in all regions e.g. South India
-  location                     = "${var.workspace_location}"
+  location                     = "${local.workspace_location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   sku                          = "Standalone"
   retention_in_days            = 90 
@@ -92,7 +104,7 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
 resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
   name                         = "Automation_Logs"
   target_resource_id           = "${azurerm_automation_account.automation.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
+  storage_account_id           = "${azurerm_storage_account.vdc_automation_storage.id}"
   log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
 
 

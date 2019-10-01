@@ -25,6 +25,8 @@ resource "random_string" "suffix" {
 # These variables will be used throughout the Terraform templates
 locals {
   # Making sure all character classes are represented, as random does not guarantee that  
+  workspace_location           = "${var.workspace_location != "" ? var.workspace_location : var.location}" 
+  automation_location          = "${var.automation_location != "" ? var.automation_location : local.workspace_location}" 
   password                     = ".Az9${random_string.password.result}"
   suffix                       = "${var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result}" 
   environment                  = "${var.resource_environment != "" ? lower(var.resource_environment) : terraform.workspace}" 
@@ -73,7 +75,7 @@ data "http" "localpublicip" {
 # Automation account, used for runbooks
 resource "azurerm_automation_account" "automation" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-automation"
-  location                     = "${azurerm_resource_group.vdc_rg.location}"
+  location                     = "${local.automation_location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   sku_name                     = "Basic"
 
