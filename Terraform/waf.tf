@@ -252,12 +252,27 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
       target_listener_name     = "${module.paas_app.app_resource_group}-https-listener"
     }
   }
+  # rewrite_rule_set {
+  #   name                       = "paas-rewrite-rules"
+  #   rewrite_rule {
+  #     name                     = "paas-rewrite-host"
+  #     rule_sequence            = 1
+  #     condition {
+  #       variable               = "Location"
+  #       pattern                = "(https:?):\\/\\/.*azurewebsites\\.net(.*)$"
+  #     }
+  #     response_header_configuration {
+  #       header_name            = "Location"
+  #       header_value           = "{http_resp_Location_1}://${local.paas_app_fqdn}{http_resp_Location_2}" 
+  #     }
+  #   }
+  # }
 
   waf_configuration {
     enabled                    = true
     firewall_mode              = "Detection"
     rule_set_type              = "OWASP"
-    rule_set_version           = "3.0"
+    rule_set_version           = "3.1"
   }
 
   tags                         = "${local.tags}"
