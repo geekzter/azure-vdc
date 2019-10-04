@@ -161,7 +161,7 @@ module "paas_spoke_vnet" {
   hub_gateway_dependency       = "${module.p2s_vpn.gateway_id}"
   hub_virtual_network_id       = "${azurerm_virtual_network.hub_vnet.id}"
   service_endpoints            = {
-    appservice                 = ["Microsoft.Storage"]
+    appservice                 = ["Microsoft.EventHub","Microsoft.Storage"]
   }
   spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-paas-spoke-network"
   subnets                      = {

@@ -21,6 +21,10 @@ output eventhub_name {
     value = "${azurerm_eventhub.app_eventhub.name}"
 }
 
+output eventhub_namespace {
+    value = "${azurerm_eventhub_namespace.app_eventhub.name}"
+}
+
 output eventhub_namespace_key {
     value = "${azurerm_eventhub_namespace.app_eventhub.default_primary_key}"
 }

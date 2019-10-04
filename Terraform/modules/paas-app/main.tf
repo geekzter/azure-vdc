@@ -250,15 +250,30 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
   capacity                     = 1
   kafka_enabled                = false
 
-  # TODO: Service Endpoint support
-/*   
-  network_rules {
+  # Service Endpoint support
+  network_rulesets {
     default_action             = "Deny"
-    # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
-    ip_rules                   = ["${chomp(data.http.localpublicip.body)}"] # We need this to make changes
-    # Allow the Firewall subnet
-    virtual_network_subnet_ids = ["${var.endpoint_subnet_id}"]
-  }  */
+    # Without this hole we can't make (automated) changes. Disable it later in the interactive demo                 
+    ip_rule {
+      action                   = "Allow"
+      ip_mask                  = "${chomp(data.http.localpublicip.body)}" # We need this to make changes
+    }
+    # # BUG: There is no variable named "var".
+    # dynamic "ip_rule" {
+    #   for_each                 = "${var.admin_ip_ranges}"
+    #   content {
+    #     action                 = "Allow"
+    #     ip_mask                = "${ip_rule.value}"
+    #   }
+    # }
+    virtual_network_rule {
+      # Allow the Firewall subnet
+      subnet_id                = "${var.iag_subnet_id}"
+    }
+    virtual_network_rule {
+      subnet_id                = "${var.integrated_subnet_id}"
+    }
+  } 
 
   tags                         = "${var.tags}"
   depends_on                   = ["azurerm_resource_group.app_rg"]

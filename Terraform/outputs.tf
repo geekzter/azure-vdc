@@ -72,6 +72,10 @@ output "iag_nat_rules" {
   value       = "${azurerm_firewall_nat_rule_collection.iag_nat_rules.name}"
 }
 
+output "paas_app_eventhub_namespace" {
+  value       = "${module.paas_app.eventhub_namespace}"
+}
+
 output "paas_app_eventhub_namespace_key" {
   sensitive   = true
   value       = "${module.paas_app.eventhub_namespace_key}"
