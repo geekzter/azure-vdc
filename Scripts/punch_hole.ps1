@@ -27,14 +27,14 @@ try {
 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
-        $Script:appResourceGroup = $(terraform output "paas_app_resource_group" 2>$null)
-        $Script:appStorageAccount = $(terraform output "paas_app_storage_account_name" 2>$null)
-        $Script:eventHubNamespace = $(terraform output "paas_app_eventhub_namespace" 2>$null)
+        $Script:appResourceGroup       = $(terraform output "paas_app_resource_group"       2>$null)
+        $Script:appStorageAccount      = $(terraform output "paas_app_storage_account_name" 2>$null)
+        $Script:appEventHubNamespace   = $(terraform output "paas_app_eventhub_namespace"   2>$null)
 
         $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(Get-AzResourceGroup -Name $appResourceGroup -ErrorAction "SilentlyContinue")))
     }
 
-    if (!$appRGExists -or [string]::IsNullOrEmpty($appStorageAccount)) {
+    if (!$appRGExists -or ([string]::IsNullOrEmpty($appStorageAccount) -and [string]::IsNullOrEmpty($appEventHubNamespace)) {
         Write-Output "Resources have not yet been created, nothing to do" 
         exit 
     }
@@ -50,6 +50,6 @@ Write-Information "Public IP address is $ipAddress"
 if ($appStorageAccount) {
     Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipAddress" -ErrorAction SilentlyContinue
 }
-if ($eventHubNamespace) {
-    Add-AzEventHubIPRule -ResourceGroupName $appResourceGroup -Name $eventHubNamespace -IpMask "$ipAddress" -Action Allow -ErrorAction SilentlyContinue
+if ($appEventHubNamespace) {
+    Add-AzEventHubIPRule -ResourceGroupName $appResourceGroup -Name $appEventHubNamespace -IpMask "$ipAddress" -Action Allow -ErrorAction SilentlyContinue
 }
