@@ -249,6 +249,8 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
   sku                          = "Standard"
   capacity                     = 1
   kafka_enabled                = false
+  # TODO: Zone Redundant
+  #zone_redundant               = true
 
   # Service Endpoint support
   network_rulesets {
@@ -274,8 +276,6 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
       subnet_id                = "${var.integrated_subnet_id}"
     }
   } 
-
-  # TODO: Zone Redundant
 
   tags                         = "${var.tags}"
   depends_on                   = ["azurerm_resource_group.app_rg"]

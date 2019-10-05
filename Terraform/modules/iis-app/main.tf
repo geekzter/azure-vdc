@@ -15,7 +15,7 @@ resource "azurerm_resource_group" "app_rg" {
 }
 
 resource "azurerm_network_interface" "app_web_if" {
-  name                         = "${azurerm_resource_group.app_rg.name}-web-nic${count.index+1}"
+  name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-nic"
   location                     = "${azurerm_resource_group.app_rg.location}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   count                        = "${var.app_web_vm_number}"
@@ -229,7 +229,7 @@ resource "azurerm_lb_probe" "app_db_lb_probe_tds" {
 }
 
 resource "azurerm_network_interface" "app_db_if" {
-  name                         = "${azurerm_resource_group.app_rg.name}-db-nic${count.index+1}"
+  name                         = "${azurerm_resource_group.app_rg.name}-db-vm${count.index+1}-nic"
   location                     = "${azurerm_resource_group.app_rg.location}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   count                        = "${var.app_db_vm_number}"

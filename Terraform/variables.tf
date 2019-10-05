@@ -204,7 +204,7 @@ variable "app_storage_account_tier" {
 }
 
 variable "app_storage_replication_type" {
-  description                  = "Defines the Replication Type to use for this storage account. Valid options include LRS, GRS etc."
+  description                  = "Defines the Replication Type to use for this storage account. Valid options include LRS, GRS, ZRS etc."
   default                      = "ZRS" # Zone redundant: ZRS
 }
 
