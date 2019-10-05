@@ -80,11 +80,11 @@ variable vdc_config {
 }
 
 variable "app_web_vms" {
-  default                      = ["10.1.1.5", "10.1.1.6"]
+  default                      = ["10.1.1.5", "10.1.1.6", "10.1.1.7", "10.1.1.8", "10.1.1.9"]
 }
 
 variable "app_db_vms" {
-  default                      = ["10.1.2.142", "10.1.2.143"]
+  default                      = ["10.1.2.142", "10.1.2.143", "10.1.2.144", "10.1.2.145", "10.1.2.146"]
 }
 
 variable "vdc_oms_solutions" {

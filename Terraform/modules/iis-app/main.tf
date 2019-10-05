@@ -15,7 +15,7 @@ resource "azurerm_resource_group" "app_rg" {
 }
 
 resource "azurerm_network_interface" "app_web_if" {
-  name                         = "${azurerm_resource_group.app_rg.name}-web-nic${count.index}"
+  name                         = "${azurerm_resource_group.app_rg.name}-web-nic${count.index+1}"
   location                     = "${azurerm_resource_group.app_rg.location}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   count                        = "${var.app_web_vm_number}"
@@ -31,7 +31,7 @@ resource "azurerm_network_interface" "app_web_if" {
 }
 
 resource "azurerm_virtual_machine" "app_web_vm" {
-  name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index}"
+  name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}"
   location                     = "${azurerm_resource_group.app_rg.location}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   vm_size                      = "${var.app_web_vm_size}"
@@ -53,7 +53,7 @@ resource "azurerm_virtual_machine" "app_web_vm" {
     delete_data_disks_on_termination = true
 
   storage_os_disk {
-    name                       = "${azurerm_resource_group.app_rg.name}-web-vm${count.index}-osdisk"
+    name                       = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-osdisk"
     caching                    = "ReadWrite"
     create_option              = "FromImage"
     managed_disk_type          = "Premium_LRS"
@@ -61,7 +61,7 @@ resource "azurerm_virtual_machine" "app_web_vm" {
 
  # Optional data disks
   storage_data_disk {
-    name                       = "${azurerm_resource_group.app_rg.name}-web-vm${count.index}-datadisk"
+    name                       = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-datadisk"
     managed_disk_type          = "Premium_LRS"
     create_option              = "Empty"
     lun                        = 0
@@ -69,7 +69,7 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   }
 
   os_profile {
-    computer_name              = "${local.app_hostname}${count.index}"
+    computer_name              = "${local.app_hostname}${count.index+1}"
     admin_username             = "${var.admin_username}"
     admin_password             = "${var.admin_password}"
   }
@@ -87,7 +87,7 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   provisioner "local-exec" {
     # cmdkey.exe /generic:${element(var.app_web_vms, count.index)} /user:${var.admin_username} /pass:${var.admin_password}
     command                    = <<EOF
-      echo To connect to application VM${count.index}, from the Bastion type:
+      echo To connect to application VM${count.index+1}, from the Bastion type:
       echo type 'mstsc.exe /v:${element(var.app_web_vms, count.index)}'
     EOF
   }
@@ -137,7 +137,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
       "VSTSAccountName": "${var.app_devops["account"]}",        
       "TeamProject": "${var.app_devops["team_project"]}",
       "DeploymentGroup": "${var.app_devops["web_deployment_group"]}",
-      "AgentName": "${local.app_hostname}${count.index}",
+      "AgentName": "${local.app_hostname}${count.index+1}",
       "Tags": "${var.resource_environment}"
     }
   EOF
@@ -158,7 +158,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
 
 resource "azurerm_network_connection_monitor" "devops_watcher" {
 # name                         = "${element(azurerm_virtual_machine.app_web_vm.*.name, count.index)}-devops-watcher"
-  name                         = "${local.app_hostname}${count.index}-${var.app_devops["account"]}.visualstudio.com"
+  name                         = "${local.app_hostname}${count.index+1}-${var.app_devops["account"]}.visualstudio.com"
   location                     = "${var.location}"
   resource_group_name          = "${local.vdc_resource_group_name}"
   network_watcher_name         = "${local.watcher_name}"
@@ -229,7 +229,7 @@ resource "azurerm_lb_probe" "app_db_lb_probe_tds" {
 }
 
 resource "azurerm_network_interface" "app_db_if" {
-  name                         = "${azurerm_resource_group.app_rg.name}-db-nic${count.index}"
+  name                         = "${azurerm_resource_group.app_rg.name}-db-nic${count.index+1}"
   location                     = "${azurerm_resource_group.app_rg.location}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   count                        = "${var.app_db_vm_number}"
@@ -252,7 +252,7 @@ resource "azurerm_network_interface_backend_address_pool_association" "app_db_if
 }
 
 resource "azurerm_virtual_machine" "app_db_vm" {
-  name                         = "${azurerm_resource_group.app_rg.name}-db-vm${count.index}"
+  name                         = "${azurerm_resource_group.app_rg.name}-db-vm${count.index+1}"
   location                     = "${azurerm_resource_group.app_rg.location}"
   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
   vm_size                      = "${var.app_db_vm_size}"
@@ -274,7 +274,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
     delete_data_disks_on_termination = true
 
   storage_os_disk {
-    name                       = "${azurerm_resource_group.app_rg.name}-db-vm${count.index}-osdisk"
+    name                       = "${azurerm_resource_group.app_rg.name}-db-vm${count.index+1}-osdisk"
     caching                    = "ReadWrite"
     create_option              = "FromImage"
     managed_disk_type          = "Premium_LRS"
@@ -282,7 +282,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
 
  # Optional data disks
   storage_data_disk {
-    name                       = "${azurerm_resource_group.app_rg.name}-db-vm${count.index}-datadisk"
+    name                       = "${azurerm_resource_group.app_rg.name}-db-vm${count.index+1}-datadisk"
     managed_disk_type          = "Premium_LRS"
     create_option              = "Empty"
     lun                        = 0
@@ -290,7 +290,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   }
 
   os_profile {
-    computer_name              = "${local.app_hostname}${count.index}"
+    computer_name              = "${local.app_hostname}${count.index+1}"
     admin_username             = "${var.admin_username}"
     admin_password             = "${var.admin_password}"
   }
@@ -308,7 +308,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   provisioner "local-exec" {
     # cmdkey.exe /generic:${element(var.app_db_vms, count.index)} /user:${var.admin_username} /pass:${var.admin_password}
     command                    = <<EOF
-      echo To connect to application VM${count.index}, from the Bastion type:
+      echo To connect to application VM${count.index+1}, from the Bastion type:
       echo type 'mstsc.exe /v:${element(var.app_db_vms, count.index)}'
     EOF
   }
@@ -358,7 +358,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
       "VSTSAccountName": "${var.app_devops["account"]}",        
       "TeamProject": "${var.app_devops["team_project"]}",
       "DeploymentGroup": "${var.app_devops["db_deployment_group"]}",
-      "AgentName": "${local.db_hostname}${count.index}",
+      "AgentName": "${local.db_hostname}${count.index+1}",
       "Tags": "${var.resource_environment}"
     }
   EOF
