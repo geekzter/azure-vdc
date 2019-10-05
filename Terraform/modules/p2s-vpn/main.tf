@@ -15,9 +15,8 @@ resource "azurerm_public_ip" "vpn_pip" {
   location                     = "${var.location}"
   resource_group_name          = "${local.resource_group_name}"
 
-  allocation_method            = "Dynamic"
-  # Zone redundant
-  #zones                        = ["1", "2", "3"]
+  allocation_method            = "Static"
+  sku                          = "Standard" # Zone redundant
 
   tags                         = "${var.tags}"
 }
@@ -32,7 +31,7 @@ resource "azurerm_virtual_network_gateway" "vpn_gw" {
 
   active_active                = false
   enable_bgp                   = false
-  sku                          = "VpnGw1"
+  sku                          = "VpnGw1AZ"
 
   ip_configuration {
     name                       = "vnetGatewayConfig"

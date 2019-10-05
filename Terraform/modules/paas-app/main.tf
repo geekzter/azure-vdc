@@ -275,6 +275,8 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
     }
   } 
 
+  # TODO: Zone Redundant
+
   tags                         = "${var.tags}"
   depends_on                   = ["azurerm_resource_group.app_rg"]
 }
@@ -432,14 +434,7 @@ resource "azurerm_sql_database" "app_sqldb" {
     use_server_default         = "Enabled"
   }
 
-/* 
-# Configure least privilege access for MSI/SPN accessing database
-  provisioner "local-exec" {
-  # TODO: pass MSI name as argument (${azurerm_app_service.app_appservice.name})
-  # Requires AAD auth in order to grant access to (other) AAD objects
-    command = "sqlcmd -S ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name} -d app_paassqldb -U ${var.admin_username} -P ${local.password} -G -i grant-database-access.sql"
-  }
-*/
+  # TODO: Zone Redundant
 
   tags                         = "${var.tags}"
 } 

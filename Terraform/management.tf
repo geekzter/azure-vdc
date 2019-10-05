@@ -88,19 +88,7 @@ resource "azurerm_virtual_machine" "bastion" {
     type                       = "SystemAssigned"
   }
 
-  /*
-  # TODO: Windows only
-  provisioner "local-exec" {
-    command                    = <<EOF
-      cmdkey.exe /generic:${azurerm_public_ip.iag_pip.ip_address}:${var.rdp_port} /user:${var.admin_username} /pass:${local.password}
-      cmdkey.exe /generic:${var.vdc_config["bastion_address"]} /user:${var.admin_username} /pass:${local.password}
-      echo To connect to bastion, type:
-      echo type 'mstsc.exe /v:${azurerm_public_ip.bas_pip.ip_address}'
-      echo or (if connected via VPN):
-      echo type 'mstsc.exe /v:${var.vdc_config["bastion_address"]}'
-    EOF
-  }
-  */
+  # Not zone redundnt, we'll rely on zone redundant managed bastion once that is available
 
   tags                         = "${local.tags}"
 }

@@ -11,10 +11,8 @@ resource "azurerm_public_ip" "iag_pip" {
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   allocation_method            = "Static"
-  sku                          = "Standard"
+  sku                          = "Standard" # Zone redundant
   domain_name_label            = "${random_string.iag_domain_name_label.result}"
-  # Zone redundant
-  #zones                       = ["1", "2", "3"]
 
   tags                         = "${local.tags}"
 
@@ -71,6 +69,8 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
         port                   = "443"
         type                   = "Https"
     }
+
+    # TODO: Specify all zones?
   }
 
   rule {

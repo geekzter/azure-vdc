@@ -13,7 +13,7 @@ resource "azurerm_storage_account" "automation_storage" {
 # account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   #account_replication_type     = "${var.app_storage_replication_type}"
-  account_replication_type     = "LRS"
+  account_replication_type     = "ZRS"
 }
 
 resource "azurerm_app_service_plan" "vdc_functions" {

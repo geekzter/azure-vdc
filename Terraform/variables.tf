@@ -205,9 +205,13 @@ variable "app_storage_account_tier" {
 
 variable "app_storage_replication_type" {
   description                  = "Defines the Replication Type to use for this storage account. Valid options include LRS, GRS etc."
-  default                      = "LRS" # Zone redundant: ZRS
+  default                      = "ZRS" # Zone redundant: ZRS
 }
 
+variable "app_web_vm_number" {
+  description                  = "Number of web tier VM's to create"
+  default                      = "2"
+}
 variable "app_web_vm_size" {
   description                  = "Specifies the size of the Web virtual machines."
   default                      = "Standard_D2s_v3"
@@ -229,6 +233,10 @@ variable "app_web_image_version" {
   default                      = "latest"
 }
 
+variable "app_db_vm_number" {
+  description                  = "Number of DB tier VM's to create"
+  default                      = "2"
+}
 variable "app_db_vm_size" {
   description                  = "Specifies the size of the DB virtual machines."
   default                      = "Standard_D2s_v3"
