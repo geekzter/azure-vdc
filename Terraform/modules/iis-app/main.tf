@@ -251,10 +251,12 @@ resource "azurerm_network_interface_backend_address_pool_association" "app_db_if
   count                        = "${var.app_db_vm_number}"
 
   # BUG: Error waiting for removal of Backend Address Pool Association for NIC
-  depends_on                   = [
-                                  "azurerm_virtual_machine.app_db_vm",
-                                  "azurerm_network_interface.app_db_if",
-                                  "azurerm_lb_backend_address_pool.app_db_backend_pool"]
+  # depends_on                   = [
+  #                                 azurerm_lb.app_db_lb,
+  #                                 azurerm_lb_backend_address_pool.app_db_backend_pool,
+  #                                 azurerm_network_interface.app_db_if
+  #                                 azurerm_virtual_machine.app_db_vm
+  #                                ]
 }
 
 resource "azurerm_virtual_machine" "app_db_vm" {
@@ -320,6 +322,9 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   }
 
   tags                         = "${var.tags}"
+
+  # BUG: Error waiting for removal of Backend Address Pool Association for NIC
+  depends_on                   = [azurerm_network_interface_backend_address_pool_association.app_db_if_backend_pool]
 }
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
