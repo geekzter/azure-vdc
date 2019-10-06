@@ -10,10 +10,9 @@ resource "azurerm_storage_account" "automation_storage" {
   name                         = "${lower(replace(local.resource_group_name,"-",""))}automation"
   location                     = "${var.location}"
   resource_group_name          = "${local.resource_group_name}"
-# account_kind                 = "StorageV2"
+  account_kind                 = "StorageV2"
   account_tier                 = "Standard"
-  #account_replication_type     = "${var.app_storage_replication_type}"
-  account_replication_type     = "LRS"
+  account_replication_type     = "${var.app_storage_replication_type}"
 }
 
 resource "azurerm_app_service_plan" "vdc_functions" {

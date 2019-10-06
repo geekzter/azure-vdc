@@ -22,7 +22,7 @@ variable app_resource_group {
 }
 
 variable app_storage_replication_type {
-  description                  = "Defines the Replication Type to use for this storage account. Valid options include LRS, GRS etc."
+  description                  = "Defines the Replication Type to use for this storage account. Valid options include LRS, GRS, ZRS etc."
 }
 
 variable deploy_auto_shutdown {

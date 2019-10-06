@@ -17,9 +17,7 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
   location                     = "${var.location}"
   resource_group_name          = "${local.resource_group_name}"
   allocation_method            = "Static"
-  sku                          = "Standard"
-  # Zone redundant
-  #zones                        = ["1", "2", "3"]
+  sku                          = "Standard" # Zone redundant
 }
 
 # Configure Managed Bastion with ARM template as Terraform doesn't (yet) support this (preview) service

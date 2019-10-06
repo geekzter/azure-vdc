@@ -80,11 +80,11 @@ variable vdc_config {
 }
 
 variable "app_web_vms" {
-  default                      = ["10.1.1.5", "10.1.1.6"]
+  default                      = ["10.1.1.5", "10.1.1.6", "10.1.1.7", "10.1.1.8", "10.1.1.9"]
 }
 
 variable "app_db_vms" {
-  default                      = ["10.1.2.142", "10.1.2.143"]
+  default                      = ["10.1.2.142", "10.1.2.143", "10.1.2.144", "10.1.2.145", "10.1.2.146"]
 }
 
 variable "vdc_oms_solutions" {
@@ -204,10 +204,14 @@ variable "app_storage_account_tier" {
 }
 
 variable "app_storage_replication_type" {
-  description                  = "Defines the Replication Type to use for this storage account. Valid options include LRS, GRS etc."
-  default                      = "LRS" # Zone redundant: ZRS
+  description                  = "Defines the Replication Type to use for this storage account. Valid options include LRS, GRS, ZRS etc."
+  default                      = "ZRS" # Zone redundant: ZRS
 }
 
+variable "app_web_vm_number" {
+  description                  = "Number of web tier VM's to create"
+  default                      = "2"
+}
 variable "app_web_vm_size" {
   description                  = "Specifies the size of the Web virtual machines."
   default                      = "Standard_D2s_v3"
@@ -229,6 +233,10 @@ variable "app_web_image_version" {
   default                      = "latest"
 }
 
+variable "app_db_vm_number" {
+  description                  = "Number of DB tier VM's to create"
+  default                      = "2"
+}
 variable "app_db_vm_size" {
   description                  = "Specifies the size of the DB virtual machines."
   default                      = "Standard_D2s_v3"
