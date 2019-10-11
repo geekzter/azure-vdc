@@ -60,7 +60,7 @@ resource "azurerm_virtual_machine" "bastion" {
     managed_disk_type          = "Premium_LRS"
     create_option              = "Empty"
     lun                        = 0
-    disk_size_gb               = "1023"
+    disk_size_gb               = "255"
   }
 
   os_profile {
