@@ -13,7 +13,7 @@ output bastion_subnet_id {
 output "arm_resource_ids" {
   value                        = [
     # Managed Bastion
-    "${azurerm_template_deployment.managed_bastion.0.outputs["resourceGroupId"]}/providers/Microsoft.Network/bastionHosts/${local.managed_bastion_name}",
+    for b in azurerm_template_deployment.managed_bastion : "${b.outputs["resourceGroupId"]}/providers/Microsoft.Network/bastionHosts/${local.managed_bastion_name}"
   ]
 }
 
