@@ -6,7 +6,7 @@ location                       = "eastus"
 #automation_location            = "westeurope"
 workspace_location             = "westeurope"
 
-deploy_auto_shutdown           = false
+deploy_auto_shutdown           = true
 deploy_connection_monitors     = false
 deploy_managed_bastion         = false
 deploy_vpn                     = false

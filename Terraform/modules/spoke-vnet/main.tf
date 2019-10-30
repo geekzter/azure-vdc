@@ -232,6 +232,7 @@ resource "azurerm_subnet" "subnet" {
 resource "azurerm_subnet_route_table_association" "subnet_routes" {
   subnet_id                    = "${local.subnet_id_map[element(var.enable_routetable_for_subnets,count.index)]}"
   route_table_id               = "${azurerm_route_table.spoke_route_table.id}"
+  # TODO: Possible issue with count value
   count                        = "${length(var.enable_routetable_for_subnets)}"
 
   depends_on                   = ["azurerm_virtual_network_peering.spoke_to_hub"]

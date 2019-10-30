@@ -51,11 +51,16 @@ resource "azurerm_storage_account" "app_storage" {
     # Allow the Firewall subnet
     virtual_network_subnet_ids = [
                                  "${var.iag_subnet_id}",
+    # BUG?: Error waiting for Azure Storage Account "vdccipaasappb1375stor" to be created: Future#WaitForCompletion: the number of retries has been exceeded: StatusCode=400 -- Original Error: Code="NetworkAclsValidationFailure" Message="Validation of network acls failure: SubnetsNotProvisioned:Cannot proceed with operation because subnets appservice of the virtual network /subscriptions//resourceGroups/vdc-ci-b1375/providers/Microsoft.Network/virtualNetworks/vdc-ci-b1375-paas-spoke-network are not provisioned. They are in Updating state.."
                                  "${var.integrated_subnet_id}"
     ]
   } 
 
   tags                         = "${var.tags}"
+  
+  # Potential race condition
+  # Error waiting for Azure Storage Account "vdccipaasappb1375stor" to be created: Future#WaitForCompletion: the number of retries has been exceeded: StatusCode=400 -- Original Error: Code="NetworkAclsValidationFailure" Message="Validation of network acls failure: SubnetsNotProvisioned:Cannot proceed with operation because subnets appservice of the virtual network /subscriptions//resourceGroups/vdc-ci-b1375/providers/Microsoft.Network/virtualNetworks/vdc-ci-b1375-paas-spoke-network are not provisioned. They are in Updating state.."
+  #depends_on                   = [azurerm_storage_container.archive_storage_container]
 }
 
 ### App Service
@@ -103,8 +108,6 @@ resource "azurerm_app_service_plan" "paas_plan" {
   }
 
   tags                         = "${var.tags}"
-
-  depends_on                   = ["azurerm_resource_group.app_rg"]
 }
 
 resource "azurerm_app_service" "paas_web_app" {
@@ -198,7 +201,7 @@ resource "azurerm_app_service" "paas_web_app" {
 #     interpreter = ["pwsh", "-c"]
 #   }
 
-#   depends_on                   = ["var.integrated_vnet_id"]
+#   depends_on                   = [var.integrated_vnet_id]
 # }
 
 # resource "azurerm_template_deployment" "app_service_network_association" {
@@ -217,7 +220,7 @@ resource "azurerm_app_service" "paas_web_app" {
 #     integratedSubnetName       = "${local.integrated_subnet_name}"
 #   }
 
-#   depends_on                   = ["azurerm_app_service.paas_web_app"] # Explicit dependency for ARM templates
+#   depends_on                   = [azurerm_app_service.paas_web_app] # Explicit dependency for ARM templates
 # } 
 
 # resource "azurerm_template_deployment" "app_service_network_connection" {
@@ -237,7 +240,7 @@ resource "azurerm_app_service" "paas_web_app" {
 #     vnetResourceGuid           = "${trimspace(file(local.spoke_vnet_guid_file))}"
 #   }
 
-#   depends_on                   = ["azurerm_app_service.paas_web_app","azurerm_template_deployment.app_service_network_association","null_resource.spoke_vnet_guid"] # Explicit dependency for ARM templates
+#   depends_on                   = [azurerm_app_service.paas_web_app,azurerm_template_deployment.app_service_network_association,null_resource.spoke_vnet_guid] # Explicit dependency for ARM templates
 # }
 
 ### Event Hub
@@ -278,7 +281,6 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
   } 
 
   tags                         = "${var.tags}"
-  depends_on                   = ["azurerm_resource_group.app_rg"]
 }
 
 resource "azurerm_eventhub" "app_eventhub" {
@@ -384,7 +386,7 @@ resource "azurerm_sql_firewall_rule" "azure1" {
 #   end_ip_address               = "${element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)}"
 # # BUG: terraform bug. Throws as an error on first creation: "value of 'count' cannot be computed". Subsequent executions do work.
 #   count                        = "${length(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses))}"
-#   depends_on                   = ["azurerm_app_service.paas_web_app"]
+#   depends_on                   = [azurerm_app_service.paas_web_app]
 # } 
 
 resource "azurerm_sql_firewall_rule" "azureall" {
