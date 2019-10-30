@@ -5,6 +5,6 @@ resource_environment           = "demo"
 
 deploy_auto_shutdown           = false
 deploy_connection_monitors     = false
-deploy_managed_bastion         = false
+deploy_managed_bastion         = true
 deploy_vpn                     = true
 use_vanity_domain_and_ssl      = true

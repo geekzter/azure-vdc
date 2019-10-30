@@ -18,7 +18,6 @@ output "app_storage_fqdns" {
 # Export Resource ID's of resources created in embedded ARM templates
 # This can be used in script to manage (e.g. clean up) these resources as Terraform doesn't know about them
 output "arm_resource_ids" {
-# value       = "${concat(module.managed_bastion_hub.arm_resource_ids,module.iaas_spoke_vnet.arm_resource_ids)}"
   value       = []
 }
 
