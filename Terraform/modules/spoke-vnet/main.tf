@@ -292,6 +292,7 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
   #zones                        = ["1", "2", "3"]
 }
 
+/* 
 # Configure Managed Bastion with ARM template as Terraform doesn't (yet) support this (preview) service
 # https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
 resource "azurerm_template_deployment" "managed_bastion" {
@@ -311,4 +312,18 @@ resource "azurerm_template_deployment" "managed_bastion" {
   count                        = "${var.deploy_managed_bastion ? 1 : 0}"
 
   depends_on                   = ["azurerm_subnet.managed_bastion_subnet","azurerm_public_ip.managed_bastion_pip"] # Explicit dependency for ARM templates
+} */
+
+resource "azurerm_bastion_host" "managed_bastion" {
+  name                         = "${replace(azurerm_virtual_network.spoke_vnet.name,"-","")}managedbastion"
+  location                     = "${var.location}"
+  resource_group_name          = "${local.resource_group_name}"
+
+  ip_configuration {
+    name                       = "configuration"
+    subnet_id                  = "${azurerm_subnet.managed_bastion_subnet.id}"
+    public_ip_address_id       = "${azurerm_public_ip.managed_bastion_pip.id}"
+  }
+
+  count                        = "${var.deploy_managed_bastion ? 1 : 0}"
 }
