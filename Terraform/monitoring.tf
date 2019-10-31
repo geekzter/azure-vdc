@@ -1,5 +1,5 @@
 resource "azurerm_storage_account" "vdc_diag_storage" {
-  name                         = "${lower(replace(local.vdc_resource_group,"-",""))}storage"
+  name                         = "${lower(replace(local.vdc_resource_group,"-",""))}diagstor"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   location                     = "${var.location}"
   account_tier                 = "Standard"

@@ -232,6 +232,7 @@ resource "azurerm_subnet" "subnet" {
 resource "azurerm_subnet_route_table_association" "subnet_routes" {
   subnet_id                    = "${local.subnet_id_map[element(var.enable_routetable_for_subnets,count.index)]}"
   route_table_id               = "${azurerm_route_table.spoke_route_table.id}"
+  # TODO: Possible issue with count value
   count                        = "${length(var.enable_routetable_for_subnets)}"
 
   depends_on                   = ["azurerm_virtual_network_peering.spoke_to_hub"]
@@ -286,28 +287,38 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
   location                     = "${var.location}"
   resource_group_name          = "${local.resource_group_name}"
   allocation_method            = "Static"
-  sku                          = "Standard"
-  # Zone redundant
-  #zones                        = ["1", "2", "3"]
+  sku                          = "Standard" # Zone redundant
 }
 
-# Configure Managed Bastion with ARM template as Terraform doesn't (yet) support this (preview) service
-# https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
-resource "azurerm_template_deployment" "managed_bastion" {
-  name                         = "${azurerm_virtual_network.spoke_vnet.name}-managed-bastion-template"
+resource "azurerm_bastion_host" "managed_bastion" {
+  name                         = "${replace(azurerm_virtual_network.spoke_vnet.name,"-","")}managedbastion"
+  location                     = "${var.location}"
   resource_group_name          = "${local.resource_group_name}"
-  deployment_mode              = "Incremental"
-  template_body                = "${file("${path.root}/modules/managed-bastion/bastion.json")}"
 
-  parameters                   = {
-    location                   = "${var.location}"
-    resourceGroup              = "${local.resource_group_name}"
-    bastionHostName            = "${local.managed_bastion_name}"
-    subnetId                   = "${azurerm_subnet.managed_bastion_subnet.id}"
-    publicIpAddressName        = "${azurerm_public_ip.managed_bastion_pip.name}"
+  ip_configuration {
+    name                       = "configuration"
+    subnet_id                  = "${azurerm_subnet.managed_bastion_subnet.id}"
+    public_ip_address_id       = "${azurerm_public_ip.managed_bastion_pip.id}"
   }
 
   count                        = "${var.deploy_managed_bastion ? 1 : 0}"
-
-  depends_on                   = ["azurerm_subnet.managed_bastion_subnet","azurerm_public_ip.managed_bastion_pip"] # Explicit dependency for ARM templates
 }
+
+/* TODO
+resource "azurerm_monitor_diagnostic_setting" "bastion_logs" {
+  name                         = "${azurerm_bastion_host.managed_bastion[count.index].name}-logs"
+  target_resource_id           = "${azurerm_bastion_host.managed_bastion[count.index].id}"
+  storage_account_id           = "${var.diagnostics_storage_id}"
+  log_analytics_workspace_id   = "${var.diagnostics_workspace_id}"
+
+  log {
+    category                   = "BastionAuditLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  count                        = "${var.deploy_managed_bastion ? 1 : 0}"
+} */

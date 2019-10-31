@@ -36,7 +36,8 @@ resource "azurerm_firewall" "iag" {
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
 
-  # TODO: No attribute to make zone redundant
+  # Make zone redundant
+  zones                        = [1,2,3]
 
   ip_configuration {
     name                       = "iag_ipconfig"

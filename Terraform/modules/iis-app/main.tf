@@ -4,7 +4,7 @@ locals {
   db_hostname                  = "${lower(var.resource_environment)}dbhost"
   db_dns_name                  = "${lower(var.resource_environment)}db_web_vm"
   vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
-  watcher_name                 = "${element(split("/",var.diagnostics_watcher_id),length(split("/",var.diagnostics_watcher_id))-1)}"
+  watcher_name                 = var.deploy_connection_monitors ? "${element(split("/",var.diagnostics_watcher_id),length(split("/",var.diagnostics_watcher_id))-1)}" : null
 }
 
 resource "azurerm_resource_group" "app_rg" {
@@ -87,7 +87,7 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   provisioner "local-exec" {
     # cmdkey.exe /generic:${element(var.app_web_vms, count.index)} /user:${var.admin_username} /pass:${var.admin_password}
     command                    = <<EOF
-      echo To connect to application VM${count.index+1}, from the Bastion type:
+      echo To connect to application VM${count.index+1}, from the Bastion,type:
       echo type 'mstsc.exe /v:${element(var.app_web_vms, count.index)}'
     EOF
   }
@@ -308,7 +308,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   provisioner "local-exec" {
     # cmdkey.exe /generic:${element(var.app_db_vms, count.index)} /user:${var.admin_username} /pass:${var.admin_password}
     command                    = <<EOF
-      echo To connect to application VM${count.index+1}, from the Bastion type:
+      echo To connect to application VM${count.index+1}, from the Bastion, type:
       echo type 'mstsc.exe /v:${element(var.app_db_vms, count.index)}'
     EOF
   }

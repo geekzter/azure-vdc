@@ -87,9 +87,9 @@ try {
     # TODO: Request JIT access to Bastion VM, once azurrm Terraform provuider supports it
 
     if ($All -or $ShowCredentials) {
-        Write-Host "`nBastion connection information:" -ForegroundColor Green 
+        Write-Host "`nConnection information:" -ForegroundColor Green 
         # Display connectivity info
-        Write-Host "Bastion RDP                    : $(terraform output iag_public_ip):$(terraform output bastion_rdp_port)"
+        Write-Host "Bastion VM RDP                 : $(terraform output iag_public_ip):$(terraform output bastion_rdp_port)"
         Write-Host "Admin user                     : $(terraform output admin_user)"
         Write-Host "Admin password                 : $(terraform output admin_password)"
     }
