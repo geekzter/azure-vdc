@@ -22,7 +22,6 @@ resource "azurerm_public_ip" "waf_pip" {
 
   tags                         = "${local.tags}"
 
-  depends_on                   = ["azurerm_resource_group.vdc_rg"]
 }
 
 resource "azurerm_dns_cname_record" "waf_iaas_app_cname" {
@@ -52,9 +51,9 @@ resource "azurerm_dns_cname_record" "waf_paas_app_cname" {
 locals {
   ssl_range                    = "${range(var.use_vanity_domain_and_ssl ? 1 : 0)}" # Contains one item only if var.use_vanity_domain_and_ssl = true
   ssl_range_inverted           = "${range(var.use_vanity_domain_and_ssl ? 0 : 1)}" # Contains one item only if var.use_vanity_domain_and_ssl = false
-  iaas_app_fqdn                = "${azurerm_dns_cname_record.waf_iaas_app_cname.0.name}.${azurerm_dns_cname_record.waf_iaas_app_cname.0.zone_name}"
+  iaas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_iaas_app_cname[0].name}.${azurerm_dns_cname_record.waf_iaas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
   iaas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.iaas_app_fqdn}/"
-  paas_app_fqdn                = "${azurerm_dns_cname_record.waf_paas_app_cname.0.name}.${azurerm_dns_cname_record.waf_paas_app_cname.0.zone_name}"
+  paas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_paas_app_cname[0].name}.${azurerm_dns_cname_record.waf_paas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
   paas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.paas_app_fqdn}/"
 }
 

@@ -77,8 +77,8 @@ module "iis_app" {
   app_db_lb_address            = "${var.vdc_config["iaas_spoke_app_db_lb_address"]}"
   app_db_vms                   = "${var.app_db_vms}"
   app_db_vm_number             = "${var.app_db_vm_number}"
-  app_subnet_id                = "${module.iaas_spoke_vnet.subnet_ids["app"]}"
-  data_subnet_id               = "${module.iaas_spoke_vnet.subnet_ids["data"]}"
+  app_subnet_id                = lookup(module.iaas_spoke_vnet.subnet_ids,"app","")
+  data_subnet_id               = lookup(module.iaas_spoke_vnet.subnet_ids,"data","")
   deploy_connection_monitors   = "${var.deploy_connection_monitors}"
   release_agent_dependency     = "${local.release_agent_dependency}"
   diagnostics_storage_id       = "${azurerm_storage_account.vdc_diag_storage.id}"
@@ -137,7 +137,7 @@ module "paas_app" {
 # dba_login                    = "${var.dba_login}"
 # dba_object_id                = "${var.dba_object_id}"
   iag_subnet_id                = "${azurerm_subnet.iag_subnet.id}"
-  integrated_subnet_id         = "${module.paas_spoke_vnet.subnet_ids["appservice"]}"
+  integrated_subnet_id         = lookup(module.paas_spoke_vnet.subnet_ids,"appservice","")
   integrated_subnet_range      = "${var.vdc_config["paas_spoke_appsvc_subnet"]}"
   integrated_vnet_id           = "${module.paas_spoke_vnet.spoke_virtual_network_id}"
   storage_replication_type     = "${var.app_storage_replication_type}"

@@ -15,8 +15,6 @@ resource "azurerm_public_ip" "iag_pip" {
   domain_name_label            = "${random_string.iag_domain_name_label.result}"
 
   tags                         = "${local.tags}"
-
-  depends_on                   = ["azurerm_resource_group.vdc_rg"]
 }
 
 resource "azurerm_dns_cname_record" "iag_pip_cname" {
