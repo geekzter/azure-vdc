@@ -138,6 +138,8 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     target_fqdns               = [
       "chocolatey.org",
       "*.chocolatey.org",
+      "github.com",
+      "*.github.com",
       "*.hashicorp.com",
       "download.microsoft.com",
       "packages.microsoft.com",
