@@ -168,6 +168,7 @@ module "paas_spoke_vnet" {
   spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-paas-spoke-network"
   subnets                      = {
     appservice                 = "${var.vdc_config["paas_spoke_appsvc_subnet"]}"
+    data                       = "${var.vdc_config["paas_spoke_data_subnet"]}"
   }
 
   subnet_delegations           = {

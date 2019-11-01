@@ -110,3 +110,15 @@ resource "azurerm_subnet_network_security_group_association" "mgmt_subnet_nsg" {
                                   "azurerm_firewall_network_rule_collection.iag_net_outbound_rules"
   ]
 }
+
+resource "azurerm_private_dns_zone" "sqldb" {
+  name                         = "privatelink.database.windows.net"
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "sqldb_hub" {
+  name                         = "${azurerm_virtual_network.hub_vnet.name}-dns-sqldb"
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  private_dns_zone_name        = azurerm_private_dns_zone.sqldb.name
+  virtual_network_id           = azurerm_virtual_network.hub_vnet.id
+}

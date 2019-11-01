@@ -215,8 +215,8 @@ resource "azurerm_subnet" "subnet" {
   
   # Create subnet delegation, if requested
   dynamic "delegation" {
-    # TODO: Won't work with multiple subnets and multiple delegations, as each delegation will be created for each subnet
-    for_each                   = "${var.subnet_delegations}"
+    # Select the delegation for this subnet, if any
+    for_each                   = {for k, v in var.subnet_delegations : k => v if k == element(keys(var.subnets),count.index)}
     content {
       name                     = "${delegation.key}_delegation"
       service_delegation {
@@ -322,3 +322,10 @@ resource "azurerm_monitor_diagnostic_setting" "bastion_logs" {
 
   count                        = "${var.deploy_managed_bastion ? 1 : 0}"
 } */
+
+resource "azurerm_private_dns_zone_virtual_network_link" "sqldb_spoke" {
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-dns-sqldb"
+  resource_group_name          = local.resource_group_name
+  private_dns_zone_name        = "privatelink.database.windows.net"
+  virtual_network_id           = azurerm_virtual_network.spoke_vnet.id
+}

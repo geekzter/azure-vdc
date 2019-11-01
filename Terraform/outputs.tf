@@ -72,6 +72,10 @@ output "iag_nat_rules" {
   value       = "${azurerm_firewall_nat_rule_collection.iag_nat_rules.name}"
 }
 
+output "location" {
+  value       = "${var.location}"
+}
+
 output "paas_app_eventhub_namespace" {
   value       = "${module.paas_app.eventhub_namespace}"
 }
@@ -124,6 +128,10 @@ output "paas_app_sql_server_fqdn" {
   value       = "${module.paas_app.sql_server_fqdn}"
 }
 
+output "paas_app_sql_server_id" {
+  value       = "${module.paas_app.sql_server_id}"
+}
+
 output "paas_app_storage_account_name" {
   value       = "${module.paas_app.storage_account_name}"
 }
@@ -140,8 +148,12 @@ output "paas_app_url" {
   value       = "${local.paas_app_url}"
 } 
 
-output spoke_vnet_guid {
+output paas_vnet_guid {
     value     = "${module.paas_app.spoke_vnet_guid}"
+}
+
+output paas_vnet_name {
+    value     = "${module.paas_spoke_vnet.spoke_virtual_network_name}"
 }
 
 output resource_group_ids {
