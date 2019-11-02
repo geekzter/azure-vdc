@@ -16,17 +16,6 @@ resource "azurerm_network_interface" "bas_if" {
   tags                         = "${local.tags}"
 }
 
-data "template_file" "bastion_first_commands" {
-  template = "${file("../Scripts/FirstLogonCommands.xml")}"
-
-  vars                         = {
-    host                       = "${azurerm_public_ip.iag_pip.ip_address}"
-    port                       = "${var.rdp_port}"
-    username                   = "${var.admin_username}"
-    password                   = "${local.password}"
-  }
-}
-
 resource "azurerm_virtual_machine" "bastion" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-bastion"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
@@ -73,13 +62,18 @@ resource "azurerm_virtual_machine" "bastion" {
     provision_vm_agent         = true
     enable_automatic_upgrades  = true
 
+    # additional_unattend_config {
+    #   pass                     = "oobeSystem"
+    #   component                = "Microsoft-Windows-Shell-Setup"
+    #   setting_name             = "AutoLogon"
+    #   content                  = templatefile("../Scripts/AutoLogon.xml", { username = var.admin_username, password = local.password})
+    # }
 
     additional_unattend_config {
       pass                     = "oobeSystem"
       component                = "Microsoft-Windows-Shell-Setup"
       setting_name             = "FirstLogonCommands"
-      # TODO: Add DB VM's
-      content                  = "<FirstLogonCommands><SynchronousCommand><CommandLine>cmdkey.exe /generic:${element(var.app_web_vms, 0)} /user:${var.admin_username} /pass:${local.password}</CommandLine><Description>Save RDP credentials</Description><Order>1</Order></SynchronousCommand><SynchronousCommand><CommandLine>cmdkey.exe /generic:${element(var.app_web_vms, 1)} /user:${var.admin_username} /pass:${local.password}</CommandLine><Description>Save RDP credentials</Description><Order>2</Order></SynchronousCommand></FirstLogonCommands>"
+      content                  = templatefile("../Scripts/FirstLogonCommands.xml", { username = var.admin_username, password = local.password, host1 = element(var.app_web_vms, 0), host2 = element(var.app_web_vms, 1)})
     }
   }
 

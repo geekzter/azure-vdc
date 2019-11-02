@@ -138,8 +138,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     target_fqdns               = [
       "chocolatey.org",
       "*.chocolatey.org",
-      "github.com",
-      "*.github.com",
       "*.hashicorp.com",
       "download.microsoft.com",
       "packages.microsoft.com",
@@ -149,8 +147,46 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.nuget.org",
       "onegetcdn.azureedge.net",
       "*.ubuntu.com",
-      "*.windowsupdate.com"
+      "*.windowsupdate.com",
+      "aka.ms"
     ]
+
+    protocol {
+        port                   = "443"
+        type                   = "Https"
+    }
+  }
+
+  rule {
+    name                       = "Allow Bootstrap scripts and tools"
+    description                = "Bootstrap scripts are hosted on GitHub, tools on their own locations"
+
+    source_addresses           = [
+      "${var.vdc_config["iaas_spoke_app_subnet"]}",
+      "${var.vdc_config["iaas_spoke_data_subnet"]}",
+      "${var.vdc_config["hub_mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
+    ]
+
+    target_fqdns               = [
+      "*.dlservice.microsoft.com",
+      "*.github.com",
+      "*.githubusercontent.com",
+      "azcopy.azureedge.net",
+      "azurecliprod.blob.core.windows.net",
+      "azuredatastudiobuilds.blob.core.windows.net",
+      "cli.run.pivotal.io",
+      "dl.pstmn.io",
+      "download.docker.com",
+      "download.elifulkerson.com",
+      "download.sysinternals.com",
+      "download.visualstudio.microsoft.com",
+      "functionscdn.azureedge.net",
+      "get.helm.sh",
+      "github.com",
+      "go.microsoft.com"
+    ]
+
 
     protocol {
         port                   = "443"

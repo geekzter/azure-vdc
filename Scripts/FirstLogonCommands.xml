@@ -1,7 +1,17 @@
 <FirstLogonCommands>
     <SynchronousCommand>
+        <CommandLine>cmdkey.exe /generic:${host1} /user:${username} /pass:${password}</CommandLine>
+        <Description>Save RDP credentials</Description>
         <Order>1</Order>
-        <CommandLine>cmdkey.exe /generic:${host}:${port} /user:${username} /pass:${password}</CommandLine>
-        <Description>Save password for ${host}</Description>
+    </SynchronousCommand>
+    <SynchronousCommand>
+        <CommandLine>cmdkey.exe /generic:${host2} /user:${username} /pass:${password}</CommandLine>
+        <Description>Save RDP credentials</Description>
+        <Order>2</Order>
+    </SynchronousCommand>
+    <SynchronousCommand>
+        <CommandLine>cmd.exe /c start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/geekzter/bootstrap-os/master/windows/bootstrap_windows.ps1'))}"</CommandLine>
+        <Description>Bootstrap packages and PowerShell</Description>
+        <Order>3</Order>
     </SynchronousCommand>
 </FirstLogonCommands>

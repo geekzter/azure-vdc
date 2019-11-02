@@ -69,7 +69,8 @@ resource "azurerm_resource_group" "vdc_rg" {
 
 data "http" "localpublicip" {
 # Get public IP address of the machine running this terraform template
-  url                          = "https://ipinfo.io/ip"
+  url                          = "http://ipinfo.io/ip"
+# url                          = "https://ipapi.co/ip" 
 }
 
 # Automation account, used for runbooks

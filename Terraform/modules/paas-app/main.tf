@@ -23,7 +23,8 @@ locals {
 
 data "http" "localpublicip" {
 # Get public IP address of the machine running this terraform template
-  url                          = "https://ipinfo.io/ip"
+  url                          = "http://ipinfo.io/ip"
+# url                          = "https://ipapi.co/ip" 
 }
 
 data "azurerm_client_config" "current" {}
