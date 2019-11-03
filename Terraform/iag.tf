@@ -138,7 +138,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
 
     target_fqdns               = [
       "*.chocolatey.org",
-      "*.hashicorp.com",
       "*.nuget.org",
       "*.powershellgallery.com",
       "*.ubuntu.com",
@@ -179,7 +178,8 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.dlservice.microsoft.com",
       "*.github.com",
       "*.githubusercontent.com",
-      "az764295.vo.msecnd.net", # Visual studio Code
+      "*.hashicorp.com",
+      "*.vo.msecnd.net", # Visual Studio Code
       "azcopy.azureedge.net",
       "azurecliprod.blob.core.windows.net",
       "azuredatastudiobuilds.blob.core.windows.net",
@@ -198,9 +198,9 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "go.microsoft.com",
       "marketplace.visualstudio.com",
       "visualstudio.microsoft.com",
-      "xamarin-downloads.azureedge.net"
+      "xamarin-downloads.azureedge.net",
+      "visualstudio-devdiv-c2s.msedge.net"
     ]
-
 
     protocol {
         port                   = "443"

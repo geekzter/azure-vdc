@@ -16,6 +16,17 @@ resource "azurerm_network_interface" "bas_if" {
   tags                         = "${local.tags}"
 }
 
+data "template_file" "bastion_first_commands" {
+  template = "${file("../Scripts/FirstLogonCommands.xml")}"
+
+  vars                         = {
+    host1                      = element(var.app_web_vms, 0)
+    host2                      = element(var.app_web_vms, 1)
+    username                   = "${var.admin_username}"
+    password                   = "${local.password}"
+  }
+}
+
 resource "azurerm_virtual_machine" "bastion" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-bastion"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
