@@ -24,6 +24,8 @@ data "template_file" "bastion_first_commands" {
     host2                      = element(var.app_web_vms, 1)
     username                   = "${var.admin_username}"
     password                   = "${local.password}"
+    repository                 = "https://github.com/geekzter/azure-vdc"
+    sqlserver                  = module.paas_app.sql_server_fqdn
   }
 }
 
@@ -93,7 +95,8 @@ resource "azurerm_virtual_machine" "bastion" {
         password               = local.password, 
         host1                  = element(var.app_web_vms, 0), 
         host2                  = element(var.app_web_vms, 1),
-        sqlserver              = module.paas_app.sql_server
+        repository             = "https://github.com/geekzter/azure-vdc"
+        sqlserver              = module.paas_app.sql_server_fqdn
       })
     }
   }
