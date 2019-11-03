@@ -14,4 +14,9 @@
         <Description>Bootstrap packages and PowerShell</Description>
         <Order>3</Order>
     </SynchronousCommand>
+    <SynchronousCommand>
+        <CommandLine>cmd.exe /c "echo nslookup {sqlserver} &gt;C:\Users\{username}\Desktop\privatelink-lookup.cmd &amp;&amp; echo pause &gt;&gt;C:\Users\{username}\Desktop\privatelink-lookup.cmd"</CommandLine>
+        <Description>Save RDP credentials</Description>
+        <Order>4</Order>
+    </SynchronousCommand>
 </FirstLogonCommands>

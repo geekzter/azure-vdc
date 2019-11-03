@@ -179,11 +179,11 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.github.com",
       "*.githubusercontent.com",
       "*.hashicorp.com",
+      "*.pivotal.io",
       "*.vo.msecnd.net", # Visual Studio Code
       "azcopy.azureedge.net",
       "azurecliprod.blob.core.windows.net",
       "azuredatastudiobuilds.blob.core.windows.net",
-      "cli.run.pivotal.io",
       "dl.pstmn.io", # Postman
       "dl.xamarin.com",
       "download.docker.com",

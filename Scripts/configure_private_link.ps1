@@ -39,23 +39,47 @@ try {
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
         $Script:appResourceGroup       = $(terraform output "paas_app_resource_group"       2>$null)
+        if ([string]::IsNullOrEmpty($appResourceGroup)) {
+          throw "Terraform output paas_app_resource_group is empty"
+        }
         $Script:appEventHubNamespace   = $(terraform output "paas_app_eventhub_namespace"   2>$null)
+        if ([string]::IsNullOrEmpty($appEventHubNamespace)) {
+          throw "Terraform output paas_app_eventhub_namespace is empty"
+        }
         $Script:appSqlServer           = $(terraform output "paas_app_sql_server"           2>$null)
+        if ([string]::IsNullOrEmpty($appSqlServer)) {
+          throw"Terraform output paas_app_sql_server is empty"
+        }
         $Script:appSqlServerId         = $(terraform output "paas_app_sql_server_id"        2>$null)
+        if ([string]::IsNullOrEmpty($appSqlServerId)) {
+          throw "Terraform output paas_app_sql_server_id is empty"
+        }
         $Script:appStorageAccount      = $(terraform output "paas_app_storage_account_name" 2>$null)
+        if ([string]::IsNullOrEmpty($appStorageAccount)) {
+          throw "Terraform output paas_app_storage_account_name is empty"
+        }
         $Script:location               = $(terraform output "location"                      2>$null)
+        if ([string]::IsNullOrEmpty($location)) {
+          throw "Terraform output location is empty"
+        }
         $Script:paasNetworkName        = $(terraform output "paas_vnet_name"                2>$null)
+        if ([string]::IsNullOrEmpty($paasNetworkName)) {
+          throw "Terraform output paas_vnet_name is empty"
+        }
         $Script:vdcResourceGroup       = $(terraform output "vdc_resource_group"            2>$null)
-
-        $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(Get-AzResourceGroup -Name $appResourceGroup -ErrorAction "SilentlyContinue")))
+        if ([string]::IsNullOrEmpty($vdcResourceGroup)) {
+          throw "Terraform output vdc_resource_group is empty"
+        }
     }
 
 } finally {
     Pop-Location
 }
 
-$privateLinkServiceConnectionName = "myConnection"
-$privateEndpointName = "myPrivateEndpoint"
+$sqlDBPrivateLinkServiceConnectionName = "${appSqlServer}-connection"
+Write-Host "SQL DB Private Link Service connection will be named '$sqlDBPrivateLinkServiceConnectionName'"
+$sqlDBPrivateEndpointName = "${paasNetworkName}-sql-endpoint"
+Write-Host "SQL DB Private Endpoint will be named '$sqlDBPrivateEndpointName'"
 $endpointSubnet = "data"
 
 # Source: https://docs.microsoft.com/en-us/azure/private-link/create-private-endpoint-powershell
@@ -76,24 +100,29 @@ if ($subnet -and ![string]::IsNullOrEmpty($subnet)) {
   Write-Error "Subnet '$endpointSubnet' not found in Virtual Network ${virtualNetwork.Name}"
 }
 
-# Disable network policies
+# Disable network policies, should not be needed at GA
 if ($subnet.PrivateEndpointNetworkPolicies -ine "Disabled") {
   $subnet.PrivateEndpointNetworkPolicies = "Disabled"
   $virtualNetwork | Set-AzVirtualNetwork
 }
  
-# $privateEndpointConnection = New-AzPrivateLinkServiceConnection -Name "$privateLinkServiceConnectionName" `
-#   -PrivateLinkServiceId $appSqlServerId`
-#   -GroupId "sqlServer" 
-# if ($privateEndpointConnection) {
-#   $privateEndpointConnection
-# } else {
-#   Write-Error "Private Endpoint connection for '$appSqlServerId' is null"
-# }
-#
+$privateEndpointConnection = New-AzPrivateLinkServiceConnection -Name "$sqlDBPrivateLinkServiceConnectionName" `
+  -PrivateLinkServiceId $appSqlServerId`
+  -GroupId "sqlServer" 
+if ($privateEndpointConnection) {
+  $privateEndpointConnection
+} else {
+  Write-Error "Private Endpoint connection for '$appSqlServerId' is null"
+}
+
 # BUG: Operation returned an invalid status code 'InternalServerError'
+# Write-Host "New-AzPrivateEndpoint -ResourceGroupName ${vdcResourceGroup} `
+# -Name ${sqlDBPrivateEndpointName} `
+# -Location ${location} `
+# -Subnet ${subnet} `
+# -PrivateLinkServiceConnection ${privateEndpointConnection}"
 # $privateEndpoint = New-AzPrivateEndpoint -ResourceGroupName $vdcResourceGroup `
-#   -Name "$privateEndpointName" `
+#   -Name $sqlDBPrivateEndpointName `
 #   -Location $location `
 #   -Subnet $subnet `
 #   -PrivateLinkServiceConnection $privateEndpointConnection
@@ -105,15 +134,15 @@ if ($subnet.PrivateEndpointNetworkPolicies -ine "Disabled") {
 
 # HACK: Workaround with Azure CLI
 az network private-endpoint create `
-    --name $privateEndpointName `
+    --name $sqlDBPrivateEndpointName `
     --resource-group $vdcResourceGroup `
     --vnet-name $paasNetworkName `
     --subnet $endpointSubnet `
     --private-connection-resource-id $appSqlServerId `
     --group-ids sqlServer `
-    --connection-name $privateLinkServiceConnectionName
+    --connection-name $sqlDBPrivateLinkServiceConnectionName
 
-$privateEndpoint = Get-AzPrivateEndpoint -Name $privateEndpointName -ResourceGroupName $vdcResourceGroup
+$privateEndpoint = Get-AzPrivateEndpoint -Name $sqlDBPrivateEndpointName -ResourceGroupName $vdcResourceGroup
 $networkInterface = Get-AzResource -ResourceId $privateEndpoint.NetworkInterfaces[0].Id -ApiVersion "2019-04-01" 
  
 foreach ($ipconfig in $networkInterface.properties.ipConfigurations) { 

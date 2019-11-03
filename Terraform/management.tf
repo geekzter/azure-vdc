@@ -73,18 +73,28 @@ resource "azurerm_virtual_machine" "bastion" {
     provision_vm_agent         = true
     enable_automatic_upgrades  = true
 
-    # additional_unattend_config {
-    #   pass                     = "oobeSystem"
-    #   component                = "Microsoft-Windows-Shell-Setup"
-    #   setting_name             = "AutoLogon"
-    #   content                  = templatefile("../Scripts/AutoLogon.xml", { username = var.admin_username, password = local.password})
-    # }
+    additional_unattend_config {
+      pass                     = "oobeSystem"
+      component                = "Microsoft-Windows-Shell-Setup"
+      setting_name             = "AutoLogon"
+      content                  = templatefile("../Scripts/AutoLogon.xml", { 
+        count                  = 1, 
+        username               = var.admin_username, 
+        password               = local.password
+      })
+    }
 
     additional_unattend_config {
       pass                     = "oobeSystem"
       component                = "Microsoft-Windows-Shell-Setup"
       setting_name             = "FirstLogonCommands"
-      content                  = templatefile("../Scripts/FirstLogonCommands.xml", { username = var.admin_username, password = local.password, host1 = element(var.app_web_vms, 0), host2 = element(var.app_web_vms, 1)})
+      content                  = templatefile("../Scripts/FirstLogonCommands.xml", { 
+        username               = var.admin_username, 
+        password               = local.password, 
+        host1                  = element(var.app_web_vms, 0), 
+        host2                  = element(var.app_web_vms, 1),
+        sqlserver              = module.paas_app.sql_server
+      })
     }
   }
 

@@ -3,7 +3,7 @@
         <Value>${password}</Value>
     </Password>
     <Enabled>true</Enabled>
-    <LogonCount>3</LogonCount>
+    <LogonCount>${count}</LogonCount>
     <Username>${username}</Username>
-</AutoLogon>"
+</AutoLogon>
    
