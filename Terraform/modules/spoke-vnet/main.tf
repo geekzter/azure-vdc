@@ -211,6 +211,8 @@ resource "azurerm_subnet" "subnet" {
   virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
   resource_group_name          = "${local.resource_group_name}"
   address_prefix               = "${element(values(var.subnets),count.index)}"
+# network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}" # Redundant bit still needed
+  route_table_id               = "${azurerm_route_table.spoke_route_table.id}" # Redundant bit still needed
   count                        = "${length(var.subnets)}"
   
   # Create subnet delegation, if requested
@@ -232,7 +234,6 @@ resource "azurerm_subnet" "subnet" {
 resource "azurerm_subnet_route_table_association" "subnet_routes" {
   subnet_id                    = "${local.subnet_id_map[element(var.enable_routetable_for_subnets,count.index)]}"
   route_table_id               = "${azurerm_route_table.spoke_route_table.id}"
-  # TODO: Possible issue with count value
   count                        = "${length(var.enable_routetable_for_subnets)}"
 
   depends_on                   = ["azurerm_virtual_network_peering.spoke_to_hub"]

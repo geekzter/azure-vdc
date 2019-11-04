@@ -3,8 +3,6 @@ resource "azurerm_network_interface" "bas_if" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-bastion-if"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-# Security group is associated at the Management subnet level
-# network_security_group_id    = "${azurerm_network_security_group.mgmt_nsg.id}"
 
   ip_configuration {
     name                       = "bas_ipconfig"
@@ -16,6 +14,21 @@ resource "azurerm_network_interface" "bas_if" {
   tags                         = "${local.tags}"
 }
 
+resource "azurerm_storage_container" "scripts" {
+  name                         = "scripts"
+  storage_account_name         = "${azurerm_storage_account.vdc_automation_storage.name}"
+  container_access_type        = "container"
+}
+
+resource "azurerm_storage_blob" "bastion_prepare_script" {
+  name                         = "prepare_bastion.ps1"
+  storage_account_name         = "${azurerm_storage_account.vdc_automation_storage.name}"
+  storage_container_name       = "${azurerm_storage_container.scripts.name}"
+
+  type                         = "block"
+  source                       = "../Scripts/prepare_bastion.ps1"
+}
+
 data "template_file" "bastion_first_commands" {
   template = "${file("../Scripts/FirstLogonCommands.xml")}"
 
@@ -24,7 +37,7 @@ data "template_file" "bastion_first_commands" {
     host2                      = element(var.app_web_vms, 1)
     username                   = "${var.admin_username}"
     password                   = "${local.password}"
-    repository                 = "https://github.com/geekzter/azure-vdc"
+    scripturl                  = azurerm_storage_blob.bastion_prepare_script.url
     sqlserver                  = module.paas_app.sql_server_fqdn
   }
 }
@@ -95,7 +108,7 @@ resource "azurerm_virtual_machine" "bastion" {
         password               = local.password, 
         host1                  = element(var.app_web_vms, 0), 
         host2                  = element(var.app_web_vms, 1),
-        repository             = "https://github.com/geekzter/azure-vdc"
+        scripturl              = azurerm_storage_blob.bastion_prepare_script.url,
         sqlserver              = module.paas_app.sql_server_fqdn
       })
     }

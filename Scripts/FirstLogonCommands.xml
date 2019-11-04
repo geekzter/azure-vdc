@@ -10,23 +10,13 @@
         <Order>2</Order>
     </SynchronousCommand>
     <SynchronousCommand>
-        <CommandLine>cmd.exe /c start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/geekzter/bootstrap-os/master/windows/bootstrap_windows.ps1'))}"</CommandLine>
+        <CommandLine>cmd.exe /c start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('${scripturl}'))}"</CommandLine>
         <Description>Bootstrap packages and PowerShell</Description>
         <Order>3</Order>
     </SynchronousCommand>
-    <!-- <SynchronousCommand>
-        <CommandLine>cmd.exe /c start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/geekzter/bootstrap-os/master/windows/bootstrap_windows.ps1'));choco.exe install azure-data-studio sql-server-management-studio vscode -r -y}"</CommandLine>
-        <Description>Bootstrap</Description>
-        <Order>3</Order>
-    </SynchronousCommand> -->
     <SynchronousCommand>
         <CommandLine>cmd.exe /c "echo nslookup ${sqlserver} &gt;C:\Users\${username}\Desktop\privatelink-lookup.cmd &amp;&amp; echo pause &gt;&gt;C:\Users\${username}\Desktop\privatelink-lookup.cmd"</CommandLine>
         <Description>Create demo script</Description>
         <Order>4</Order>
-    </SynchronousCommand>
-    <SynchronousCommand>
-        <CommandLine>cmd.exe /c start cmd.exe /k "cd C:\Users\${username}\Source\Public &amp;&amp; git clone ${repository}"</CommandLine>
-        <Description>Clone VDC repository</Description>
-        <Order>5</Order>
     </SynchronousCommand>
 </FirstLogonCommands>

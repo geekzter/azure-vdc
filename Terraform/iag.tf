@@ -154,7 +154,8 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "psg-prod-eastus.azureedge.net", # PowerShell
       "registry.npmjs.org",
       "skimdb.npmjs.com",
-      "update.microsoft.com"
+      "update.microsoft.com",
+      azurerm_storage_account.vdc_automation_storage.primary_blob_host # Bastion prepare script
     ]
 
     protocol {
