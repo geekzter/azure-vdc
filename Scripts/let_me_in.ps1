@@ -33,10 +33,11 @@ try {
     terraform workspace list
     Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
 
+    $bastionName = $(terraform output "bastion_name" 2>$null)
+    $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
+    
     if ($All -or $StartBastion -or $ConnectBastion) {
         # Start bastion
-        $bastionName = $(terraform output "bastion_name" 2>$null)
-        $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
         if ($bastionName) {
             Write-Host "`nStarting bastion" -ForegroundColor Green 
             Get-AzVM -Name $bastionName -ResourceGroupName $vdcResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM -AsJob

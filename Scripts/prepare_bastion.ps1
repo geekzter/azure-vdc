@@ -1,9 +1,9 @@
 <# 
 .SYNOPSIS 
-    
+    Script used to bootstrap Bastion server
  
 .DESCRIPTION 
-    
+    This script is downloaded and executed during first logon
 
 .EXAMPLE
     cmd.exe /c start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('${scripturl}'))}"
@@ -17,4 +17,4 @@ choco.exe install azure-data-studio microsoftazurestorageexplorer sql-server-man
 
 # Clone VDC repository
 Push-Location ~\Source\Public
-git clone https://github.com/geekzter/bootstrap-os
+git clone https://github.com/geekzter/azure-vdc

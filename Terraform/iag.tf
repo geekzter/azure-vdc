@@ -181,6 +181,7 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.githubusercontent.com",
       "*.hashicorp.com",
       "*.pivotal.io",
+      "*.typescriptlang.org",
       "*.vo.msecnd.net", # Visual Studio Code
       "azcopy.azureedge.net",
       "azurecliprod.blob.core.windows.net",
