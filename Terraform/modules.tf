@@ -33,10 +33,7 @@ module "iaas_spoke_vnet" {
 # gateway_ip_address           = "${cidrhost(var.vdc_config["iag_subnet"], 4)}" # Azure FW uses the 4th available IP address in the range
   hub_gateway_dependency       = "${module.p2s_vpn.gateway_id}"
   hub_virtual_network_id       = "${azurerm_virtual_network.hub_vnet.id}"
-  private_dns_links            = {
-    sqldb                      = azurerm_private_dns_zone.sqldb.name
-    blob                       = azurerm_private_dns_zone.blob_storage.name
-  }
+  private_dns_zones            = [for z in azurerm_private_dns_zone.zone : z.name]
   service_endpoints            = {
     app                        = []
     data                       = []
@@ -166,10 +163,7 @@ module "paas_spoke_vnet" {
   gateway_ip_address           = "${azurerm_firewall.iag.ip_configuration.0.private_ip_address}" # Delays provisioning to start after Azure FW is provisioned
   hub_gateway_dependency       = "${module.p2s_vpn.gateway_id}"
   hub_virtual_network_id       = "${azurerm_virtual_network.hub_vnet.id}"
-  private_dns_links            = {
-    sqldb                      = azurerm_private_dns_zone.sqldb.name
-    blob                       = azurerm_private_dns_zone.blob_storage.name
-  }
+  private_dns_zones            = [for z in azurerm_private_dns_zone.zone : z.name]
   service_endpoints            = {
     appservice                 = ["Microsoft.EventHub","Microsoft.Storage"]
   }

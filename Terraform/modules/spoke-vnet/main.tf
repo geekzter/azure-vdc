@@ -325,10 +325,10 @@ resource "azurerm_monitor_diagnostic_setting" "bastion_logs" {
 } */
 
 resource "azurerm_private_dns_zone_virtual_network_link" "spoke_link" {
-  name                         = "${azurerm_virtual_network.spoke_vnet.name}-dns-${element(keys(var.private_dns_links),count.index)}"
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-zone-link${count.index+1}"
   resource_group_name          = local.resource_group_name
-  private_dns_zone_name        = element(values(var.private_dns_links),count.index)
+  private_dns_zone_name        = element(var.private_dns_zones,count.index)
   virtual_network_id           = azurerm_virtual_network.spoke_vnet.id
 
-  count                        = "${length(var.private_dns_links)}"
+  count                        = "${length(var.private_dns_zones)}"
 }

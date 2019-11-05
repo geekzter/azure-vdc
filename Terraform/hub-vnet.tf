@@ -114,26 +114,19 @@ resource "azurerm_subnet_network_security_group_association" "mgmt_subnet_nsg" {
   ]
 }
 
-resource "azurerm_private_dns_zone" "sqldb" {
-  name                         = "privatelink.database.windows.net"
+resource "azurerm_private_dns_zone" "zone" {
+  for_each                     = {
+    sqldb                      = "privatelink.database.windows.net"
+    blob                       = "privatelink.blob.core.windows.net"
+  }
+  name                         = each.value
   resource_group_name          = azurerm_resource_group.vdc_rg.name
 }
 
-resource "azurerm_private_dns_zone" "blob_storage" {
-  name                         = "privatelink.blob.core.windows.net"
+resource "azurerm_private_dns_zone_virtual_network_link" "link" {
+  for_each                     = azurerm_private_dns_zone.zone
+  name                         = "${azurerm_virtual_network.hub_vnet.name}-dns-${each.key}"
   resource_group_name          = azurerm_resource_group.vdc_rg.name
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "sqldb_hub" {
-  name                         = "${azurerm_virtual_network.hub_vnet.name}-dns-sqldb"
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  private_dns_zone_name        = azurerm_private_dns_zone.sqldb.name
-  virtual_network_id           = azurerm_virtual_network.hub_vnet.id
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "blob_storage_hub" {
-  name                         = "${azurerm_virtual_network.hub_vnet.name}-dns-blob"
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  private_dns_zone_name        = azurerm_private_dns_zone.blob_storage.name
+  private_dns_zone_name        = each.value.name
   virtual_network_id           = azurerm_virtual_network.hub_vnet.id
 }

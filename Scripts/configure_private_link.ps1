@@ -9,7 +9,6 @@
     As some API's are in beta and not always working, it is also a mix of Azure PowerShell and Azure CLI
 #> 
 
-
 param (    
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
@@ -107,7 +106,7 @@ if ($subnet.PrivateEndpointNetworkPolicies -ine "Disabled") {
 }
  
 $privateEndpointConnection = New-AzPrivateLinkServiceConnection -Name "$sqlDBPrivateLinkServiceConnectionName" `
-  -PrivateLinkServiceId $appSqlServerId`
+  -PrivateLinkServiceId $appSqlServerId `
   -GroupId "sqlServer" 
 if ($privateEndpointConnection) {
   $privateEndpointConnection

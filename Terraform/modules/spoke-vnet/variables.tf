@@ -18,8 +18,8 @@ variable hub_virtual_network_id {}
 variable enable_routetable_for_subnets {
   type                         = list
 }
-variable private_dns_links {
-  type                         = map
+variable private_dns_zones {
+  type                         = list
 }
 variable spoke_virtual_network_name {}
 variable service_endpoints {

@@ -119,7 +119,9 @@ resource "azurerm_virtual_machine" "bastion" {
     type                       = "SystemAssigned"
   }
 
-  # Not zone redundnt, we'll rely on zone redundant managed bastion once that is available
+  # Not zone redundant, we'll rely on zone redundant managed bastion
+
+  depends_on                   = [azurerm_firewall_application_rule_collection.iag_app_rules]
 
   tags                         = "${local.tags}"
 }
