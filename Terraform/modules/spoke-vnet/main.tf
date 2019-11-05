@@ -211,7 +211,7 @@ resource "azurerm_subnet" "subnet" {
   virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
   resource_group_name          = "${local.resource_group_name}"
   address_prefix               = "${element(values(var.subnets),count.index)}"
-  network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}" # Redundant bit still needed
+# network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}" # Redundant bit still needed
   route_table_id               = "${azurerm_route_table.spoke_route_table.id}" # Redundant bit still needed
   count                        = "${length(var.subnets)}"
   
@@ -239,13 +239,13 @@ resource "azurerm_subnet_route_table_association" "subnet_routes" {
   depends_on                   = ["azurerm_virtual_network_peering.spoke_to_hub"]
 }
 
-resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
-  subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
-  network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}"
-  count                        = "${length(var.subnets)}"
+# resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
+#   subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
+#   network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}"
+#   count                        = "${length(var.subnets)}"
 
-  depends_on                   = ["azurerm_virtual_network_peering.spoke_to_hub"]
-}
+#   depends_on                   = ["azurerm_virtual_network_peering.spoke_to_hub"]
+# }
 
 resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
   name                         = "${azurerm_network_security_group.spoke_nsg.name}-logs"
