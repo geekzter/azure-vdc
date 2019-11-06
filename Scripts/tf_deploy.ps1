@@ -293,6 +293,11 @@ try {
         # Now let Terraform do it's work
         Invoke "terraform destroy $forceArgs -parallelism=$parallelism"
     }
+} catch {
+    # Useful info to debug potential network exceptions
+    Write-Host "Connected from IP address is $ipAddress"
+    # Rethrow exceotion
+    throw
 } finally {
     Pop-Location
 }

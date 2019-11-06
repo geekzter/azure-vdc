@@ -25,16 +25,16 @@ output "bastion_address" {
   value       = "${var.vdc_config["hub_bastion_address"]}"
 }
 
-output "bastion_firstlogoncommand" {
-  value                  = templatefile("../Scripts/FirstLogonCommands.xml", { 
-    username               = var.admin_username, 
-    password               = local.password, 
-    host1                  = element(var.app_web_vms, 0), 
-    host2                  = element(var.app_web_vms, 1),
-    scripturl              = azurerm_storage_blob.bastion_prepare_script.url,
-    sqlserver              = module.paas_app.sql_server_fqdn
-  })
-}
+# output "bastion_firstlogoncommand" {
+#   value                  = templatefile("../Scripts/FirstLogonCommands.xml", { 
+#     username               = var.admin_username, 
+#     password               = local.password, 
+#     host1                  = element(var.app_web_vms, 0), 
+#     host2                  = element(var.app_web_vms, 1),
+#     scripturl              = azurerm_storage_blob.bastion_prepare_script.url,
+#     sqlserver              = module.paas_app.sql_server_fqdn
+#   })
+# }
 
 output "bastion_name" {
   value = "${azurerm_virtual_machine.bastion.name}"

@@ -44,11 +44,13 @@ try {
 
 # Get public IP address
 $ipAddress=$(Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip)
-Write-Information "Public IP address is $ipAddress"
+Write-Host "Public IP address is $ipAddress"
 
 # Punch hole in PaaS Firewalls
 if ($appStorageAccount) {
     Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipAddress" -ErrorAction SilentlyContinue
+    Write-Host "Network Rules for ${appStorageAccount}:"
+    Get-AzStorageAccountNetworkRuleSet -ResourceGroupName $appResourceGroup -Name $appStorageAccount | Select-Object -ExpandProperty IpRules | Sort-Object -Property IPAddressOrRange | Format-Table
 }
 if ($appEventHubNamespace) {
     Add-AzEventHubIPRule -ResourceGroupName $appResourceGroup -Name $appEventHubNamespace -IpMask "$ipAddress" -Action Allow -ErrorAction SilentlyContinue

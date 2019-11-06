@@ -57,6 +57,10 @@ try {
 
         # Add rule to Azure Firewall
         $azFWName = $(terraform output "iag_name" 2>$null)
+        if ([string]::isNullOrEmpty($azFWName)) {
+            Write-Host "`nAzure Firewall not found, nothing to get into" -ForegroundColor Red 
+            exit
+        }
         $azFWPublicIPAddress = $(terraform output "iag_public_ip" 2>$null)
         #$azFWNATRulesName = $(terraform output "iag_nat_rules" 2>$null)
         $azFWNATRulesName = "$azFWName-letmein-rules"
