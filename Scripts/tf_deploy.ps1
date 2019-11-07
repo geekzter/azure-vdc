@@ -129,6 +129,7 @@ function SetPipelineVariablesFromTerraform () {
 if (!($workspace)) { Throw "You must supply a value for Workspace" }
 #if (!(Get-Module Az)) { Throw "Az modules not loaded"}
 
+$MyInvocation.line
 ### Main routine
 # Configure instrumentation
 Set-PSDebug -trace $trace
@@ -259,8 +260,8 @@ try {
 
     if ($plan -or $apply) {
         SetDatabaseImport
-        #Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'" 
-        Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile' 2`>`&1" # Redirect Error to Success stream, to cover Terraform azurerm provider warnings that should be ignored
+        Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'" 
+        #Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile' 2`>`&1" # Redirect Error to Success stream, to cover Terraform azurerm provider warnings that should be ignored
     }
 
     if ($apply) {
