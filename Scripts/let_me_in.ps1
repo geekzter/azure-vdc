@@ -8,6 +8,7 @@ param (
     [parameter(Mandatory=$false)][switch]$ForceEntry=$false,
     [parameter(Mandatory=$false)][switch]$ShowCredentials=$false,
     [parameter(Mandatory=$false)][switch]$StartBastion=$false,
+    [parameter(Mandatory=$false)][switch]$ConnectBastion=$false,
     [parameter(Mandatory=$false)][switch]$wait=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
@@ -17,7 +18,7 @@ param (
 ) 
 
 # Provide at least one argument
-if (!($All -or $ForceEntry -or $ShowCredentials -or $StartBastion)) {
+if (!($All -or $ConnectBastion -or $ForceEntry -or $ShowCredentials -or $StartBastion)) {
     Write-Host "Please indicate what to do"
     Get-Help $MyInvocation.MyCommand.Definition
     exit
@@ -32,10 +33,11 @@ try {
     terraform workspace list
     Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
 
-    if ($All -or $StartBastion) {
+    $bastionName = $(terraform output "bastion_name" 2>$null)
+    $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
+    
+    if ($All -or $StartBastion -or $ConnectBastion) {
         # Start bastion
-        $bastionName = $(terraform output "bastion_name" 2>$null)
-        $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
         if ($bastionName) {
             Write-Host "`nStarting bastion" -ForegroundColor Green 
             Get-AzVM -Name $bastionName -ResourceGroupName $vdcResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM -AsJob
@@ -55,6 +57,10 @@ try {
 
         # Add rule to Azure Firewall
         $azFWName = $(terraform output "iag_name" 2>$null)
+        if ([string]::isNullOrEmpty($azFWName)) {
+            Write-Host "`nAzure Firewall not found, nothing to get into" -ForegroundColor Red 
+            exit
+        }
         $azFWPublicIPAddress = $(terraform output "iag_public_ip" 2>$null)
         #$azFWNATRulesName = $(terraform output "iag_nat_rules" 2>$null)
         $azFWNATRulesName = "$azFWName-letmein-rules"
@@ -84,19 +90,36 @@ try {
         Set-AzFirewall -AzureFirewall $azFW
     }
 
+    if ($All -or $ShowCredentials -or $ConnectBastion) {
+        $Script:adminUser = $(terraform output admin_user)
+        $Script:adminPassword = $(terraform output admin_password)
+        $Script:bastionHost = "$(terraform output iag_public_ip):$(terraform output bastion_rdp_port)"
+    }
+
     # TODO: Request JIT access to Bastion VM, once azurrm Terraform provuider supports it
 
     if ($All -or $ShowCredentials) {
         Write-Host "`nConnection information:" -ForegroundColor Green 
         # Display connectivity info
-        Write-Host "Bastion VM RDP                 : $(terraform output iag_public_ip):$(terraform output bastion_rdp_port)"
-        Write-Host "Admin user                     : $(terraform output admin_user)"
-        Write-Host "Admin password                 : $(terraform output admin_password)"
+        Write-Host "Bastion VM RDP                 : $bastionHost"
+        Write-Host "Admin user                     : $adminUser"
+        Write-Host "Admin password                 : $adminPassword"
     }
 
     # Wait for bastion to start
-    if (($All -or $StartBastion) -and $wait) {
+    if ((($All -or $StartBastion) -and $wait) -or $ConnectBastion) {
         Get-AzVM -Name $bastionName -ResourceGroupName $vdcResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM   
+    }
+    
+    # Set up RDP session to Bastion
+    if ($All -or $ConnectBastion) {
+        if ($IsWindows) {
+            cmdkey.exe /generic:${bastionHost} /user:${adminUser} /pass:${adminPassword}
+            mstsc.exe /v:${bastionHost} /f
+        }
+        if ($IsMacOS) {
+            open rdp://${adminUser}:${adminPassword}@${bastionHost}
+        }
     }
 } finally {
     Pop-Location

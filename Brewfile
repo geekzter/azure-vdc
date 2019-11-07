@@ -9,6 +9,7 @@ cask "visual-studio-code"
 
 # Terraform
 brew "terraform" 
+brew "tfenv" 
 
 # Required for Azure Functions with PowerShell Core
 #cask "powershell@6.2"

@@ -3,8 +3,6 @@ resource "azurerm_network_interface" "bas_if" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-bastion-if"
   location                     = "${azurerm_resource_group.vdc_rg.location}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-# Security group is associated at the Management subnet level
-# network_security_group_id    = "${azurerm_network_security_group.mgmt_nsg.id}"
 
   ip_configuration {
     name                       = "bas_ipconfig"
@@ -16,14 +14,31 @@ resource "azurerm_network_interface" "bas_if" {
   tags                         = "${local.tags}"
 }
 
+resource "azurerm_storage_container" "scripts" {
+  name                         = "scripts"
+  storage_account_name         = "${azurerm_storage_account.vdc_automation_storage.name}"
+  container_access_type        = "container"
+}
+
+resource "azurerm_storage_blob" "bastion_prepare_script" {
+  name                         = "prepare_bastion.ps1"
+  storage_account_name         = "${azurerm_storage_account.vdc_automation_storage.name}"
+  storage_container_name       = "${azurerm_storage_container.scripts.name}"
+
+  type                         = "block"
+  source                       = "../Scripts/prepare_bastion.ps1"
+}
+
 data "template_file" "bastion_first_commands" {
   template = "${file("../Scripts/FirstLogonCommands.xml")}"
 
   vars                         = {
-    host                       = "${azurerm_public_ip.iag_pip.ip_address}"
-    port                       = "${var.rdp_port}"
+    host1                      = element(var.app_web_vms, 0)
+    host2                      = element(var.app_web_vms, 1)
     username                   = "${var.admin_username}"
     password                   = "${local.password}"
+    scripturl                  = azurerm_storage_blob.bastion_prepare_script.url
+    sqlserver                  = module.paas_app.sql_server_fqdn
   }
 }
 
@@ -73,13 +88,29 @@ resource "azurerm_virtual_machine" "bastion" {
     provision_vm_agent         = true
     enable_automatic_upgrades  = true
 
+    additional_unattend_config {
+      pass                     = "oobeSystem"
+      component                = "Microsoft-Windows-Shell-Setup"
+      setting_name             = "AutoLogon"
+      content                  = templatefile("../Scripts/AutoLogon.xml", { 
+        count                  = 1, 
+        username               = var.admin_username, 
+        password               = local.password
+      })
+    }
 
     additional_unattend_config {
       pass                     = "oobeSystem"
       component                = "Microsoft-Windows-Shell-Setup"
       setting_name             = "FirstLogonCommands"
-      # TODO: Add DB VM's
-      content                  = "<FirstLogonCommands><SynchronousCommand><CommandLine>cmdkey.exe /generic:${element(var.app_web_vms, 0)} /user:${var.admin_username} /pass:${local.password}</CommandLine><Description>Save RDP credentials</Description><Order>1</Order></SynchronousCommand><SynchronousCommand><CommandLine>cmdkey.exe /generic:${element(var.app_web_vms, 1)} /user:${var.admin_username} /pass:${local.password}</CommandLine><Description>Save RDP credentials</Description><Order>2</Order></SynchronousCommand></FirstLogonCommands>"
+      content                  = templatefile("../Scripts/FirstLogonCommands.xml", { 
+        username               = var.admin_username, 
+        password               = local.password, 
+        host1                  = element(var.app_web_vms, 0), 
+        host2                  = element(var.app_web_vms, 1),
+        scripturl              = azurerm_storage_blob.bastion_prepare_script.url,
+        sqlserver              = module.paas_app.sql_server_fqdn
+      })
     }
   }
 
@@ -88,7 +119,9 @@ resource "azurerm_virtual_machine" "bastion" {
     type                       = "SystemAssigned"
   }
 
-  # Not zone redundnt, we'll rely on zone redundant managed bastion once that is available
+  # Not zone redundant, we'll rely on zone redundant managed bastion
+
+  depends_on                   = [azurerm_firewall_application_rule_collection.iag_app_rules]
 
   tags                         = "${local.tags}"
 }

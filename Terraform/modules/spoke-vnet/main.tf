@@ -211,12 +211,14 @@ resource "azurerm_subnet" "subnet" {
   virtual_network_name         = "${azurerm_virtual_network.spoke_vnet.name}"
   resource_group_name          = "${local.resource_group_name}"
   address_prefix               = "${element(values(var.subnets),count.index)}"
+# network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}" # Redundant bit still needed
+  route_table_id               = "${azurerm_route_table.spoke_route_table.id}" # Redundant bit still needed
   count                        = "${length(var.subnets)}"
   
   # Create subnet delegation, if requested
   dynamic "delegation" {
-    # TODO: Won't work with multiple subnets and multiple delegations, as each delegation will be created for each subnet
-    for_each                   = "${var.subnet_delegations}"
+    # Select the delegation for this subnet, if any
+    for_each                   = {for k, v in var.subnet_delegations : k => v if k == element(keys(var.subnets),count.index)}
     content {
       name                     = "${delegation.key}_delegation"
       service_delegation {
@@ -232,7 +234,6 @@ resource "azurerm_subnet" "subnet" {
 resource "azurerm_subnet_route_table_association" "subnet_routes" {
   subnet_id                    = "${local.subnet_id_map[element(var.enable_routetable_for_subnets,count.index)]}"
   route_table_id               = "${azurerm_route_table.spoke_route_table.id}"
-  # TODO: Possible issue with count value
   count                        = "${length(var.enable_routetable_for_subnets)}"
 
   depends_on                   = ["azurerm_virtual_network_peering.spoke_to_hub"]
@@ -322,3 +323,12 @@ resource "azurerm_monitor_diagnostic_setting" "bastion_logs" {
 
   count                        = "${var.deploy_managed_bastion ? 1 : 0}"
 } */
+
+resource "azurerm_private_dns_zone_virtual_network_link" "spoke_link" {
+  name                         = "${azurerm_virtual_network.spoke_vnet.name}-zone-link${count.index+1}"
+  resource_group_name          = local.resource_group_name
+  private_dns_zone_name        = element(var.private_dns_zones,count.index)
+  virtual_network_id           = azurerm_virtual_network.spoke_vnet.id
+
+  count                        = "${length(var.private_dns_zones)}"
+}

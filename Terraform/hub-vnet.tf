@@ -89,6 +89,9 @@ resource "azurerm_subnet" "mgmt_subnet" {
   virtual_network_name         = "${azurerm_virtual_network.hub_vnet.name}"
   resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
   address_prefix               = "${var.vdc_config["hub_mgmt_subnet"]}"
+  network_security_group_id    = "${azurerm_network_security_group.mgmt_nsg.id}" # Redundant bit still needed
+  route_table_id              = "${azurerm_route_table.mgmt_route_table.id}" # Redundant bit still needed
+
   service_endpoints            = [
                                  "Microsoft.Web"
   ]
@@ -109,4 +112,21 @@ resource "azurerm_subnet_network_security_group_association" "mgmt_subnet_nsg" {
                                   "azurerm_firewall_application_rule_collection.iag_app_rules",
                                   "azurerm_firewall_network_rule_collection.iag_net_outbound_rules"
   ]
+}
+
+resource "azurerm_private_dns_zone" "zone" {
+  for_each                     = {
+    sqldb                      = "privatelink.database.windows.net"
+    blob                       = "privatelink.blob.core.windows.net"
+  }
+  name                         = each.value
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "link" {
+  for_each                     = azurerm_private_dns_zone.zone
+  name                         = "${azurerm_virtual_network.hub_vnet.name}-dns-${each.key}"
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  private_dns_zone_name        = each.value.name
+  virtual_network_id           = azurerm_virtual_network.hub_vnet.id
 }

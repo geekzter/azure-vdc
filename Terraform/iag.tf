@@ -106,16 +106,17 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
 
     target_fqdns               = [
       # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/v2-windows?view=azure-devops
-      "app.vssps.visualstudio.com",
-      "*.visualstudio.com",
-      "*.vsrm.visualstudio.com",
-      "*.pkgs.visualstudio.com",
-      "*.vssps.visualstudio.com",
-      "vstsagentpackage.azureedge.net",
-      "dev.azure.com",
       "*.dev.azure.com",
+      "*.pkgs.visualstudio.com",
+      "*.visualstudio.com",
+      "*.vsassets.io",
+      "*.vsrm.visualstudio.com",
+      "*.vssps.visualstudio.com",
+      "dev.azure.com",
       "login.microsoftonline.com",
-      "management.core.windows.net"
+      "management.core.windows.net",
+      "visualstudio-devdiv-c2s.msedge.net",
+      "vstsagentpackage.azureedge.net"
     ]
 
     protocol {
@@ -136,18 +137,71 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     ]
 
     target_fqdns               = [
-      "chocolatey.org",
       "*.chocolatey.org",
-      "*.hashicorp.com",
-      "download.microsoft.com",
-      "packages.microsoft.com",
-      "update.microsoft.com",
-      "*.update.microsoft.com",
-      "nuget.org",
       "*.nuget.org",
-      "onegetcdn.azureedge.net",
+      "*.powershellgallery.com",
       "*.ubuntu.com",
-      "*.windowsupdate.com"
+      "*.update.microsoft.com",
+      "*.windowsupdate.com",
+      "aka.ms",
+      "api.npms.io",
+      "chocolatey.org",
+      "devopsgallerystorage.blob.core.windows.net",
+      "download.microsoft.com",
+      "nuget.org",
+      "onegetcdn.azureedge.net",
+      "packages.microsoft.com",
+      "psg-prod-eastus.azureedge.net", # PowerShell
+      "registry.npmjs.org",
+      "skimdb.npmjs.com",
+      "update.microsoft.com",
+      azurerm_storage_account.vdc_automation_storage.primary_blob_host # Bastion prepare script
+    ]
+
+    protocol {
+        port                   = "443"
+        type                   = "Https"
+    }
+  }
+
+  rule {
+    name                       = "Allow Bootstrap scripts and tools"
+    description                = "Bootstrap scripts are hosted on GitHub, tools on their own locations"
+
+    source_addresses           = [
+      "${var.vdc_config["iaas_spoke_app_subnet"]}",
+      "${var.vdc_config["iaas_spoke_data_subnet"]}",
+      "${var.vdc_config["hub_mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
+    ]
+
+    target_fqdns               = [
+      "*.dlservice.microsoft.com",
+      "*.github.com",
+      "*.githubusercontent.com",
+      "*.hashicorp.com",
+      "*.pivotal.io",
+      "*.typescriptlang.org",
+      "*.vo.msecnd.net", # Visual Studio Code
+      "azcopy.azureedge.net",
+      "azurecliprod.blob.core.windows.net",
+      "azuredatastudiobuilds.blob.core.windows.net",
+      "dl.pstmn.io", # Postman
+      "dl.xamarin.com",
+      "download.docker.com",
+      "download.elifulkerson.com",
+      "download.sysinternals.com",
+      "download.visualstudio.com",
+      "download.visualstudio.microsoft.com",
+      "functionscdn.azureedge.net",
+      "get.helm.sh",
+      "github-production-release-asset-2e65be.s3.amazonaws.com", 
+      "github.com",
+      "go.microsoft.com",
+      "marketplace.visualstudio.com",
+      "visualstudio.microsoft.com",
+      "xamarin-downloads.azureedge.net",
+      "visualstudio-devdiv-c2s.msedge.net"
     ]
 
     protocol {

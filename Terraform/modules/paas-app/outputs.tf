@@ -69,6 +69,9 @@ output sql_server {
 output sql_server_fqdn {
   value       = "${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
 }
+output sql_server_id {
+    value = "${azurerm_sql_server.app_sqlserver.id}"
+}
 output storage_account_name {
     value = "${azurerm_storage_account.app_storage.name}"
 }

@@ -129,6 +129,7 @@ function SetPipelineVariablesFromTerraform () {
 if (!($workspace)) { Throw "You must supply a value for Workspace" }
 #if (!(Get-Module Az)) { Throw "Az modules not loaded"}
 
+$MyInvocation.line
 ### Main routine
 # Configure instrumentation
 Set-PSDebug -trace $trace
@@ -149,8 +150,8 @@ switch ($trace) {
         $Script:informationPreference = "Continue"
         $Script:verbosePreference = "Continue"
         $Script:debugPreference   = "SilentlyContinue"
-        #$env:TF_LOG="TRACE"
-        #$env:TF_LOG_PATH="terraform.log"
+        $env:TF_LOG="TRACE"
+        $env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object
     }
@@ -159,17 +160,17 @@ switch ($trace) {
         $Script:informationPreference = "Continue"
         $Script:verbosePreference = "Continue"
         $Script:debugPreference   = "Continue"      
-        #$env:TF_LOG="TRACE"
-        #$env:TF_LOG_PATH="terraform.log"
+        $env:TF_LOG="TRACE"
+        $env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object
     }
 }
-#if ($env:TF_LOG_PATH -and (Test-Path $env:TF_LOG_PATH))
-#{
-#    # Clear log file
-#    Remove-Item $env:TF_LOG_PATH
-#}
+if ($env:TF_LOG_PATH -and (Test-Path $env:TF_LOG_PATH))
+{
+   # Clear log file
+   Remove-Item $env:TF_LOG_PATH
+}
 $Script:ErrorActionPreference = "Stop"
 
 $pipeline = ![string]::IsNullOrEmpty($env:AGENT_VERSION)
@@ -259,7 +260,8 @@ try {
 
     if ($plan -or $apply) {
         SetDatabaseImport
-        Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'"
+        Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'" 
+        #Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile' 2`>`&1" # Redirect Error to Success stream, to cover Terraform azurerm provider warnings that should be ignored
     }
 
     if ($apply) {
@@ -293,6 +295,12 @@ try {
         # Now let Terraform do it's work
         Invoke "terraform destroy $forceArgs -parallelism=$parallelism"
     }
+} catch {
+    # Useful info to debug potential network exceptions
+    $ipAddress=$(Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip)
+    Write-Host "Connected from IP address: $ipAddress"
+    # Rethrow exception
+    throw
 } finally {
     Pop-Location
 }
