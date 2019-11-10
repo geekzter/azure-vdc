@@ -5,6 +5,7 @@ param (
     [parameter(Mandatory=$false,HelpMessage="The workspace tag to filter use")][string] $Workspace,
     [parameter(Mandatory=$false)][switch]$Resources=$false,
     [parameter(Mandatory=$false)][switch]$Summary=$false,
+    [parameter(Mandatory=$false)][switch]$Workspaces=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
@@ -26,17 +27,13 @@ if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
 Set-AzContext -Subscription $subscription
 
 # Provide at least one argument
-if (!($Resources -or $Summary)) {
+if (!($Resources -or $Summary -or $Workspaces)) {
     Write-Host "Please indicate what to do by using a command-line switch"
     Get-Help $MyInvocation.MyCommand.Definition
     exit
 }
 
-if ($Summary) {
-    $resourceQuery = "Resources | where tags['application']=='Automated VDC' | summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']) | order by Workspace asc"
-    Write-Host "`nQuery: `"$resourceQuery`""
-    $graphResult = Search-AzGraph -Query $resourceQuery
-
+if ($Summary -or $Workspaces) {
     # Access Terraform (Azure) backend to get leases for each workspace
     $tfConfig = $(Get-Content $tfdirectory/.terraform/terraform.tfstate | ConvertFrom-Json)
     $backendStorageAccountName = $tfConfig.backend.config.storage_account_name
@@ -47,14 +44,26 @@ if ($Summary) {
     $leaseTable = @{}
     $tfStateBlobs | ForEach-Object {
         $leaseTable.Add($($_.Name -Replace "terraform.tfstateenv:","" -Replace "terraform.tfstate","default"),$_.ICloudBlob.Properties.LeaseStatus)
+        Add-Member -InputObject $_ -NotePropertyName "Workspace" -NotePropertyValue $($_.Name -Replace "terraform.tfstateenv:","" -Replace "terraform.tfstate","default")
+        Add-Member -InputObject $_ -NotePropertyName "LeaseStatus" -NotePropertyValue $_.ICloudBlob.Properties.LeaseStatus
     }
- 
+    if ($Workspaces) {
+        $tfStateBlobs | Sort-Object -Property Workspace | Format-Table Workspace, LeaseStatus
+    }
+}
+
+if ($Summary) {
+    $resourceQuery = "Resources | where tags['application']=='Automated VDC' | summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']) | order by Workspace asc"
+    Write-Host "`nQuery: `"$resourceQuery`""
+    $graphResult = Search-AzGraph -Query $resourceQuery
+
     # Join tables
     $graphResult | ForEach-Object {
         Add-Member -InputObject $_ -NotePropertyName "Lease" -NotePropertyValue $leaseTable[$_.Workspace]
     }
     $graphResult | Format-Table
 } 
+
 if ($Resources) {
     $resourceQuery = "Resources | where tags['application']=='Automated VDC'"
     if ($Workspace) {
