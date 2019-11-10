@@ -238,7 +238,7 @@ try {
     if ($clear) {
         # Clear Terraform workspace
         Write-Host "`nClearing workspace..." -ForegroundColor Green 
-        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "clear_tfstate.ps1") 
+        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "tf_clear_state.ps1") 
     }
 
     if ($plan -or $apply -or $destroy) {
