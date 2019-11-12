@@ -11,15 +11,16 @@ if(-not($subscription)) { Throw "You must supply a value for subscription" }
 
 # Log on to Azure if not already logged on
 if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
+    Write-Host "Reconnecting to Azure with SPN..."
     if(-not($tenantid)) { Throw "You must supply a value for tenantid" }
     if(-not($clientid)) { Throw "You must supply a value for clientid" }
     if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
     # Use Terraform ARM Backend config to authenticate Azure CLI
     $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
     $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-    Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
+    $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
 }
-Set-AzContext -Subscription $subscription
+$null = Set-AzContext -Subscription $subscription
 
 # Retrieve Azure resources config using Terraform
 try {
@@ -48,10 +49,12 @@ Write-Host "Public IP address is $ipAddress"
 
 # Punch hole in PaaS Firewalls
 if ($appStorageAccount) {
-    Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipAddress" -ErrorAction SilentlyContinue
+    Write-Host "Adding rule for storage account $appStorageAccount to allow $ipAddress..."
+    $null = Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipAddress" -ErrorAction SilentlyContinue
     Write-Host "Network Rules for ${appStorageAccount}:"
     Get-AzStorageAccountNetworkRuleSet -ResourceGroupName $appResourceGroup -Name $appStorageAccount | Select-Object -ExpandProperty IpRules | Sort-Object -Property IPAddressOrRange | Format-Table
 }
 if ($appEventHubNamespace) {
-    Add-AzEventHubIPRule -ResourceGroupName $appResourceGroup -Name $appEventHubNamespace -IpMask "$ipAddress" -Action Allow -ErrorAction SilentlyContinue
+    Write-Host "Adding rule for event hub $appStorageAccount to allow $ipAddress..."
+    $null = Add-AzEventHubIPRule -ResourceGroupName $appResourceGroup -Name $appEventHubNamespace -IpMask "$ipAddress" -Action Allow -ErrorAction SilentlyContinue
 }

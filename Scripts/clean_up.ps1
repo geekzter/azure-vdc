@@ -14,14 +14,15 @@ param (
 
 function AzLogin () {
     if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
+        Write-Host "Reconnecting to Azure with SPN..."
         if(-not($clientid)) { Throw "You must supply a value for clientid" }
         if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
         # Use Terraform ARM Backend config to authenticate to Azure
         $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
         $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-        Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
+        $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
     }
-    Set-AzContext -Subscription $subscription -Tenant $tenantid
+    $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
 }
 
 function RemoveResourceGroups (
