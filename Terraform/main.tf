@@ -47,6 +47,7 @@ locals {
     var.tags,
     map(
       "environment",           "${local.environment}",
+      "suffix",                "${local.suffix}",
       "workspace",             "${terraform.workspace}",
       "release-id",            "${var.release_id}",
       "release-url",           "${var.release_web_url}",
