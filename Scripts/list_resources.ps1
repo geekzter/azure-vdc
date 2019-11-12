@@ -7,6 +7,10 @@ param (
     [parameter(Mandatory=$false)][switch]$Resources=$false,
     [parameter(Mandatory=$false)][switch]$Summary=$false,
     [parameter(Mandatory=$false)][switch]$Workspaces=$false,
+    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
+    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
+    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
+    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 $Script:ErrorActionPreference = "Stop"
@@ -42,6 +46,20 @@ if ($All -or $Summary -or $Workspaces) {
     if ($Workspaces) {
         $tfStateBlobs | Sort-Object -Property Workspace | Format-Table Workspace, LeaseStatus
     }
+}
+
+if ($All -or $Summary -or $Resources) {
+    # Login required
+    if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
+        Write-Host "Reconnecting to Azure with SPN..."
+        if(-not($clientid)) { Throw "You must supply a value for clientid" }
+        if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
+        # Use Terraform ARM Backend config to authenticate to Azure
+        $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
+        $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
+    }
+    $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
 }
 
 if ($All -or $Summary) {
