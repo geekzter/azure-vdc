@@ -6,25 +6,8 @@ param (
     [parameter(Mandatory=$false)][switch]$Resources=$false,
     [parameter(Mandatory=$false)][switch]$Summary=$false,
     [parameter(Mandatory=$false)][switch]$Workspaces=$false,
-    [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
-    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
-    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
-    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
-    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
+    [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
-if(-not($subscription)) { Throw "You must supply a value for subscription" }
-
-# Log on to Azure if not already logged on
-if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
-    if(-not($tenantid)) { Throw "You must supply a value for tenantid" }
-    if(-not($clientid)) { Throw "You must supply a value for clientid" }
-    if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
-    # Use Terraform ARM Backend config to authenticate Azure CLI
-    $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-    $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-    Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
-}
-Set-AzContext -Subscription $subscription
 
 # Provide at least one argument
 if (!($Resources -or $Summary -or $Workspaces)) {
@@ -38,13 +21,15 @@ if ($Summary -or $Workspaces) {
     $tfConfig = $(Get-Content $tfdirectory/.terraform/terraform.tfstate | ConvertFrom-Json)
     $backendStorageAccountName = $tfConfig.backend.config.storage_account_name
     $backendStorageContainerName = $tfConfig.backend.config.container_name
+    $backendStateKey = $tfConfig.backend.config.key
     $backendStorageKey = $env:ARM_ACCESS_KEY
     $backendstorageContext = New-AzStorageContext -StorageAccountName $backendStorageAccountName -StorageAccountKey $backendStorageKey
     $tfStateBlobs = Get-AzStorageBlob -Context $backendstorageContext -Container $backendStorageContainerName 
     $leaseTable = @{}
     $tfStateBlobs | ForEach-Object {
-        $leaseTable.Add($($_.Name -Replace "terraform.tfstateenv:","" -Replace "terraform.tfstate","default"),$_.ICloudBlob.Properties.LeaseStatus)
-        Add-Member -InputObject $_ -NotePropertyName "Workspace" -NotePropertyValue $($_.Name -Replace "terraform.tfstateenv:","" -Replace "terraform.tfstate","default")
+        $storageWorkspaceName = $($_.Name -Replace "${backendStateKey}env:","" -Replace $backendStateKey,"default")
+        $leaseTable.Add($storageWorkspaceName,$_.ICloudBlob.Properties.LeaseStatus)
+        Add-Member -InputObject $_ -NotePropertyName "Workspace"   -NotePropertyValue $storageWorkspaceName
         Add-Member -InputObject $_ -NotePropertyName "LeaseStatus" -NotePropertyValue $_.ICloudBlob.Properties.LeaseStatus
     }
     if ($Workspaces) {
