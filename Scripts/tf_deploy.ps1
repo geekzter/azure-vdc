@@ -262,7 +262,6 @@ try {
     if ($plan -or $apply) {
         SetDatabaseImport
         Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'" 
-        #Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile' 2`>`&1" # Redirect Error to Success stream, to cover Terraform azurerm provider warnings that should be ignored
     }
 
     if ($apply) {

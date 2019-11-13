@@ -31,7 +31,26 @@ if ($Workspace -eq "default") {
 }
 
 Write-Host "Retrieving blob https://${backendStorageAccountName}.blob.core.windows.net/${backendStorageContainerName}/${blobName}..."
-$tfStateBlob = Get-AzStorageBlob -Context $backendstorageContext -Container $backendStorageContainerName -Blob $blobName
-Write-Host "Breaking lease on blob $($tfStateBlob.ICloudBlob.Uri.AbsoluteUri)..."
+$tfStateBlob = Get-AzStorageBlob -Context $backendstorageContext -Container $backendStorageContainerName -Blob $blobName -ErrorAction SilentlyContinue
+if (!($tfStateBlob)) {
+    Write-Host "Workspace `"${Workspace}`" state not found" -ForegroundColor Red
+    exit
+}
 
-$tfStateBlob.ICloudBlob.BreakLease()
+if ($tfStateBlob.ICloudBlob.Properties.LeaseStatus -ieq "Unlocked") {
+    Write-Host "Workspace `"${Workspace}`" is not locked" -ForegroundColor Red
+    exit
+} else {
+    # Prompt to continue
+    $proceedanswer = Read-Host "If you wish to proceed to unlock workspace `"${Workspace}`", please reply 'yes' - null or N aborts"
+
+    if ($proceedanswer -ne "yes") {
+        Write-Host "`nReply is not 'yes' - Aborting " -ForegroundColor Red
+        exit
+    }
+    Write-Host "Unlocking workspace `"${Workspace}`" by breaking lease on blob $($tfStateBlob.ICloudBlob.Uri.AbsoluteUri)..."
+    $lease = $tfStateBlob.ICloudBlob.BreakLease()
+    if ($lease) {
+        Write-Host "Unlocked workspace `"${Workspace}`""
+    }
+}

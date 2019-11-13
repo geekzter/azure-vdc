@@ -43,7 +43,7 @@ if ($All -or $Summary -or $Workspaces) {
         Add-Member -InputObject $_ -NotePropertyName "Workspace"   -NotePropertyValue $storageWorkspaceName
         Add-Member -InputObject $_ -NotePropertyName "LeaseStatus" -NotePropertyValue $_.ICloudBlob.Properties.LeaseStatus
     }
-    if ($Workspaces) {
+    if ($All -or $Workspaces) {
         $tfStateBlobs | Sort-Object -Property Workspace | Format-Table Workspace, LeaseStatus
     }
 }
