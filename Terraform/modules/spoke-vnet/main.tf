@@ -29,6 +29,14 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
       enabled                  = false
     }
   }
+
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
 }
 
 resource "azurerm_virtual_network_peering" "spoke_to_hub" {
@@ -270,6 +278,7 @@ resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
       enabled                  = false
     }
   }
+ 
 }
 
 # This is the tempale for Managed Bastion, IaaS bastion is defined in management.tf
@@ -305,10 +314,9 @@ resource "azurerm_bastion_host" "managed_bastion" {
   count                        = var.deploy_managed_bastion ? 1 : 0
 }
 
-/* TODO
 resource "azurerm_monitor_diagnostic_setting" "bastion_logs" {
   name                         = "${azurerm_bastion_host.managed_bastion[count.index].name}-logs"
-  target_resource_id           = "${azurerm_bastion_host.managed_bastion[count.index].id}"
+  target_resource_id           = azurerm_bastion_host.managed_bastion[count.index].id
   storage_account_id           = var.diagnostics_storage_id
   log_analytics_workspace_id   = var.diagnostics_workspace_id
 
@@ -321,8 +329,8 @@ resource "azurerm_monitor_diagnostic_setting" "bastion_logs" {
     }
   }
 
-  count                        = "${var.deploy_managed_bastion ? 1 : 0}"
-} */
+  count                        = var.deploy_managed_bastion ? 1 : 0
+}
 
 resource "azurerm_private_dns_zone_virtual_network_link" "spoke_link" {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-zone-link${count.index+1}"

@@ -179,6 +179,66 @@ resource "azurerm_app_service" "paas_web_app" {
   tags                         = var.tags
 }
 
+resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
+  name                         = "AppService_Logs"
+  target_resource_id           = azurerm_app_service.paas_web_app.id
+  storage_account_id           = var.diagnostics_storage_id
+  log_analytics_workspace_id   = var.diagnostics_workspace_id
+
+  log {
+    category                   = "AppServiceConsoleLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "AppServiceHTTPLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  
+  log {
+    category                   = "AppServiceAuditLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  
+  log {
+    category                   = "AppServiceFileAuditLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  
+  log {
+    category                   = "AppServiceAppLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }  
+
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+}
+
 # data "azuread_application" "app_service_msi" {
 #   object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
 # }
@@ -302,7 +362,7 @@ resource "azurerm_eventhub" "app_eventhub" {
   }
 }
 
-resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
+resource "azurerm_monitor_diagnostic_setting" "eventhub_logs" {
   name                         = "EventHub_Logs"
   target_resource_id           = azurerm_eventhub_namespace.app_eventhub.id
   storage_account_id           = var.diagnostics_storage_id
@@ -439,3 +499,109 @@ resource "azurerm_sql_database" "app_sqldb" {
 
   tags                         = var.tags
 } 
+
+
+resource "azurerm_monitor_diagnostic_setting" "sql_database_logs" {
+  name                         = "SqlDatabase_Logs"
+  target_resource_id           = azurerm_sql_database.app_sqldb.id
+  storage_account_id           = var.diagnostics_storage_id
+  log_analytics_workspace_id   = var.diagnostics_workspace_id
+
+  log {
+    category                   = "SQLInsights"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "AutomaticTuning"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  
+  log {
+    category                   = "QueryStoreRuntimeStatistics"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  
+  log {
+    category                   = "QueryStoreWaitStatistics"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  
+  log {
+    category                   = "Errors"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }  
+
+  log {
+    category                   = "DatabaseWaitStatistics"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }  
+
+  log {
+    category                   = "Timeouts"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }  
+
+  log {
+    category                   = "Blocks"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }  
+
+  log {
+    category                   = "Deadlocks"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }  
+ 
+  metric {
+    category                   = "Basic"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }  
+
+  metric {
+    category                   = "InstanceAndAppAdvanced"
+
+    retention_policy {
+      enabled                  = false
+    }
+  } 
+}

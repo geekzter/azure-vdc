@@ -109,16 +109,14 @@ resource "azurerm_template_deployment" "vdc_shutdown_function_arm" {
   depends_on                   = [azurerm_function_app.vdc_functions] # Explicit dependency for ARM templates
 }
 
-# TODO: Not yet available for Azure Functions
-/* 
 resource "azurerm_monitor_diagnostic_setting" "vdc_function_logs" {
   name                         = "Function_Logs"
-  target_resource_id           = "${azurerm_function_app.vdc_functions.0.id}"
-  storage_account_id           = "var.diagnostics_storage_id
+  target_resource_id           = azurerm_function_app.vdc_functions.0.id
+  storage_account_id           = var.diagnostics_storage_id
   log_analytics_workspace_id   = var.diagnostics_workspace_id
 
   log {
-    category                   = "FunctionExecutionLogs"
+    category                   = "FunctionAppLogs"
     enabled                    = true
 
     retention_policy {
@@ -134,5 +132,5 @@ resource "azurerm_monitor_diagnostic_setting" "vdc_function_logs" {
     }
   }
 
-  count                        = "${var.deploy_auto_shutdown ? 1 : 0}"
-}  */
+  count                        = var.deploy_auto_shutdown ? 1 : 0
+} 

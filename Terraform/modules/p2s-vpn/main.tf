@@ -106,5 +106,13 @@ resource "azurerm_monitor_diagnostic_setting" "vpn_logs" {
     }
   }
 
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
   count                        = var.deploy_vpn ? 1 : 0
 }

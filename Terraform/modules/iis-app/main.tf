@@ -331,6 +331,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
 
   tags                         = var.tags
 }
+
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   name                         = "app_db_vm_bginfo"
   location                     = azurerm_resource_group.app_rg.location
@@ -397,6 +398,14 @@ resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {
   log {
     category                   = "LoadBalancerProbeHealthStatus"
     enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  metric {
+    category                   = "AllMetrics"
 
     retention_policy {
       enabled                  = false
