@@ -68,8 +68,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
         port                   = "443"
         type                   = "Https"
     }
-
-    # TODO: Specify all zones?
   }
 
   rule {
@@ -377,6 +375,14 @@ resource "azurerm_monitor_diagnostic_setting" "iag_pip_logs" {
   log {
     category                   = "DDoSMitigationReports"
     enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  metric {
+    category                   = "AllMetrics"
 
     retention_policy {
       enabled                  = false

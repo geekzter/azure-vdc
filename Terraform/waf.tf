@@ -309,6 +309,15 @@ resource "azurerm_monitor_diagnostic_setting" "waf_iaas_app_pip_logs" {
       enabled                  = false
     }
   }
+
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
 }
 
 resource "azurerm_monitor_diagnostic_setting" "waf_logs" {

@@ -94,6 +94,14 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
       enabled                  = false
     }
   }
+
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
 }
 
 # Conflicts with Start/Stop Automation solution
