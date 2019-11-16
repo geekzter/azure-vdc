@@ -6,7 +6,7 @@ variable location {
 }
 
 variable resource_group_ids {
-  type                         = "list"
+  type                         = list
 }
 variable resource_environment {
   description = "The logical environment (tier) resource will be deployed in"
@@ -14,7 +14,7 @@ variable resource_environment {
 
 variable tags {
   description = "A map of the tags to use for the resources that are deployed"
-  type        = "map"
+  type        = map
 } 
 
 variable app_resource_group {

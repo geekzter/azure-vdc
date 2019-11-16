@@ -30,33 +30,33 @@ data "http" "localpublicip" {
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_resource_group" "app_rg" {
-  name                         = "${var.resource_group_name}"
-  location                     = "${var.location}"
+  name                         = var.resource_group_name
+  location                     = var.location
 
-  tags                         = "${var.tags}"
+  tags                         = var.tags
 }
 
 resource "azurerm_storage_account" "app_storage" {
   name                         = "${substr(lower(replace(var.resource_group_name,"-","")),0,20)}stor"
-  location                     = "${azurerm_resource_group.app_rg.location}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
-  account_replication_type     = "${var.storage_replication_type}"
+  account_replication_type     = var.storage_replication_type
  
   network_rules {
     default_action             = "Deny"
     bypass                     = ["Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
-    ip_rules                   = "${var.admin_ip_ranges}"
+    ip_rules                   = var.admin_ip_ranges
     # Allow the Firewall subnet
     virtual_network_subnet_ids = [
-                                 "${var.iag_subnet_id}",
-                                 "${var.integrated_subnet_id}"
+                                 var.iag_subnet_id,
+                                 var.integrated_subnet_id
     ]
   } 
 
-  tags                         = "${var.tags}"
+  tags                         = var.tags
   
   # FIX for race condition: Error waiting for Azure Storage Account "vdccipaasappb1375stor" to be created: Future#WaitForCompletion: the number of retries has been exceeded: StatusCode=400 -- Original Error: Code="NetworkAclsValidationFailure" Message="Validation of network acls failure: SubnetsNotProvisioned:Cannot proceed with operation because subnets appservice of the virtual network /subscriptions//resourceGroups/vdc-ci-b1375/providers/Microsoft.Network/virtualNetworks/vdc-ci-b1375-paas-spoke-network are not provisioned. They are in Updating state.."
   depends_on                   = [azurerm_storage_container.archive_storage_container]
@@ -66,14 +66,14 @@ resource "azurerm_storage_account" "app_storage" {
 
 resource "azurerm_storage_container" "app_storage_container" {
   name                         = "data"
-  storage_account_name         = "${azurerm_storage_account.app_storage.name}"
+  storage_account_name         = azurerm_storage_account.app_storage.name
   container_access_type        = "private"
 }
 
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
   name                         = "sample.txt"
-  storage_account_name         = "${azurerm_storage_account.app_storage.name}"
-  storage_container_name       = "${azurerm_storage_container.app_storage_container.name}"
+  storage_account_name         = azurerm_storage_account.app_storage.name
+  storage_container_name       = azurerm_storage_container.app_storage_container.name
 
   type                         = "block"
   source                       = "../Data/sample.txt"
@@ -81,42 +81,42 @@ resource "azurerm_storage_blob" "app_storage_blob_sample" {
 
 resource "azurerm_storage_account" "archive_storage" {
   name                         = "${substr(lower(replace(var.resource_group_name,"-","")),0,20)}arch"
-  location                     = "${azurerm_resource_group.app_rg.location}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
-  account_replication_type     = "${var.storage_replication_type}"
+  account_replication_type     = var.storage_replication_type
 
-  tags                         = "${var.tags}"
+  tags                         = var.tags
 }
 
 resource "azurerm_storage_container" "archive_storage_container" {
   name                         = "eventarchive"
-  storage_account_name         = "${azurerm_storage_account.archive_storage.name}"
+  storage_account_name         = azurerm_storage_account.archive_storage.name
   container_access_type        = "private"
 }
 
 resource "azurerm_app_service_plan" "paas_plan" {
   name                         = "${var.resource_group_name}-appsvc-plan"
-  location                     = "${azurerm_resource_group.app_rg.location}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
 
   sku {
     tier                       = "PremiumV2"
     size                       = "P1v2"
   }
 
-  tags                         = "${var.tags}"
+  tags                         = var.tags
 }
 
 resource "azurerm_app_service" "paas_web_app" {
   name                         = "${var.resource_group_name}-appsvc-app"
-  location                     = "${azurerm_resource_group.app_rg.location}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  app_service_plan_id          = "${azurerm_app_service_plan.paas_plan.id}"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  app_service_plan_id          = azurerm_app_service_plan.paas_plan.id
 
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = "${var.diagnostics_instrumentation_key}"
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = var.diagnostics_instrumentation_key
     "WEBSITE_HTTPLOGGING_RETENTION_DAYS" = "90"
   }
 
@@ -164,19 +164,19 @@ resource "azurerm_app_service" "paas_web_app" {
     ftps_state                 = "Disabled"
 
     ip_restriction {
-      virtual_network_subnet_id = "${var.waf_subnet_id}"
+      virtual_network_subnet_id = var.waf_subnet_id
     }
     dynamic "ip_restriction" {
       for_each = var.management_subnet_ids
       content {
-        virtual_network_subnet_id = "${ip_restriction.value}"
+        virtual_network_subnet_id = ip_restriction.value
       }
     }
     scm_type                   = "LocalGit"
-  # virtual_network_name       = "${local.integrated_vnet_name}"
+  # virtual_network_name       = local.integrated_vnet_name
   }
 
-  tags                         = "${var.tags}"
+  tags                         = var.tags
 }
 
 # data "azuread_application" "app_service_msi" {
@@ -211,7 +211,7 @@ resource "azurerm_app_service" "paas_web_app" {
 #   template_body                = "${file("${path.module}/appsvc-network-association.json")}"
 
 #   parameters                   = {
-#     location                   = "${var.location}"
+#     location                   = var.location
 #     addressPrefix              = "${var.integrated_subnet_range}" # Required parameter when updating subnet to add association
 #     appServicePlanId           = "${azurerm_app_service_plan.paas_plan.id}"
 #     integratedVNetName         = "${local.integrated_vnet_name}"
@@ -224,13 +224,13 @@ resource "azurerm_app_service" "paas_web_app" {
 
 # resource "azurerm_template_deployment" "app_service_network_connection" {
 #   name                         = "${azurerm_app_service.paas_web_app.name}-network-connection"
-#   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+#   resource_group_name          = azurerm_resource_group.app_rg.name
 #   deployment_mode              = "Incremental"
 
 #   template_body                = "${file("${path.module}/appsvc-network-connection.json")}"
 
 #   parameters                   = {
-#     location                   = "${azurerm_resource_group.app_rg.location}"
+#     location                   = azurerm_resource_group.app_rg.location
 #     functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
 #     integratedVNetId           = "${var.integrated_vnet_id}"
 #     integratedSubnetId         = "${var.integrated_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
@@ -246,8 +246,8 @@ resource "azurerm_app_service" "paas_web_app" {
 
 resource "azurerm_eventhub_namespace" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}eventhubNamespace"
-  location                     = "${azurerm_resource_group.app_rg.location}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
   sku                          = "Standard"
   capacity                     = 1
   kafka_enabled                = false
@@ -260,7 +260,7 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo                 
     ip_rule {
       action                   = "Allow"
-      ip_mask                  = "${chomp(data.http.localpublicip.body)}" # We need this to make changes
+      ip_mask                  = chomp(data.http.localpublicip.body) # We need this to make changes
     }
     # # BUG: There is no variable named "var".
     # dynamic "ip_rule" {
@@ -272,20 +272,20 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
     # }
     virtual_network_rule {
       # Allow the Firewall subnet
-      subnet_id                = "${var.iag_subnet_id}"
+      subnet_id                = var.iag_subnet_id
     }
     virtual_network_rule {
-      subnet_id                = "${var.integrated_subnet_id}"
+      subnet_id                = var.integrated_subnet_id
     }
   } 
 
-  tags                         = "${var.tags}"
+  tags                         = var.tags
 }
 
 resource "azurerm_eventhub" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}eventhub"
-  namespace_name               = "${azurerm_eventhub_namespace.app_eventhub.name}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+  namespace_name               = azurerm_eventhub_namespace.app_eventhub.name
+  resource_group_name          = azurerm_resource_group.app_rg.name
   partition_count              = 2
   message_retention            = 1
 
@@ -296,17 +296,17 @@ resource "azurerm_eventhub" "app_eventhub" {
     destination {
       name                     = "EventHubArchive.AzureBlockBlob"
       archive_name_format      = "{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}/{Minute}/{Second}"
-      storage_account_id       = "${azurerm_storage_account.archive_storage.id}"
-      blob_container_name      = "${azurerm_storage_container.archive_storage_container.name}"
+      storage_account_id       = azurerm_storage_account.archive_storage.id
+      blob_container_name      = azurerm_storage_container.archive_storage_container.name
     }
   }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
   name                         = "EventHub_Logs"
-  target_resource_id           = "${azurerm_eventhub_namespace.app_eventhub.id}"
-  storage_account_id           = "${var.diagnostics_storage_id}"
-  log_analytics_workspace_id   = "${var.diagnostics_workspace_id}"
+  target_resource_id           = azurerm_eventhub_namespace.app_eventhub.id
+  storage_account_id           = var.diagnostics_storage_id
+  log_analytics_workspace_id   = var.diagnostics_workspace_id
 
   log {
     category                   = "ArchiveLogs"
@@ -339,38 +339,38 @@ resource "azurerm_monitor_diagnostic_setting" "eh_logs" {
 
 resource "azurerm_sql_server" "app_sqlserver" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}sqlserver"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  location                     = "${azurerm_resource_group.app_rg.location}"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  location                     = azurerm_resource_group.app_rg.location
   version                      = "12.0"
 # TODO: Remove credentials, and/or store in Key Vault
-  administrator_login          = "${var.admin_username}"
-  administrator_login_password = "${local.password}"
+  administrator_login          = var.admin_username
+  administrator_login_password = local.password
   
-  tags                         = "${var.tags}"
+  tags                         = var.tags
 }
 
 resource "azurerm_sql_firewall_rule" "tfclient" {
   name                         = "TerraformClientRule"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
-  start_ip_address             = "${chomp(data.http.localpublicip.body)}"
-  end_ip_address               = "${chomp(data.http.localpublicip.body)}"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  start_ip_address             = chomp(data.http.localpublicip.body)
+  end_ip_address               = chomp(data.http.localpublicip.body)
 }
 
 resource "azurerm_sql_firewall_rule" "adminclient" {
   name                         = "AdminClientRule${count.index}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
-  start_ip_address             = "${element(local.admin_ips, count.index)}"
-  end_ip_address               = "${element(local.admin_ips, count.index)}"
-  count                        = "${length(local.admin_ips)}"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  start_ip_address             = element(local.admin_ips, count.index)
+  end_ip_address               = element(local.admin_ips, count.index)
+  count                        = length(local.admin_ips)
 }
 
 # HACK: Not sure why backup restores are initated from this address
 resource "azurerm_sql_firewall_rule" "azure1" {
   name                         = "AzureRule1"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
   start_ip_address             = "65.52.129.125"
   end_ip_address               = "65.52.129.125"
 }
@@ -379,7 +379,7 @@ resource "azurerm_sql_firewall_rule" "azure1" {
 # Note these are shared addresses, hence does not fully constrain access
 # resource "azurerm_sql_firewall_rule" "webapp" {
 #   name                         = "AllowWebApp${count.index}"
-#   resource_group_name          = "${azurerm_resource_group.app_rg.name}"
+#   resource_group_name          = azurerm_resource_group.app_rg.name
 #   server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
 #   start_ip_address             = "${element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)}"
 #   end_ip_address               = "${element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)}"
@@ -390,8 +390,8 @@ resource "azurerm_sql_firewall_rule" "azure1" {
 
 resource "azurerm_sql_firewall_rule" "azureall" {
   name                         = "AllowAllWindowsAzureIPs" # Same name as Azure generated one
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
 # 0.0.0.0 represents Azure addresses, see https://docs.microsoft.com/en-us/rest/api/sql/firewallrules/createorupdate
   start_ip_address             = "0.0.0.0"
   end_ip_address               = "0.0.0.0"
@@ -399,32 +399,32 @@ resource "azurerm_sql_firewall_rule" "azureall" {
 
 # If you have AD permissions it is better to use an AAD group for DBA's, and add DBA and TF to that group
 resource "azurerm_sql_active_directory_administrator" "dba" {
-  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-# login                        = "${var.dba_login}"
-  tenant_id                    = "${data.azurerm_client_config.current.tenant_id}"
-# object_id                    = "${var.dba_object_id}" 
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  resource_group_name          = azurerm_resource_group.app_rg.name
+# login                        = var.dba_login
+  tenant_id                    = data.azurerm_client_config.current.tenant_id
+# object_id                    = var.dba_object_id
 # HACK: Not least privilege, but req'd as automation SP does not have sufficient permissions
   login                        = "client"
-  object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
+  object_id                    = azurerm_app_service.paas_web_app.identity.0.principal_id
 } 
 
 resource "azurerm_sql_database" "app_sqldb" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}sqldb"
-  resource_group_name          = "${azurerm_resource_group.app_rg.name}"
-  location                     = "${azurerm_resource_group.app_rg.location}"
-  server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  location                     = azurerm_resource_group.app_rg.location
+  server_name                  = azurerm_sql_server.app_sqlserver.name
   edition                      = "Premium"
 
   # Import is not re-entrant
   dynamic "import" {
     for_each = range(var.database_import ? 1 : 0)
     content {
-      storage_uri              = "${var.database_template_storage_uri}"
-      storage_key              = "${var.database_template_storage_key}"
+      storage_uri              = var.database_template_storage_uri
+      storage_key              = var.database_template_storage_key
       storage_key_type         = "StorageAccessKey"
-      administrator_login      = "${azurerm_sql_server.app_sqlserver.administrator_login}"
-      administrator_login_password = "${azurerm_sql_server.app_sqlserver.administrator_login_password}"
+      administrator_login      = azurerm_sql_server.app_sqlserver.administrator_login
+      administrator_login_password = azurerm_sql_server.app_sqlserver.administrator_login_password
       authentication_type      = "SQL"
     }
   }
@@ -437,5 +437,5 @@ resource "azurerm_sql_database" "app_sqldb" {
 
   # TODO: Zone Redundant
 
-  tags                         = "${var.tags}"
+  tags                         = var.tags
 } 

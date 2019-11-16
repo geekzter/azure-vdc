@@ -7,50 +7,50 @@ resource "random_string" "waf_domain_name_label" {
 }
 
 data "azurerm_dns_zone" "vanity_domain" {
-  name                         = "${var.vanity_domainname}"
+  name                         = var.vanity_domainname
   resource_group_name          = "Shared"
-  count                        = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
+  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
 }
 
 resource "azurerm_public_ip" "waf_pip" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-waf-pip"
-  location                     = "${azurerm_resource_group.vdc_rg.location}"
-  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
+  location                     = azurerm_resource_group.vdc_rg.location
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
   allocation_method            = "Static"
   sku                          = "Standard" # Zone redundant
-  domain_name_label            = "${random_string.waf_domain_name_label.result}"
+  domain_name_label            = random_string.waf_domain_name_label.result
 
-  tags                         = "${local.tags}"
+  tags                         = local.tags
 
 }
 
 resource "azurerm_dns_cname_record" "waf_iaas_app_cname" {
   name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}iisapp"
-  zone_name                    = "${data.azurerm_dns_zone.vanity_domain.0.name}"
-  resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.0.resource_group_name}"
+  zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
+  resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name
   ttl                          = 300
-  record                       = "${azurerm_public_ip.waf_pip.fqdn}"
-  depends_on                   = ["azurerm_public_ip.waf_pip"]
+  record                       = azurerm_public_ip.waf_pip.fqdn
+  depends_on                   = [azurerm_public_ip.waf_pip]
 
-  count                        = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
-  tags                         = "${local.tags}"
+  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
+  tags                         = local.tags
 } 
 
 resource "azurerm_dns_cname_record" "waf_paas_app_cname" {
   name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}webapp"
-  zone_name                    = "${data.azurerm_dns_zone.vanity_domain.0.name}"
-  resource_group_name          = "${data.azurerm_dns_zone.vanity_domain.0.resource_group_name}"
+  zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
+  resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name
   ttl                          = 300
-  record                       = "${azurerm_public_ip.waf_pip.fqdn}"
-  depends_on                   = ["azurerm_public_ip.waf_pip"]
+  record                       = azurerm_public_ip.waf_pip.fqdn
+  depends_on                   = [azurerm_public_ip.waf_pip]
 
-  count                        = "${var.use_vanity_domain_and_ssl ? 1 : 0}"
-  tags                         = "${local.tags}"
+  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
+  tags                         = local.tags
 } 
 
 locals {
-  ssl_range                    = "${range(var.use_vanity_domain_and_ssl ? 1 : 0)}" # Contains one item only if var.use_vanity_domain_and_ssl = true
-  ssl_range_inverted           = "${range(var.use_vanity_domain_and_ssl ? 0 : 1)}" # Contains one item only if var.use_vanity_domain_and_ssl = false
+  ssl_range                    = range(var.use_vanity_domain_and_ssl ? 1 : 0) # Contains one item only if var.use_vanity_domain_and_ssl = true
+  ssl_range_inverted           = range(var.use_vanity_domain_and_ssl ? 0 : 1) # Contains one item only if var.use_vanity_domain_and_ssl = false
   iaas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_iaas_app_cname[0].name}.${azurerm_dns_cname_record.waf_iaas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
   iaas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.iaas_app_fqdn}/"
   paas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_paas_app_cname[0].name}.${azurerm_dns_cname_record.waf_paas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
@@ -59,8 +59,8 @@ locals {
 
 resource "azurerm_application_gateway" "waf" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-waf"
-  resource_group_name          = "${azurerm_resource_group.vdc_rg.name}"
-  location                     = "${azurerm_resource_group.vdc_rg.location}"
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  location                     = azurerm_resource_group.vdc_rg.location
 
   sku {
     # v2 SKU's are zone redundant
@@ -73,11 +73,11 @@ resource "azurerm_application_gateway" "waf" {
 
   gateway_ip_configuration {
     name                       = "waf-ip-configuration"
-    subnet_id                  = "${azurerm_subnet.waf_subnet.id}"
+    subnet_id                  = azurerm_subnet.waf_subnet.id
   }
   frontend_ip_configuration {
     name                       = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
-    public_ip_address_id       = "${azurerm_public_ip.waf_pip.id}"
+    public_ip_address_id       = azurerm_public_ip.waf_pip.id
   }
   frontend_port {
     name                       = "http"
@@ -92,9 +92,9 @@ resource "azurerm_application_gateway" "waf" {
   dynamic "ssl_certificate" {
     for_each = local.ssl_range
     content {
-      name                     = "${var.vanity_certificate_name}"
-      data                     = "${filebase64(var.vanity_certificate_path)}" # load pfx from file
-      password                 = "${var.vanity_certificate_password}"
+      name                     = var.vanity_certificate_name
+      data                     = filebase64(var.vanity_certificate_path) # load pfx from file
+      password                 = var.vanity_certificate_password
     }
   }
 
@@ -106,7 +106,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
   #### IaaS IIS App
   backend_address_pool {
     name                       = "${module.iis_app.app_resource_group}-webservers"
-    ip_addresses               = "${var.app_web_vms}"
+    ip_addresses               = var.app_web_vms
   }
   backend_http_settings {
     name                       = "${module.iis_app.app_resource_group}-config"
@@ -120,7 +120,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     name                       = "${module.iis_app.app_resource_group}-http-listener"
     frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
     frontend_port_name         = "http"
-    host_name                  = "${local.iaas_app_fqdn}"
+    host_name                  = local.iaas_app_fqdn
     protocol                   = "Http"
   }
   # This is a way to make HTTPS and SSL optional 
@@ -131,8 +131,8 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
       frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
       frontend_port_name       = "https"
       protocol                 = "Https"
-      host_name                = "${local.iaas_app_fqdn}"
-      ssl_certificate_name     = "${var.vanity_certificate_name}"
+      host_name                = local.iaas_app_fqdn
+      ssl_certificate_name     = var.vanity_certificate_name
     }
   }
   dynamic "request_routing_rule" {
@@ -195,7 +195,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     name                       = "${module.paas_app.app_resource_group}-http-listener"
     frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
     frontend_port_name         = "http"
-    host_name                  = "${local.paas_app_fqdn}"
+    host_name                  = local.paas_app_fqdn
     protocol                   = "Http"
   }
   # This is a way to make HTTPS and SSL optional 
@@ -206,8 +206,8 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
       frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
       frontend_port_name       = "https"
       protocol                 = "Https"
-      host_name                = "${local.paas_app_fqdn}"
-      ssl_certificate_name     = "${var.vanity_certificate_name}"
+      host_name                = local.paas_app_fqdn
+      ssl_certificate_name     = var.vanity_certificate_name
     }
   }
   dynamic "request_routing_rule" {
@@ -274,14 +274,14 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     rule_set_version           = "3.1"
   }
 
-  tags                         = "${local.tags}"
+  tags                         = local.tags
 }
 
 resource "azurerm_monitor_diagnostic_setting" "waf_iaas_app_pip_logs" {
   name                         = "${azurerm_public_ip.waf_pip.name}-logs"
-  target_resource_id           = "${azurerm_public_ip.waf_pip.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+  target_resource_id           = azurerm_public_ip.waf_pip.id
+  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
+  log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
 
   log {
     category                   = "DDoSProtectionNotifications"
@@ -313,9 +313,9 @@ resource "azurerm_monitor_diagnostic_setting" "waf_iaas_app_pip_logs" {
 
 resource "azurerm_monitor_diagnostic_setting" "waf_logs" {
   name                         = "${azurerm_application_gateway.waf.name}-logs"
-  target_resource_id           = "${azurerm_application_gateway.waf.id}"
-  storage_account_id           = "${azurerm_storage_account.vdc_diag_storage.id}"
-  log_analytics_workspace_id   = "${azurerm_log_analytics_workspace.vcd_workspace.id}"
+  target_resource_id           = azurerm_application_gateway.waf.id
+  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
+  log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
 
   log {
     category                   = "ApplicationGatewayAccessLog"
