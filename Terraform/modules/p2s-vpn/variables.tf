@@ -12,7 +12,7 @@ variable tags {
 variable diagnostics_storage_id {
   description                  = "The id of the diagnostics storage account to use"
 }
-variable diagnostics_workspace_id {
+variable diagnostics_workspace_resource_id {
   description                  = "The id of the Log Analytics workspace to use"
 }
 

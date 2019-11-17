@@ -156,6 +156,66 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
   )
 }
 
+resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
+  name                         = "app_web_vm_dependency_monitor"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  virtual_machine_name         = element(azurerm_virtual_machine.app_web_vm.*.name, count.index)
+  publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
+  type                         = "DependencyAgentWindows"
+  type_handler_version         = "9.5"
+  auto_upgrade_minor_version   = true
+  count                        = var.app_web_vm_number
+  settings                     = <<EOF
+    {
+      "workspaceId": "${var.diagnostics_workspace_workspace_id}"
+    }
+  EOF
+
+  protected_settings = <<EOF
+    { 
+      "workspaceKey": "${var.diagnostics_workspace_key}"
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.release_agent_dependency
+    )
+  )
+}
+
+resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
+  name                         = "app_web_vm_monitor"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  virtual_machine_name         = element(azurerm_virtual_machine.app_web_vm.*.name, count.index)
+  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
+  type                         = "MicrosoftMonitoringAgent"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+  count                        = var.app_web_vm_number
+  settings                     = <<EOF
+    {
+      "workspaceId": "${var.diagnostics_workspace_workspace_id}"
+    }
+  EOF
+
+  protected_settings = <<EOF
+    { 
+      "workspaceKey": "${var.diagnostics_workspace_key}"
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.release_agent_dependency
+    )
+  )
+}
+
 resource "azurerm_network_connection_monitor" "devops_watcher" {
   name                         = "${local.app_hostname}${count.index+1}-${var.app_devops["account"]}.visualstudio.com"
   location                     = var.location
@@ -380,11 +440,71 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
   )
 }
 
+resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
+  name                         = "app_db_vm_dependency_monitor"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  virtual_machine_name         = element(azurerm_virtual_machine.app_db_vm.*.name, count.index)
+  publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
+  type                         = "DependencyAgentWindows"
+  type_handler_version         = "9.5"
+  auto_upgrade_minor_version   = true
+  count                        = var.app_db_vm_number
+  settings                     = <<EOF
+    {
+      "workspaceId": "${var.diagnostics_workspace_workspace_id}"
+    }
+  EOF
+
+  protected_settings = <<EOF
+    { 
+      "workspaceKey": "${var.diagnostics_workspace_key}"
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.release_agent_dependency
+    )
+  )
+}
+
+resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
+  name                         = "app_db_vm_monitor"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  virtual_machine_name         = element(azurerm_virtual_machine.app_db_vm.*.name, count.index)
+  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
+  type                         = "MicrosoftMonitoringAgent"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+  count                        = var.app_db_vm_number
+  settings                     = <<EOF
+    {
+      "workspaceId": "${var.diagnostics_workspace_workspace_id}"
+    }
+  EOF
+
+  protected_settings = <<EOF
+    { 
+      "workspaceKey": "${var.diagnostics_workspace_key}"
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.release_agent_dependency
+    )
+  )
+}
+
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {
   name                         = "${azurerm_lb.app_db_lb.name}-logs"
   target_resource_id           = azurerm_lb.app_db_lb.id
   storage_account_id           = var.diagnostics_storage_id
-  log_analytics_workspace_id   = var.diagnostics_workspace_id
+  log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
   log {
     category                   = "LoadBalancerAlertEvent"

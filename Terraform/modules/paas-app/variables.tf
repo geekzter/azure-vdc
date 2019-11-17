@@ -29,4 +29,4 @@ variable waf_subnet_id {}
 
 variable diagnostics_instrumentation_key {}
 variable diagnostics_storage_id {}
-variable diagnostics_workspace_id {}
+variable diagnostics_workspace_resource_id {}

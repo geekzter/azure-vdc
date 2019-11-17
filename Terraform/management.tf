@@ -151,3 +151,51 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
 
   tags                         = local.tags
 }
+
+resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
+  name                         = "bastion_dependency_monitor"
+  location                     = azurerm_resource_group.vdc_rg.location
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  virtual_machine_name         = azurerm_virtual_machine.bastion.name
+  publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
+  type                         = "DependencyAgentWindows"
+  type_handler_version         = "9.5"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "workspaceId": "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}"
+    }
+  EOF
+
+  protected_settings = <<EOF
+    { 
+      "workspaceKey": "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
+    } 
+  EOF
+
+  tags                         = local.tags
+}
+
+resource "azurerm_virtual_machine_extension" "bastion_monitor" {
+  name                         = "bastion_monitor"
+  location                     = azurerm_resource_group.vdc_rg.location
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  virtual_machine_name         = azurerm_virtual_machine.bastion.name
+  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
+  type                         = "MicrosoftMonitoringAgent"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "workspaceId": "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}"
+    }
+  EOF
+
+  protected_settings = <<EOF
+    { 
+      "workspaceKey": "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
+    } 
+  EOF
+
+  tags                         = local.tags
+}

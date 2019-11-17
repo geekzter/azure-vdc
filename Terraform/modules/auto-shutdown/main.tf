@@ -113,7 +113,7 @@ resource "azurerm_monitor_diagnostic_setting" "vdc_function_logs" {
   name                         = "Function_Logs"
   target_resource_id           = azurerm_function_app.vdc_functions.0.id
   storage_account_id           = var.diagnostics_storage_id
-  log_analytics_workspace_id   = var.diagnostics_workspace_id
+  log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
   log {
     category                   = "FunctionAppLogs"
