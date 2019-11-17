@@ -38,7 +38,7 @@ resource "azurerm_monitor_diagnostic_setting" "bastion_logs" {
   name                         = "${azurerm_bastion_host.managed_bastion[count.index].name}-logs"
   target_resource_id           = azurerm_bastion_host.managed_bastion[count.index].id
   storage_account_id           = var.diagnostics_storage_id
-  log_analytics_workspace_id   = var.diagnostics_workspace_id
+  log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
   log {
     category                   = "BastionAuditLogs"

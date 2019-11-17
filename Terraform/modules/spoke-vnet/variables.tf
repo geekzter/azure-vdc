@@ -36,4 +36,4 @@ variable use_hub_gateway {
 }
 
 variable diagnostics_storage_id {}
-variable diagnostics_workspace_id {}
+variable diagnostics_workspace_resource_id {}

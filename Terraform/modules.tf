@@ -15,7 +15,7 @@ module auto_shutdown {
 
   diagnostics_instrumentation_key = azurerm_application_insights.vdc_insights.instrumentation_key
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
-  diagnostics_workspace_id     = azurerm_log_analytics_workspace.vcd_workspace.id
+  diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
 }
 
 module iaas_spoke_vnet {
@@ -47,7 +47,7 @@ module iaas_spoke_vnet {
   use_hub_gateway              = var.deploy_vpn
 
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
-  diagnostics_workspace_id     = azurerm_log_analytics_workspace.vcd_workspace.id
+  diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
 }
 
 locals {
@@ -84,7 +84,9 @@ module iis_app {
   release_agent_dependency     = local.release_agent_dependency
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_watcher_id       = var.deploy_connection_monitors ? azurerm_network_watcher.vdc_watcher[0].id : null
-  diagnostics_workspace_id     = azurerm_log_analytics_workspace.vcd_workspace.id
+  diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
+  diagnostics_workspace_workspace_id = azurerm_log_analytics_workspace.vcd_workspace.workspace_id
+  diagnostics_workspace_key    = azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key
 }
 
 module managed_bastion_hub {
@@ -97,7 +99,7 @@ module managed_bastion_hub {
   virtual_network_id           = azurerm_virtual_network.hub_vnet.id
 
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
-  diagnostics_workspace_id     = azurerm_log_analytics_workspace.vcd_workspace.id
+  diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
 
   deploy_managed_bastion       = var.deploy_managed_bastion
 }
@@ -115,7 +117,7 @@ module p2s_vpn {
   vpn_root_cert_file           = var.vpn_root_cert_file
 
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
-  diagnostics_workspace_id     = azurerm_log_analytics_workspace.vcd_workspace.id
+  diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
 
   deploy_vpn                   = var.deploy_vpn
 }
@@ -146,7 +148,7 @@ module paas_app {
 
   diagnostics_instrumentation_key = azurerm_application_insights.vdc_insights.instrumentation_key
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
-  diagnostics_workspace_id     = azurerm_log_analytics_workspace.vcd_workspace.id
+  diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
 }
 
 module paas_spoke_vnet {
@@ -179,5 +181,5 @@ module paas_spoke_vnet {
   use_hub_gateway              = var.deploy_vpn
 
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
-  diagnostics_workspace_id     = azurerm_log_analytics_workspace.vcd_workspace.id
+  diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
 }

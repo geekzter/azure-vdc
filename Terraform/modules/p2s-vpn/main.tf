@@ -59,7 +59,7 @@ resource "azurerm_monitor_diagnostic_setting" "vpn_logs" {
   name                         = "${azurerm_virtual_network_gateway.vpn_gw.0.name}-logs"
   target_resource_id           = azurerm_virtual_network_gateway.vpn_gw.0.id
   storage_account_id           = var.diagnostics_storage_id
-  log_analytics_workspace_id   = var.diagnostics_workspace_id
+  log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
   log {
     category                   = "GatewayDiagnosticLog"

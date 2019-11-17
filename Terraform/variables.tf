@@ -94,8 +94,8 @@ variable vdc_oms_solutions {
   default                      = [
   # "ADAssessment",
   # "ADReplication",
-  # "AgentHealthAssessment",
-  # "AlertManagement",
+    "AgentHealthAssessment",
+    "AlertManagement",
     "AntiMalware",
   # "ApplicationInsights", # Depricated
   # "ASRAnalytics",
@@ -109,7 +109,7 @@ variable vdc_oms_solutions {
   # "AzureSecurityOfThings",
     "AzureSQLAnalytics",
   # "AzureWebAppsAnalytics", # Depricated
-  # "Backup",
+  # "Backup", # Depricated
     "CapacityPerformance",
   # "ChangeTracking",
   # "CompatibilityAssessment",
@@ -130,11 +130,11 @@ variable vdc_oms_solutions {
   # "KeyVaultAnalytics",
   # "LogicAppB2B",
   # "LogicAppsManagement",
-  # "LogManagement",
+    "LogManagement",
   # "Microsoft365Analytics",
-  # "NetworkMonitoring",
+    "NetworkMonitoring",
   # "Office365",
-  # "ProcessInvestigator",
+    "ProcessInvestigator",
   # "SCOMAssessment",
     "Security",
     "SecurityCenterFree",
@@ -161,7 +161,7 @@ variable vdc_oms_solutions {
   # "WindowsDefenderATPStable",
     "WindowsEventForwarding",
   # "WindowsFirewall",
-  # "WinLog",
+    "WinLog",
   # "WireData",
   # "WireData2"
   ]

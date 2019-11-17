@@ -25,9 +25,13 @@ variable deploy_connection_monitors {
 variable diagnostics_storage_id {
   description                  = "The id of the diagnostics storage account to use"
 }
-variable diagnostics_workspace_id {
-  description                  = "The id of the Log Analytics workspace to use"
+variable diagnostics_workspace_resource_id {
+  description                  = "The resource id of the Log Analytics workspace to use"
 }
+variable diagnostics_workspace_workspace_id {
+  description                  = "The workspace id of the Log Analytics workspace to use"
+}
+variable diagnostics_workspace_key {}
 variable diagnostics_watcher_id {
   description                  = "The id of the network watcher to use"
 }

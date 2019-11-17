@@ -1632,15 +1632,15 @@
 <path fill="none" stroke="black" d="M6634.17,-1296.82C6630.89,-1296.54 6627.63,-1296.26 6624.41,-1296 6349.75,-1273.53 6279.94,-1283.95 6005.41,-1260 6004.12,-1259.89 6002.83,-1259.77 6001.53,-1259.66"/>
 <polygon fill="black" stroke="black" points="6001.76,-1256.16 5991.48,-1258.72 6001.11,-1263.13 6001.76,-1256.16"/>
 </g>
-<!-- [root] module.auto_shutdown.var.diagnostics_workspace_id -->
-<g id="node84" class="node"><title>[root] module.auto_shutdown.var.diagnostics_workspace_id</title>
+<!-- [root] module.auto_shutdown.var.diagnostics_workspace_resource_id -->
+<g id="node84" class="node"><title>[root] module.auto_shutdown.var.diagnostics_workspace_resource_id</title>
 <polygon fill="none" stroke="black" points="5486.41,-1260 5170.41,-1260 5170.41,-1224 5492.41,-1224 5492.41,-1254 5486.41,-1260"/>
 <polyline fill="none" stroke="black" points="5486.41,-1260 5486.41,-1254 "/>
 <polyline fill="none" stroke="black" points="5492.41,-1254 5486.41,-1254 "/>
-<text text-anchor="middle" x="5331.41" y="-1238.3" font-family="Times New Roman,serif" font-size="14.00">module.auto_shutdown.var.diagnostics_workspace_id</text>
+<text text-anchor="middle" x="5331.41" y="-1238.3" font-family="Times New Roman,serif" font-size="14.00">module.auto_shutdown.var.diagnostics_workspace_resource_id</text>
 </g>
-<!-- [root] module.auto_shutdown.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
-<g id="edge293" class="edge"><title>[root] module.auto_shutdown.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
+<!-- [root] module.auto_shutdown.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
+<g id="edge293" class="edge"><title>[root] module.auto_shutdown.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
 <path fill="none" stroke="black" d="M5320.32,-1223.85C5297.9,-1190.66 5243.83,-1117.57 5179.41,-1080 5112.12,-1040.76 4906.71,-997.876 4778.93,-973.921"/>
 <polygon fill="black" stroke="black" points="4779.2,-970.411 4768.73,-972.017 4777.92,-977.292 4779.2,-970.411"/>
 </g>
@@ -1717,15 +1717,15 @@
 <path fill="none" stroke="black" d="M5351.54,-1367.97C5263.9,-1357.44 5151.51,-1343.95 5062.11,-1333.21"/>
 <polygon fill="black" stroke="black" points="5062.5,-1329.74 5052.16,-1332.02 5061.67,-1336.69 5062.5,-1329.74"/>
 </g>
-<!-- [root] module.iaas_spoke_vnet.var.diagnostics_workspace_id -->
-<g id="node115" class="node"><title>[root] module.iaas_spoke_vnet.var.diagnostics_workspace_id</title>
+<!-- [root] module.iaas_spoke_vnet.var.diagnostics_workspace_resource_id -->
+<g id="node115" class="node"><title>[root] module.iaas_spoke_vnet.var.diagnostics_workspace_resource_id</title>
 <polygon fill="none" stroke="black" points="4731.91,-1332 4408.91,-1332 4408.91,-1296 4737.91,-1296 4737.91,-1326 4731.91,-1332"/>
 <polyline fill="none" stroke="black" points="4731.91,-1332 4731.91,-1326 "/>
 <polyline fill="none" stroke="black" points="4737.91,-1326 4731.91,-1326 "/>
-<text text-anchor="middle" x="4573.41" y="-1310.3" font-family="Times New Roman,serif" font-size="14.00">module.iaas_spoke_vnet.var.diagnostics_workspace_id</text>
+<text text-anchor="middle" x="4573.41" y="-1310.3" font-family="Times New Roman,serif" font-size="14.00">module.iaas_spoke_vnet.var.diagnostics_workspace_resource_id</text>
 </g>
-<!-- [root] module.iaas_spoke_vnet.azurerm_monitor_diagnostic_setting.nsg_logs&#45;&gt;[root] module.iaas_spoke_vnet.var.diagnostics_workspace_id -->
-<g id="edge301" class="edge"><title>[root] module.iaas_spoke_vnet.azurerm_monitor_diagnostic_setting.nsg_logs&#45;&gt;[root] module.iaas_spoke_vnet.var.diagnostics_workspace_id</title>
+<!-- [root] module.iaas_spoke_vnet.azurerm_monitor_diagnostic_setting.nsg_logs&#45;&gt;[root] module.iaas_spoke_vnet.var.diagnostics_workspace_resource_id -->
+<g id="edge301" class="edge"><title>[root] module.iaas_spoke_vnet.azurerm_monitor_diagnostic_setting.nsg_logs&#45;&gt;[root] module.iaas_spoke_vnet.var.diagnostics_workspace_resource_id</title>
 <path fill="none" stroke="black" d="M5285.14,-1368.71C5281.87,-1368.47 5278.63,-1368.24 5275.41,-1368 5044.14,-1351.1 4983.52,-1351.42 4748.49,-1332.08"/>
 <polygon fill="black" stroke="black" points="4748.51,-1328.57 4738.25,-1331.23 4747.93,-1335.54 4748.51,-1328.57"/>
 </g>
@@ -1749,8 +1749,8 @@
 <path fill="none" stroke="black" d="M5021.45,-1367.88C5001.53,-1358.39 4976.59,-1346.51 4955.39,-1336.42"/>
 <polygon fill="black" stroke="black" points="4956.78,-1333.21 4946.25,-1332.07 4953.77,-1339.53 4956.78,-1333.21"/>
 </g>
-<!-- [root] module.iaas_spoke_vnet.azurerm_monitor_diagnostic_setting.vnet_logs&#45;&gt;[root] module.iaas_spoke_vnet.var.diagnostics_workspace_id -->
-<g id="edge304" class="edge"><title>[root] module.iaas_spoke_vnet.azurerm_monitor_diagnostic_setting.vnet_logs&#45;&gt;[root] module.iaas_spoke_vnet.var.diagnostics_workspace_id</title>
+<!-- [root] module.iaas_spoke_vnet.azurerm_monitor_diagnostic_setting.vnet_logs&#45;&gt;[root] module.iaas_spoke_vnet.var.diagnostics_workspace_resource_id -->
+<g id="edge304" class="edge"><title>[root] module.iaas_spoke_vnet.azurerm_monitor_diagnostic_setting.vnet_logs&#45;&gt;[root] module.iaas_spoke_vnet.var.diagnostics_workspace_resource_id</title>
 <path fill="none" stroke="black" d="M4939.63,-1367.97C4867.6,-1357.55 4775.44,-1344.22 4701.59,-1333.54"/>
 <polygon fill="black" stroke="black" points="4701.69,-1330.02 4691.3,-1332.05 4700.69,-1336.95 4701.69,-1330.02"/>
 </g>
@@ -2179,8 +2179,8 @@
 <path fill="none" stroke="black" d="M5064.46,-1301.64C5245.07,-1288.31 5541.93,-1266.42 5717.24,-1253.49"/>
 <polygon fill="black" stroke="black" points="5717.6,-1256.97 5727.31,-1252.74 5717.08,-1249.99 5717.6,-1256.97"/>
 </g>
-<!-- [root] module.iaas_spoke_vnet.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
-<g id="edge347" class="edge"><title>[root] module.iaas_spoke_vnet.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
+<!-- [root] module.iaas_spoke_vnet.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
+<g id="edge347" class="edge"><title>[root] module.iaas_spoke_vnet.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
 <path fill="none" stroke="black" d="M4596.59,-1295.76C4645.92,-1257.31 4759.64,-1158.83 4794.41,-1044 4799.04,-1028.69 4803.18,-1021.38 4794.41,-1008 4785.39,-994.248 4771.94,-984.045 4757.24,-976.482"/>
 <polygon fill="black" stroke="black" points="4758.48,-973.199 4747.94,-972.105 4755.5,-979.532 4758.48,-973.199"/>
 </g>
@@ -2356,15 +2356,15 @@
 <path fill="none" stroke="black" d="M6376.42,-1367.97C6320.86,-1357.68 6249.96,-1344.55 6192.65,-1333.93"/>
 <polygon fill="black" stroke="black" points="6192.95,-1330.43 6182.48,-1332.05 6191.67,-1337.31 6192.95,-1330.43"/>
 </g>
-<!-- [root] module.iis_app.var.diagnostics_workspace_id -->
-<g id="node181" class="node"><title>[root] module.iis_app.var.diagnostics_workspace_id</title>
+<!-- [root] module.iis_app.var.diagnostics_workspace_resource_id -->
+<g id="node181" class="node"><title>[root] module.iis_app.var.diagnostics_workspace_resource_id</title>
 <polygon fill="none" stroke="black" points="5535.41,-1116 5265.41,-1116 5265.41,-1080 5541.41,-1080 5541.41,-1110 5535.41,-1116"/>
 <polyline fill="none" stroke="black" points="5535.41,-1116 5535.41,-1110 "/>
 <polyline fill="none" stroke="black" points="5541.41,-1110 5535.41,-1110 "/>
-<text text-anchor="middle" x="5403.41" y="-1094.3" font-family="Times New Roman,serif" font-size="14.00">module.iis_app.var.diagnostics_workspace_id</text>
+<text text-anchor="middle" x="5403.41" y="-1094.3" font-family="Times New Roman,serif" font-size="14.00">module.iis_app.var.diagnostics_workspace_resource_id</text>
 </g>
-<!-- [root] module.iis_app.azurerm_monitor_diagnostic_setting.db_lb_logs&#45;&gt;[root] module.iis_app.var.diagnostics_workspace_id -->
-<g id="edge368" class="edge"><title>[root] module.iis_app.azurerm_monitor_diagnostic_setting.db_lb_logs&#45;&gt;[root] module.iis_app.var.diagnostics_workspace_id</title>
+<!-- [root] module.iis_app.azurerm_monitor_diagnostic_setting.db_lb_logs&#45;&gt;[root] module.iis_app.var.diagnostics_workspace_resource_id -->
+<g id="edge368" class="edge"><title>[root] module.iis_app.azurerm_monitor_diagnostic_setting.db_lb_logs&#45;&gt;[root] module.iis_app.var.diagnostics_workspace_resource_id</title>
 <path fill="none" stroke="black" d="M6279.65,-1369.13C6274.17,-1368.74 6268.75,-1368.36 6263.41,-1368 6187.25,-1362.85 5644.21,-1368.93 5577.41,-1332 5526.04,-1303.6 5536.41,-1271.11 5501.41,-1224 5475.25,-1188.8 5443.78,-1149.1 5423.68,-1124.07"/>
 <polygon fill="black" stroke="black" points="5426.32,-1121.77 5417.33,-1116.17 5420.87,-1126.16 5426.32,-1121.77"/>
 </g>
@@ -3059,8 +3059,8 @@
 <path fill="none" stroke="black" d="M2701.78,-1223.88C2716.95,-1214.72 2735.81,-1203.34 2752.15,-1193.48"/>
 <polygon fill="black" stroke="black" points="2754.17,-1196.35 2760.92,-1188.19 2750.55,-1190.36 2754.17,-1196.35"/>
 </g>
-<!-- [root] module.iis_app.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
-<g id="edge441" class="edge"><title>[root] module.iis_app.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
+<!-- [root] module.iis_app.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
+<g id="edge441" class="edge"><title>[root] module.iis_app.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
 <path fill="none" stroke="black" d="M5374.98,-1079.88C5338.84,-1059.01 5273.84,-1024.52 5213.41,-1008 5051.47,-963.747 5004.46,-988.603 4837.41,-972 4836.12,-971.872 4834.82,-971.743 4833.52,-971.613"/>
 <polygon fill="black" stroke="black" points="4833.76,-968.12 4823.47,-970.608 4833.07,-975.085 4833.76,-968.12"/>
 </g>
@@ -3259,15 +3259,15 @@
 <path fill="none" stroke="black" d="M6302.81,-1295.97C6211.37,-1285.04 6093.13,-1270.92 6001.75,-1260"/>
 <polygon fill="black" stroke="black" points="6001.94,-1256.5 5991.59,-1258.79 6001.11,-1263.45 6001.94,-1256.5"/>
 </g>
-<!-- [root] module.managed_bastion_hub.var.diagnostics_workspace_id -->
-<g id="node197" class="node"><title>[root] module.managed_bastion_hub.var.diagnostics_workspace_id</title>
+<!-- [root] module.managed_bastion_hub.var.diagnostics_workspace_resource_id -->
+<g id="node197" class="node"><title>[root] module.managed_bastion_hub.var.diagnostics_workspace_resource_id</title>
 <polygon fill="none" stroke="black" points="5108.41,-1260 4752.41,-1260 4752.41,-1224 5114.41,-1224 5114.41,-1254 5108.41,-1260"/>
 <polyline fill="none" stroke="black" points="5108.41,-1260 5108.41,-1254 "/>
 <polyline fill="none" stroke="black" points="5114.41,-1254 5108.41,-1254 "/>
-<text text-anchor="middle" x="4933.41" y="-1238.3" font-family="Times New Roman,serif" font-size="14.00">module.managed_bastion_hub.var.diagnostics_workspace_id</text>
+<text text-anchor="middle" x="4933.41" y="-1238.3" font-family="Times New Roman,serif" font-size="14.00">module.managed_bastion_hub.var.diagnostics_workspace_resource_id</text>
 </g>
-<!-- [root] module.managed_bastion_hub.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
-<g id="edge464" class="edge"><title>[root] module.managed_bastion_hub.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
+<!-- [root] module.managed_bastion_hub.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
+<g id="edge464" class="edge"><title>[root] module.managed_bastion_hub.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
 <path fill="none" stroke="black" d="M4930.44,-1223.92C4922.13,-1181.25 4894.73,-1069.06 4827.41,-1008 4811.59,-993.65 4791.71,-983.159 4771.51,-975.496"/>
 <polygon fill="black" stroke="black" points="4772.5,-972.134 4761.91,-972.065 4770.15,-978.726 4772.5,-972.134"/>
 </g>
@@ -3330,15 +3330,15 @@
 <path fill="none" stroke="black" d="M4070.36,-1367.88C4052.92,-1358.55 4031.14,-1346.92 4012.46,-1336.94"/>
 <polygon fill="black" stroke="black" points="4014.05,-1333.82 4003.58,-1332.19 4010.75,-1339.99 4014.05,-1333.82"/>
 </g>
-<!-- [root] module.p2s_vpn.var.diagnostics_workspace_id -->
-<g id="node212" class="node"><title>[root] module.p2s_vpn.var.diagnostics_workspace_id</title>
+<!-- [root] module.p2s_vpn.var.diagnostics_workspace_resource_id -->
+<g id="node212" class="node"><title>[root] module.p2s_vpn.var.diagnostics_workspace_resource_id</title>
 <polygon fill="none" stroke="black" points="4618.41,-1116 4340.41,-1116 4340.41,-1080 4624.41,-1080 4624.41,-1110 4618.41,-1116"/>
 <polyline fill="none" stroke="black" points="4618.41,-1116 4618.41,-1110 "/>
 <polyline fill="none" stroke="black" points="4624.41,-1110 4618.41,-1110 "/>
-<text text-anchor="middle" x="4482.41" y="-1094.3" font-family="Times New Roman,serif" font-size="14.00">module.p2s_vpn.var.diagnostics_workspace_id</text>
+<text text-anchor="middle" x="4482.41" y="-1094.3" font-family="Times New Roman,serif" font-size="14.00">module.p2s_vpn.var.diagnostics_workspace_resource_id</text>
 </g>
-<!-- [root] module.p2s_vpn.azurerm_monitor_diagnostic_setting.vpn_logs&#45;&gt;[root] module.p2s_vpn.var.diagnostics_workspace_id -->
-<g id="edge472" class="edge"><title>[root] module.p2s_vpn.azurerm_monitor_diagnostic_setting.vpn_logs&#45;&gt;[root] module.p2s_vpn.var.diagnostics_workspace_id</title>
+<!-- [root] module.p2s_vpn.azurerm_monitor_diagnostic_setting.vpn_logs&#45;&gt;[root] module.p2s_vpn.var.diagnostics_workspace_resource_id -->
+<g id="edge472" class="edge"><title>[root] module.p2s_vpn.azurerm_monitor_diagnostic_setting.vpn_logs&#45;&gt;[root] module.p2s_vpn.var.diagnostics_workspace_resource_id</title>
 <path fill="none" stroke="black" d="M3927.72,-1367.99C3849.19,-1358.54 3771.32,-1345.89 3759.41,-1332 3748.99,-1319.85 3748.38,-1307.59 3759.41,-1296 3815.16,-1237.41 4407.48,-1277.64 4486.41,-1260 4568.49,-1241.65 4614.6,-1257.87 4661.41,-1188 4684.4,-1153.67 4647.3,-1132.03 4601.02,-1118.69"/>
 <polygon fill="black" stroke="black" points="4601.91,-1115.3 4591.35,-1116.05 4600.07,-1122.06 4601.91,-1115.3"/>
 </g>
@@ -3514,8 +3514,8 @@
 <path fill="none" stroke="black" d="M4103.47,-1296.7C4106.47,-1296.45 4109.46,-1296.22 4112.41,-1296 4728.31,-1250.99 4884.28,-1282.65 5501.41,-1260 5572.53,-1257.39 5651.56,-1253.72 5717.24,-1250.46"/>
 <polygon fill="black" stroke="black" points="5717.43,-1253.95 5727.25,-1249.96 5717.08,-1246.96 5717.43,-1253.95"/>
 </g>
-<!-- [root] module.p2s_vpn.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
-<g id="edge490" class="edge"><title>[root] module.p2s_vpn.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
+<!-- [root] module.p2s_vpn.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
+<g id="edge490" class="edge"><title>[root] module.p2s_vpn.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
 <path fill="none" stroke="black" d="M4477.79,-1079.91C4473.6,-1060.34 4470.29,-1028.38 4486.41,-1008 4497.23,-994.308 4529.95,-982.995 4564.99,-974.387"/>
 <polygon fill="black" stroke="black" points="4565.99,-977.746 4574.91,-972.031 4564.38,-970.935 4565.99,-977.746"/>
 </g>
@@ -3730,15 +3730,15 @@
 <path fill="none" stroke="black" d="M4492.48,-1367.97C4447.1,-1357.78 4389.31,-1344.82 4342.27,-1334.26"/>
 <polygon fill="black" stroke="black" points="4342.93,-1330.82 4332.4,-1332.05 4341.39,-1337.65 4342.93,-1330.82"/>
 </g>
-<!-- [root] module.paas_app.var.diagnostics_workspace_id -->
-<g id="node280" class="node"><title>[root] module.paas_app.var.diagnostics_workspace_id</title>
+<!-- [root] module.paas_app.var.diagnostics_workspace_resource_id -->
+<g id="node280" class="node"><title>[root] module.paas_app.var.diagnostics_workspace_resource_id</title>
 <polygon fill="none" stroke="black" points="4779.41,-1044 4495.41,-1044 4495.41,-1008 4785.41,-1008 4785.41,-1038 4779.41,-1044"/>
 <polyline fill="none" stroke="black" points="4779.41,-1044 4779.41,-1038 "/>
 <polyline fill="none" stroke="black" points="4785.41,-1038 4779.41,-1038 "/>
-<text text-anchor="middle" x="4640.41" y="-1022.3" font-family="Times New Roman,serif" font-size="14.00">module.paas_app.var.diagnostics_workspace_id</text>
+<text text-anchor="middle" x="4640.41" y="-1022.3" font-family="Times New Roman,serif" font-size="14.00">module.paas_app.var.diagnostics_workspace_resource_id</text>
 </g>
-<!-- [root] module.paas_app.azurerm_monitor_diagnostic_setting.eh_logs&#45;&gt;[root] module.paas_app.var.diagnostics_workspace_id -->
-<g id="edge513" class="edge"><title>[root] module.paas_app.azurerm_monitor_diagnostic_setting.eh_logs&#45;&gt;[root] module.paas_app.var.diagnostics_workspace_id</title>
+<!-- [root] module.paas_app.azurerm_monitor_diagnostic_setting.eh_logs&#45;&gt;[root] module.paas_app.var.diagnostics_workspace_resource_id -->
+<g id="edge513" class="edge"><title>[root] module.paas_app.azurerm_monitor_diagnostic_setting.eh_logs&#45;&gt;[root] module.paas_app.var.diagnostics_workspace_resource_id</title>
 <path fill="none" stroke="black" d="M4383.23,-1373.23C4166.16,-1359.21 3835.11,-1337.05 3830.41,-1332 3717.69,-1210.9 4414.27,-1311.77 4571.41,-1260 4626.2,-1241.95 4652.19,-1238.86 4679.41,-1188 4702.85,-1144.19 4676.89,-1086.19 4657.53,-1053.1"/>
 <polygon fill="black" stroke="black" points="4660.47,-1051.2 4652.29,-1044.46 4654.49,-1054.83 4660.47,-1051.2"/>
 </g>
@@ -4403,8 +4403,8 @@
 <path fill="none" stroke="black" d="M4391.1,-1296.66C4393.89,-1296.43 4396.67,-1296.21 4399.41,-1296 4888.05,-1259.04 5011.76,-1279.62 5501.41,-1260 5572.52,-1257.15 5651.55,-1253.45 5717.23,-1250.24"/>
 <polygon fill="black" stroke="black" points="5717.42,-1253.73 5727.24,-1249.74 5717.08,-1246.74 5717.42,-1253.73"/>
 </g>
-<!-- [root] module.paas_app.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
-<g id="edge580" class="edge"><title>[root] module.paas_app.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
+<!-- [root] module.paas_app.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
+<g id="edge580" class="edge"><title>[root] module.paas_app.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
 <path fill="none" stroke="black" d="M4648.32,-1007.7C4651.96,-999.728 4656.36,-990.1 4660.4,-981.264"/>
 <polygon fill="black" stroke="black" points="4663.61,-982.654 4664.59,-972.104 4657.25,-979.744 4663.61,-982.654"/>
 </g>
@@ -4523,15 +4523,15 @@
 <path fill="none" stroke="black" d="M3653.89,-1367.88C3635.57,-1358.51 3612.67,-1346.81 3593.08,-1336.8"/>
 <polygon fill="black" stroke="black" points="3594.55,-1333.62 3584.05,-1332.19 3591.36,-1339.86 3594.55,-1333.62"/>
 </g>
-<!-- [root] module.paas_spoke_vnet.var.diagnostics_workspace_id -->
-<g id="node317" class="node"><title>[root] module.paas_spoke_vnet.var.diagnostics_workspace_id</title>
+<!-- [root] module.paas_spoke_vnet.var.diagnostics_workspace_resource_id -->
+<g id="node317" class="node"><title>[root] module.paas_spoke_vnet.var.diagnostics_workspace_resource_id</title>
 <polygon fill="none" stroke="black" points="3292.91,-1332 2965.91,-1332 2965.91,-1296 3298.91,-1296 3298.91,-1326 3292.91,-1332"/>
 <polyline fill="none" stroke="black" points="3292.91,-1332 3292.91,-1326 "/>
 <polyline fill="none" stroke="black" points="3298.91,-1326 3292.91,-1326 "/>
-<text text-anchor="middle" x="3132.41" y="-1310.3" font-family="Times New Roman,serif" font-size="14.00">module.paas_spoke_vnet.var.diagnostics_workspace_id</text>
+<text text-anchor="middle" x="3132.41" y="-1310.3" font-family="Times New Roman,serif" font-size="14.00">module.paas_spoke_vnet.var.diagnostics_workspace_resource_id</text>
 </g>
-<!-- [root] module.paas_spoke_vnet.azurerm_monitor_diagnostic_setting.nsg_logs&#45;&gt;[root] module.paas_spoke_vnet.var.diagnostics_workspace_id -->
-<g id="edge595" class="edge"><title>[root] module.paas_spoke_vnet.azurerm_monitor_diagnostic_setting.nsg_logs&#45;&gt;[root] module.paas_spoke_vnet.var.diagnostics_workspace_id</title>
+<!-- [root] module.paas_spoke_vnet.azurerm_monitor_diagnostic_setting.nsg_logs&#45;&gt;[root] module.paas_spoke_vnet.var.diagnostics_workspace_resource_id -->
+<g id="edge595" class="edge"><title>[root] module.paas_spoke_vnet.azurerm_monitor_diagnostic_setting.nsg_logs&#45;&gt;[root] module.paas_spoke_vnet.var.diagnostics_workspace_resource_id</title>
 <path fill="none" stroke="black" d="M3552.35,-1367.97C3469.17,-1357.47 3362.57,-1344.03 3277.58,-1333.31"/>
 <polygon fill="black" stroke="black" points="3277.95,-1329.83 3267.59,-1332.05 3277.07,-1336.77 3277.95,-1329.83"/>
 </g>
@@ -4555,8 +4555,8 @@
 <path fill="none" stroke="black" d="M3321.14,-1367.97C3365.12,-1357.8 3421.1,-1344.87 3466.74,-1334.33"/>
 <polygon fill="black" stroke="black" points="3467.65,-1337.71 3476.61,-1332.05 3466.07,-1330.89 3467.65,-1337.71"/>
 </g>
-<!-- [root] module.paas_spoke_vnet.azurerm_monitor_diagnostic_setting.vnet_logs&#45;&gt;[root] module.paas_spoke_vnet.var.diagnostics_workspace_id -->
-<g id="edge598" class="edge"><title>[root] module.paas_spoke_vnet.azurerm_monitor_diagnostic_setting.vnet_logs&#45;&gt;[root] module.paas_spoke_vnet.var.diagnostics_workspace_id</title>
+<!-- [root] module.paas_spoke_vnet.azurerm_monitor_diagnostic_setting.vnet_logs&#45;&gt;[root] module.paas_spoke_vnet.var.diagnostics_workspace_resource_id -->
+<g id="edge598" class="edge"><title>[root] module.paas_spoke_vnet.azurerm_monitor_diagnostic_setting.vnet_logs&#45;&gt;[root] module.paas_spoke_vnet.var.diagnostics_workspace_resource_id</title>
 <path fill="none" stroke="black" d="M3219.28,-1367.88C3204.24,-1358.72 3185.54,-1347.34 3169.35,-1337.48"/>
 <polygon fill="black" stroke="black" points="3171.01,-1334.4 3160.65,-1332.19 3167.37,-1340.38 3171.01,-1334.4"/>
 </g>
@@ -4964,8 +4964,8 @@
 <path fill="none" stroke="black" d="M3706.96,-1302.41C3747.18,-1299.99 3790.39,-1297.65 3830.41,-1296 4572.62,-1265.49 4759.01,-1285.62 5501.41,-1260 5572.53,-1257.55 5651.57,-1253.89 5717.25,-1250.6"/>
 <polygon fill="black" stroke="black" points="5717.44,-1254.09 5727.25,-1250.09 5717.09,-1247.1 5717.44,-1254.09"/>
 </g>
-<!-- [root] module.paas_spoke_vnet.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
-<g id="edge641" class="edge"><title>[root] module.paas_spoke_vnet.var.diagnostics_workspace_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
+<!-- [root] module.paas_spoke_vnet.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace -->
+<g id="edge641" class="edge"><title>[root] module.paas_spoke_vnet.var.diagnostics_workspace_resource_id&#45;&gt;[root] azurerm_log_analytics_workspace.vcd_workspace</title>
 <path fill="none" stroke="black" d="M3141.99,-1295.87C3161.24,-1263.01 3207.82,-1190.97 3266.41,-1152 3357.36,-1091.5 3393.89,-1099.32 3501.41,-1080 3771.77,-1031.42 3850.92,-1106.48 4118.41,-1044 4158.36,-1034.67 4163.72,-1018.41 4203.41,-1008 4303.77,-981.668 4419.6,-968.419 4511.03,-961.752"/>
 <polygon fill="black" stroke="black" points="4511.48,-965.229 4521.21,-961.029 4510.99,-958.246 4511.48,-965.229"/>
 </g>
@@ -5721,8 +5721,8 @@
 <path fill="none" stroke="black" d="M12982.9,-1456.55C12015.5,-1454.01 7476,-1440.18 7181.41,-1404 7113.36,-1395.64 7098.26,-1383.22 7031.41,-1368 6980.31,-1356.37 6923.09,-1344 6876.7,-1334.14"/>
 <polygon fill="black" stroke="black" points="6877.18,-1330.66 6866.67,-1332.01 6875.73,-1337.51 6877.18,-1330.66"/>
 </g>
-<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.auto_shutdown.var.diagnostics_workspace_id -->
-<g id="edge170" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.auto_shutdown.var.diagnostics_workspace_id</title>
+<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.auto_shutdown.var.diagnostics_workspace_resource_id -->
+<g id="edge170" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.auto_shutdown.var.diagnostics_workspace_resource_id</title>
 <path fill="none" stroke="black" d="M12983.3,-1456.52C11901.2,-1453.53 6308.11,-1436.52 6227.41,-1404 6205.83,-1395.31 6210.86,-1377 6189.41,-1368 6086.67,-1324.91 5264.76,-1412.18 5187.41,-1332 5158.92,-1302.47 5204.34,-1278.67 5251.53,-1263.14"/>
 <polygon fill="black" stroke="black" points="5252.81,-1266.41 5261.29,-1260.05 5250.7,-1259.74 5252.81,-1266.41"/>
 </g>
@@ -5826,8 +5826,8 @@
 <path fill="none" stroke="black" d="M12983.4,-1456.4C11978.1,-1452.93 7101.42,-1434.54 7031.41,-1404 7011.24,-1395.2 7017.18,-1377.67 6997.41,-1368 6996.34,-1367.48 6786.8,-1347.46 6626.23,-1332.18"/>
 <polygon fill="black" stroke="black" points="6626.5,-1328.69 6616.21,-1331.22 6625.84,-1335.66 6626.5,-1328.69"/>
 </g>
-<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.managed_bastion_hub.var.diagnostics_workspace_id -->
-<g id="edge191" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.managed_bastion_hub.var.diagnostics_workspace_id</title>
+<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.managed_bastion_hub.var.diagnostics_workspace_resource_id -->
+<g id="edge191" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.managed_bastion_hub.var.diagnostics_workspace_resource_id</title>
 <path fill="none" stroke="black" d="M12983.3,-1456.12C11894,-1450.71 6229.41,-1421.78 6189.41,-1404 6169.57,-1395.18 6176.11,-1377.1 6156.41,-1368 6057.39,-1322.26 5282.42,-1353.09 5175.41,-1332 5165.81,-1330.11 5056.52,-1289.32 4988.13,-1263.62"/>
 <polygon fill="black" stroke="black" points="4989.36,-1260.34 4978.77,-1260.1 4986.9,-1266.9 4989.36,-1260.34"/>
 </g>

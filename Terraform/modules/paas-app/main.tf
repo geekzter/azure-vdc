@@ -183,7 +183,7 @@ resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
   name                         = "AppService_Logs"
   target_resource_id           = azurerm_app_service.paas_web_app.id
   storage_account_id           = var.diagnostics_storage_id
-  log_analytics_workspace_id   = var.diagnostics_workspace_id
+  log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
   log {
     category                   = "AppServiceConsoleLogs"
@@ -366,7 +366,7 @@ resource "azurerm_monitor_diagnostic_setting" "eventhub_logs" {
   name                         = "EventHub_Logs"
   target_resource_id           = azurerm_eventhub_namespace.app_eventhub.id
   storage_account_id           = var.diagnostics_storage_id
-  log_analytics_workspace_id   = var.diagnostics_workspace_id
+  log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
   log {
     category                   = "ArchiveLogs"
@@ -505,7 +505,7 @@ resource "azurerm_monitor_diagnostic_setting" "sql_database_logs" {
   name                         = "SqlDatabase_Logs"
   target_resource_id           = azurerm_sql_database.app_sqldb.id
   storage_account_id           = var.diagnostics_storage_id
-  log_analytics_workspace_id   = var.diagnostics_workspace_id
+  log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
   log {
     category                   = "SQLInsights"
