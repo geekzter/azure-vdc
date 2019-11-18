@@ -14,12 +14,13 @@ if ($workspace) {
 }
 
 try {
-    $backupPath = [system.io.path]::GetTempPath()
-    Write-Host "Backups will be saved in $backupPath"
-    foreach($resource in $(terraform state list)) {
-        Write-Host -NoNewline "Removing $resource from Terraform workspace ${workspace}: "
-        terraform state rm -backup="$backupPath" $resource
-    }
+    # terraform state rm does not remove output (anymore)
+    # Manipulate the state directly instead
+    $tfState = terraform state pull | ConvertFrom-Json
+    $tfState.outputs = New-Object PSObject
+    $tfState.resources = @()
+    $tfState | ConvertTo-Json
+    $tfState | ConvertTo-Json | terraform state push -force -
 } finally {
     # Ensure this always runs
     if ($currentWorkspace) {

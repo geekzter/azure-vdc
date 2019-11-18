@@ -8,7 +8,8 @@ param (
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
     [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET,
-    [parameter(Mandatory=$false)][string[]]$suffixes,
+    [parameter(Mandatory=$false)][string[]]$Suffixes,
+    [parameter(Mandatory=$false)][string]$Environment="*",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 
@@ -44,13 +45,18 @@ function RemoveResourceGroups (
 
 AzLogin
 
-if ($suffixes) {
-    foreach ($suffix in $suffixes) {
+if ($Environment -and ($Environment -notlike "\*") -and !($Suffixes)) {
+    # Workspace constraint, no Suffix constraint, set Suffix to wildcard
+    $Suffixes = "*"
+}
+
+if ($Suffixes) {
+    foreach ($suffix in $Suffixes) {
         # Use suffix wildcard
         $prefix = "vdc"
-        $matchWildcard = "$prefix-*-$suffix"
+        $matchWildcard = "$prefix-$Environment-$suffix"
 
-        Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -like "$prefix-*-*"} | Select-Object -Property ResourceGroupName, Location | Format-Table
+        Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -like "$prefix-$Environment-*"} | Select-Object -Property ResourceGroupName, Location | Format-Table
 
         Write-Host "Looking for resource groups that match $matchWildcard.."
         $resourceGroups = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -like $matchWildcard}
@@ -71,7 +77,7 @@ if ($suffixes) {
         terraform workspace new temp 2>$null
         terraform workspace select temp
         $stderrfile = [system.io.path]::GetTempFileName()
-        $suffixes = @()
+        $Suffixes = @()
         foreach($workspace in ($(terraform workspace list)).Trim())
         {
             if ($workspace.StartsWith("*") -or $workspace -notmatch "\w") {
@@ -95,8 +101,8 @@ if ($suffixes) {
                 $Script:environment      = $(terraform output "resource_environment" 2>$null)
                 $Script:suffix           = $(terraform output "resource_suffix" 2>$null)
                 if ($suffix) {
-                    $suffixes += $suffix
-                    Write-Host "Added $suffix to suffix list $suffixes"
+                    $Suffixes += $suffix
+                    Write-Host "Added $suffix to suffix list $Suffixes"
                 }
 
                 $Script:outputAvailable  = (![string]::IsNullOrEmpty($prefix) -and ![string]::IsNullOrEmpty($environment) -and ![string]::IsNullOrEmpty($suffix))
@@ -134,10 +140,10 @@ if ($suffixes) {
             }
         }
 
-        $notMatchSuffixes = $suffixes -join '|'
+        $notMatchSuffixes = $Suffixes -join '|'
         $resourceGroups = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -like "vdc-*"} | Where-Object {$_.ResourceGroupName -notmatch $notMatchSuffixes}
         if (!(RemoveResourceGroups $resourceGroups)) {
-            Write-Host "No VDC resource groups found not matching suffixes $suffixes"
+            Write-Host "No VDC resource groups found not matching Suffixes $Suffixes"
         }
 
         Get-Job | Where-Object {$_.Command -like "Remove-AzResourceGroup"} | Format-Table -Property Id, Name, State
