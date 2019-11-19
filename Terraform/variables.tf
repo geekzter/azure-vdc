@@ -136,7 +136,7 @@ variable vdc_oms_solutions {
   # "Office365",
     "ProcessInvestigator",
   # "SCOMAssessment",
-    "Security",
+  # "Security",
     "SecurityCenterFree",
     "SecurityCenterNetworkTraffic",
     "SecurityInsights",

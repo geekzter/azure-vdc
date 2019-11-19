@@ -112,7 +112,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.vssps.visualstudio.com",
       "dev.azure.com",
       "login.microsoftonline.com",
-      "management.core.windows.net",
       "visualstudio-devdiv-c2s.msedge.net",
       "vstsagentpackage.azureedge.net"
     ]
@@ -139,8 +138,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.nuget.org",
       "*.powershellgallery.com",
       "*.ubuntu.com",
-      "*.update.microsoft.com",
-      "*.windowsupdate.com",
       "aka.ms",
       "api.npms.io",
       "chocolatey.org",
@@ -152,7 +149,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "psg-prod-eastus.azureedge.net", # PowerShell
       "registry.npmjs.org",
       "skimdb.npmjs.com",
-      "update.microsoft.com",
       azurerm_storage_account.vdc_automation_storage.primary_blob_host # Bastion prepare script
     ]
 
@@ -209,8 +205,8 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
   }
 
   rule {
-    name                       = "Allow Management traffic"
-    description                = "Azure Backup, Management, Windwows Update"
+    name                       = "Allow Management traffic by tag"
+    description                = "Azure Backup, Diagnostics, Management, Windows Update"
 
     source_addresses           = [
       var.vdc_config["vdc_range"],
@@ -219,13 +215,50 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
 
     fqdn_tags                  = [
       "AzureBackup",
+      "AzureMonitor",
       "MicrosoftActiveProtectionService",
       "WindowsDiagnostics",
       "WindowsUpdate"
     ]
 
   }
+
+  rule {
+    name                       = "Allow Management traffic by url"
+    description                = "Diagnostics, Management, Windows Update"
+
+    source_addresses           = [
+      var.vdc_config["vdc_range"],
+      var.vdc_config["vpn_range"]
+    ]
+
+    target_fqdns               = [
+      "*.azure-automation.net",
+      "*.events.data.microsoft.com",
+      "*.loganalytics.io",
+      "*.ods.opinsights.azure.com",
+      "*.oms.opinsights.azure.com",
+      "opinsightsweuomssa.blob.core.windows.net",
+      "*.systemcenteradvisor.com",
+      "scadvisor.accesscontrol.windows.net",
+      "scadvisorservice.accesscontrol.windows.net",
+      "management.core.windows.net",
+      "*.do.dsp.mp.microsoft.com",
+      "*.update.microsoft.com",
+      "*.windowsupdate.com",
+      azurerm_storage_account.vdc_diag_storage.primary_blob_host,
+      azurerm_log_analytics_workspace.vcd_workspace.portal_url
+    ]
+
+    protocol {
+        port                   = "443"
+        type                   = "Https"
+    }
+
+  }
 } 
+
+
 
 # Inbound port forwarding rules
 resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {

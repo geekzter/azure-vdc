@@ -227,3 +227,23 @@ resource "azurerm_application_insights" "vdc_insights" {
 
   tags                         = local.tags
 }
+
+resource "azurerm_dashboard" "vdc_dashboard" {
+  name                         = "VDC-${local.environment}-${terraform.workspace}"
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  location                     = azurerm_resource_group.vdc_rg.location
+  tags                         = merge(
+    var.tags,
+    map(
+      "hidden-title",           "VDC (${local.environment}/${terraform.workspace})",
+    )
+  )
+
+  dashboard_properties = templatefile("dashboard.json",
+    {
+      subscription             = data.azurerm_subscription.primary.id
+      prefix                   = var.resource_prefix
+      environment              = local.environment
+      suffix                   = local.suffix
+  })
+}

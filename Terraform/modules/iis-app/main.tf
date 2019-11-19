@@ -178,12 +178,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.release_agent_dependency
-    )
-  )
+  tags                         = var.tags
 }
 
 resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
@@ -208,12 +203,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.release_agent_dependency
-    )
-  )
+  tags                         = var.tags
 }
 
 resource "azurerm_network_connection_monitor" "devops_watcher" {
@@ -462,12 +452,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.release_agent_dependency
-    )
-  )
+  tags                         = var.tags
 }
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
@@ -492,12 +477,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.release_agent_dependency
-    )
-  )
+  tags                         = var.tags
 }
 
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {

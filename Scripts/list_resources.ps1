@@ -63,7 +63,7 @@ if ($All -or $Summary -or $Resources) {
 }
 
 if ($All -or $Summary) {
-    $resourceQuery = "Resources | where tags['application']=='Automated VDC' | summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), Suffix=tostring(tags['suffix']) | order by Workspace asc"
+    $resourceQuery = "Resources | where tags['application']=='Automated VDC' | summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), Suffix=tostring(tags['suffix']) | order by Environment asc, Workspace asc, Suffix asc"
     Write-Host "Executing graph query:`n$resourceQuery"
     $graphResult = Search-AzGraph -Query $resourceQuery
 
