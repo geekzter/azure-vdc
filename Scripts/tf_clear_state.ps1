@@ -1,25 +1,27 @@
 #!/usr/bin/env pwsh
 
 param (
-    [parameter(Mandatory=$false)][string]$workspace
+    [parameter(Mandatory=$false)][string]$Workspace
 )
 
 Push-Location (Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent "Terraform")
 
 $currentWorkspace = $(terraform workspace show)
-if ($workspace) {
-    terraform workspace select $workspace
+if ($Workspace) {
+    terraform workspace select $Workspace
 } else {
-    $workspace = $(terraform workspace show)
+    $Workspace = $(terraform workspace show)
 }
 
 try {
-    $backupPath = [system.io.path]::GetTempPath()
-    Write-Host "Backups will be saved in $backupPath"
-    foreach($resource in $(terraform state list)) {
-        Write-Host -NoNewline "Removing $resource from Terraform workspace ${workspace}: "
-        terraform state rm -backup="$backupPath" $resource
-    }
+    # 'terraform state rm' does not remove output (anymore)
+    # HACK: Manipulate the state directly instead
+    $tfState = terraform state pull | ConvertFrom-Json
+    $tfState.outputs = New-Object PSObject # Empty output
+    $tfState.resources = @() # No resources
+    $tfState.serial++
+    $tfState | ConvertTo-Json | terraform state push -
+    terraform state pull 
 } finally {
     # Ensure this always runs
     if ($currentWorkspace) {
