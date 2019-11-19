@@ -34,7 +34,7 @@ if ($All -or $Summary -or $Workspaces) {
     $backendStateKey = $tfConfig.backend.config.key
     $backendStorageKey = $env:ARM_ACCESS_KEY
     $backendstorageContext = New-AzStorageContext -StorageAccountName $backendStorageAccountName -StorageAccountKey $backendStorageKey
-    Write-Host "Retrieving blobs from https://${backendStorageAccountName}.blob.core.windows.net/${backendStorageContainerName} ..."
+    Write-Host "Retrieving blobs from https://${backendStorageAccountName}.blob.core.windows.net/${backendStorageContainerName}..."
     $tfStateBlobs = Get-AzStorageBlob -Context $backendstorageContext -Container $backendStorageContainerName 
     $leaseTable = @{}
     $tfStateBlobs | ForEach-Object {
@@ -64,7 +64,7 @@ if ($All -or $Summary -or $Resources) {
 
 if ($All -or $Summary) {
     $resourceQuery = "Resources | where tags['application']=='Automated VDC' | summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), Suffix=tostring(tags['suffix']) | order by Workspace asc"
-    Write-Host "Executing graph query `"$resourceQuery`"..."
+    Write-Host "Executing graph query:`n$resourceQuery"
     $graphResult = Search-AzGraph -Query $resourceQuery
 
     # Join tables
@@ -84,7 +84,7 @@ if ($All -or $Resources) {
     }
     $resourceQuery += " | project Name=name,ResourceGroup=resourceGroup | order by ResourceGroup asc, Name asc"
 
-    Write-Host "Executing graph query `"$resourceQuery`"..."
+    Write-Host "Executing graph query:`n$resourceQuery"
     $result = Search-AzGraph -Query $resourceQuery -Subscription $subscription
     $result | Format-Table -Property Name, ResourceGroup 
     Write-Host "$($result.Count) item(s) found"
