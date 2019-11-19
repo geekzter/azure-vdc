@@ -239,13 +239,16 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.ods.opinsights.azure.com",
       "*.oms.opinsights.azure.com",
       "opinsightsweuomssa.blob.core.windows.net",
+      "scadvisorcontent.blob.core.windows.net",
       "*.systemcenteradvisor.com",
       "scadvisor.accesscontrol.windows.net",
       "scadvisorservice.accesscontrol.windows.net",
       "management.core.windows.net",
       "*.do.dsp.mp.microsoft.com",
+      "*.delivery.mp.microsoft.com",
       "*.update.microsoft.com",
       "*.windowsupdate.com",
+      "checkappexec.microsoft.com",
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_log_analytics_workspace.vcd_workspace.portal_url
     ]
@@ -324,6 +327,7 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
 
     source_addresses           = [
       var.vdc_config["iaas_spoke_app_subnet"],
+      var.vdc_config["iaas_spoke_data_subnet"],
     ]
 
     destination_ports          = [
