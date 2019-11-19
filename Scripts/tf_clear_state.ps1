@@ -20,8 +20,8 @@ try {
     $tfState.outputs = New-Object PSObject # Empty output
     $tfState.resources = @() # No resources
     $tfState.serial++
-    $tfState | ConvertTo-Json
     $tfState | ConvertTo-Json | terraform state push -
+    terraform state pull 
 } finally {
     # Ensure this always runs
     if ($currentWorkspace) {
