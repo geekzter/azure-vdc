@@ -173,12 +173,7 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        local.vm_agent_dependencies
-    )
-  )
+  tags                         = local.tags
 }
 
 resource "azurerm_virtual_machine_extension" "bastion_monitor" {
@@ -202,10 +197,5 @@ resource "azurerm_virtual_machine_extension" "bastion_monitor" {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        local.vm_agent_dependencies
-    )
-  )
+  tags                         = local.tags
 }

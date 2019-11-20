@@ -94,7 +94,7 @@ variable vdc_oms_solutions {
   default                      = [
   # "ADAssessment",
   # "ADReplication",
-    "AgentHealthAssessment",
+  # "AgentHealthAssessment",
     "AlertManagement",
     "AntiMalware",
   # "ApplicationInsights", # Depricated
