@@ -239,7 +239,7 @@ resource "azurerm_dashboard" "vdc_dashboard" {
     )
   )
 
-  dashboard_properties = templatefile("dashboard.json",
+  dashboard_properties = templatefile("dashboard.tpl",
     {
       subscription             = data.azurerm_subscription.primary.id
       prefix                   = var.resource_prefix
