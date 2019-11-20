@@ -245,5 +245,8 @@ resource "azurerm_dashboard" "vdc_dashboard" {
       prefix                   = var.resource_prefix
       environment              = local.environment
       suffix                   = local.suffix
+      iaas_app_url             = local.iaas_app_url
+      paas_app_url             = local.paas_app_url
+      release_web_url          = var.release_web_url != "" ? var.release_web_url : "https://dev.azure.com/${var.app_devops["account"]}/"
   })
 }
