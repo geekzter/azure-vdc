@@ -29,10 +29,27 @@ if (!($Environment -and $Prefix -and $Suffix)) {
 
 $template = (Get-Content $InputFilePath -Raw) 
 $template = $($template | jq '.properties') # Use jq, ConvertFrom-Json does not parse properly
-$template = $template -Replace "/subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/", "`$`{subscription`}/"
+$template = $template -Replace "/subscriptions/........-....-....-................./", "`$`{subscription`}/"
 $template = $template -Replace "${Prefix}-", "`$`{prefix`}-"
 $template = $template -Replace "-${Environment}-", "-`$`{environment`}-"
 $template = $template -Replace "-${Suffix}", "-`$`{suffix`}"
-$template | Out-File $OutputFilePath
+$template = $template -Replace "\`'${Suffix}\`'", "`'suffix`'"
 
+# Check for remnants of tokens that should've been caught
+$enviromentMatches = $template -match $Environment
+$suffixMatches = $template -match $Suffix
+if ($enviromentMatches) {
+    Write-Host "Environment `"'$Environment'`" found in output:" -ForegroundColor Red
+    $enviromentMatches
+}
+if ($suffixMatches) {
+    Write-Host "Environment `"'$Suffix'`" found in output:" -ForegroundColor Red
+    $suffixMatches
+}
+if ($enviromentMatches -or $suffixMatches) {
+    Write-Host "Aborting" -ForegroundColor Red
+    exit
+}
+
+$template | Out-File $OutputFilePath
 Get-Content $OutputFilePath
