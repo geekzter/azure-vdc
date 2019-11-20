@@ -7,6 +7,8 @@ param (
     [parameter(Mandatory=$false)][string]$Prefix,
     [parameter(Mandatory=$false)][string]$Suffix,
     [parameter(Mandatory=$false)][switch]$Force=$false,
+    [parameter(Mandatory=$false)][switch]$ShowTemplate=$false,
+    [parameter(Mandatory=$false)][switch]$DontWrite=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 
@@ -18,7 +20,7 @@ If (!(Test-Path $InputFilePath)) {
     Write-Host "$InputFilePath not found" -ForegroundColor Red
     exit
 }
-If (!(Test-Path $OutputFilePath) -and !$Force) {
+If (!(Test-Path $OutputFilePath) -and !$Force -and !$DontWrite) {
     Write-Host "$OutputFilePath already exists" -ForegroundColor Red
     exit
 }
@@ -33,23 +35,28 @@ $template = $template -Replace "/subscriptions/........-....-....-..............
 $template = $template -Replace "${Prefix}-", "`$`{prefix`}-"
 $template = $template -Replace "-${Environment}-", "-`$`{environment`}-"
 $template = $template -Replace "-${Suffix}", "-`$`{suffix`}"
-$template = $template -Replace "\`'${Suffix}\`'", "`'suffix`'"
+$template = $template -Replace "\`'${Suffix}\`'", "'`$`{suffix`}'"
 
 # Check for remnants of tokens that should've been caught
 $enviromentMatches = $template -match $Environment
 $suffixMatches = $template -match $Suffix
 if ($enviromentMatches) {
-    Write-Host "Environment `"'$Environment'`" found in output:" -ForegroundColor Red
+    Write-Host "Environment value '$Environment' found in output:" -ForegroundColor Red
     $enviromentMatches
 }
 if ($suffixMatches) {
-    Write-Host "Environment `"'$Suffix'`" found in output:" -ForegroundColor Red
+    Write-Host "Environment value '$Suffix' found in output:" -ForegroundColor Red
     $suffixMatches
 }
 if ($enviromentMatches -or $suffixMatches) {
     Write-Host "Aborting" -ForegroundColor Red
     exit
 }
-
-$template | Out-File $OutputFilePath
-Get-Content $OutputFilePath
+if ($ShowTemplate) {
+    Write-Host $template
+}
+if (($DontWrite -ne $false) -or ($DontWrite -eq $null)) {
+    $template | Out-File $OutputFilePath
+} else {
+    Write-Host "Skipped writing template"
+}

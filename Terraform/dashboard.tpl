@@ -40,7 +40,7 @@
               },
               {
                 "name": "query",
-                "value": "Resources | where tags['application']=='Automated VDC' and tags['suffix']=='suffix'| summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), ResourceGroup=resourceGroup | order by ResourceGroup asc",
+                "value": "Resources | where tags['application']=='Automated VDC' and tags['suffix']=='${suffix}'| summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), ResourceGroup=resourceGroup | order by ResourceGroup asc",
                 "isOptional": true
               },
               {
