@@ -167,6 +167,10 @@ output paas_vnet_name {
     value     = module.paas_spoke_vnet.spoke_virtual_network_name
 }
 
+output release_web_url {
+  value       = var.release_web_url
+}
+
 output resource_group_ids {
   value       = [
                 azurerm_resource_group.vdc_rg.id,

@@ -1239,20 +1239,20 @@
 <path fill="none" stroke="black" d="M16204.1,-1095.75C16354.1,-1091.69 16789.3,-1077.16 16843.4,-1044 16913.3,-1001.2 16908.4,-942.034 16883.4,-864 16861.5,-795.622 16810,-727.471 16780.4,-692.027"/>
 <polygon fill="black" stroke="black" points="16782.8,-689.52 16773.7,-684.149 16777.5,-694.043 16782.8,-689.52"/>
 </g>
-<!-- [root] local.release_agent_dependencies -->
-<g id="node62" class="node"><title>[root] local.release_agent_dependencies</title>
+<!-- [root] local.vm_agent_dependencies -->
+<g id="node62" class="node"><title>[root] local.vm_agent_dependencies</title>
 <polygon fill="none" stroke="black" points="9554.41,-1188 9356.41,-1188 9356.41,-1152 9560.41,-1152 9560.41,-1182 9554.41,-1188"/>
 <polyline fill="none" stroke="black" points="9554.41,-1188 9554.41,-1182 "/>
 <polyline fill="none" stroke="black" points="9560.41,-1182 9554.41,-1182 "/>
-<text text-anchor="middle" x="9458.41" y="-1166.3" font-family="Times New Roman,serif" font-size="14.00">local.release_agent_dependencies</text>
+<text text-anchor="middle" x="9458.41" y="-1166.3" font-family="Times New Roman,serif" font-size="14.00">local.vm_agent_dependencies</text>
 </g>
-<!-- [root] local.release_agent_dependencies&#45;&gt;[root] azurerm_firewall_application_rule_collection.iag_app_rules -->
-<g id="edge129" class="edge"><title>[root] local.release_agent_dependencies&#45;&gt;[root] azurerm_firewall_application_rule_collection.iag_app_rules</title>
+<!-- [root] local.vm_agent_dependencies&#45;&gt;[root] azurerm_firewall_application_rule_collection.iag_app_rules -->
+<g id="edge129" class="edge"><title>[root] local.vm_agent_dependencies&#45;&gt;[root] azurerm_firewall_application_rule_collection.iag_app_rules</title>
 <path fill="none" stroke="black" d="M9560.56,-1152.8C9563.54,-1152.5 9566.49,-1152.24 9569.41,-1152 10373,-1086.81 12391.4,-1135.25 13197.4,-1116 13284.5,-1113.92 13381.1,-1110.42 13462.3,-1107.13"/>
 <polygon fill="black" stroke="black" points="13462.8,-1110.61 13472.7,-1106.71 13462.5,-1103.62 13462.8,-1110.61"/>
 </g>
-<!-- [root] local.release_agent_dependencies&#45;&gt;[root] azurerm_firewall_network_rule_collection.iag_net_outbound_rules -->
-<g id="edge130" class="edge"><title>[root] local.release_agent_dependencies&#45;&gt;[root] azurerm_firewall_network_rule_collection.iag_net_outbound_rules</title>
+<!-- [root] local.vm_agent_dependencies&#45;&gt;[root] azurerm_firewall_network_rule_collection.iag_net_outbound_rules -->
+<g id="edge130" class="edge"><title>[root] local.vm_agent_dependencies&#45;&gt;[root] azurerm_firewall_network_rule_collection.iag_net_outbound_rules</title>
 <path fill="none" stroke="black" d="M9560.58,-1152.98C9563.55,-1152.64 9566.5,-1152.31 9569.41,-1152 9841.69,-1123.24 9911.27,-1135.1 10184.4,-1116 10185.7,-1115.91 10187.1,-1115.81 10188.4,-1115.72"/>
 <polygon fill="black" stroke="black" points="10189,-1119.19 10198.7,-1114.98 10188.5,-1112.2 10189,-1119.19"/>
 </g>
@@ -1263,20 +1263,20 @@
 <polyline fill="none" stroke="black" points="8809.91,-1110 8803.91,-1110 "/>
 <text text-anchor="middle" x="8650.41" y="-1094.3" font-family="Times New Roman,serif" font-size="14.00">module.iaas_spoke_vnet.output.access_dependencies</text>
 </g>
-<!-- [root] local.release_agent_dependencies&#45;&gt;[root] module.iaas_spoke_vnet.output.access_dependencies -->
-<g id="edge131" class="edge"><title>[root] local.release_agent_dependencies&#45;&gt;[root] module.iaas_spoke_vnet.output.access_dependencies</title>
+<!-- [root] local.vm_agent_dependencies&#45;&gt;[root] module.iaas_spoke_vnet.output.access_dependencies -->
+<g id="edge131" class="edge"><title>[root] local.vm_agent_dependencies&#45;&gt;[root] module.iaas_spoke_vnet.output.access_dependencies</title>
 <path fill="none" stroke="black" d="M9356.16,-1157.19C9338.89,-1155.35 9321.15,-1153.54 9304.41,-1152 9092.43,-1132.44 9036.42,-1134.74 8820.15,-1116.05"/>
 <polygon fill="black" stroke="black" points="8820.33,-1112.55 8810.07,-1115.17 8819.73,-1119.53 8820.33,-1112.55"/>
 </g>
-<!-- [root] local.release_agent_dependency -->
-<g id="node63" class="node"><title>[root] local.release_agent_dependency</title>
+<!-- [root] local.vm_agent_dependency -->
+<g id="node63" class="node"><title>[root] local.vm_agent_dependency</title>
 <polygon fill="none" stroke="black" points="9598.41,-1260 9408.41,-1260 9408.41,-1224 9604.41,-1224 9604.41,-1254 9598.41,-1260"/>
 <polyline fill="none" stroke="black" points="9598.41,-1260 9598.41,-1254 "/>
 <polyline fill="none" stroke="black" points="9604.41,-1254 9598.41,-1254 "/>
-<text text-anchor="middle" x="9506.41" y="-1238.3" font-family="Times New Roman,serif" font-size="14.00">local.release_agent_dependency</text>
+<text text-anchor="middle" x="9506.41" y="-1238.3" font-family="Times New Roman,serif" font-size="14.00">local.vm_agent_dependency</text>
 </g>
-<!-- [root] local.release_agent_dependency&#45;&gt;[root] local.release_agent_dependencies -->
-<g id="edge132" class="edge"><title>[root] local.release_agent_dependency&#45;&gt;[root] local.release_agent_dependencies</title>
+<!-- [root] local.vm_agent_dependency&#45;&gt;[root] local.vm_agent_dependencies -->
+<g id="edge132" class="edge"><title>[root] local.vm_agent_dependency&#45;&gt;[root] local.vm_agent_dependencies</title>
 <path fill="none" stroke="black" d="M9494.54,-1223.7C9488.9,-1215.47 9482.05,-1205.48 9475.84,-1196.42"/>
 <polygon fill="black" stroke="black" points="9478.68,-1194.37 9470.14,-1188.1 9472.91,-1198.33 9478.68,-1194.37"/>
 </g>
@@ -2808,15 +2808,15 @@
 <path fill="none" stroke="black" d="M8566.84,-1367.97C8606.06,-1357.91 8655.88,-1345.14 8696.76,-1334.65"/>
 <polygon fill="black" stroke="black" points="8697.86,-1337.98 8706.68,-1332.11 8696.12,-1331.2 8697.86,-1337.98"/>
 </g>
-<!-- [root] module.iis_app.var.release_agent_dependency -->
-<g id="node183" class="node"><title>[root] module.iis_app.var.release_agent_dependency</title>
+<!-- [root] module.iis_app.var.vm_agent_dependency -->
+<g id="node183" class="node"><title>[root] module.iis_app.var.vm_agent_dependency</title>
 <polygon fill="none" stroke="black" points="9160.41,-1332 8890.41,-1332 8890.41,-1296 9166.41,-1296 9166.41,-1326 9160.41,-1332"/>
 <polyline fill="none" stroke="black" points="9160.41,-1332 9160.41,-1326 "/>
 <polyline fill="none" stroke="black" points="9166.41,-1326 9160.41,-1326 "/>
-<text text-anchor="middle" x="9028.41" y="-1310.3" font-family="Times New Roman,serif" font-size="14.00">module.iis_app.var.release_agent_dependency</text>
+<text text-anchor="middle" x="9028.41" y="-1310.3" font-family="Times New Roman,serif" font-size="14.00">module.iis_app.var.vm_agent_dependency</text>
 </g>
-<!-- [root] module.iis_app.azurerm_virtual_machine_extension.app_db_vm_pipeline&#45;&gt;[root] module.iis_app.var.release_agent_dependency -->
-<g id="edge412" class="edge"><title>[root] module.iis_app.azurerm_virtual_machine_extension.app_db_vm_pipeline&#45;&gt;[root] module.iis_app.var.release_agent_dependency</title>
+<!-- [root] module.iis_app.azurerm_virtual_machine_extension.app_db_vm_pipeline&#45;&gt;[root] module.iis_app.var.vm_agent_dependency -->
+<g id="edge412" class="edge"><title>[root] module.iis_app.azurerm_virtual_machine_extension.app_db_vm_pipeline&#45;&gt;[root] module.iis_app.var.vm_agent_dependency</title>
 <path fill="none" stroke="black" d="M8628.9,-1367.97C8707.79,-1357.51 8808.83,-1344.11 8889.56,-1333.41"/>
 <polygon fill="black" stroke="black" points="8890.35,-1336.83 8899.8,-1332.05 8889.43,-1329.89 8890.35,-1336.83"/>
 </g>
@@ -2855,8 +2855,8 @@
 <path fill="none" stroke="black" d="M8263.17,-1367.98C8407.65,-1356.1 8585.84,-1340.84 8660.41,-1332 8661.89,-1331.82 8663.37,-1331.65 8664.87,-1331.46"/>
 <polygon fill="black" stroke="black" points="8665.37,-1334.93 8674.85,-1330.2 8664.49,-1327.98 8665.37,-1334.93"/>
 </g>
-<!-- [root] module.iis_app.azurerm_virtual_machine_extension.app_web_vm_pipeline&#45;&gt;[root] module.iis_app.var.release_agent_dependency -->
-<g id="edge417" class="edge"><title>[root] module.iis_app.azurerm_virtual_machine_extension.app_web_vm_pipeline&#45;&gt;[root] module.iis_app.var.release_agent_dependency</title>
+<!-- [root] module.iis_app.azurerm_virtual_machine_extension.app_web_vm_pipeline&#45;&gt;[root] module.iis_app.var.vm_agent_dependency -->
+<g id="edge417" class="edge"><title>[root] module.iis_app.azurerm_virtual_machine_extension.app_web_vm_pipeline&#45;&gt;[root] module.iis_app.var.vm_agent_dependency</title>
 <path fill="none" stroke="black" d="M8269.11,-1368.56C8271.89,-1368.37 8274.66,-1368.19 8277.41,-1368 8542.01,-1350.15 8611.26,-1355.2 8880.11,-1331.99"/>
 <polygon fill="black" stroke="black" points="8880.51,-1335.47 8890.17,-1331.12 8879.91,-1328.5 8880.51,-1335.47"/>
 </g>
@@ -3069,8 +3069,8 @@
 <path fill="none" stroke="black" d="M6047.19,-437.927C6198.71,-418.807 6523.78,-379.757 6799.41,-360 7286.7,-325.071 7869.81,-312.466 8108.91,-308.549"/>
 <polygon fill="black" stroke="black" points="8109.05,-312.047 8118.99,-308.386 8108.94,-305.048 8109.05,-312.047"/>
 </g>
-<!-- [root] module.iis_app.var.release_agent_dependency&#45;&gt;[root] local.release_agent_dependency -->
-<g id="edge443" class="edge"><title>[root] module.iis_app.var.release_agent_dependency&#45;&gt;[root] local.release_agent_dependency</title>
+<!-- [root] module.iis_app.var.vm_agent_dependency&#45;&gt;[root] local.vm_agent_dependency -->
+<g id="edge443" class="edge"><title>[root] module.iis_app.var.vm_agent_dependency&#45;&gt;[root] local.vm_agent_dependency</title>
 <path fill="none" stroke="black" d="M9144.73,-1295.97C9221.95,-1284.66 9322.63,-1269.91 9398.14,-1258.85"/>
 <polygon fill="black" stroke="black" points="9398.77,-1262.3 9408.16,-1257.39 9397.76,-1255.37 9398.77,-1262.3"/>
 </g>

@@ -227,3 +227,26 @@ resource "azurerm_application_insights" "vdc_insights" {
 
   tags                         = local.tags
 }
+
+resource "azurerm_dashboard" "vdc_dashboard" {
+  name                         = "VDC-${local.environment}-${terraform.workspace}"
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  location                     = azurerm_resource_group.vdc_rg.location
+  tags                         = merge(
+    var.tags,
+    map(
+      "hidden-title",           "VDC (${local.environment}/${terraform.workspace})",
+    )
+  )
+
+  dashboard_properties = templatefile("dashboard.tpl",
+    {
+      subscription             = data.azurerm_subscription.primary.id
+      prefix                   = var.resource_prefix
+      environment              = local.environment
+      suffix                   = local.suffix
+      iaas_app_url             = local.iaas_app_url
+      paas_app_url             = local.paas_app_url
+      release_web_url          = var.release_web_url != "" ? var.release_web_url : "https://dev.azure.com/${var.app_devops["account"]}/"
+  })
+}

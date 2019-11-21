@@ -94,7 +94,7 @@ variable vdc_oms_solutions {
   default                      = [
   # "ADAssessment",
   # "ADReplication",
-    "AgentHealthAssessment",
+  # "AgentHealthAssessment",
     "AlertManagement",
     "AntiMalware",
   # "ApplicationInsights", # Depricated
@@ -132,11 +132,11 @@ variable vdc_oms_solutions {
   # "LogicAppsManagement",
     "LogManagement",
   # "Microsoft365Analytics",
-    "NetworkMonitoring",
+  # "NetworkMonitoring",
   # "Office365",
     "ProcessInvestigator",
   # "SCOMAssessment",
-    "Security",
+  # "Security",
     "SecurityCenterFree",
     "SecurityCenterNetworkTraffic",
     "SecurityInsights",

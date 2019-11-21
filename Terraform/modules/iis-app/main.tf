@@ -151,7 +151,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.release_agent_dependency
+      "dummy-dependency",        var.vm_agent_dependency
     )
   )
 }
@@ -181,7 +181,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.release_agent_dependency
+      "dummy-dependency",        var.vm_agent_dependency
     )
   )
 }
@@ -211,7 +211,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.release_agent_dependency
+      "dummy-dependency",        var.vm_agent_dependency
     )
   )
 }
@@ -435,7 +435,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.release_agent_dependency
+      "dummy-dependency",        var.vm_agent_dependency
     )
   )
 }
@@ -465,7 +465,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.release_agent_dependency
+      "dummy-dependency",        var.vm_agent_dependency
     )
   )
 }
@@ -495,7 +495,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.release_agent_dependency
+      "dummy-dependency",        var.vm_agent_dependency
     )
   )
 }

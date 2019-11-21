@@ -51,14 +51,14 @@ module iaas_spoke_vnet {
 }
 
 locals {
-  release_agent_dependencies   = concat(module.iaas_spoke_vnet.access_dependencies,
+  vm_agent_dependencies        = concat(module.iaas_spoke_vnet.access_dependencies,
                                  [
                                  azurerm_firewall_application_rule_collection.iag_app_rules.id,
                                  azurerm_firewall_network_rule_collection.iag_net_outbound_rules.id
 #                                module.p2s_vpn.gateway_id
   ])
   # HACK: This value is dependent on all elements of the list being created
-  release_agent_dependency     = join("|",[for dep in local.release_agent_dependencies : substr(dep,0,1)])
+  vm_agent_dependency     = join("|",[for dep in local.vm_agent_dependencies : substr(dep,0,1)])
 }
 
 module iis_app {
@@ -81,7 +81,7 @@ module iis_app {
   app_subnet_id                = lookup(module.iaas_spoke_vnet.subnet_ids,"app","")
   data_subnet_id               = lookup(module.iaas_spoke_vnet.subnet_ids,"data","")
   deploy_connection_monitors   = var.deploy_connection_monitors
-  release_agent_dependency     = local.release_agent_dependency
+  vm_agent_dependency     = local.vm_agent_dependency
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_watcher_id       = var.deploy_connection_monitors ? azurerm_network_watcher.vdc_watcher[0].id : null
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
