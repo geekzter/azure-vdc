@@ -12,36 +12,8 @@ param (
     [parameter(Mandatory=$false)][string]$Environment="*",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
+. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
-function AzLogin () {
-    if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
-        Write-Host "Reconnecting to Azure with SPN..."
-        if(-not($clientid)) { Throw "You must supply a value for clientid" }
-        if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
-        # Use Terraform ARM Backend config to authenticate to Azure
-        $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-        $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
-    }
-    $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
-}
-
-function RemoveResourceGroups (
-    [parameter(Mandatory=$false)][object[]]$resourceGroups
-) {
-    if ($resourceGroups) {
-        $resourceGroupNames = $resourceGroups | Select-Object -ExpandProperty ResourceGroupName
-        $proceedanswer = Read-Host "If you wish to proceed removing these resource groups:`n$resourceGroupNames `nplease reply 'yes' - null or N aborts"
-        if ($proceedanswer -ne "yes") {
-            Write-Host "`nSkipping $resourceGroupNames" -ForegroundColor Red
-            continue
-        }
-        $resourceGroups | Remove-AzResourceGroup -AsJob -Force
-        return $true
-    } else {
-        return $false
-    }
-}
 
 AzLogin
 

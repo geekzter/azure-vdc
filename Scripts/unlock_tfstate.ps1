@@ -38,14 +38,15 @@ if (!($tfStateBlob)) {
 }
 
 if ($tfStateBlob.ICloudBlob.Properties.LeaseStatus -ieq "Unlocked") {
-    Write-Host "Workspace `"${Workspace}`" is not locked" -ForegroundColor Red
+    Write-Host "Workspace `"${Workspace}`" is not locked" -ForegroundColor Yellow
     exit
 } else {
     # Prompt to continue
-    $proceedanswer = Read-Host "If you wish to proceed to unlock workspace `"${Workspace}`", please reply 'yes' - null or N aborts"
+    Write-Host "If you wish to proceed to unlock workspace `"${Workspace}`", please reply 'yes' - null or N aborts" -ForegroundColor Blue -NoNewline
+    $proceedanswer = Read-Host
 
     if ($proceedanswer -ne "yes") {
-        Write-Host "`nReply is not 'yes' - Aborting " -ForegroundColor Red
+        Write-Host "`nReply is not 'yes' - Aborting " -ForegroundColor Yellow
         exit
     }
     Write-Host "Unlocking workspace `"${Workspace}`" by breaking lease on blob $($tfStateBlob.ICloudBlob.Uri.AbsoluteUri)..."

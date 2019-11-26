@@ -52,6 +52,10 @@ output bastion_rdp_vpn {
   value = "mstsc.exe /v:${var.vdc_config["hub_bastion_address"]}"
 }
 
+output dashboard_id {
+  value = azurerm_dashboard.vdc_dashboard.id
+}
+
 output iaas_app_resource_group {
   value       = local.iaas_app_resource_group
 }

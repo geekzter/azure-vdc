@@ -50,7 +50,7 @@ Get-ChildItem -Path "Cert:\CurrentUser\My" | Where-Object {$_.Subject -like "CN=
 ###############################
 # Export Certificates
 ###############################
-$certPassword = Read-Host -AsSecureString -Prompt "Provide password to protect exported certificates"
+$certPassword = Read-Host -AsSecureString -Prompt "Provide password to protect exported certificates" 
 
 # Create directory if it does not exist yet
 New-Item -ItemType Directory -Force -Path $certDirectory >$null

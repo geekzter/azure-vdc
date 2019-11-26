@@ -15,18 +15,7 @@ param (
 
 
 ### Internal Functions
-function AzLogin () {
-    if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
-        Write-Host "Reconnecting to Azure with SPN..."
-        if(-not($clientid)) { Throw "You must supply a value for clientid" }
-        if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
-        # Use Terraform ARM Backend config to authenticate to Azure
-        $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-        $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
-    }
-    $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
-}
+. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 $InputFilePath  = Join-Path $tfdirectory $InputFile
 $OutputFilePath = Join-Path $tfdirectory $OutputFile
 
@@ -56,7 +45,7 @@ try {
     }
 
     if ([string]::IsNullOrEmpty($prefix) -or [string]::IsNullOrEmpty($environment) -or [string]::IsNullOrEmpty($suffix)) {
-        Write-Output "Resources have not yet been created, nothing to do" 
+        Write-Host "Resources have not yet been created, nothing to do" -ForegroundColor Yellow
         exit 
     }
 } finally {
@@ -93,7 +82,7 @@ if ($enviromentMatches -or $suffixMatches) {
 if (($DontWrite -eq $false) -or ($DontWrite -eq $null)) {
     $template | Out-File $OutputFilePath
 } else {
-    Write-Host "Skipped writing template"
+    Write-Host "Skipped writing template" -ForegroundColor Yellow
 }
 if ($ShowTemplate) {
     #Write-Host $template
