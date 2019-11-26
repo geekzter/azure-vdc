@@ -66,7 +66,7 @@ function RemoveResourceGroups (
 ) {
     if ($resourceGroups) {
         $resourceGroupNames = $resourceGroups | Select-Object -ExpandProperty ResourceGroupName
-        Write-Host "If you wish to proceed removing these resource groups:`n$resourceGroupNames `nplease reply 'yes' - null or N aborts" -ForegroundColor Blue -NoNewline
+        Write-Host "If you wish to proceed removing these resource groups:`n$resourceGroupNames `nplease reply 'yes' - null or N aborts" -ForegroundColor Blue
         $proceedanswer = Read-Host
         if ($proceedanswer -ne "yes") {
             Write-Host "`nSkipping $resourceGroupNames" -ForegroundColor Yellow

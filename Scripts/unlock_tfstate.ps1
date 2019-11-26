@@ -42,7 +42,7 @@ if ($tfStateBlob.ICloudBlob.Properties.LeaseStatus -ieq "Unlocked") {
     exit
 } else {
     # Prompt to continue
-    Write-Host "If you wish to proceed to unlock workspace `"${Workspace}`", please reply 'yes' - null or N aborts" -ForegroundColor Blue -NoNewline
+    Write-Host "If you wish to proceed to unlock workspace `"${Workspace}`", please reply 'yes' - null or N aborts" -ForegroundColor Blue
     $proceedanswer = Read-Host
 
     if ($proceedanswer -ne "yes") {

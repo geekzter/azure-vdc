@@ -177,7 +177,7 @@ try {
     if ($apply) {
         if (!$force) {
             # Prompt to continue
-            Write-Host "If you wish to proceed executing Terraform plan $planFile in workspace $workspaceLowercase, please reply 'yes' - null or N aborts" -ForegroundColor Blue -NoNewline
+            Write-Host "If you wish to proceed executing Terraform plan $planFile in workspace $workspaceLowercase, please reply 'yes' - null or N aborts" -ForegroundColor Blue
             $proceedanswer = Read-Host 
 
             if ($proceedanswer -ne "yes") {
