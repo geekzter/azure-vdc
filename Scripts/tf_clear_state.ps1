@@ -9,11 +9,12 @@
     Therefore it is the fastest way to 'start over' with a clean workspace.
 
 .EXAMPLE
-    ./tf_destroy.ps1 -Workspace test
+    ./tf_clear_state.ps1 -Workspace test -Destroy
 #> 
 
 param (
     [parameter(Mandatory=$false)][string]$Workspace,
+    [parameter(Mandatory=$false)][switch]$Destroy,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
@@ -48,9 +49,11 @@ try {
     Pop-Location
 }
 
-AzLogin
-$resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
-if (!(RemoveResourceGroups $resourceGroups)) {
-    Write-Host "Nothing found to delete for workspace $Workspace"
+if ($Destroy) {
+    AzLogin
+    $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
+    if (!(RemoveResourceGroups $resourceGroups)) {
+        Write-Host "Nothing found to delete for workspace $Workspace"
+    }
+    Get-Job | Where-Object {$_.Command -like "Remove-AzResourceGroup"} | Format-Table -Property Id, Name, State
 }
-Get-Job | Where-Object {$_.Command -like "Remove-AzResourceGroup"} | Format-Table -Property Id, Name, State
