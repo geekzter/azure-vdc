@@ -36,11 +36,16 @@ try {
     # 'terraform state rm' does not remove output (anymore)
     # HACK: Manipulate the state directly instead
     $tfState = terraform state pull | ConvertFrom-Json
-    $tfState.outputs = New-Object PSObject # Empty output
-    $tfState.resources = @() # No resources
-    $tfState.serial++
-    $tfState | ConvertTo-Json | terraform state push -
-    terraform state pull 
+    if ($tfState -and $tfState.outputs) {
+        $tfState.outputs = New-Object PSObject # Empty output
+        $tfState.resources = @() # No resources
+        $tfState.serial++
+        $tfState | ConvertTo-Json | terraform state push -
+        terraform state pull 
+    } else {
+        Write-Host "Terraform state not valid" -ForegroundColor Red
+        exit
+    }
 } finally {
     # Ensure this always runs
     if ($currentWorkspace) {
