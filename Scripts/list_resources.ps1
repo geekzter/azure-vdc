@@ -56,7 +56,7 @@ if ($All -or $Summary -or $Resources) {
 
 if ($All -or $Summary) {
     $resourceQuery = "Resources | where tags['application']=='Automated VDC' | summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), Suffix=tostring(tags['suffix']) | order by Environment asc, Workspace asc, Suffix asc"
-    Write-Host "Executing graph query:`n$resourceQuery"
+    Write-Host "Executing graph query:`n$resourceQuery" -ForegroundColor Green
     $graphResult = Search-AzGraph -Query $resourceQuery
 
     # Join tables
@@ -76,7 +76,7 @@ if ($All -or $Resources) {
     }
     $resourceQuery += " | project Name=name,ResourceGroup=resourceGroup | order by ResourceGroup asc, Name asc"
 
-    Write-Host "Executing graph query:`n$resourceQuery"
+    Write-Host "Executing graph query:`n$resourceQuery" -ForegroundColor Green
     $result = Search-AzGraph -Query $resourceQuery -Subscription $subscription
     $result | Format-Table -Property Name, ResourceGroup 
     Write-Host "$($result.Count) item(s) found"

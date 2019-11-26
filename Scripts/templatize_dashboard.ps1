@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 
 param ( 
-    [parameter(Mandatory=$false)][string]$InputFile="tmpdashboard.json",
+    [parameter(Mandatory=$false)][string]$InputFile,
     [parameter(Mandatory=$false)][string]$OutputFile="dashboard.tpl",
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$ShowTemplate=$false,
@@ -39,6 +39,7 @@ try {
 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
+        $Script:dashboardID = $(terraform output "dashboard_id"         2>$null)
         $Script:prefix      = $(terraform output "resource_prefix"      2>$null)
         $Script:suffix      = $(terraform output "resource_suffix"      2>$null)
         $Script:environment = $(terraform output "resource_environment" 2>$null)
@@ -52,8 +53,23 @@ try {
     Pop-Location
 }
 
-$template = (Get-Content $InputFilePath -Raw) 
-$template = $($template | jq '.properties') # Use jq, ConvertFrom-Json does not parse properly
+if ($InputFile) {
+    Write-Host "Reading from file $InputFile..." -ForegroundColor Green
+    $template = (Get-Content $InputFilePath -Raw) 
+    $template = $($template | jq '.properties') # Use jq, ConvertFrom-Json does not parse properly
+} else {
+    Write-Host "Retrieving resource $dashboardID..." -ForegroundColor Green
+    # This doesn't export full JSON
+    # Get-AzResource -ResourceId $dashboardID -ExpandProperties
+    # Resource Graph doesn't export full JSON either
+    # $dashboardQuery  = "Resources | where type == `"microsoft.portal/dashboards`" and id == `"$dashboardID`" | project properties"
+    # Write-Host "Executing Graph Query:`n$dashboardQuery" -ForegroundColor Green
+    # $dashboardProperties = Search-AzGraph -Query $dashboardQuery -Subscription $subscription
+    # HACK: Use Azure CLI instead
+    $dashboardProperties = az resource show --ids $dashboardID
+    $template = $dashboardProperties | jq '.properties'
+}
+
 $template = $template -Replace "/subscriptions/........-....-....-................./", "`$`{subscription`}/"
 $template = $template -Replace "${prefix}-", "`$`{prefix`}-"
 $template = $template -Replace "-${environment}-", "-`$`{environment`}-"
