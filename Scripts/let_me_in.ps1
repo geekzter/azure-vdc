@@ -3,7 +3,7 @@
 
 ### Arguments
 param ( 
-    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $workspace = "default",
+    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace,
     [parameter(Mandatory=$false)][switch]$All=$false,
     [parameter(Mandatory=$false)][switch]$ForceEntry=$false,
     [parameter(Mandatory=$false)][switch]$ShowCredentials=$false,
@@ -24,13 +24,17 @@ if (!($All -or $ConnectBastion -or $ForceEntry -or $ShowCredentials -or $StartBa
     exit
 }
 
+. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+AzLogin
+
 try {
     # Terraform config
     Push-Location $tfdirectory
-    terraform -version
-    terraform workspace select $workspace.ToLower()
-    Write-Host "Terraform workspaces:" -ForegroundColor White
-    terraform workspace list
+    if ($Workspace) {
+        terraform workspace select $Workspace.ToLower()
+        Write-Host "Terraform workspaces:" -ForegroundColor White
+        terraform workspace list
+    }
     Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
 
     $bastionName = $(terraform output "bastion_name" 2>$null)
@@ -58,7 +62,7 @@ try {
         # Add rule to Azure Firewall
         $azFWName = $(terraform output "iag_name" 2>$null)
         if ([string]::isNullOrEmpty($azFWName)) {
-            Write-Host "`nAzure Firewall not found, nothing to get into" -ForegroundColor Red 
+            Write-Host "`nAzure Firewall not found, nothing to get into" -ForegroundColor Yellow
             exit
         }
         $azFWPublicIPAddress = $(terraform output "iag_public_ip" 2>$null)

@@ -22,6 +22,8 @@ if (!($All -or $Resources -or $Summary -or $Workspaces)) {
     exit
 }
 
+. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+
 if ($All -or $Summary -or $Workspaces) {
     # Access Terraform (Azure) backend to get leases for each workspace
     Write-Host "Reading Terraform settings from ${tfdirectory}/.terraform/terraform.tfstate..."
@@ -49,22 +51,12 @@ if ($All -or $Summary -or $Workspaces) {
 }
 
 if ($All -or $Summary -or $Resources) {
-    # Login required
-    if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
-        Write-Host "Reconnecting to Azure with SPN..."
-        if(-not($clientid)) { Throw "You must supply a value for clientid" }
-        if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
-        # Use Terraform ARM Backend config to authenticate to Azure
-        $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-        $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
-    }
-    $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
+    AzLogin
 }
 
 if ($All -or $Summary) {
     $resourceQuery = "Resources | where tags['application']=='Automated VDC' | summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), Suffix=tostring(tags['suffix']) | order by Environment asc, Workspace asc, Suffix asc"
-    Write-Host "Executing graph query:`n$resourceQuery"
+    Write-Host "Executing graph query:`n$resourceQuery" -ForegroundColor Green
     $graphResult = Search-AzGraph -Query $resourceQuery
 
     # Join tables
@@ -84,7 +76,7 @@ if ($All -or $Resources) {
     }
     $resourceQuery += " | project Name=name,ResourceGroup=resourceGroup | order by ResourceGroup asc, Name asc"
 
-    Write-Host "Executing graph query:`n$resourceQuery"
+    Write-Host "Executing graph query:`n$resourceQuery" -ForegroundColor Green
     $result = Search-AzGraph -Query $resourceQuery -Subscription $subscription
     $result | Format-Table -Property Name, ResourceGroup 
     Write-Host "$($result.Count) item(s) found"

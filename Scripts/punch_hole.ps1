@@ -9,23 +9,18 @@ param (
 ) 
 if(-not($subscription)) { Throw "You must supply a value for subscription" }
 
+. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+
 # Log on to Azure if not already logged on
-if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
-    Write-Host "Reconnecting to Azure with SPN..."
-    if(-not($tenantid)) { Throw "You must supply a value for tenantid" }
-    if(-not($clientid)) { Throw "You must supply a value for clientid" }
-    if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
-    # Use Terraform ARM Backend config to authenticate Azure CLI
-    $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-    $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-    $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
-}
-$null = Set-AzContext -Subscription $subscription
+AzLogin
 
 # Retrieve Azure resources config using Terraform
 try {
     Push-Location $tfdirectory
-
+    if ($MyInvocation.InvocationName -ne "&") {
+        Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
+    }
+    
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
         $Script:appResourceGroup       = $(terraform output "paas_app_resource_group"       2>$null)

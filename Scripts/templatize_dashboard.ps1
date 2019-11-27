@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 
 param ( 
-    [parameter(Mandatory=$false)][string]$InputFile="tmpdashboard.json",
+    [parameter(Mandatory=$false)][string]$InputFile,
     [parameter(Mandatory=$false)][string]$OutputFile="dashboard.tpl",
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$ShowTemplate=$false,
@@ -15,18 +15,7 @@ param (
 
 
 ### Internal Functions
-function AzLogin () {
-    if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
-        Write-Host "Reconnecting to Azure with SPN..."
-        if(-not($clientid)) { Throw "You must supply a value for clientid" }
-        if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
-        # Use Terraform ARM Backend config to authenticate to Azure
-        $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-        $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
-    }
-    $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
-}
+. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 $InputFilePath  = Join-Path $tfdirectory $InputFile
 $OutputFilePath = Join-Path $tfdirectory $OutputFile
 
@@ -47,24 +36,42 @@ If (!(Test-Path $OutputFilePath) -and !$Force -and !$DontWrite) {
 # Retrieve Azure resources config using Terraform
 try {
     Push-Location $tfdirectory
+    
+    Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
+        $Script:dashboardID = $(terraform output "dashboard_id"         2>$null)
         $Script:prefix      = $(terraform output "resource_prefix"      2>$null)
         $Script:suffix      = $(terraform output "resource_suffix"      2>$null)
         $Script:environment = $(terraform output "resource_environment" 2>$null)
     }
 
     if ([string]::IsNullOrEmpty($prefix) -or [string]::IsNullOrEmpty($environment) -or [string]::IsNullOrEmpty($suffix)) {
-        Write-Output "Resources have not yet been created, nothing to do" 
+        Write-Host "Resources have not yet been created, nothing to do" -ForegroundColor Yellow
         exit 
     }
 } finally {
     Pop-Location
 }
 
-$template = (Get-Content $InputFilePath -Raw) 
-$template = $($template | jq '.properties') # Use jq, ConvertFrom-Json does not parse properly
+if ($InputFile) {
+    Write-Host "Reading from file $InputFile..." -ForegroundColor Green
+    $template = (Get-Content $InputFilePath -Raw) 
+    $template = $($template | jq '.properties') # Use jq, ConvertFrom-Json does not parse properly
+} else {
+    Write-Host "Retrieving resource $dashboardID..." -ForegroundColor Green
+    # This doesn't export full JSON
+    # Get-AzResource -ResourceId $dashboardID -ExpandProperties
+    # Resource Graph doesn't export full JSON either
+    # $dashboardQuery  = "Resources | where type == `"microsoft.portal/dashboards`" and id == `"$dashboardID`" | project properties"
+    # Write-Host "Executing Graph Query:`n$dashboardQuery" -ForegroundColor Green
+    # $dashboardProperties = Search-AzGraph -Query $dashboardQuery -Subscription $subscription
+    # HACK: Use Azure CLI instead
+    $dashboardProperties = az resource show --ids $dashboardID
+    $template = $dashboardProperties | jq '.properties'
+}
+
 $template = $template -Replace "/subscriptions/........-....-....-................./", "`$`{subscription`}/"
 $template = $template -Replace "${prefix}-", "`$`{prefix`}-"
 $template = $template -Replace "-${environment}-", "-`$`{environment`}-"
@@ -93,7 +100,7 @@ if ($enviromentMatches -or $suffixMatches) {
 if (($DontWrite -eq $false) -or ($DontWrite -eq $null)) {
     $template | Out-File $OutputFilePath
 } else {
-    Write-Host "Skipped writing template"
+    Write-Host "Skipped writing template" -ForegroundColor Yellow
 }
 if ($ShowTemplate) {
     #Write-Host $template
