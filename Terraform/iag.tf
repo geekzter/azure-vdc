@@ -106,7 +106,8 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     ]
 
     protocol {
-        type                   = "mssql"
+        port                   = "1433"
+        type                   = "Mssql"
     }
   }
 
