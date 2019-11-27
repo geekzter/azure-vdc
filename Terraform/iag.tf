@@ -92,6 +92,25 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
   }
 
   rule {
+    name                       = "Allow ${module.paas_app.sql_server} SQL Server TDS"
+
+    source_addresses           = [
+      "${var.vdc_config["iaas_spoke_app_subnet"]}",
+      "${var.vdc_config["iaas_spoke_data_subnet"]}",
+      "${var.vdc_config["hub_mgmt_subnet"]}",
+      "${var.vdc_config["vpn_range"]}"
+    ]
+
+    target_fqdns               = [
+      module.paas_app.sql_server_fqdn
+    ]
+
+    protocol {
+        type                   = "mssql"
+    }
+  }
+
+  rule {
     name                       = "Allow Azure DevOps"
     description                = "The VSTS/Azure DevOps agent installed on application VM's requires outbound access. This agent is used by Azure Pipelines for application deployment"
 
@@ -260,8 +279,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
 
   }
 } 
-
-
 
 # Inbound port forwarding rules
 resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
