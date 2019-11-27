@@ -24,6 +24,8 @@ try
     Push-Location $tfdirectory
     if ($Workspace) {
         terraform workspace select $Workspace.ToLower()
+    }
+    if ($MyInvocation.InvocationName -ne "&") {
         Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
     }
     Invoke-Command -ScriptBlock {

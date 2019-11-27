@@ -40,7 +40,7 @@ param (
 if (!($workspace)) { Throw "You must supply a value for Workspace" }
 #if (!(Get-Module Az)) { Throw "Az modules not loaded"}
 
-$MyInvocation.line
+Write-Host $MyInvocation.line -ForegroundColor Green
 ### Main routine
 # Configure instrumentation
 Set-PSDebug -trace $trace
@@ -148,7 +148,6 @@ try {
 
     if ($clear) {
         # Clear Terraform workspace
-        Write-Host "`nClearing workspace..." -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "tf_clear_state.ps1") 
     }
 

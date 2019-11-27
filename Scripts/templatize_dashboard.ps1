@@ -36,6 +36,8 @@ If (!(Test-Path $OutputFilePath) -and !$Force -and !$DontWrite) {
 # Retrieve Azure resources config using Terraform
 try {
     Push-Location $tfdirectory
+    
+    Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"

@@ -17,7 +17,10 @@ AzLogin
 # Retrieve Azure resources config using Terraform
 try {
     Push-Location $tfdirectory
-
+    if ($MyInvocation.InvocationName -ne "&") {
+        Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
+    }
+    
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
         $Script:appResourceGroup       = $(terraform output "paas_app_resource_group"       2>$null)

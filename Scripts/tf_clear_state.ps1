@@ -33,6 +33,8 @@ try {
         $Workspace = $(terraform workspace show)
     }
 
+    Write-Host "Clearing Terraform workspace '$Workspace'..." -ForegroundColor Green
+
     # 'terraform state rm' does not remove output (anymore)
     # HACK: Manipulate the state directly instead
     $tfState = terraform state pull | ConvertFrom-Json

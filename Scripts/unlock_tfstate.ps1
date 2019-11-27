@@ -13,6 +13,10 @@ if(-not($Workspace)) {
 }
 $Script:ErrorActionPreference = "Stop"
 
+if ($MyInvocation.InvocationName -ne "&") {
+    Write-Host "Using Terraform workspace '$Workspace'"
+}
+
 # Access Terraform (Azure) backend to get leases for each workspace
 Write-Host "Reading Terraform settings from ${tfdirectory}/.terraform/terraform.tfstate..."
 $tfConfig = $(Get-Content ${tfdirectory}/.terraform/terraform.tfstate | ConvertFrom-Json)
@@ -33,25 +37,28 @@ if ($Workspace -eq "default") {
 Write-Host "Retrieving blob https://${backendStorageAccountName}.blob.core.windows.net/${backendStorageContainerName}/${blobName}..."
 $tfStateBlob = Get-AzStorageBlob -Context $backendstorageContext -Container $backendStorageContainerName -Blob $blobName -ErrorAction SilentlyContinue
 if (!($tfStateBlob)) {
-    Write-Host "Workspace `"${Workspace}`" state not found" -ForegroundColor Red
+    Write-Host "Workspace '${Workspace}' state not found" -ForegroundColor Red
     exit
 }
 
 if ($tfStateBlob.ICloudBlob.Properties.LeaseStatus -ieq "Unlocked") {
-    Write-Host "Workspace `"${Workspace}`" is not locked" -ForegroundColor Yellow
+    Write-Host "Workspace '${Workspace}' is not locked" -ForegroundColor Yellow
     exit
 } else {
     # Prompt to continue
-    Write-Host "If you wish to proceed to unlock workspace `"${Workspace}`", please reply 'yes' - null or N aborts" -ForegroundColor Blue
+    Write-Host "If you wish to proceed to unlock workspace '${Workspace}', please reply 'yes' - null or N aborts" -ForegroundColor Blue
     $proceedanswer = Read-Host
 
     if ($proceedanswer -ne "yes") {
         Write-Host "`nReply is not 'yes' - Aborting " -ForegroundColor Yellow
         exit
     }
-    Write-Host "Unlocking workspace `"${Workspace}`" by breaking lease on blob $($tfStateBlob.ICloudBlob.Uri.AbsoluteUri)..."
+    Write-Host "Unlocking workspace '${Workspace}' by breaking lease on blob $($tfStateBlob.ICloudBlob.Uri.AbsoluteUri)..."
     $lease = $tfStateBlob.ICloudBlob.BreakLease()
-    if ($lease) {
-        Write-Host "Unlocked workspace `"${Workspace}`""
+    if ($lease.Ticks -eq 0) {
+        Write-Host "Unlocked workspace '${Workspace}'"
+    } else {
+        Write-Host "Lease has unexpected value for 'Ticks'" -ForegroundColor Yellow
+        $lease
     }
 }
