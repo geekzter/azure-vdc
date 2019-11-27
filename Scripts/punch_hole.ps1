@@ -31,7 +31,7 @@ try {
     }
 
     if (!$appRGExists -or ([string]::IsNullOrEmpty($appStorageAccount) -and [string]::IsNullOrEmpty($appEventHubNamespace))) {
-        Write-Output "Resources have not yet been created, nothing to do" 
+        Write-Host "Resources have not yet been created, nothing to do"
         exit 
     }
 } finally {
@@ -48,6 +48,13 @@ if ($appStorageAccount) {
     $null = Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipAddress" -ErrorAction SilentlyContinue
     Write-Host "Network Rules for ${appStorageAccount}:"
     Get-AzStorageAccountNetworkRuleSet -ResourceGroupName $appResourceGroup -Name $appStorageAccount | Select-Object -ExpandProperty IpRules | Sort-Object -Property IPAddressOrRange | Format-Table
+
+    # Enable logging on storage account
+    Write-Host "Enabling blob logging for storage account $appStorageAccount..."
+    $storageKey = Get-AzStorageAccountKey -ResourceGroupName $appResourceGroup -AccountName $appStorageAccount | Where-Object {$_.KeyName -eq "key1"} | Select-Object -ExpandProperty Value
+    $storageContext = New-AzStorageContext -StorageAccountName $appStorageAccount -StorageAccountKey $storageKey
+    Set-AzStorageServiceLoggingProperty -Context $storageContext -ServiceType Blob -LoggingOperations Delete,Read,Write -PassThru 
+    Get-AzStorageServiceLoggingProperty -Context $storageContext -ServiceType Blob 
 }
 if ($appEventHubNamespace) {
     Write-Host "Adding rule for event hub $appStorageAccount to allow $ipAddress..."

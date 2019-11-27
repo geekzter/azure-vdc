@@ -115,32 +115,16 @@ if ($privateEndpointConnection) {
   Write-Error "Private Endpoint connection for '$appSqlServerId' is null"
 }
 
-# BUG: Operation returned an invalid status code 'InternalServerError'
-# Write-Host "New-AzPrivateEndpoint -ResourceGroupName ${vdcResourceGroup} `
-# -Name ${sqlDBPrivateEndpointName} `
-# -Location ${location} `
-# -Subnet ${subnet} `
-# -PrivateLinkServiceConnection ${privateEndpointConnection}"
-# $privateEndpoint = New-AzPrivateEndpoint -ResourceGroupName $vdcResourceGroup `
-#   -Name $sqlDBPrivateEndpointName `
-#   -Location $location `
-#   -Subnet $subnet `
-#   -PrivateLinkServiceConnection $privateEndpointConnection
-# if ($privateEndpoint) {
-#   $privateEndpoint
-# } else {
-#   Write-Error "Private Endpoint is null"
-# }
-
-# HACK: Workaround with Azure CLI
-az network private-endpoint create `
-    --name $sqlDBPrivateEndpointName `
-    --resource-group $vdcResourceGroup `
-    --vnet-name $paasNetworkName `
-    --subnet $endpointSubnet `
-    --private-connection-resource-id $appSqlServerId `
-    --group-ids sqlServer `
-    --connection-name $sqlDBPrivateLinkServiceConnectionName
+$privateEndpoint = New-AzPrivateEndpoint -ResourceGroupName $vdcResourceGroup `
+  -Name $sqlDBPrivateEndpointName `
+  -Location $location `
+  -Subnet $subnet `
+  -PrivateLinkServiceConnection $privateEndpointConnection
+if ($privateEndpoint) {
+  $privateEndpoint
+} else {
+  Write-Error "Private Endpoint is null"
+}
 
 $privateEndpoint = Get-AzPrivateEndpoint -Name $sqlDBPrivateEndpointName -ResourceGroupName $vdcResourceGroup
 $networkInterface = Get-AzResource -ResourceId $privateEndpoint.NetworkInterfaces[0].Id -ApiVersion "2019-04-01" 
