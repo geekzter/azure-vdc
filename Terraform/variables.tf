@@ -1,3 +1,7 @@
+variable branch {
+  default                      = ""
+}
+
 variable resource_prefix {
   description                  = "The prefix to put in front of resource names created"
   default                      = "vdc"
@@ -33,6 +37,10 @@ variable release_id {
 }
 variable release_user_email {
   description = "The email address of the user that triggered the pipeline that deployed this resource"
+  default     = ""
+}
+variable vso_url {
+  description = "The url of the Visual Studio Online environment used (if any)"
   default     = ""
 }
 

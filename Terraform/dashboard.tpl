@@ -4,187 +4,401 @@
       "order": 0,
       "parts": {
         "0": {
-          "position": {
-            "x": 0,
-            "y": 0,
-            "rowSpan": 3,
-            "colSpan": 4
-          },
           "metadata": {
             "inputs": [],
-            "type": "Extension/HubsExtension/PartType/MarkdownPart",
             "settings": {
               "content": {
                 "settings": {
-                  "content": "__Description__\n<p>\nThis project contains a hub & spoke Virtual Datacenter deployment. \n</p>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n",
-                  "title": "Automated VDC",
-                  "subtitle": ""
+                  "content": "__Description__\n<p>\nThis project contains a hub & spoke Virtual Datacenter deployment. \n</p>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
+                  "subtitle": "",
+                  "title": "Automated VDC"
                 }
               }
-            }
+            },
+            "type": "Extension/HubsExtension/PartType/MarkdownPart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 3,
+            "x": 0,
+            "y": 0
           }
         },
         "1": {
-          "position": {
-            "x": 4,
-            "y": 0,
-            "rowSpan": 3,
-            "colSpan": 7
-          },
           "metadata": {
             "inputs": [
               {
+                "isOptional": true,
                 "name": "partTitle",
-                "value": "VDC Resources by Suffix",
-                "isOptional": true
+                "value": "VDC Resources by Suffix"
               },
               {
+                "isOptional": true,
                 "name": "query",
-                "value": "Resources | where tags['application']=='Automated VDC' and tags['suffix']=='${suffix}'| summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), ResourceGroup=resourceGroup | order by ResourceGroup asc",
-                "isOptional": true
+                "value": "Resources | where tags['application']=='Automated VDC' and tags['suffix']=='${suffix}'| summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), ResourceGroup=resourceGroup | order by ResourceGroup asc"
               },
               {
-                "name": "chartType",
-                "isOptional": true
+                "isOptional": true,
+                "name": "chartType"
               },
               {
-                "name": "isShared",
-                "isOptional": true
+                "isOptional": true,
+                "name": "isShared"
               },
               {
+                "isOptional": true,
                 "name": "queryId",
-                "value": "183f4042-6fe0-4362-b2bd-7575cf2ddf98",
-                "isOptional": true
+                "value": "183f4042-6fe0-4362-b2bd-7575cf2ddf98"
               }
             ],
-            "type": "Extension/HubsExtension/PartType/ArgQueryGridTile",
-            "settings": {}
+            "settings": {},
+            "type": "Extension/HubsExtension/PartType/ArgQueryGridTile"
+          },
+          "position": {
+            "colSpan": 7,
+            "rowSpan": 3,
+            "x": 4,
+            "y": 0
+          }
+        },
+        "10": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-19T12:10:07.715Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
+            "y": 7
+          }
+        },
+        "11": {
+          "metadata": {
+            "asset": {
+              "idInputName": "ComponentId",
+              "type": "ApplicationInsights"
+            },
+            "inputs": [
+              {
+                "name": "ComponentId",
+                "value": {
+                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
+                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
+                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
+                  "SubscriptionId": "84c1a2c7-585a-4753-ad28-97f69618cf12"
+                }
+              },
+              {
+                "name": "Query",
+                "value": "AzureDiagnostics \n| where Category == \"ApplicationGatewayAccessLog\" and httpStatus_d >= 500\n| project TimeGenerated, httpStatus_d, listenerName_s, backendPoolName_s, ruleName_s\n| order by TimeGenerated desc\n"
+              },
+              {
+                "name": "TimeRange",
+                "value": "P1D"
+              },
+              {
+                "name": "Version",
+                "value": "1.0"
+              },
+              {
+                "name": "PartId",
+                "value": "42ad871f-2614-484d-8e7e-0b9a1a522403"
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics"
+              },
+              {
+                "name": "PartSubTitle",
+                "value": "${prefix}-${environment}-${suffix}-loganalytics"
+              },
+              {
+                "name": "resourceTypeMode",
+                "value": "workspace"
+              },
+              {
+                "name": "ControlType",
+                "value": "AnalyticsGrid"
+              },
+              {
+                "isOptional": true,
+                "name": "Dimensions"
+              },
+              {
+                "isOptional": true,
+                "name": "DashboardId"
+              },
+              {
+                "isOptional": true,
+                "name": "SpecificChart"
+              }
+            ],
+            "settings": {
+              "content": {
+                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
+                "PartTitle": "Errors on HTTP inbound traffic (WAF)"
+              }
+            },
+            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
+          },
+          "position": {
+            "colSpan": 7,
+            "rowSpan": 3,
+            "x": 4,
+            "y": 8
+          }
+        },
+        "12": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/ServiceMap(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-20T17:11:43.326Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
+            "y": 9
+          }
+        },
+        "13": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/Updates(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-19T12:09:05.945Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
+            "y": 11
+          }
+        },
+        "14": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AntiMalware(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-20T17:11:43.326Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
+            "y": 13
           }
         },
         "2": {
-          "position": {
-            "x": 11,
-            "y": 0,
-            "rowSpan": 1,
-            "colSpan": 2
-          },
           "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Compute/virtualMachines/${prefix}-${environment}-${suffix}-bastion",
-                "isOptional": true
-              },
-              {
-                "name": "resourceId",
-                "isOptional": true
-              },
-              {
-                "name": "menuid",
-                "isOptional": true
-              }
-            ],
-            "type": "Extension/HubsExtension/PartType/ResourcePart",
             "asset": {
               "idInputName": "id"
-            }
+            },
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Compute/virtualMachines/${prefix}-${environment}-${suffix}-bastion"
+              },
+              {
+                "isOptional": true,
+                "name": "resourceId"
+              },
+              {
+                "isOptional": true,
+                "name": "menuid"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 11,
+            "y": 0
           }
         },
         "3": {
-          "position": {
-            "x": 13,
-            "y": 0,
-            "rowSpan": 4,
-            "colSpan": 5
-          },
           "metadata": {
             "inputs": [
               {
-                "name": "resourceGroup",
-                "isOptional": true
+                "isOptional": true,
+                "name": "resourceGroup"
               },
               {
+                "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}",
-                "isOptional": true
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
               }
             ],
             "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+          },
+          "position": {
+            "colSpan": 5,
+            "rowSpan": 4,
+            "x": 13,
+            "y": 0
           }
         },
         "4": {
-          "position": {
-            "x": 18,
-            "y": 0,
-            "rowSpan": 7,
-            "colSpan": 5
-          },
           "metadata": {
             "inputs": [
               {
-                "name": "resourceGroup",
-                "isOptional": true
+                "isOptional": true,
+                "name": "resourceGroup"
               },
               {
+                "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-iaasapp-${suffix}",
-                "isOptional": true
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-iaasapp-${suffix}"
               }
             ],
             "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+          },
+          "position": {
+            "colSpan": 5,
+            "rowSpan": 7,
+            "x": 18,
+            "y": 0
           }
         },
         "5": {
-          "position": {
-            "x": 23,
-            "y": 0,
-            "rowSpan": 13,
-            "colSpan": 5
-          },
           "metadata": {
             "inputs": [
               {
-                "name": "resourceGroup",
-                "isOptional": true
+                "isOptional": true,
+                "name": "resourceGroup"
               },
               {
+                "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}",
-                "isOptional": true
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}"
               }
             ],
             "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+          },
+          "position": {
+            "colSpan": 5,
+            "rowSpan": 13,
+            "x": 23,
+            "y": 0
           }
         },
         "6": {
-          "position": {
-            "x": 11,
-            "y": 1,
-            "rowSpan": 1,
-            "colSpan": 2
-          },
           "metadata": {
+            "asset": {
+              "idInputName": "id",
+              "type": "Workspace"
+            },
             "inputs": [
               {
                 "name": "id",
                 "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics"
               }
             ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/WorkspacePart",
-            "asset": {
-              "idInputName": "id",
-              "type": "Workspace"
-            }
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/WorkspacePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 11,
+            "y": 1
           }
         },
         "7": {
-          "position": {
-            "x": 0,
-            "y": 3,
-            "rowSpan": 2,
-            "colSpan": 4
-          },
           "metadata": {
+            "asset": {
+              "idInputName": "ResourceId",
+              "type": "ApplicationInsights"
+            },
             "inputs": [
               {
                 "name": "ResourceId",
@@ -203,6 +417,7 @@
                 "value": "Failures"
               },
               {
+                "isOptional": true,
                 "name": "DataModel",
                 "value": {
                   "clientTypeMode": "Server",
@@ -220,29 +435,28 @@
                     "useDashboardTimeRange": false
                   },
                   "version": "1.0.0"
-                },
-                "isOptional": true
+                }
               },
               {
                 "name": "Version",
                 "value": "1.0"
               }
             ],
-            "type": "Extension/AppInsightsExtension/PartType/FailuresCuratedPinnedChartPart",
-            "asset": {
-              "idInputName": "ResourceId",
-              "type": "ApplicationInsights"
-            }
+            "type": "Extension/AppInsightsExtension/PartType/FailuresCuratedPinnedChartPart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
+            "y": 3
           }
         },
         "8": {
-          "position": {
-            "x": 4,
-            "y": 3,
-            "rowSpan": 5,
-            "colSpan": 7
-          },
           "metadata": {
+            "asset": {
+              "idInputName": "ComponentId",
+              "type": "ApplicationInsights"
+            },
             "inputs": [
               {
                 "name": "ComponentId",
@@ -286,38 +500,34 @@
                 "value": "AnalyticsGrid"
               },
               {
-                "name": "Dimensions",
-                "isOptional": true
+                "isOptional": true,
+                "name": "Dimensions"
               },
               {
-                "name": "DashboardId",
-                "isOptional": true
+                "isOptional": true,
+                "name": "DashboardId"
               },
               {
-                "name": "SpecificChart",
-                "isOptional": true
+                "isOptional": true,
+                "name": "SpecificChart"
               }
             ],
-            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart",
             "settings": {
               "content": {
                 "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
                 "PartTitle": "Denied outbound HTTP Traffic"
               }
             },
-            "asset": {
-              "idInputName": "ComponentId",
-              "type": "ApplicationInsights"
-            }
+            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
+          },
+          "position": {
+            "colSpan": 7,
+            "rowSpan": 5,
+            "x": 4,
+            "y": 3
           }
         },
         "9": {
-          "position": {
-            "x": 0,
-            "y": 5,
-            "rowSpan": 2,
-            "colSpan": 4
-          },
           "metadata": {
             "inputs": [
               {
@@ -325,241 +535,31 @@
                 "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureAppGatewayAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
               },
               {
-                "name": "solutionId",
-                "isOptional": true
+                "isOptional": true,
+                "name": "solutionId"
               },
               {
+                "isOptional": true,
                 "name": "timeInterval",
                 "value": {
                   "_Now": "2019-11-19T12:09:05.945Z",
                   "_duration": 86400000,
                   "_end": null
-                },
-                "isOptional": true
-              },
-              {
-                "name": "timeRange",
-                "binding": "timeRange",
-                "isOptional": true
-              }
-            ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
-          }
-        },
-        "10": {
-          "position": {
-            "x": 0,
-            "y": 7,
-            "rowSpan": 2,
-            "colSpan": 4
-          },
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
-              },
-              {
-                "name": "solutionId",
-                "isOptional": true
-              },
-              {
-                "name": "timeInterval",
-                "value": {
-                  "_Now": "2019-11-19T12:10:07.715Z",
-                  "_duration": 86400000,
-                  "_end": null
-                },
-                "isOptional": true
-              },
-              {
-                "name": "timeRange",
-                "binding": "timeRange",
-                "isOptional": true
-              }
-            ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
-          }
-        },
-        "11": {
-          "position": {
-            "x": 4,
-            "y": 8,
-            "rowSpan": 3,
-            "colSpan": 7
-          },
-          "metadata": {
-            "inputs": [
-              {
-                "name": "ComponentId",
-                "value": {
-                  "SubscriptionId": "84c1a2c7-585a-4753-ad28-97f69618cf12",
-                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
-                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
-                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics"
                 }
               },
               {
-                "name": "Query",
-                "value": "AzureDiagnostics \n| where Category == \"ApplicationGatewayAccessLog\" and httpStatus_d >= 500\n| project TimeGenerated, httpStatus_d, listenerName_s, backendPoolName_s, ruleName_s\n| order by TimeGenerated desc\n"
-              },
-              {
-                "name": "TimeRange",
-                "value": "P1D"
-              },
-              {
-                "name": "Version",
-                "value": "1.0"
-              },
-              {
-                "name": "PartId",
-                "value": "42ad871f-2614-484d-8e7e-0b9a1a522403"
-              },
-              {
-                "name": "PartTitle",
-                "value": "Analytics"
-              },
-              {
-                "name": "PartSubTitle",
-                "value": "${prefix}-${environment}-${suffix}-loganalytics"
-              },
-              {
-                "name": "resourceTypeMode",
-                "value": "workspace"
-              },
-              {
-                "name": "ControlType",
-                "value": "AnalyticsGrid"
-              },
-              {
-                "name": "Dimensions",
-                "isOptional": true
-              },
-              {
-                "name": "DashboardId",
-                "isOptional": true
-              },
-              {
-                "name": "SpecificChart",
-                "isOptional": true
-              }
-            ],
-            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart",
-            "settings": {
-              "content": {
-                "PartTitle": "Errors on HTTP inbound traffic (WAF)",
-                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics"
-              }
-            },
-            "asset": {
-              "idInputName": "ComponentId",
-              "type": "ApplicationInsights"
-            }
-          }
-        },
-        "12": {
-          "position": {
-            "x": 0,
-            "y": 9,
-            "rowSpan": 2,
-            "colSpan": 4
-          },
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/ServiceMap(${prefix}-${environment}-${suffix}-loganalytics)"
-              },
-              {
-                "name": "solutionId",
-                "isOptional": true
-              },
-              {
-                "name": "timeInterval",
-                "value": {
-                  "_Now": "2019-11-20T17:11:43.326Z",
-                  "_duration": 86400000,
-                  "_end": null
-                },
-                "isOptional": true
-              },
-              {
-                "name": "timeRange",
                 "binding": "timeRange",
-                "isOptional": true
+                "isOptional": true,
+                "name": "timeRange"
               }
             ],
             "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
-          }
-        },
-        "13": {
-          "position": {
-            "x": 0,
-            "y": 11,
-            "rowSpan": 2,
-            "colSpan": 4
           },
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/Updates(${prefix}-${environment}-${suffix}-loganalytics)"
-              },
-              {
-                "name": "solutionId",
-                "isOptional": true
-              },
-              {
-                "name": "timeInterval",
-                "value": {
-                  "_Now": "2019-11-19T12:09:05.945Z",
-                  "_duration": 86400000,
-                  "_end": null
-                },
-                "isOptional": true
-              },
-              {
-                "name": "timeRange",
-                "binding": "timeRange",
-                "isOptional": true
-              }
-            ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
-          }
-        },
-        "14": {
           "position": {
-            "x": 0,
-            "y": 13,
+            "colSpan": 4,
             "rowSpan": 2,
-            "colSpan": 4
-          },
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AntiMalware(${prefix}-${environment}-${suffix}-loganalytics)"
-              },
-              {
-                "name": "solutionId",
-                "isOptional": true
-              },
-              {
-                "name": "timeInterval",
-                "value": {
-                  "_Now": "2019-11-20T17:11:43.326Z",
-                  "_duration": 86400000,
-                  "_end": null
-                },
-                "isOptional": true
-              },
-              {
-                "name": "timeRange",
-                "binding": "timeRange",
-                "isOptional": true
-              }
-            ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+            "x": 0,
+            "y": 5
           }
         }
       }
@@ -567,34 +567,34 @@
   },
   "metadata": {
     "model": {
-      "timeRange": {
-        "value": {
-          "relative": {
-            "duration": 24,
-            "timeUnit": 1
-          }
-        },
-        "type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
-      },
       "filterLocale": {
         "value": "en-us"
       },
       "filters": {
         "value": {
           "MsPortalFx_TimeRange": {
-            "model": {
-              "format": "utc",
-              "granularity": "auto",
-              "relative": "24h"
-            },
             "displayCache": {
               "name": "UTC Time",
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-AnalyticsPart-ea8e9735-83a6-4f0d-b8f2-22461b655015",
-              "StartboardPart-AnalyticsPart-ea8e9735-83a6-4f0d-b8f2-22461b65501d"
-            ]
+              "StartboardPart-AnalyticsPart-5b998286-c9fc-4b6a-a828-d8e943666015",
+              "StartboardPart-AnalyticsPart-5b998286-c9fc-4b6a-a828-d8e94366601b"
+            ],
+            "model": {
+              "format": "utc",
+              "granularity": "auto",
+              "relative": "24h"
+            }
+          }
+        }
+      },
+      "timeRange": {
+        "type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange",
+        "value": {
+          "relative": {
+            "duration": 24,
+            "timeUnit": 1
           }
         }
       }

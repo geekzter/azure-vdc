@@ -46,6 +46,7 @@ locals {
   tags                         = merge(
     var.tags,
     map(
+      "branch",                var.branch,
       "environment",           local.environment,
       "suffix",                local.suffix,
       "workspace",             terraform.workspace,

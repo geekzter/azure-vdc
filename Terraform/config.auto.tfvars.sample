@@ -34,3 +34,4 @@ app_devops                     = {
 app_database_template_storage_key = "aaaaaaaaaaaaaaaaaaaaa/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
 dba_login                      = "user@tenant.onmicrosoft.com"
 dba_object_id                  = "00000000-0000-0000-0000-000000000000"
+vso_url                        = "https://online.visualstudio.com/environment/00000000-0000-0000-0000-000000000000"

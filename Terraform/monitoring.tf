@@ -248,5 +248,6 @@ resource "azurerm_dashboard" "vdc_dashboard" {
       iaas_app_url             = local.iaas_app_url
       paas_app_url             = local.paas_app_url
       release_web_url          = var.release_web_url != "" ? var.release_web_url : "https://dev.azure.com/${var.app_devops["account"]}/"
+      vso_url                  = var.vso_url != "" ? var.vso_url : "https://online.visualstudio.com/"
   })
 }
