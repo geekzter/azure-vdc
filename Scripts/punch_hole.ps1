@@ -39,12 +39,12 @@ try {
 }
 
 # Get public IP address
-$ipAddress=$(Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip)
+$ipAddress=$(Invoke-RestMethod https://stat.ripe.net/data/whats-my-ip/data.json | Select-Object -ExpandProperty data | Select-Object -ExpandProperty ip)
 Write-Host "Public IP address is $ipAddress"
 
 # Get block(s) the public IP address belongs to
-$ripe = Invoke-RestMethod "https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress}"
-$ipPrefix = $ripe.data.prefix
+# HACK: We need this to cater for changing public IP addresses e.g. Azure Pipelines Hosted Agents
+$ipPrefix = Invoke-RestMethod https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
 Write-Host "Public IP prefix is $ipPrefix"
 
 # Punch hole in PaaS Firewalls
