@@ -51,6 +51,12 @@ function DeleteArmResources () {
     }
 }
 
+function GetCurrentBranch () {
+    if (Get-Command git -ErrorAction SilentlyContinue) {
+        return git rev-parse --abbrev-ref HEAD 2>$null
+    }
+}
+
 function Invoke (
     [string]$cmd
 ) {

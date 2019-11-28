@@ -54,7 +54,6 @@ if ($appStorageAccount) {
     $storageKey = Get-AzStorageAccountKey -ResourceGroupName $appResourceGroup -AccountName $appStorageAccount | Where-Object {$_.KeyName -eq "key1"} | Select-Object -ExpandProperty Value
     $storageContext = New-AzStorageContext -StorageAccountName $appStorageAccount -StorageAccountKey $storageKey
     Set-AzStorageServiceLoggingProperty -Context $storageContext -ServiceType Blob -LoggingOperations Delete,Read,Write -PassThru 
-    Get-AzStorageServiceLoggingProperty -Context $storageContext -ServiceType Blob 
 }
 if ($appEventHubNamespace) {
     Write-Host "Adding rule for event hub $appStorageAccount to allow $ipAddress..."

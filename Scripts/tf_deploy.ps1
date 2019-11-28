@@ -41,6 +41,8 @@ if (!($workspace)) { Throw "You must supply a value for Workspace" }
 #if (!(Get-Module Az)) { Throw "Az modules not loaded"}
 
 Write-Host $MyInvocation.line -ForegroundColor Green
+Write-Host "Using branch '$(GetCurrentBranch)'"
+
 ### Main routine
 # Configure instrumentation
 Set-PSDebug -trace $trace
@@ -102,6 +104,8 @@ try {
         Copy-Item $file.Value $tfdirectory
     }
 
+    $env:TF_VAR_branch=GetCurrentBranch
+
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
     foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_CFG_*,TF_VAR_*)) {
         $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
@@ -141,7 +145,7 @@ try {
         $forceArgs = "-auto-approve"
     }
 
-    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_paas_app_database_import) -and (Test-Path $varsFile)) {
+    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_branch, TF_VAR_paas_app_database_import) -and (Test-Path $varsFile)) {
         # Load variables from file, if it exists and environment variables have not been set
         $varArgs = "-var-file='$varsFile'"
     }

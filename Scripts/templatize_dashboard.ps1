@@ -80,6 +80,7 @@ $template = $template -Replace "\`'${suffix}\`'", "'`$`{suffix`}'"
 $template = $template -Replace "http[s?]://[\w\.]*iisapp[\w\.]*/", "`$`{iaas_app_url`}"
 $template = $template -Replace "http[s?]://[\w\.]*webapp[\w\.]*/", "`$`{paas_app_url`}"
 $template = $template -Replace "https://dev.azure.com[^`']*`'", "`$`{release_web_url`}`'"
+$template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"
 
 # Check for remnants of tokens that should've been caught
 $enviromentMatches = $template -match $environment
@@ -99,6 +100,7 @@ if ($enviromentMatches -or $suffixMatches) {
 
 if (($DontWrite -eq $false) -or ($DontWrite -eq $null)) {
     $template | Out-File $OutputFilePath
+    Write-Host "Saved template to $OutputFilePath"
 } else {
     Write-Host "Skipped writing template" -ForegroundColor Yellow
 }
