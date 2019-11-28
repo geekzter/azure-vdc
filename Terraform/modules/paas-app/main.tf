@@ -46,7 +46,7 @@ resource "azurerm_storage_account" "app_storage" {
  
   network_rules {
     default_action             = "Deny"
-    bypass                     = ["Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
+    bypass                     = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
     ip_rules                   = var.admin_ip_ranges
     # Allow the Firewall subnet
