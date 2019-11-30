@@ -273,7 +273,7 @@ variable paas_app_database_import {
 }
 variable paas_app_storage_import {
   type                         = bool
-  default                      = false
+  default                      = true
 }
 variable vanity_domainname {
   description                  = "The domain part of the vanity url"
