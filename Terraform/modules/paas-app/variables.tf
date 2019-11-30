@@ -24,6 +24,9 @@ variable iag_subnet_id {}
 variable integrated_subnet_range {}
 variable integrated_subnet_id {}
 variable integrated_vnet_id {}
+variable storage_import {
+  type                         = bool
+}
 variable storage_replication_type {}
 variable waf_subnet_id {}
 
