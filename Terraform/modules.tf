@@ -143,6 +143,7 @@ module paas_app {
   integrated_subnet_id         = lookup(module.paas_spoke_vnet.subnet_ids,"appservice","")
   integrated_subnet_range      = var.vdc_config["paas_spoke_appsvc_subnet"]
   integrated_vnet_id           = module.paas_spoke_vnet.spoke_virtual_network_id
+  storage_import               = var.paas_app_storage_import
   storage_replication_type     = var.app_storage_replication_type
   waf_subnet_id                = azurerm_subnet.waf_subnet.id
 

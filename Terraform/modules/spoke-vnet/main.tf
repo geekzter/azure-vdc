@@ -221,7 +221,7 @@ resource "azurerm_subnet" "subnet" {
   address_prefix               = element(values(var.subnets),count.index)
 # network_security_group_id    = azurerm_network_security_group.spoke_nsg.id # Redundant bit still needed
   route_table_id               = azurerm_route_table.spoke_route_table.id # Redundant bit still needed
-  enforce_private_link_service_network_policies = true
+# enforce_private_link_service_network_policies = true
   count                        = length(var.subnets)
   
   # Create subnet delegation, if requested

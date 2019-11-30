@@ -39,13 +39,20 @@ try {
 }
 
 # Get public IP address
-$ipAddress=$(Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip)
+$ipAddress=$(Invoke-RestMethod https://stat.ripe.net/data/whats-my-ip/data.json | Select-Object -ExpandProperty data | Select-Object -ExpandProperty ip)
 Write-Host "Public IP address is $ipAddress"
+
+# Get block(s) the public IP address belongs to
+# HACK: We need this to cater for changing public IP addresses e.g. Azure Pipelines Hosted Agents
+$ipPrefix = Invoke-RestMethod https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
+Write-Host "Public IP prefix is $ipPrefix"
 
 # Punch hole in PaaS Firewalls
 if ($appStorageAccount) {
     Write-Host "Adding rule for storage account $appStorageAccount to allow $ipAddress..."
     $null = Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipAddress" -ErrorAction SilentlyContinue
+    Write-Host "Adding rule for storage account $appStorageAccount to allow $ipPrefix..."
+    $null = Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipPrefix" -ErrorAction SilentlyContinue
     Write-Host "Network Rules for ${appStorageAccount}:"
     Get-AzStorageAccountNetworkRuleSet -ResourceGroupName $appResourceGroup -Name $appStorageAccount | Select-Object -ExpandProperty IpRules | Sort-Object -Property IPAddressOrRange | Format-Table
 
@@ -53,7 +60,7 @@ if ($appStorageAccount) {
     Write-Host "Enabling blob logging for storage account $appStorageAccount..."
     $storageKey = Get-AzStorageAccountKey -ResourceGroupName $appResourceGroup -AccountName $appStorageAccount | Where-Object {$_.KeyName -eq "key1"} | Select-Object -ExpandProperty Value
     $storageContext = New-AzStorageContext -StorageAccountName $appStorageAccount -StorageAccountKey $storageKey
-    Set-AzStorageServiceLoggingProperty -Context $storageContext -ServiceType Blob -LoggingOperations Delete,Read,Write -PassThru 
+    $null = Set-AzStorageServiceLoggingProperty -Context $storageContext -ServiceType Blob -LoggingOperations Delete,Read,Write -PassThru 
 }
 if ($appEventHubNamespace) {
     Write-Host "Adding rule for event hub $appStorageAccount to allow $ipAddress..."

@@ -37,8 +37,15 @@ locals {
   app_dns_name                 = "${lower(local.environment)}app_web_vm"
   db_hostname                  = "${lower(local.environment)}dbhost"
   db_dns_name                  = "${lower(local.environment)}db_web_vm"
-  admin_ip                     = [chomp(data.http.localpublicip.body)]
-  admin_ip_cidr                = ["${chomp(data.http.localpublicip.body)}/30"] # /32 not allowed in network_rules
+  ipprefixdata                 = jsondecode(chomp(data.http.localpublicprefix.body))
+  admin_ip                     = [
+                                  chomp(data.http.localpublicip.body) 
+  ]
+  admin_ip_cidr                = [
+                                  "${chomp(data.http.localpublicip.body)}/30", # /32 not allowed in network_rules
+                                  # HACK: Complete prefix required when run from an environment where public ip changes e.g. Azure Pipeline Hosted Agents
+                                  local.ipprefixdata.data.prefix 
+  ] 
   admin_ips                    = setunion(local.admin_ip,var.admin_ips)
   admin_ip_ranges              = setunion([for ip in local.admin_ips : format("%s/30", ip)],var.admin_ip_ranges) # /32 not allowed in network_rules
   admin_cidr_ranges            = [for range in local.admin_ip_ranges : cidrsubnet(range,0,0)] # Make sure ranges have correct base address
@@ -73,6 +80,11 @@ data "http" "localpublicip" {
 # Get public IP address of the machine running this terraform template
   url                          = "http://ipinfo.io/ip"
 # url                          = "https://ipapi.co/ip" 
+}
+
+data "http" "localpublicprefix" {
+# Get public IP prefix of the machine running this terraform template
+  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${chomp(data.http.localpublicip.body)}"
 }
 
 # Automation account, used for runbooks
