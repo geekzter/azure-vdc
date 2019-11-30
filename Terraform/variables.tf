@@ -176,11 +176,7 @@ variable vdc_oms_solutions {
 }
 
 variable admin_ip_ranges {
-  default                      = [
-    # HACK
-    "137.116.0.0/15", # Microsoft Azure
-    "104.40.0.0/13", # Microsoft Azure
-  ]
+  default                      = []
 }
 variable admin_ips {
   default                      = []
