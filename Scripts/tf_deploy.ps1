@@ -41,7 +41,7 @@ if (!($workspace)) { Throw "You must supply a value for Workspace" }
 #if (!(Get-Module Az)) { Throw "Az modules not loaded"}
 
 Write-Host $MyInvocation.line -ForegroundColor Green
-Write-Host "Using branch '$(GetCurrentBranch)'"
+PrintCurrentBranch
 
 ### Main routine
 # Configure instrumentation
