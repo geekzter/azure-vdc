@@ -114,7 +114,7 @@
               },
               {
                 "name": "Query",
-                "value": "AzureDiagnostics \n| where Category == \"ApplicationGatewayAccessLog\" and httpStatus_d >= 500\n| project TimeGenerated, httpStatus_d, listenerName_s, backendPoolName_s, ruleName_s\n| order by TimeGenerated desc\n"
+                "value": "// Taken from https://docs.microsoft.com/en-us/azure/firewall/log-analytics-samples\nAzureDiagnostics\n| where Category == \"AzureFirewallApplicationRule\" \n| parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePortInt:int \" \" TempDetails\n| parse TempDetails with \"was \" Action1 \". Reason: \" Rule1\n| parse TempDetails with \"to \" FQDN \":\" TargetPortInt:int \". Action: \" Action2 \".\" *\n| parse TempDetails with * \". Rule Collection: \" RuleCollection2a \". Rule:\" Rule2a\n| parse TempDetails with * \"Deny.\" RuleCollection2b \". Proceeding with\" Rule2b\n| extend TargetPort = tostring(TargetPortInt)\n| extend Action1 = case(Action1 == \"Deny\",\"Deny\",\"Unknown Action\")\n| extend Action = case(Action2 == \"\",Action1,Action2),Rule = case(Rule2a == \"\", case(Rule1 == \"\",case(Rule2b == \"\",\"N/A\", Rule2b),Rule1),Rule2a), \nRuleCollection = case(RuleCollection2b == \"\",case(RuleCollection2a == \"\",\"No rule matched\",RuleCollection2a), RuleCollection2b),FQDN = case(FQDN == \"\", \"N/A\", FQDN),TargetPort = case(TargetPort == \"\", \"N/A\", TargetPort)\n| project TimeGenerated, SourceIP, FQDN, TargetPort, Action ,RuleCollection, Rule\n| order by TimeGenerated desc\n| where Action == \"Deny\"\n"
               },
               {
                 "name": "TimeRange",
@@ -126,7 +126,7 @@
               },
               {
                 "name": "PartId",
-                "value": "42ad871f-2614-484d-8e7e-0b9a1a522403"
+                "value": "dd66a9d3-5b28-4ecf-b169-7dd179535af1"
               },
               {
                 "name": "PartTitle",
@@ -160,16 +160,16 @@
             "settings": {
               "content": {
                 "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
-                "PartTitle": "Errors on HTTP inbound traffic (WAF)"
+                "PartTitle": "Denied outbound HTTP Traffic"
               }
             },
             "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
           },
           "position": {
             "colSpan": 7,
-            "rowSpan": 3,
+            "rowSpan": 5,
             "x": 4,
-            "y": 8
+            "y": 7
           }
         },
         "12": {
@@ -243,6 +243,82 @@
           }
         },
         "14": {
+          "metadata": {
+            "asset": {
+              "idInputName": "ComponentId",
+              "type": "ApplicationInsights"
+            },
+            "inputs": [
+              {
+                "name": "ComponentId",
+                "value": {
+                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
+                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
+                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
+                  "SubscriptionId": "84c1a2c7-585a-4753-ad28-97f69618cf12"
+                }
+              },
+              {
+                "name": "Query",
+                "value": "AzureDiagnostics \n| where Category == \"ApplicationGatewayAccessLog\" and httpStatus_d >= 500\n| project TimeGenerated, httpStatus_d, listenerName_s, backendPoolName_s, ruleName_s\n| order by TimeGenerated desc\n"
+              },
+              {
+                "name": "TimeRange",
+                "value": "P1D"
+              },
+              {
+                "name": "Version",
+                "value": "1.0"
+              },
+              {
+                "name": "PartId",
+                "value": "42ad871f-2614-484d-8e7e-0b9a1a522403"
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics"
+              },
+              {
+                "name": "PartSubTitle",
+                "value": "${prefix}-${environment}-${suffix}-loganalytics"
+              },
+              {
+                "name": "resourceTypeMode",
+                "value": "workspace"
+              },
+              {
+                "name": "ControlType",
+                "value": "AnalyticsGrid"
+              },
+              {
+                "isOptional": true,
+                "name": "Dimensions"
+              },
+              {
+                "isOptional": true,
+                "name": "DashboardId"
+              },
+              {
+                "isOptional": true,
+                "name": "SpecificChart"
+              }
+            ],
+            "settings": {
+              "content": {
+                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
+                "PartTitle": "Errors on HTTP inbound traffic (WAF)"
+              }
+            },
+            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
+          },
+          "position": {
+            "colSpan": 7,
+            "rowSpan": 3,
+            "x": 4,
+            "y": 12
+          }
+        },
+        "15": {
           "metadata": {
             "inputs": [
               {
@@ -453,76 +529,109 @@
         },
         "8": {
           "metadata": {
-            "asset": {
-              "idInputName": "ComponentId",
-              "type": "ApplicationInsights"
-            },
             "inputs": [
               {
-                "name": "ComponentId",
+                "name": "scope",
+                "value": "/subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12"
+              },
+              {
+                "name": "scopeName",
+                "value": "Microsoft Azure Internal Consumption Eric van Wijk"
+              },
+              {
+                "isOptional": true,
+                "name": "view",
                 "value": {
-                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
-                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
-                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
-                  "SubscriptionId": "84c1a2c7-585a-4753-ad28-97f69618cf12"
+                  "accumulated": "true",
+                  "chart": "Area",
+                  "currency": "USD",
+                  "dateRange": "LastMonth",
+                  "displayName": "AccumulatedCosts",
+                  "kpis": [
+                    {
+                      "enabled": true,
+                      "extendedProperties": {
+                        "amount": 2000,
+                        "name": "NormalBudget",
+                        "timeGrain": "Monthly",
+                        "type": "providers"
+                      },
+                      "id": "subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/providers/Microsoft.Consumption/budgets/NormalBudget",
+                      "type": "Budget"
+                    },
+                    {
+                      "enabled": true,
+                      "type": "Forecast"
+                    }
+                  ],
+                  "pivots": [
+                    {
+                      "name": "ServiceName",
+                      "type": "Dimension"
+                    },
+                    {
+                      "name": "ResourceLocation",
+                      "type": "Dimension"
+                    },
+                    {
+                      "name": "ResourceGroupName",
+                      "type": "Dimension"
+                    }
+                  ],
+                  "query": {
+                    "dataSet": {
+                      "aggregation": {
+                        "totalCost": {
+                          "function": "Sum",
+                          "name": "PreTaxCost"
+                        }
+                      },
+                      "filter": {
+                        "And": [
+                          {
+                            "Tags": {
+                              "Name": "application",
+                              "Operator": "In",
+                              "Values": [
+                                "automated vdc"
+                              ]
+                            }
+                          },
+                          {
+                            "Tags": {
+                              "Name": "workspace",
+                              "Operator": "In",
+                              "Values": [
+                                "default"
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "granularity": "Daily",
+                      "sorting": [
+                        {
+                          "direction": "ascending",
+                          "name": "UsageDate"
+                        }
+                      ]
+                    },
+                    "timeframe": "None",
+                    "type": "ActualCost"
+                  },
+                  "scope": "subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12"
                 }
               },
               {
-                "name": "Query",
-                "value": "// Taken from https://docs.microsoft.com/en-us/azure/firewall/log-analytics-samples\nAzureDiagnostics\n| where Category == \"AzureFirewallApplicationRule\" \n| parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePortInt:int \" \" TempDetails\n| parse TempDetails with \"was \" Action1 \". Reason: \" Rule1\n| parse TempDetails with \"to \" FQDN \":\" TargetPortInt:int \". Action: \" Action2 \".\" *\n| parse TempDetails with * \". Rule Collection: \" RuleCollection2a \". Rule:\" Rule2a\n| parse TempDetails with * \"Deny.\" RuleCollection2b \". Proceeding with\" Rule2b\n| extend TargetPort = tostring(TargetPortInt)\n| extend Action1 = case(Action1 == \"Deny\",\"Deny\",\"Unknown Action\")\n| extend Action = case(Action2 == \"\",Action1,Action2),Rule = case(Rule2a == \"\", case(Rule1 == \"\",case(Rule2b == \"\",\"N/A\", Rule2b),Rule1),Rule2a), \nRuleCollection = case(RuleCollection2b == \"\",case(RuleCollection2a == \"\",\"No rule matched\",RuleCollection2a), RuleCollection2b),FQDN = case(FQDN == \"\", \"N/A\", FQDN),TargetPort = case(TargetPort == \"\", \"N/A\", TargetPort)\n| project TimeGenerated, SourceIP, FQDN, TargetPort, Action ,RuleCollection, Rule\n| order by TimeGenerated desc\n| where Action == \"Deny\"\n"
-              },
-              {
-                "name": "TimeRange",
-                "value": "P1D"
-              },
-              {
-                "name": "Version",
-                "value": "1.0"
-              },
-              {
-                "name": "PartId",
-                "value": "dd66a9d3-5b28-4ecf-b169-7dd179535af1"
-              },
-              {
-                "name": "PartTitle",
-                "value": "Analytics"
-              },
-              {
-                "name": "PartSubTitle",
-                "value": "${prefix}-${environment}-${suffix}-loganalytics"
-              },
-              {
-                "name": "resourceTypeMode",
-                "value": "workspace"
-              },
-              {
-                "name": "ControlType",
-                "value": "AnalyticsGrid"
-              },
-              {
                 "isOptional": true,
-                "name": "Dimensions"
-              },
-              {
-                "isOptional": true,
-                "name": "DashboardId"
-              },
-              {
-                "isOptional": true,
-                "name": "SpecificChart"
+                "name": "externalState"
               }
             ],
-            "settings": {
-              "content": {
-                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
-                "PartTitle": "Denied outbound HTTP Traffic"
-              }
-            },
-            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
+            "type": "Extension/Microsoft_Azure_CostManagement/PartType/CostAnalysisPinPart"
           },
           "position": {
-            "colSpan": 7,
-            "rowSpan": 5,
+            "colSpan": 6,
+            "rowSpan": 4,
             "x": 4,
             "y": 3
           }
@@ -578,8 +687,8 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-AnalyticsPart-86fcb482-1db6-43d6-9e8b-4febf97df01b",
-              "StartboardPart-AnalyticsPart-86fcb482-1db6-43d6-9e8b-4febf97df021"
+              "StartboardPart-AnalyticsPart-86fcb482-1db6-43d6-9e8b-4febf97df1f2",
+              "StartboardPart-AnalyticsPart-86fcb482-1db6-43d6-9e8b-4febf97df1f8"
             ],
             "model": {
               "format": "utc",
