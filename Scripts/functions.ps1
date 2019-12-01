@@ -53,7 +53,10 @@ function DeleteArmResources () {
 
 function GetCurrentBranch () {
     if (Get-Command git -ErrorAction SilentlyContinue) {
-        return git rev-parse --abbrev-ref HEAD 2>$null
+        Invoke-Command -ScriptBlock {
+            $Private:ErrorActionPreference = "Continue"
+            return git rev-parse --abbrev-ref HEAD 2>$null
+        }
     }
 }
 
