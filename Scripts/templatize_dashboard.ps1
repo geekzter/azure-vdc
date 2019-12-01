@@ -3,6 +3,7 @@
 param ( 
     [parameter(Mandatory=$false)][string]$InputFile,
     [parameter(Mandatory=$false)][string]$OutputFile="dashboard.tpl",
+    [parameter(Mandatory=$false)][string]$Workspace,
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$ShowTemplate=$false,
     [parameter(Mandatory=$false)][switch]$DontWrite=$false,
@@ -28,15 +29,16 @@ If (!(Test-Path $OutputFilePath) -and !$Force -and !$DontWrite) {
     Write-Host "$OutputFilePath already exists" -ForegroundColor Red
     exit
 }
-# if (!($Environment -and $Prefix -and $Suffix)) {
-#     Write-Host "Please specify token vakues to look for (Environment/Prefix/Suffix)" -ForegroundColor Red
-#     exit
-# }
 
 # Retrieve Azure resources config using Terraform
 try {
     Push-Location $tfdirectory
-    
+    if ($Workspace) {
+        $currentWorkspace = $(terraform workspace show)
+        terraform workspace select $Workspace
+    } else {
+        $Workspace = $(terraform workspace show)
+    }
     Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
 
     Invoke-Command -ScriptBlock {
@@ -52,6 +54,10 @@ try {
         exit 
     }
 } finally {
+    # Ensure this always runs
+    if ($currentWorkspace) {
+        terraform workspace select $currentWorkspace
+    }
     Pop-Location
 }
 
@@ -75,11 +81,14 @@ if ($InputFile) {
 $template = $template -Replace "/subscriptions/........-....-....-................./", "`$`{subscription`}/"
 $template = $template -Replace "${prefix}-", "`$`{prefix`}-"
 $template = $template -Replace "-${environment}-", "-`$`{environment`}-"
+$template = $template -Replace "\`"${environment}\`"", "`"`$`{environment`}`""
 $template = $template -Replace "-${suffix}", "-`$`{suffix`}"
 $template = $template -Replace "\`'${suffix}\`'", "'`$`{suffix`}'"
 $template = $template -Replace "http[s?]://[\w\.]*iisapp[\w\.]*/", "`$`{iaas_app_url`}"
 $template = $template -Replace "http[s?]://[\w\.]*webapp[\w\.]*/", "`$`{paas_app_url`}"
-$template = $template -Replace "https://dev.azure.com[^`']*`'", "`$`{release_web_url`}`'"
+#$template = $template -Replace "https://dev.azure.com[^`']*`'", "`$`{release_web_url`}`'"
+$template = $template -Replace "https://dev.azure.com[^`']*_build[^`']*`'", "`$`{build_web_url`}`'"
+$template = $template -Replace "https://dev.azure.com[^`']*_release[^`']*`'", "`$`{release_web_url`}`'"
 $template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"
 
 # Check for remnants of tokens that should've been caught

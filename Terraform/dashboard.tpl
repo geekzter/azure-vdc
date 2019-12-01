@@ -9,7 +9,7 @@
             "settings": {
               "content": {
                 "settings": {
-                  "content": "__Description__\n<p>\nThis project contains a hub & spoke Virtual Datacenter deployment. \n</p>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
+                  "content": "__Description__\n<p>\nThis project contains a hub & spoke Virtual Datacenter deployment. \n</p>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
                   "subtitle": "",
                   "title": "Automated VDC"
                 }
@@ -35,7 +35,7 @@
               {
                 "isOptional": true,
                 "name": "query",
-                "value": "Resources | where tags['application']=='Automated VDC' and tags['suffix']=='${suffix}'| summarize ResourceCount=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), ResourceGroup=resourceGroup | order by ResourceGroup asc"
+                "value": "Resources | where tags['application']=='Automated VDC' and tags['suffix']=='${suffix}'| summarize Count=count() by Environment=tostring(tags['environment']), Workspace=tostring(tags['workspace']), ResourceGroup=resourceGroup | order by ResourceGroup asc"
               },
               {
                 "isOptional": true,
@@ -55,13 +55,90 @@
             "type": "Extension/HubsExtension/PartType/ArgQueryGridTile"
           },
           "position": {
-            "colSpan": 7,
+            "colSpan": 6,
             "rowSpan": 3,
             "x": 4,
             "y": 0
           }
         },
         "10": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id",
+              "type": "CloudNativeFirewall"
+            },
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/azureFirewalls/${prefix}-${environment}-${suffix}-iag"
+              }
+            ],
+            "type": "Extension/Microsoft_Azure_HybridNetworking/PartType/CloudNativeFirewallPart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 3
+          }
+        },
+        "11": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id",
+              "type": "Website"
+            },
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Web/sites/${prefix}-${environment}-paasapp-${suffix}-appsvc-app"
+              }
+            ],
+            "type": "Extension/WebsitesExtension/PartType/SingleWebsitePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 4
+          }
+        },
+        "12": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureAppGatewayAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-19T12:09:05.945Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
+            "y": 5
+          }
+        },
+        "13": {
           "metadata": {
             "inputs": [
               {
@@ -96,7 +173,154 @@
             "y": 7
           }
         },
-        "11": {
+        "14": {
+          "metadata": {
+            "asset": {
+              "idInputName": "ComponentId",
+              "type": "ApplicationInsights"
+            },
+            "inputs": [
+              {
+                "name": "ComponentId",
+                "value": {
+                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
+                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
+                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
+                  "SubscriptionId": "84c1a2c7-585a-4753-ad28-97f69618cf12"
+                }
+              },
+              {
+                "name": "Query",
+                "value": "// Taken from https://docs.microsoft.com/en-us/azure/firewall/log-analytics-samples\nAzureDiagnostics\n| where Category == \"AzureFirewallApplicationRule\" \n| parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePortInt:int \" \" TempDetails\n| parse TempDetails with \"was \" Action1 \". Reason: \" Rule1\n| parse TempDetails with \"to \" FQDN \":\" TargetPortInt:int \". Action: \" Action2 \".\" *\n| parse TempDetails with * \". Rule Collection: \" RuleCollection2a \". Rule:\" Rule2a\n| parse TempDetails with * \"Deny.\" RuleCollection2b \". Proceeding with\" Rule2b\n| extend TargetPort = tostring(TargetPortInt)\n| extend Action1 = case(Action1 == \"Deny\",\"Deny\",\"Unknown Action\")\n| extend Action = case(Action2 == \"\",Action1,Action2),Rule = case(Rule2a == \"\", case(Rule1 == \"\",case(Rule2b == \"\",\"N/A\", Rule2b),Rule1),Rule2a), \nRuleCollection = case(RuleCollection2b == \"\",case(RuleCollection2a == \"\",\"No rule matched\",RuleCollection2a), RuleCollection2b),FQDN = case(FQDN == \"\", \"N/A\", FQDN),TargetPort = case(TargetPort == \"\", \"N/A\", TargetPort)\n| project TimeGenerated, SourceIP, FQDN, TargetPort, Action ,RuleCollection, Rule\n| order by TimeGenerated desc\n| where Action == \"Deny\"\n"
+              },
+              {
+                "name": "TimeRange",
+                "value": "P1D"
+              },
+              {
+                "name": "Version",
+                "value": "1.0"
+              },
+              {
+                "name": "PartId",
+                "value": "dd66a9d3-5b28-4ecf-b169-7dd179535af1"
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics"
+              },
+              {
+                "name": "PartSubTitle",
+                "value": "${prefix}-${environment}-${suffix}-loganalytics"
+              },
+              {
+                "name": "resourceTypeMode",
+                "value": "workspace"
+              },
+              {
+                "name": "ControlType",
+                "value": "AnalyticsGrid"
+              },
+              {
+                "isOptional": true,
+                "name": "Dimensions"
+              },
+              {
+                "isOptional": true,
+                "name": "DashboardId"
+              },
+              {
+                "isOptional": true,
+                "name": "SpecificChart"
+              }
+            ],
+            "settings": {
+              "content": {
+                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
+                "PartTitle": "Denied outbound HTTP Traffic",
+                "Query": "// Taken from https://docs.microsoft.com/en-us/azure/firewall/log-analytics-samples\nAzureDiagnostics\n| where Category == \"AzureFirewallApplicationRule\" \n| parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePortInt:int \" \" TempDetails\n| parse TempDetails with \"was \" Action1 \". Reason: \" Rule1\n| parse TempDetails with \"to \" FQDN \":\" TargetPortInt:int \". Action: \" Action2 \".\" *\n| parse TempDetails with * \". Rule Collection: \" RuleCollection2a \". Rule:\" Rule2a\n| parse TempDetails with * \"Deny.\" RuleCollection2b \". Proceeding with\" Rule2b\n| extend TargetPort = tostring(TargetPortInt)\n| extend Action1 = case(Action1 == \"Deny\",\"Deny\",\"Unknown Action\")\n| extend Action = case(Action2 == \"\",Action1,Action2),Rule = case(Rule2a == \"\", case(Rule1 == \"\",case(Rule2b == \"\",\"N/A\", Rule2b),Rule1),Rule2a), \nRuleCollection = case(RuleCollection2b == \"\",case(RuleCollection2a == \"\",\"No rule matched\",RuleCollection2a), RuleCollection2b),FQDN = case(FQDN == \"\", \"N/A\", FQDN),Port = case(TargetPort == \"\", \"N/A\", TargetPort)\n| project TimeGenerated, FQDN, SourceIP, Port, Action ,RuleCollection, Rule\n| order by TimeGenerated desc\n| where Action == \"Deny\"\n"
+              }
+            },
+            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
+          },
+          "position": {
+            "colSpan": 6,
+            "rowSpan": 5,
+            "x": 4,
+            "y": 7
+          }
+        },
+        "15": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/ServiceMap(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-20T17:11:43.326Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
+            "y": 9
+          }
+        },
+        "16": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/Updates(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-19T12:09:05.945Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
+            "y": 11
+          }
+        },
+        "17": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -166,83 +390,13 @@
             "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
           },
           "position": {
-            "colSpan": 7,
+            "colSpan": 6,
             "rowSpan": 3,
             "x": 4,
-            "y": 8
+            "y": 12
           }
         },
-        "12": {
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/ServiceMap(${prefix}-${environment}-${suffix}-loganalytics)"
-              },
-              {
-                "isOptional": true,
-                "name": "solutionId"
-              },
-              {
-                "isOptional": true,
-                "name": "timeInterval",
-                "value": {
-                  "_Now": "2019-11-20T17:11:43.326Z",
-                  "_duration": 86400000,
-                  "_end": null
-                }
-              },
-              {
-                "binding": "timeRange",
-                "isOptional": true,
-                "name": "timeRange"
-              }
-            ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
-          },
-          "position": {
-            "colSpan": 4,
-            "rowSpan": 2,
-            "x": 0,
-            "y": 9
-          }
-        },
-        "13": {
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/Updates(${prefix}-${environment}-${suffix}-loganalytics)"
-              },
-              {
-                "isOptional": true,
-                "name": "solutionId"
-              },
-              {
-                "isOptional": true,
-                "name": "timeInterval",
-                "value": {
-                  "_Now": "2019-11-19T12:09:05.945Z",
-                  "_duration": 86400000,
-                  "_end": null
-                }
-              },
-              {
-                "binding": "timeRange",
-                "isOptional": true,
-                "name": "timeRange"
-              }
-            ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
-          },
-          "position": {
-            "colSpan": 4,
-            "rowSpan": 2,
-            "x": 0,
-            "y": 11
-          }
-        },
-        "14": {
+        "18": {
           "metadata": {
             "inputs": [
               {
@@ -277,6 +431,28 @@
             "y": 13
           }
         },
+        "19": {
+          "metadata": {
+            "asset": {
+              "idInputName": "ComponentId",
+              "type": "ApplicationInsights"
+            },
+            "inputs": [
+              {
+                "name": "ComponentId",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Insights/components/${prefix}-${environment}-${suffix}-insights"
+              }
+            ],
+            "isAdapter": true,
+            "type": "Extension/AppInsightsExtension/PartType/AllWebTestsResponseTimeFullGalleryAdapterPart"
+          },
+          "position": {
+            "colSpan": 6,
+            "rowSpan": 4,
+            "x": 4,
+            "y": 15
+          }
+        },
         "2": {
           "metadata": {
             "asset": {
@@ -302,7 +478,7 @@
           "position": {
             "colSpan": 2,
             "rowSpan": 1,
-            "x": 11,
+            "x": 10,
             "y": 0
           }
         },
@@ -324,7 +500,7 @@
           "position": {
             "colSpan": 5,
             "rowSpan": 4,
-            "x": 13,
+            "x": 12,
             "y": 0
           }
         },
@@ -345,8 +521,8 @@
           },
           "position": {
             "colSpan": 5,
-            "rowSpan": 7,
-            "x": 18,
+            "rowSpan": 8,
+            "x": 17,
             "y": 0
           }
         },
@@ -367,8 +543,8 @@
           },
           "position": {
             "colSpan": 5,
-            "rowSpan": 13,
-            "x": 23,
+            "rowSpan": 23,
+            "x": 22,
             "y": 0
           }
         },
@@ -389,11 +565,32 @@
           "position": {
             "colSpan": 2,
             "rowSpan": 1,
-            "x": 11,
+            "x": 10,
             "y": 1
           }
         },
         "7": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id",
+              "type": "Website"
+            },
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Web/sites/${prefix}-${environment}-${suffix}-functions"
+              }
+            ],
+            "type": "Extension/WebsitesExtension/PartType/SingleWebsitePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 2
+          }
+        },
+        "8": {
           "metadata": {
             "asset": {
               "idInputName": "ResourceId",
@@ -451,115 +648,113 @@
             "y": 3
           }
         },
-        "8": {
-          "metadata": {
-            "asset": {
-              "idInputName": "ComponentId",
-              "type": "ApplicationInsights"
-            },
-            "inputs": [
-              {
-                "name": "ComponentId",
-                "value": {
-                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
-                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
-                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
-                  "SubscriptionId": "84c1a2c7-585a-4753-ad28-97f69618cf12"
-                }
-              },
-              {
-                "name": "Query",
-                "value": "// Taken from https://docs.microsoft.com/en-us/azure/firewall/log-analytics-samples\nAzureDiagnostics\n| where Category == \"AzureFirewallApplicationRule\" \n| parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePortInt:int \" \" TempDetails\n| parse TempDetails with \"was \" Action1 \". Reason: \" Rule1\n| parse TempDetails with \"to \" FQDN \":\" TargetPortInt:int \". Action: \" Action2 \".\" *\n| parse TempDetails with * \". Rule Collection: \" RuleCollection2a \". Rule:\" Rule2a\n| parse TempDetails with * \"Deny.\" RuleCollection2b \". Proceeding with\" Rule2b\n| extend TargetPort = tostring(TargetPortInt)\n| extend Action1 = case(Action1 == \"Deny\",\"Deny\",\"Unknown Action\")\n| extend Action = case(Action2 == \"\",Action1,Action2),Rule = case(Rule2a == \"\", case(Rule1 == \"\",case(Rule2b == \"\",\"N/A\", Rule2b),Rule1),Rule2a), \nRuleCollection = case(RuleCollection2b == \"\",case(RuleCollection2a == \"\",\"No rule matched\",RuleCollection2a), RuleCollection2b),FQDN = case(FQDN == \"\", \"N/A\", FQDN),TargetPort = case(TargetPort == \"\", \"N/A\", TargetPort)\n| project TimeGenerated, SourceIP, FQDN, TargetPort, Action ,RuleCollection, Rule\n| order by TimeGenerated desc\n| where Action == \"Deny\"\n"
-              },
-              {
-                "name": "TimeRange",
-                "value": "P1D"
-              },
-              {
-                "name": "Version",
-                "value": "1.0"
-              },
-              {
-                "name": "PartId",
-                "value": "dd66a9d3-5b28-4ecf-b169-7dd179535af1"
-              },
-              {
-                "name": "PartTitle",
-                "value": "Analytics"
-              },
-              {
-                "name": "PartSubTitle",
-                "value": "${prefix}-${environment}-${suffix}-loganalytics"
-              },
-              {
-                "name": "resourceTypeMode",
-                "value": "workspace"
-              },
-              {
-                "name": "ControlType",
-                "value": "AnalyticsGrid"
-              },
-              {
-                "isOptional": true,
-                "name": "Dimensions"
-              },
-              {
-                "isOptional": true,
-                "name": "DashboardId"
-              },
-              {
-                "isOptional": true,
-                "name": "SpecificChart"
-              }
-            ],
-            "settings": {
-              "content": {
-                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
-                "PartTitle": "Denied outbound HTTP Traffic"
-              }
-            },
-            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
-          },
-          "position": {
-            "colSpan": 7,
-            "rowSpan": 5,
-            "x": 4,
-            "y": 3
-          }
-        },
         "9": {
           "metadata": {
             "inputs": [
               {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureAppGatewayAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
+                "name": "scope",
+                "value": "/subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12"
+              },
+              {
+                "name": "scopeName",
+                "value": "Microsoft Azure Internal Consumption Eric van Wijk"
               },
               {
                 "isOptional": true,
-                "name": "solutionId"
-              },
-              {
-                "isOptional": true,
-                "name": "timeInterval",
+                "name": "view",
                 "value": {
-                  "_Now": "2019-11-19T12:09:05.945Z",
-                  "_duration": 86400000,
-                  "_end": null
+                  "accumulated": "true",
+                  "chart": "Area",
+                  "currency": "USD",
+                  "dateRange": "LastMonth",
+                  "displayName": "AccumulatedCosts",
+                  "kpis": [
+                    {
+                      "enabled": true,
+                      "extendedProperties": {
+                        "amount": 2000,
+                        "name": "NormalBudget",
+                        "timeGrain": "Monthly",
+                        "type": "provider"
+                      },
+                      "id": "subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/providers/Microsoft.Consumption/budgets/NormalBudget",
+                      "type": "Budget"
+                    },
+                    {
+                      "enabled": true,
+                      "type": "Forecast"
+                    }
+                  ],
+                  "pivots": [
+                    {
+                      "name": "ServiceName",
+                      "type": "Dimension"
+                    },
+                    {
+                      "name": "ResourceLocation",
+                      "type": "Dimension"
+                    },
+                    {
+                      "name": "ResourceGroupName",
+                      "type": "Dimension"
+                    }
+                  ],
+                  "query": {
+                    "dataSet": {
+                      "aggregation": {
+                        "totalCost": {
+                          "function": "Sum",
+                          "name": "PreTaxCost"
+                        }
+                      },
+                      "filter": {
+                        "And": [
+                          {
+                            "Tags": {
+                              "Name": "application",
+                              "Operator": "In",
+                              "Values": [
+                                "automated vdc"
+                              ]
+                            }
+                          },
+                          {
+                            "Tags": {
+                              "Name": "environment",
+                              "Operator": "In",
+                              "Values": [
+                                "${environment}"
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "granularity": "Daily",
+                      "sorting": [
+                        {
+                          "direction": "ascending",
+                          "name": "UsageDate"
+                        }
+                      ]
+                    },
+                    "timeframe": "None",
+                    "type": "ActualCost"
+                  },
+                  "scope": "subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12"
                 }
               },
               {
-                "binding": "timeRange",
                 "isOptional": true,
-                "name": "timeRange"
+                "name": "externalState"
               }
             ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+            "type": "Extension/Microsoft_Azure_CostManagement/PartType/CostAnalysisPinPart"
           },
           "position": {
-            "colSpan": 4,
-            "rowSpan": 2,
-            "x": 0,
-            "y": 5
+            "colSpan": 6,
+            "rowSpan": 4,
+            "x": 4,
+            "y": 3
           }
         }
       }
@@ -578,8 +773,8 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-AnalyticsPart-5b998286-c9fc-4b6a-a828-d8e943666015",
-              "StartboardPart-AnalyticsPart-5b998286-c9fc-4b6a-a828-d8e94366601b"
+              "StartboardPart-AnalyticsPart-5956a062-f2ad-4864-b54c-3bb211d8e85e",
+              "StartboardPart-AnalyticsPart-5956a062-f2ad-4864-b54c-3bb211d8e864"
             ],
             "model": {
               "format": "utc",
