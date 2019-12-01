@@ -75,11 +75,14 @@ if ($InputFile) {
 $template = $template -Replace "/subscriptions/........-....-....-................./", "`$`{subscription`}/"
 $template = $template -Replace "${prefix}-", "`$`{prefix`}-"
 $template = $template -Replace "-${environment}-", "-`$`{environment`}-"
+$template = $template -Replace "\`"${environment}\`"", "`"`$`{environment`}`""
 $template = $template -Replace "-${suffix}", "-`$`{suffix`}"
 $template = $template -Replace "\`'${suffix}\`'", "'`$`{suffix`}'"
 $template = $template -Replace "http[s?]://[\w\.]*iisapp[\w\.]*/", "`$`{iaas_app_url`}"
 $template = $template -Replace "http[s?]://[\w\.]*webapp[\w\.]*/", "`$`{paas_app_url`}"
-$template = $template -Replace "https://dev.azure.com[^`']*`'", "`$`{release_web_url`}`'"
+#$template = $template -Replace "https://dev.azure.com[^`']*`'", "`$`{release_web_url`}`'"
+$template = $template -Replace "https://dev.azure.com[^`']*_build[^`']*`'", "`$`{build_web_url`}`'"
+$template = $template -Replace "https://dev.azure.com[^`']*_release[^`']*`'", "`$`{release_web_url`}`'"
 $template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"
 
 # Check for remnants of tokens that should've been caught
