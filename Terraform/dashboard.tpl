@@ -554,7 +554,7 @@
                         "amount": 2000,
                         "name": "NormalBudget",
                         "timeGrain": "Monthly",
-                        "type": "providers"
+                        "type": "provider"
                       },
                       "id": "subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/providers/Microsoft.Consumption/budgets/NormalBudget",
                       "type": "Budget"
@@ -599,10 +599,10 @@
                           },
                           {
                             "Tags": {
-                              "Name": "workspace",
+                              "Name": "environment",
                               "Operator": "In",
                               "Values": [
-                                "default"
+                                '${environment}'
                               ]
                             }
                           }
@@ -687,8 +687,8 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-AnalyticsPart-86fcb482-1db6-43d6-9e8b-4febf97df1f2",
-              "StartboardPart-AnalyticsPart-86fcb482-1db6-43d6-9e8b-4febf97df1f8"
+              "StartboardPart-AnalyticsPart-dcb9a3f8-9627-457e-b734-86a8241b315c",
+              "StartboardPart-AnalyticsPart-dcb9a3f8-9627-457e-b734-86a8241b3162"
             ],
             "model": {
               "format": "utc",

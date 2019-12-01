@@ -75,6 +75,7 @@ if ($InputFile) {
 $template = $template -Replace "/subscriptions/........-....-....-................./", "`$`{subscription`}/"
 $template = $template -Replace "${prefix}-", "`$`{prefix`}-"
 $template = $template -Replace "-${environment}-", "-`$`{environment`}-"
+$template = $template -Replace "\`"${environment}\`"", "'`$`{environment`}'"
 $template = $template -Replace "-${suffix}", "-`$`{suffix`}"
 $template = $template -Replace "\`'${suffix}\`'", "'`$`{suffix`}'"
 $template = $template -Replace "http[s?]://[\w\.]*iisapp[\w\.]*/", "`$`{iaas_app_url`}"
