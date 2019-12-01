@@ -9,7 +9,7 @@
             "settings": {
               "content": {
                 "settings": {
-                  "content": "__Description__\n<p>\nThis project contains a hub & spoke Virtual Datacenter deployment. \n</p>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
+                  "content": "__Description__\n<p>\nThis project contains a hub & spoke Virtual Datacenter deployment. \n</p>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
                   "subtitle": "",
                   "title": "Automated VDC"
                 }
@@ -578,8 +578,8 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-AnalyticsPart-5b998286-c9fc-4b6a-a828-d8e943666015",
-              "StartboardPart-AnalyticsPart-5b998286-c9fc-4b6a-a828-d8e94366601b"
+              "StartboardPart-AnalyticsPart-86fcb482-1db6-43d6-9e8b-4febf97df01b",
+              "StartboardPart-AnalyticsPart-86fcb482-1db6-43d6-9e8b-4febf97df021"
             ],
             "model": {
               "format": "utc",

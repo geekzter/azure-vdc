@@ -27,12 +27,16 @@ variable tags {
   }
 } 
 
+variable build_id {
+  description = "The ID of the Build Pipeline that deployed this resource, or created the artefacts"
+  default     = "" 
+}
 variable release_web_url {
   description = "The url of the Release Pipeline that deployed this resource"
   default     = "" 
 }
 variable release_id {
-  description = "The ID Release Pipeline that deployed this resource"
+  description = "The ID of the Release Pipeline that deployed this resource"
   default     = ""
 }
 variable release_user_email {
