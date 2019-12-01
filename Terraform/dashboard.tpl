@@ -602,7 +602,7 @@
                               "Name": "environment",
                               "Operator": "In",
                               "Values": [
-                                '${environment}'
+                                "${environment}"
                               ]
                             }
                           }
