@@ -59,6 +59,12 @@ function GetCurrentBranch () {
         }
     }
 }
+function PrintCurrentBranch () {
+    $branch = GetCurrentBranch
+    if (![string]::IsNullOrEmpty($branch)) {
+        Write-Host "Using branch '$branch'"
+    }
+}
 
 function Invoke (
     [string]$cmd
