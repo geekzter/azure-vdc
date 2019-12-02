@@ -57,7 +57,7 @@ output dashboard_id {
 }
 
 output iaas_app_resource_group {
-  value       = local.iaas_app_resource_group
+  value       = module.iis_app.app_resource_group
 }
 
 output iaas_app_url {
@@ -152,7 +152,11 @@ output paas_app_storage_account_name {
 }
 
 output paas_app_resource_group {
-  value       = local.paas_app_resource_group
+  value       = module.paas_app.app_resource_group
+}
+
+output paas_app_resource_group_short {
+  value       = local.paas_app_resource_group_short
 }
 
 output paas_app_internal_url {

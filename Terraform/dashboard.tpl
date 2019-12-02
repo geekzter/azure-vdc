@@ -65,27 +65,6 @@
           "metadata": {
             "asset": {
               "idInputName": "id",
-              "type": "CloudNativeFirewall"
-            },
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/azureFirewalls/${prefix}-${environment}-${suffix}-iag"
-              }
-            ],
-            "type": "Extension/Microsoft_Azure_HybridNetworking/PartType/CloudNativeFirewallPart"
-          },
-          "position": {
-            "colSpan": 2,
-            "rowSpan": 1,
-            "x": 10,
-            "y": 3
-          }
-        },
-        "11": {
-          "metadata": {
-            "asset": {
-              "idInputName": "id",
               "type": "Website"
             },
             "inputs": [
@@ -100,6 +79,28 @@
             "colSpan": 2,
             "rowSpan": 1,
             "x": 10,
+            "y": 4
+          }
+        },
+        "11": {
+          "metadata": {
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "resourceGroup"
+              },
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-iaasapp-${suffix}"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+          },
+          "position": {
+            "colSpan": 5,
+            "rowSpan": 8,
+            "x": 12,
             "y": 4
           }
         },
@@ -143,6 +144,44 @@
             "inputs": [
               {
                 "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.EventHub/namespaces/${paas_app_resource_group_short}eventhubNamespace"
+              }
+            ],
+            "type": "Extension/Microsoft_Azure_EventHub/PartType/NamespaceOverviewPart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 5
+          }
+        },
+        "14": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id",
+              "type": "StorageAccount"
+            },
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Storage/storageAccounts/${paas_app_resource_group_short}stor"
+              }
+            ],
+            "type": "Extension/Microsoft_Azure_Storage/PartType/StorageAccountPart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 6
+          }
+        },
+        "15": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
                 "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
               },
               {
@@ -173,7 +212,7 @@
             "y": 7
           }
         },
-        "14": {
+        "16": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -250,7 +289,65 @@
             "y": 7
           }
         },
-        "15": {
+        "17": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id"
+            },
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-hub-network"
+              },
+              {
+                "isOptional": true,
+                "name": "resourceId"
+              },
+              {
+                "isOptional": true,
+                "name": "menuid"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 7
+          }
+        },
+        "18": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id"
+            },
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-iaas-spoke-network"
+              },
+              {
+                "isOptional": true,
+                "name": "resourceId"
+              },
+              {
+                "isOptional": true,
+                "name": "menuid"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 8
+          }
+        },
+        "19": {
           "metadata": {
             "inputs": [
               {
@@ -285,7 +382,65 @@
             "y": 9
           }
         },
-        "16": {
+        "2": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id"
+            },
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Compute/virtualMachines/${prefix}-${environment}-${suffix}-bastion"
+              },
+              {
+                "isOptional": true,
+                "name": "resourceId"
+              },
+              {
+                "isOptional": true,
+                "name": "menuid"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 0
+          }
+        },
+        "20": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id"
+            },
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-paas-spoke-network"
+              },
+              {
+                "isOptional": true,
+                "name": "resourceId"
+              },
+              {
+                "isOptional": true,
+                "name": "menuid"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 9
+          }
+        },
+        "21": {
           "metadata": {
             "inputs": [
               {
@@ -320,7 +475,7 @@
             "y": 11
           }
         },
-        "17": {
+        "22": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -396,7 +551,7 @@
             "y": 12
           }
         },
-        "18": {
+        "23": {
           "metadata": {
             "inputs": [
               {
@@ -431,7 +586,7 @@
             "y": 13
           }
         },
-        "19": {
+        "24": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -451,35 +606,6 @@
             "rowSpan": 4,
             "x": 4,
             "y": 15
-          }
-        },
-        "2": {
-          "metadata": {
-            "asset": {
-              "idInputName": "id"
-            },
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Compute/virtualMachines/${prefix}-${environment}-${suffix}-bastion"
-              },
-              {
-                "isOptional": true,
-                "name": "resourceId"
-              },
-              {
-                "isOptional": true,
-                "name": "menuid"
-              }
-            ],
-            "type": "Extension/HubsExtension/PartType/ResourcePart"
-          },
-          "position": {
-            "colSpan": 2,
-            "rowSpan": 1,
-            "x": 10,
-            "y": 0
           }
         },
         "3": {
@@ -514,28 +640,6 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-iaasapp-${suffix}"
-              }
-            ],
-            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
-          },
-          "position": {
-            "colSpan": 5,
-            "rowSpan": 8,
-            "x": 17,
-            "y": 0
-          }
-        },
-        "5": {
-          "metadata": {
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "resourceGroup"
-              },
-              {
-                "isOptional": true,
-                "name": "id",
                 "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}"
               }
             ],
@@ -544,11 +648,11 @@
           "position": {
             "colSpan": 5,
             "rowSpan": 23,
-            "x": 22,
+            "x": 17,
             "y": 0
           }
         },
-        "6": {
+        "5": {
           "metadata": {
             "asset": {
               "idInputName": "id",
@@ -569,7 +673,7 @@
             "y": 1
           }
         },
-        "7": {
+        "6": {
           "metadata": {
             "asset": {
               "idInputName": "id",
@@ -590,7 +694,7 @@
             "y": 2
           }
         },
-        "8": {
+        "7": {
           "metadata": {
             "asset": {
               "idInputName": "ResourceId",
@@ -648,7 +752,7 @@
             "y": 3
           }
         },
-        "9": {
+        "8": {
           "metadata": {
             "inputs": [
               {
@@ -756,6 +860,27 @@
             "x": 4,
             "y": 3
           }
+        },
+        "9": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id",
+              "type": "CloudNativeFirewall"
+            },
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/azureFirewalls/${prefix}-${environment}-${suffix}-iag"
+              }
+            ],
+            "type": "Extension/Microsoft_Azure_HybridNetworking/PartType/CloudNativeFirewallPart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 3
+          }
         }
       }
     }
@@ -773,8 +898,8 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-AnalyticsPart-5956a062-f2ad-4864-b54c-3bb211d8e85e",
-              "StartboardPart-AnalyticsPart-5956a062-f2ad-4864-b54c-3bb211d8e864"
+              "StartboardPart-AnalyticsPart-5e79127e-9fcf-44cf-8790-06e345439025",
+              "StartboardPart-AnalyticsPart-5e79127e-9fcf-44cf-8790-06e34543902b"
             ],
             "model": {
               "format": "utc",

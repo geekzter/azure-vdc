@@ -43,14 +43,15 @@ try {
 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
-        $Script:dashboardID = $(terraform output "dashboard_id"         2>$null)
-        $Script:prefix      = $(terraform output "resource_prefix"      2>$null)
-        $Script:suffix      = $(terraform output "resource_suffix"      2>$null)
-        $Script:environment = $(terraform output "resource_environment" 2>$null)
+        $Script:dashboardID = $(terraform output "dashboard_id"                  2>$null)
+        $Script:appRGShort  = $(terraform output "paas_app_resource_group_short" 2>$null)
+        $Script:prefix      = $(terraform output "resource_prefix"               2>$null)
+        $Script:suffix      = $(terraform output "resource_suffix"               2>$null)
+        $Script:environment = $(terraform output "resource_environment"          2>$null)
     }
 
     if ([string]::IsNullOrEmpty($prefix) -or [string]::IsNullOrEmpty($environment) -or [string]::IsNullOrEmpty($suffix)) {
-        Write-Host "Resources have not yet been created, nothing to do" -ForegroundColor Yellow
+        Write-Host "Resources have not yet been, or are being created. Nothing to do" -ForegroundColor Yellow
         exit 
     }
 } finally {
@@ -79,14 +80,22 @@ if ($InputFile) {
 }
 
 $template = $template -Replace "/subscriptions/........-....-....-................./", "`$`{subscription`}/"
-$template = $template -Replace "${prefix}-", "`$`{prefix`}-"
-$template = $template -Replace "-${environment}-", "-`$`{environment`}-"
-$template = $template -Replace "\`"${environment}\`"", "`"`$`{environment`}`""
-$template = $template -Replace "-${suffix}", "-`$`{suffix`}"
-$template = $template -Replace "\`'${suffix}\`'", "'`$`{suffix`}'"
+if ($prefix) {
+    $template = $template -Replace "${prefix}-", "`$`{prefix`}-"
+}
+if ($environment) {
+    $template = $template -Replace "-${environment}-", "-`$`{environment`}-"
+    $template = $template -Replace "\`"${environment}\`"", "`"`$`{environment`}`""
+}
+if ($suffix) {
+    $template = $template -Replace "-${suffix}", "-`$`{suffix`}"
+    $template = $template -Replace "\`'${suffix}\`'", "'`$`{suffix`}'"
+}
+if ($appRGShort) {
+    $template = $template -Replace "${appRGShort}", "`$`{paas_app_resource_group_short`}"
+}
 $template = $template -Replace "http[s?]://[\w\.]*iisapp[\w\.]*/", "`$`{iaas_app_url`}"
 $template = $template -Replace "http[s?]://[\w\.]*webapp[\w\.]*/", "`$`{paas_app_url`}"
-#$template = $template -Replace "https://dev.azure.com[^`']*`'", "`$`{release_web_url`}`'"
 $template = $template -Replace "https://dev.azure.com[^`']*_build[^`']*`'", "`$`{build_web_url`}`'"
 $template = $template -Replace "https://dev.azure.com[^`']*_release[^`']*`'", "`$`{release_web_url`}`'"
 $template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"

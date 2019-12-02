@@ -15,6 +15,9 @@
 param (
     [parameter(Mandatory=$false)][string]$Workspace,
     [parameter(Mandatory=$false)][switch]$Destroy,
+    [parameter(Mandatory=$false)][switch]$Force=$false,
+    [parameter(Mandatory=$false)][switch]$Wait=$false,
+    [parameter(Mandatory=$false)][int]$Timeout=300,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
@@ -43,6 +46,9 @@ try {
         $tfState.resources = @() # No resources
         $tfState.serial++
         $tfState | ConvertTo-Json | terraform state push -
+        if ($LASTEXITCODE -ne 0) {
+            exit
+        }
         terraform state pull 
     } else {
         Write-Host "Terraform state not valid" -ForegroundColor Red
@@ -59,8 +65,17 @@ try {
 if ($Destroy) {
     AzLogin
     $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
-    if (!(RemoveResourceGroups $resourceGroups)) {
+    if (!(RemoveResourceGroups $resourceGroups -Force $Force)) {
         Write-Host "Nothing found to delete for workspace $Workspace"
     }
-    Get-Job | Where-Object {$_.Command -like "Remove-AzResourceGroup"} | Format-Table -Property Id, Name, State
+    $jobs = Get-Job | Where-Object {$_.Command -like "Remove-AzResourceGroup"}
+    $jobs | Format-Table -Property Id, Name, State
+    if ($Wait) {
+        Write-Host "Waiting for jobs to complete..."
+        $waitStatus = Wait-Job -Job $jobs -Timeout $Timeout
+        if (!$waitStatus) {
+            Write-Host "Jobs did not complete before timeout ($Timeout seconds) expired..." -ForegroundColor Yellow
+        }
+        $jobs | Format-Table -Property Id, Name, State
+    }
 }
