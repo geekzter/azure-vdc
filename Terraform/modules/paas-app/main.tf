@@ -16,6 +16,7 @@ locals {
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
   spoke_vnet_guid_file         = "${path.module}/paas-spoke-vnet-resourceguid.tmp"
 
+  resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
   vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
 
@@ -37,7 +38,7 @@ resource "azurerm_resource_group" "app_rg" {
 }
 
 resource "azurerm_storage_account" "app_storage" {
-  name                         = "${substr(lower(replace(var.resource_group_name,"-","")),0,20)}stor"
+  name                         = "${local.resource_group_name_short}stor"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
   account_kind                 = "StorageV2"
@@ -84,7 +85,7 @@ resource "azurerm_storage_blob" "app_storage_blob_sample" {
 }
 
 resource "azurerm_storage_account" "archive_storage" {
-  name                         = "${substr(lower(replace(var.resource_group_name,"-","")),0,20)}arch"
+  name                         = "${local.resource_group_name_short}arch"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
   account_kind                 = "StorageV2"

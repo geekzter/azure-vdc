@@ -132,7 +132,10 @@ module paas_app {
   admin_ips                    = local.admin_ips
   admin_ip_ranges              = local.admin_cidr_ranges
   admin_username               = var.admin_username
-  management_subnet_ids        = [module.paas_spoke_vnet.bastion_subnet_id,azurerm_subnet.mgmt_subnet.id]
+  management_subnet_ids        = concat(module.paas_spoke_vnet.management_subnet_ids,
+                                 [
+                                 azurerm_subnet.mgmt_subnet.id
+  ])
   database_import              = var.paas_app_database_import
   database_template_storage_key= var.app_database_template_storage_key
   dba_login                    = "Terraform"

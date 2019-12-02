@@ -5,7 +5,7 @@ resource_environment           = "dev"
 location                       = "eastus"
 workspace_location             = "westeurope"
 
-deploy_auto_shutdown           = false
+deploy_auto_shutdown           = true
 deploy_connection_monitors     = false
 deploy_managed_bastion         = true
 deploy_vpn                     = false

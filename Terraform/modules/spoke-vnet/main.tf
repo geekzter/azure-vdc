@@ -291,6 +291,8 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
   service_endpoints            = [
                                  "Microsoft.Web"
   ]
+
+  count                        = var.deploy_managed_bastion ? 1 : 0
 }
 
 resource "azurerm_public_ip" "managed_bastion_pip" {
@@ -299,6 +301,8 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
   resource_group_name          = local.resource_group_name
   allocation_method            = "Static"
   sku                          = "Standard" # Zone redundant
+
+  count                        = var.deploy_managed_bastion ? 1 : 0
 }
 
 resource "azurerm_bastion_host" "managed_bastion" {
@@ -308,8 +312,8 @@ resource "azurerm_bastion_host" "managed_bastion" {
 
   ip_configuration {
     name                       = "configuration"
-    subnet_id                  = azurerm_subnet.managed_bastion_subnet.id
-    public_ip_address_id       = azurerm_public_ip.managed_bastion_pip.id
+    subnet_id                  = azurerm_subnet.managed_bastion_subnet.0.id
+    public_ip_address_id       = azurerm_public_ip.managed_bastion_pip.0.id
   }
 
   count                        = var.deploy_managed_bastion ? 1 : 0
