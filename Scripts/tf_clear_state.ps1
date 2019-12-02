@@ -77,11 +77,13 @@ if ($Destroy) {
             if ($waitStatus) {
                 $stopWatch.Stop()
                 $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+                $jobs | Format-Table -Property Id, Name, State
                 Write-Host "Jobs completed in $elapsed"
             } else {
-                Write-Host "Jobs did not complete before timeout (${Timeout}s) expired" -ForegroundColor Yellow
+                $jobs | Format-Table -Property Id, Name, State
+                Write-Warning "Jobs did not complete before timeout (${Timeout}s) expired"
+                exit 1
             }
-            $jobs | Format-Table -Property Id, Name, State
         }
     } else {
         Write-Host "Nothing found to delete for workspace $Workspace"
