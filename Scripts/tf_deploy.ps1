@@ -14,30 +14,31 @@
 
 ### Arguments
 param ( 
-    [parameter(Mandatory=$false,HelpMessage="Initialize Terraform backend, modules & provider")][switch]$init=$false,
-    [parameter(Mandatory=$false,HelpMessage="Perform Terraform plan stage")][switch]$plan=$false,
-    [parameter(Mandatory=$false,HelpMessage="Perform Terraform validate stage")][switch]$validate=$false,
-    [parameter(Mandatory=$false,HelpMessage="Perform Terraform apply stage (implies plan)")][switch]$apply=$false,
-    [parameter(Mandatory=$false,HelpMessage="Perform Terraform destroy stage")][switch]$destroy=$false,
-    [parameter(Mandatory=$false,HelpMessage="Show Terraform output variables")][switch]$output=$false,
-    [parameter(Mandatory=$false,HelpMessage="Don't show prompts")][switch]$force=$false,
-    [parameter(Mandatory=$false,HelpMessage="Initialize Terraform backend, upgrade modules & provider")][switch]$upgrade=$false,
-    [parameter(Mandatory=$false,HelpMessage="Clears Terraform worksoace before starting")][switch]$clear=$false,
-    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $workspace = "default",
+    [parameter(Mandatory=$false,HelpMessage="Initialize Terraform backend, modules & provider")][switch]$Init=$false,
+    [parameter(Mandatory=$false,HelpMessage="Perform Terraform plan stage")][switch]$Plan=$false,
+    [parameter(Mandatory=$false,HelpMessage="Perform Terraform validate stage")][switch]$Validate=$false,
+    [parameter(Mandatory=$false,HelpMessage="Perform Terraform apply stage (implies plan)")][switch]$Apply=$false,
+    [parameter(Mandatory=$false,HelpMessage="Perform Terraform destroy stage")][switch]$Destroy=$false,
+    [parameter(Mandatory=$false,HelpMessage="Show Terraform output variables")][switch]$Output=$false,
+    [parameter(Mandatory=$false,HelpMessage="Don't show prompts")][switch]$Force=$false,
+    [parameter(Mandatory=$false,HelpMessage="Initialize Terraform backend, upgrade modules & provider")][switch]$Upgrade=$false,
+    [parameter(Mandatory=$false,HelpMessage="Clears Terraform worksoace before starting")][switch]$Clear=$false,
+    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace = "default",
+    [parameter(Mandatory=$false,HelpMessage="Don't use Terraform resource_suffix variable if output exists")][switch]$StickySuffix=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
-    [parameter(Mandatory=$false)][int]$parallelism=10, # Lower this to 10 if you run into rate limits
+    [parameter(Mandatory=$false)][int]$Parallelism=10, # Lower this to 10 if you run into rate limits
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
     [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET,
-    [parameter(Mandatory=$false)][int]$trace=0
+    [parameter(Mandatory=$false)][int]$Trace=0
 ) 
 
 ### Internal Functions
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
 ### Validation
-if (!($workspace)) { Throw "You must supply a value for Workspace" }
+if (!($Workspace)) { Throw "You must supply a value for Workspace" }
 #if (!(Get-Module Az)) { Throw "Az modules not loaded"}
 
 Write-Host $MyInvocation.line -ForegroundColor Green
@@ -45,12 +46,12 @@ PrintCurrentBranch
 
 ### Main routine
 # Configure instrumentation
-Set-PSDebug -trace $trace
+Set-PSDebug -trace $Trace
 if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
     # Increase debug information consistent with Azure Pipeline debug setting
-    $trace = 2
+    $Trace = 2
 }
-switch ($trace) {
+switch ($Trace) {
     0 {
         $Script:informationPreference = "SilentlyContinue"
         $Script:warningPreference = "SilentlyContinue"
@@ -87,13 +88,13 @@ if ($env:TF_LOG_PATH -and (Test-Path $env:TF_LOG_PATH))
 $Script:ErrorActionPreference = "Stop"
 
 $pipeline = ![string]::IsNullOrEmpty($env:AGENT_VERSION)
-if ($pipeline -or $force) {
+if ($pipeline -or $Force) {
     $env:TF_IN_AUTOMATION="true"
     $env:TF_INPUT=0
 }
-$workspaceLowercase = $workspace.ToLower()
-$planFile           = "$workspace.tfplan".ToLower()
-$varsFile           = "$workspace.tfvars".ToLower()
+$WorkspaceLowercase = $Workspace.ToLower()
+$PlanFile           = "$Workspace.tfplan".ToLower()
+$varsFile           = "$Workspace.tfvars".ToLower()
 
 try {
     Push-Location $tfdirectory
@@ -111,38 +112,38 @@ try {
         $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
         Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
     } 
-    if (($trace -gt 0) -or (${env:system.debug} -eq "true")) {
+    if (($Trace -gt 0) -or (${env:system.debug} -eq "true")) {
         Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_CFG_*,TF_VAR_* | Sort-Object -Property Name
     }
 
     terraform -version
-    if ($init -or $upgrade) {
+    if ($Init -or $Upgrade) {
         if([string]::IsNullOrEmpty($env:TF_CFG_backend_storage_account))   { Throw "You must set environment variable TF_CFG_backend_storage_account" }
         $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_CFG_backend_storage_account}`""
-        $initCmd = "terraform init $tfbackendArgs"
-        if ($upgrade) {
-            $initCmd += " -upgrade"
+        $InitCmd = "terraform init $tfbackendArgs"
+        if ($Upgrade) {
+            $InitCmd += " -upgrade"
         }
-        Invoke "`n$initCmd" 
+        Invoke "`n$InitCmd" 
     }
 
     # Workspace can only be selected after init 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
-        terraform workspace new $workspaceLowercase 2>$null
+        terraform workspace new $WorkspaceLowercase 2>$null
     }
-    terraform workspace select $workspaceLowercase
+    terraform workspace select $WorkspaceLowercase
     Write-Host "Terraform workspaces:" -ForegroundColor White
     terraform workspace list
     Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
 
-    if ($validate) {
+    if ($Validate) {
         Invoke "`nterraform validate" 
     }
     
     # Prepare common arguments
-    if ($force) {
-        $forceArgs = "-auto-approve"
+    if ($Force) {
+        $ForceArgs = "-auto-approve"
     }
 
     if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_branch, TF_VAR_paas_app_database_import) -and (Test-Path $varsFile)) {
@@ -150,12 +151,12 @@ try {
         $varArgs = "-var-file='$varsFile'"
     }
 
-    if ($clear) {
+    if ($Clear) {
         # Clear Terraform workspace
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "tf_clear_state.ps1") 
     }
 
-    if ($plan -or $apply -or $destroy) {
+    if ($Plan -or $Apply -or $Destroy) {
         # For Terraform apply, plan & destroy stages we need access to resources, and for destroy as well sometimes
         Write-Host "`nStart VM's, some operations (e.g. adding VM extensions) may fail if they're not started" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "start_vms.ps1") 
@@ -172,15 +173,18 @@ try {
         }
     }
 
-    if ($plan -or $apply) {
+    if ($Plan -or $Apply) {
         SetDatabaseImport
-        Invoke "terraform plan $varArgs -parallelism=$parallelism -out='$planFile'" 
+        if ($StickySuffix) {
+            SetSuffix
+        }
+        Invoke "terraform plan $varArgs -parallelism=$Parallelism -out='$PlanFile'" 
     }
 
-    if ($apply) {
-        if (!$force) {
+    if ($Apply) {
+        if (!$Force) {
             # Prompt to continue
-            Write-Host "If you wish to proceed executing Terraform plan $planFile in workspace $workspaceLowercase, please reply 'yes' - null or N aborts" -ForegroundColor Blue
+            Write-Host "If you wish to proceed executing Terraform plan $PlanFile in workspace $WorkspaceLowercase, please reply 'yes' - null or N aborts" -ForegroundColor Blue
             $proceedanswer = Read-Host 
 
             if ($proceedanswer -ne "yes") {
@@ -189,25 +193,25 @@ try {
             }
         }
 
-        Invoke "terraform apply $forceArgs -parallelism=$parallelism '$planFile'"
+        Invoke "terraform apply $ForceArgs -parallelism=$Parallelism '$PlanFile'"
     }
 
-    if ($output) {
+    if ($Output) {
         Write-Host "`nterraform output" -ForegroundColor Green 
         terraform output
     }
 
-    if (($apply -or $output) -and $pipeline) {
+    if (($Apply -or $Output) -and $pipeline) {
         # Export Terraform output as Pipeline output variables for subsequent tasks
         SetPipelineVariablesFromTerraform
     }
 
-    if ($destroy) {
+    if ($Destroy) {
         # Delete resources created with ARM templates, Terraform doesn't know about those
         DeleteArmResources
 
         # Now let Terraform do it's work
-        Invoke "terraform destroy $forceArgs -parallelism=$parallelism"
+        Invoke "terraform destroy $ForceArgs -parallelism=$Parallelism"
     }
 } catch {
     # Useful info to debug potential network exceptions
