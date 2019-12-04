@@ -228,7 +228,7 @@
                   "Name": "${prefix}-${environment}-${suffix}-loganalytics",
                   "ResourceGroup": "${prefix}-${environment}-${suffix}",
                   "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
-                  "SubscriptionId": "84c1a2c7-585a-4753-ad28-97f69618cf12"
+                  "SubscriptionId": "${subscription_guid}"
                 }
               },
               {
@@ -579,7 +579,7 @@
                   "Name": "${prefix}-${environment}-${suffix}-loganalytics",
                   "ResourceGroup": "${prefix}-${environment}-${suffix}",
                   "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
-                  "SubscriptionId": "84c1a2c7-585a-4753-ad28-97f69618cf12"
+                  "SubscriptionId": "${subscription_guid}"
                 }
               },
               {
@@ -906,7 +906,7 @@
                 "value": {
                   "Name": "${prefix}-${environment}-${suffix}-insights",
                   "ResourceGroup": "${prefix}-${environment}-${suffix}",
-                  "SubscriptionId": "/subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12"
+                  "SubscriptionId": "/subscriptions/${subscription_guid}"
                 }
               },
               {
@@ -953,7 +953,7 @@
             "inputs": [
               {
                 "name": "scope",
-                "value": "/subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12"
+                "value": "/subscriptions/${subscription_guid}"
               },
               {
                 "name": "scopeName",
@@ -977,7 +977,7 @@
                         "timeGrain": "Monthly",
                         "type": "provider"
                       },
-                      "id": "subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/providers/Microsoft.Consumption/budgets/NormalBudget",
+                      "id": "subscriptions/${subscription_guid}/providers/Microsoft.Consumption/budgets/NormalBudget",
                       "type": "Budget"
                     },
                     {
@@ -1040,7 +1040,7 @@
                     "timeframe": "None",
                     "type": "ActualCost"
                   },
-                  "scope": "subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12"
+                  "scope": "subscriptions/${subscription_guid}"
                 }
               },
               {

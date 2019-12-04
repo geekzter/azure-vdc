@@ -87,6 +87,9 @@ if ($environment) {
     $template = $template -Replace "-${environment}-", "-`$`{environment`}-"
     $template = $template -Replace "\`"${environment}\`"", "`"`$`{environment`}`""
 }
+if ($subscription) {
+    $template = $template -Replace "${subscription}", "`$`{subscription_guid`}"
+}
 if ($suffix) {
     $template = $template -Replace "-${suffix}", "-`$`{suffix`}"
     $template = $template -Replace "\`'${suffix}\`'", "'`$`{suffix`}'"
@@ -102,18 +105,23 @@ $template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{v
 
 # Check for remnants of tokens that should've been caught
 $enviromentMatches = $template -match $environment
+$subscriptionMatches = $template -match $subscription
 $suffixMatches = $template -match $suffix
 if ($enviromentMatches) {
     Write-Host "Environment value '$environment' found in output:" -ForegroundColor Red
     $enviromentMatches
 }
+if ($subscriptionMatches) {
+    Write-Host "Subscription GUID '$subscription' found in output:" -ForegroundColor Red
+    $subscriptionMatches
+}
 if ($suffixMatches) {
     Write-Host "Suffix value '$suffix' found in output:" -ForegroundColor Red
     $suffixMatches
 }
-if ($enviromentMatches -or $suffixMatches) {
+if ($enviromentMatches -or $subscriptionMatches -or $suffixMatches) {
     Write-Host "Aborting" -ForegroundColor Red
-    exit
+    exit 1
 }
 
 if (($DontWrite -eq $false) -or ($DontWrite -eq $null)) {
