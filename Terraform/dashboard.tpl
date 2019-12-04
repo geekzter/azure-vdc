@@ -533,6 +533,67 @@
         },
         "20": {
           "metadata": {
+            "asset": {
+              "idInputName": "ComponentId",
+              "type": "ApplicationInsights"
+            },
+            "inputs": [
+              {
+                "name": "ComponentId",
+                "value": "Network Insights AppGateways Minified"
+              },
+              {
+                "isOptional": true,
+                "name": "ResourceIds",
+                "value": [
+                  "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.network/applicationgateways/${prefix}-${environment}-${suffix}-waf"
+                ]
+              },
+              {
+                "isOptional": true,
+                "name": "Type",
+                "value": "workbook"
+              },
+              {
+                "isOptional": true,
+                "name": "TimeContext"
+              },
+              {
+                "isOptional": true,
+                "name": "ConfigurationId",
+                "value": "Community-Workbooks/Network Insights/NetworkInsights-AppGatewayMetrics-Minified"
+              },
+              {
+                "isOptional": true,
+                "name": "ViewerMode"
+              },
+              {
+                "isOptional": true,
+                "name": "GalleryResourceType",
+                "value": "Network Insights AppGateways Minified"
+              },
+              {
+                "isOptional": true,
+                "name": "Version",
+                "value": "1.0"
+              }
+            ],
+            "type": "Extension/AppInsightsExtension/PartType/NotebookPinnedPart",
+            "viewState": {
+              "content": {
+                "configurationId": "Community-Workbooks/Network Insights/NetworkInsights-AppGatewayMetrics-Minified"
+              }
+            }
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 2,
+            "x": 10,
+            "y": 10
+          }
+        },
+        "21": {
+          "metadata": {
             "inputs": [
               {
                 "name": "id",
@@ -566,7 +627,7 @@
             "y": 11
           }
         },
-        "21": {
+        "22": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -642,7 +703,7 @@
             "y": 12
           }
         },
-        "22": {
+        "23": {
           "metadata": {
             "inputs": [
               {
@@ -677,7 +738,7 @@
             "y": 13
           }
         },
-        "23": {
+        "24": {
           "metadata": {
             "inputs": [
               {
@@ -712,7 +773,7 @@
             "y": 15
           }
         },
-        "24": {
+        "25": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -734,7 +795,7 @@
             "y": 15
           }
         },
-        "25": {
+        "26": {
           "metadata": {
             "inputs": [
               {
@@ -769,7 +830,7 @@
             "y": 17
           }
         },
-        "26": {
+        "27": {
           "metadata": {
             "inputs": [
               {
@@ -1094,10 +1155,10 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-AnalyticsPart-7ff75dcc-25e3-463e-8e26-23b484e2e1a7",
-              "StartboardPart-AnalyticsPart-7ff75dcc-25e3-463e-8e26-23b484e2e1b3",
-              "StartboardPart-MonitorChartPart-7ff75dcc-25e3-463e-8e26-23b484e2e1ba",
-              "StartboardPart-ApplicationMapPart-7ff75dcc-25e3-463e-8e26-23b484e2e2c4"
+              "StartboardPart-ApplicationMapPart-70f8206d-4fcd-4d84-aa63-4b7dc897a828",
+              "StartboardPart-AnalyticsPart-70f8206d-4fcd-4d84-aa63-4b7dc897a82e",
+              "StartboardPart-MonitorChartPart-70f8206d-4fcd-4d84-aa63-4b7dc897a834",
+              "StartboardPart-AnalyticsPart-70f8206d-4fcd-4d84-aa63-4b7dc897a83a"
             ],
             "model": {
               "format": "utc",

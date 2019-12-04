@@ -116,7 +116,7 @@ variable vdc_oms_solutions {
     "AzureAutomation",
   # "AzureCdnCoreAnalytics",
   # "AzureDataFactoryAnalytics",
-  # "AzureNetworking", # Depricated
+    "AzureNetworking", # Depricated
     "AzureNSGAnalytics", # Depricated
   # "AzureSecurityOfThings",
     "AzureSQLAnalytics",
@@ -144,7 +144,7 @@ variable vdc_oms_solutions {
   # "LogicAppsManagement",
     "LogManagement",
   # "Microsoft365Analytics",
-  # "NetworkMonitoring",
+    "NetworkMonitoring",
   # "Office365",
     "ProcessInvestigator",
   # "SCOMAssessment",
@@ -308,15 +308,15 @@ variable deploy_auto_shutdown {
   type                         = bool
 }
 
-variable deploy_connection_monitors {
-  description                  = "Whether to deploy connection monitors"
-  default                      = false
-  type                         = bool
-}
-
 variable deploy_managed_bastion {
   description                  = "Whether to deploy the Managed Bastion (preview)"
   default                      = true
+  type                         = bool
+}
+
+variable deploy_network_watcher {
+  description                  = "Whether to deploy connection monitors"
+  default                      = false
   type                         = bool
 }
 

@@ -6,7 +6,7 @@ location                       = "eastus"
 workspace_location             = "westeurope"
 
 deploy_auto_shutdown           = true
-deploy_connection_monitors     = false
+deploy_network_watcher         = false
 deploy_managed_bastion         = true
 deploy_vpn                     = false
 paas_app_storage_import        = true

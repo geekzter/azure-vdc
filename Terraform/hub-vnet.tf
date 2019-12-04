@@ -41,6 +41,17 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
   }
 }
 
+resource null_resource flow_logs {
+  # TODO: Use terraform resource
+  provisioner "local-exec" {
+    command                    = "Set-AzNetworkWatcherConfigFlowLog -NetworkWatcherName ${azurerm_network_watcher.vdc_watcher.0.name} -ResourceGroupName ${azurerm_network_watcher.vdc_watcher.0.resource_group_name} -TargetResourceId ${azurerm_network_security_group.mgmt_nsg.id} -StorageAccountId ${azurerm_storage_account.vdc_diag_storage.id} -WorkspaceGUID ${azurerm_log_analytics_workspace.vcd_workspace.workspace_id} -WorkspaceResourceId ${azurerm_log_analytics_workspace.vcd_workspace.id} -WorkspaceLocation ${local.workspace_location} -EnableFlowLog $true -EnableTrafficAnalytics"
+    interpreter                = ["pwsh", "-Command"]
+  }
+
+  count                        = var.deploy_network_watcher ? 1 : 0
+  depends_on                   = [azurerm_network_security_group.mgmt_nsg]
+}
+
 # ******************* Routing ******************* #
 resource "azurerm_route_table" "mgmt_route_table" {
   name                        = "${azurerm_resource_group.vdc_rg.name}-mgmt-routes"

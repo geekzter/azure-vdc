@@ -9,6 +9,9 @@ variable bastion_subnet_range {}
 variable deploy_managed_bastion {
   type                         = bool
 }
+variable deploy_network_watcher {
+  type                         = bool
+}
 variable dns_servers {
   default                      = []
 }
@@ -37,3 +40,7 @@ variable use_hub_gateway {
 
 variable diagnostics_storage_id {}
 variable diagnostics_workspace_resource_id {}
+variable diagnostics_workspace_workspace_id {}
+variable network_watcher_name {}
+variable network_watcher_resource_group_name {}
+variable workspace_location {}
