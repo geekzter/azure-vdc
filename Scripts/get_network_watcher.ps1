@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+# No longer used
 
 param ( 
     [parameter(Mandatory=$true)][string]$Location,

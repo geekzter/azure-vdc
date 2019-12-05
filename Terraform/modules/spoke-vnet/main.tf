@@ -215,10 +215,10 @@ resource "azurerm_network_security_group" "spoke_nsg" {
 }
 
 resource null_resource flow_logs {
-  # TODO: Use terraform resource
+  # TODO: Use azurerm_network_watcher_flow_log resource, once available
   provisioner "local-exec" {
     command                    = "Set-AzNetworkWatcherConfigFlowLog -NetworkWatcherName ${var.network_watcher_name} -ResourceGroupName ${var.network_watcher_resource_group_name} -TargetResourceId ${azurerm_network_security_group.spoke_nsg.id} -StorageAccountId ${var.diagnostics_storage_id} -WorkspaceGUID ${var.diagnostics_workspace_workspace_id} -WorkspaceResourceId ${var.diagnostics_workspace_resource_id} -WorkspaceLocation ${var.workspace_location} -EnableFlowLog $true -EnableTrafficAnalytics"
-    interpreter                = ["pwsh", "-Command"]
+    interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
   count                        = var.deploy_network_watcher ? 1 : 0
@@ -230,8 +230,8 @@ resource "azurerm_subnet" "subnet" {
   virtual_network_name         = azurerm_virtual_network.spoke_vnet.name
   resource_group_name          = local.resource_group_name
   address_prefix               = element(values(var.subnets),count.index)
-  network_security_group_id    = azurerm_network_security_group.spoke_nsg.id # Redundant bit still needed
-  route_table_id               = azurerm_route_table.spoke_route_table.id # Redundant bit still needed
+  network_security_group_id    = azurerm_network_security_group.spoke_nsg.id # Depricated but still needed
+  route_table_id               = azurerm_route_table.spoke_route_table.id # Depricated but still needed
 # enforce_private_link_service_network_policies = true
   count                        = length(var.subnets)
   

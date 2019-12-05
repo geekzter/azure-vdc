@@ -42,14 +42,14 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
 }
 
 resource null_resource flow_logs {
-  # TODO: Use terraform resource
+  # TODO: Use azurerm_network_watcher_flow_log resource, once available
   provisioner "local-exec" {
-    command                    = "Set-AzNetworkWatcherConfigFlowLog -NetworkWatcherName ${azurerm_network_watcher.vdc_watcher.0.name} -ResourceGroupName ${azurerm_network_watcher.vdc_watcher.0.resource_group_name} -TargetResourceId ${azurerm_network_security_group.mgmt_nsg.id} -StorageAccountId ${azurerm_storage_account.vdc_diag_storage.id} -WorkspaceGUID ${azurerm_log_analytics_workspace.vcd_workspace.workspace_id} -WorkspaceResourceId ${azurerm_log_analytics_workspace.vcd_workspace.id} -WorkspaceLocation ${local.workspace_location} -EnableFlowLog $true -EnableTrafficAnalytics"
-    interpreter                = ["pwsh", "-Command"]
+    command                    = "Set-AzNetworkWatcherConfigFlowLog -NetworkWatcherName ${local.network_watcher_name} -ResourceGroupName ${local.network_watcher_resource_group} -TargetResourceId ${azurerm_network_security_group.mgmt_nsg.id} -StorageAccountId ${azurerm_storage_account.vdc_diag_storage.id} -WorkspaceGUID ${azurerm_log_analytics_workspace.vcd_workspace.workspace_id} -WorkspaceResourceId ${azurerm_log_analytics_workspace.vcd_workspace.id} -WorkspaceLocation ${local.workspace_location} -EnableFlowLog $true -EnableTrafficAnalytics"
+    interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
   count                        = var.deploy_network_watcher ? 1 : 0
-  depends_on                   = [azurerm_network_security_group.mgmt_nsg]
+  depends_on                   = [azurerm_network_security_group.mgmt_nsg,null_resource.network_watcher]
 }
 
 # ******************* Routing ******************* #

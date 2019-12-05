@@ -27,6 +27,11 @@ resource "azurerm_log_analytics_workspace" "vcd_workspace" {
   retention_in_days            = 90 
 
   tags                         = local.tags
+
+  depends_on                   = [
+                                  # HACK: Not an actual dependency, but ensures this is available for flow logs, that are also dependent on this workspace
+                                  null_resource.network_watcher 
+                                 ]
 }
 
 resource "azurerm_log_analytics_linked_service" "automation" {
@@ -150,38 +155,26 @@ resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
 }
 
 # Check if network watcher exists, there can only be one per region
-data external network_watcher {
-  program                      = ["pwsh", "-nop", "-Command",
-                                  "../Scripts/get_network_watcher.ps1",
-                                  "-Location",azurerm_resource_group.vdc_rg.location,
-                                  "-SubscriptionId",data.azurerm_subscription.primary.subscription_id,
-                                 ]
-}
-
-# Relies on ARM_PROVIDER_STRICT=false
-resource "azurerm_resource_group" "network_watcher" {
-  name                         = "NetworkWatcherRG"
-  location                     = var.workspace_location
-
-  count                        = var.deploy_network_watcher ? (contains(keys(data.external.network_watcher.result),"name") ? 0 : 1) : 0
-  tags                         = local.tags
-}
-
-# TODO: Issue with monitoring connections can cause deployment to fail when apply is repeatedly run
-resource "azurerm_network_watcher" "vdc_watcher" {
-# Singleton deployment, so use canonical name and resource group. Relies on ARM_PROVIDER_STRICT=false
-  name                         = "NetworkWatcher_${azurerm_resource_group.vdc_rg.location}"
-  location                     = azurerm_resource_group.vdc_rg.location
-# resource_group_name          = azurerm_resource_group.vdc_rg.name
-  resource_group_name          = azurerm_resource_group.network_watcher.0.name
-
-  count                        = var.deploy_network_watcher ? (contains(keys(data.external.network_watcher.result),"name") ? 0 : 1) : 0
-  tags                         = local.tags
-}
+# data external network_watcher {
+#   program                      = ["pwsh", "-nop", "-Command",
+#                                   "../Scripts/get_network_watcher.ps1",
+#                                   "-Location",azurerm_resource_group.vdc_rg.location,
+#                                   "-SubscriptionId",data.azurerm_subscription.primary.subscription_id,
+#                                  ]
+# }
 
 locals {
-  network_watcher_name         = var.deploy_network_watcher ? (contains(keys(data.external.network_watcher.result),"name") ? data.external.network_watcher.result["name"] : azurerm_network_watcher.vdc_watcher.0.name) : null
-  network_watcher_resource_group = var.deploy_network_watcher ? (contains(keys(data.external.network_watcher.result),"resourceGroup") ? data.external.network_watcher.result["resourceGroup"] : azurerm_resource_group.network_watcher.0.name) : null
+  network_watcher_name         = "NetworkWatcher_${var.location}"
+  network_watcher_resource_group = "NetworkWatcherRG"
+}
+
+resource null_resource network_watcher {
+  provisioner "local-exec" {
+    command                    = "../Scripts/create_network_watcher.ps1 -Location ${var.location} -NetworkWatcherName ${local.network_watcher_name} -ResourceGroupName ${local.network_watcher_resource_group}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  count                        = var.deploy_network_watcher ? 1 : 0
 }
 
 /*
