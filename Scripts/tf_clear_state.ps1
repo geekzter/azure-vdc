@@ -65,17 +65,27 @@ try {
 if ($Destroy) {
     AzLogin
     $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
-    if (!(RemoveResourceGroups $resourceGroups -Force $Force)) {
-        Write-Host "Nothing found to delete for workspace $Workspace"
-    }
-    $jobs = Get-Job | Where-Object {$_.Command -like "Remove-AzResourceGroup"}
-    $jobs | Format-Table -Property Id, Name, State
-    if ($Wait) {
-        Write-Host "Waiting for jobs to complete..."
-        $waitStatus = Wait-Job -Job $jobs -Timeout $Timeout
-        if (!$waitStatus) {
-            Write-Host "Jobs did not complete before timeout ($Timeout seconds) expired..." -ForegroundColor Yellow
-        }
+    if ((RemoveResourceGroups $resourceGroups -Force $Force)) {
+        $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
+        $stopWatch.Start()
+
+        $jobs = Get-Job | Where-Object {$_.Command -like "Remove-AzResourceGroup"}
         $jobs | Format-Table -Property Id, Name, State
+        if ($Wait) {
+            Write-Host "Waiting for jobs to complete..."
+            $waitStatus = Wait-Job -Job $jobs -Timeout $Timeout
+            if ($waitStatus) {
+                $stopWatch.Stop()
+                $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+                $jobs | Format-Table -Property Id, Name, State
+                Write-Host "Jobs completed in $elapsed"
+            } else {
+                $jobs | Format-Table -Property Id, Name, State
+                Write-Warning "Jobs did not complete before timeout (${Timeout}s) expired"
+                exit 1
+            }
+        }
+    } else {
+        Write-Host "Nothing found to delete for workspace $Workspace"
     }
 }

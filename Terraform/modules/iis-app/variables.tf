@@ -16,7 +16,7 @@ variable tags {
   type        = map
 } 
 
-variable deploy_connection_monitors {
+variable deploy_network_watcher {
   description                  = "Whether to deploy connection monitors"
   default                      = false
   type                         = bool
@@ -32,9 +32,7 @@ variable diagnostics_workspace_workspace_id {
   description                  = "The workspace id of the Log Analytics workspace to use"
 }
 variable diagnostics_workspace_key {}
-variable diagnostics_watcher_id {
-  description                  = "The id of the network watcher to use"
-}
+variable network_watcher_name {}
 
 variable app_web_vms {}
 

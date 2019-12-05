@@ -214,13 +214,24 @@ resource "azurerm_network_security_group" "spoke_nsg" {
   }
 }
 
+resource null_resource flow_logs {
+  # TODO: Use azurerm_network_watcher_flow_log resource, once available
+  provisioner "local-exec" {
+    command                    = "Set-AzNetworkWatcherConfigFlowLog -NetworkWatcherName ${var.network_watcher_name} -ResourceGroupName ${var.network_watcher_resource_group_name} -TargetResourceId ${azurerm_network_security_group.spoke_nsg.id} -StorageAccountId ${var.diagnostics_storage_id} -WorkspaceGUID ${var.diagnostics_workspace_workspace_id} -WorkspaceResourceId ${var.diagnostics_workspace_resource_id} -WorkspaceLocation ${var.workspace_location} -EnableFlowLog $true -EnableTrafficAnalytics"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  count                        = var.deploy_network_watcher ? 1 : 0
+  depends_on                   = [azurerm_network_security_group.spoke_nsg]
+}
+
 resource "azurerm_subnet" "subnet" {
   name                         = element(keys(var.subnets),count.index)
   virtual_network_name         = azurerm_virtual_network.spoke_vnet.name
   resource_group_name          = local.resource_group_name
   address_prefix               = element(values(var.subnets),count.index)
-# network_security_group_id    = azurerm_network_security_group.spoke_nsg.id # Redundant bit still needed
-  route_table_id               = azurerm_route_table.spoke_route_table.id # Redundant bit still needed
+  network_security_group_id    = azurerm_network_security_group.spoke_nsg.id # Depricated but still needed
+  route_table_id               = azurerm_route_table.spoke_route_table.id # Depricated but still needed
 # enforce_private_link_service_network_policies = true
   count                        = length(var.subnets)
   
@@ -248,13 +259,13 @@ resource "azurerm_subnet_route_table_association" "subnet_routes" {
   depends_on                   = [azurerm_virtual_network_peering.spoke_to_hub]
 }
 
-# resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
-#   subnet_id                    = "${element(azurerm_subnet.subnet.*.id,count.index)}"
-#   network_security_group_id    = "${azurerm_network_security_group.spoke_nsg.id}"
-#   count                        = "${length(var.subnets)}"
+resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
+  subnet_id                    = element(azurerm_subnet.subnet.*.id,count.index)
+  network_security_group_id    = azurerm_network_security_group.spoke_nsg.id
+  count                        = length(var.subnets)
 
-#   depends_on                   = [azurerm_virtual_network_peering.spoke_to_hub]
-# }
+  depends_on                   = [azurerm_virtual_network_peering.spoke_to_hub]
+}
 
 resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
   name                         = "${azurerm_network_security_group.spoke_nsg.name}-logs"
@@ -279,7 +290,6 @@ resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
       enabled                  = false
     }
   }
- 
 }
 
 # This is the tempale for Managed Bastion, IaaS bastion is defined in management.tf

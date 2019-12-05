@@ -83,7 +83,7 @@ function RemoveResourceGroups (
     if ($resourceGroups) {
         $resourceGroupNames = $resourceGroups | Select-Object -ExpandProperty ResourceGroupName
         if (!$Force) {
-            Write-Host "If you wish to proceed removing these resource groups:`n$resourceGroupNames `nplease reply 'yes' - null or N aborts" -ForegroundColor Blue
+            Write-Host "If you wish to proceed removing these resource groups:`n$resourceGroupNames `nplease reply 'yes' - null or N aborts" -ForegroundColor Cyan
             $proceedanswer = Read-Host
             if ($proceedanswer -ne "yes") {
                 Write-Host "`nSkipping $resourceGroupNames" -ForegroundColor Yellow
@@ -112,6 +112,25 @@ function SetDatabaseImport () {
         $env:TF_VAR_paas_app_database_import="false"
         Write-Host "Database $sqlDatabase already exists. TF_VAR_paas_app_database_import=$env:TF_VAR_paas_app_database_import"
     }
+}
+
+function SetSuffix () {
+    # Don't change the suffix on paln/apply
+    # BUG: This can cause problems when cycling apply/destroy repeatedly within the same shell lifetime
+    #      TF_VAR_resource_suffix will be used for subsequent apply's, including different workspaces
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        $script:resourceSuffix = $(terraform output "resource_suffix" 2>$null)
+    }
+
+    if (![string]::IsNullOrEmpty($resourceSuffix)) {
+        # Re-use previously defined suffix, to prevent resources from being recreated
+        $env:TF_VAR_resource_suffix=$resourceSuffix
+        Write-Host "Suffix already set. TF_VAR_resource_suffix=$env:TF_VAR_resource_suffix"
+    }
+}
+function UnsetSuffix () {
+    $env:TF_VAR_resource_suffix=$null    
 }
 
 function SetPipelineVariablesFromTerraform () {

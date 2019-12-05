@@ -26,6 +26,7 @@ module iaas_spoke_vnet {
 
   address_space                = var.vdc_config["iaas_spoke_range"]
   bastion_subnet_range         = var.vdc_config["iaas_spoke_bastion_subnet"]
+  deploy_network_watcher       = var.deploy_network_watcher
   deploy_managed_bastion       = var.deploy_managed_bastion
   dns_servers                  = azurerm_virtual_network.hub_vnet.dns_servers
   enable_routetable_for_subnets = ["app","data"]
@@ -48,6 +49,10 @@ module iaas_spoke_vnet {
 
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
+  diagnostics_workspace_workspace_id = azurerm_log_analytics_workspace.vcd_workspace.workspace_id
+  network_watcher_name         = local.network_watcher_name
+  network_watcher_resource_group_name = local.network_watcher_resource_group
+  workspace_location           = local.workspace_location
 }
 
 locals {
@@ -80,13 +85,14 @@ module iis_app {
   app_db_vm_number             = var.app_db_vm_number
   app_subnet_id                = lookup(module.iaas_spoke_vnet.subnet_ids,"app","")
   data_subnet_id               = lookup(module.iaas_spoke_vnet.subnet_ids,"data","")
-  deploy_connection_monitors   = var.deploy_connection_monitors
-  vm_agent_dependency     = local.vm_agent_dependency
+  deploy_network_watcher       = var.deploy_network_watcher
+  vm_agent_dependency          = local.vm_agent_dependency
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
-  diagnostics_watcher_id       = var.deploy_connection_monitors ? azurerm_network_watcher.vdc_watcher[0].id : null
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
   diagnostics_workspace_workspace_id = azurerm_log_analytics_workspace.vcd_workspace.workspace_id
   diagnostics_workspace_key    = azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key
+  network_watcher_name         = local.network_watcher_name
+# network_watcher_resource_group_name = local.network_watcher_resource_group
 }
 
 module managed_bastion_hub {
@@ -164,6 +170,7 @@ module paas_spoke_vnet {
   address_space                = var.vdc_config["paas_spoke_range"]
   bastion_subnet_range         = var.vdc_config["paas_spoke_bastion_subnet"]
   deploy_managed_bastion       = var.deploy_managed_bastion
+  deploy_network_watcher       = var.deploy_network_watcher
   dns_servers                  = azurerm_virtual_network.hub_vnet.dns_servers
   enable_routetable_for_subnets = []
   gateway_ip_address           = azurerm_firewall.iag.ip_configuration.0.private_ip_address # Delays provisioning to start after Azure FW is provisioned
@@ -186,4 +193,8 @@ module paas_spoke_vnet {
 
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
+  diagnostics_workspace_workspace_id = azurerm_log_analytics_workspace.vcd_workspace.workspace_id
+  network_watcher_name         = local.network_watcher_name
+  network_watcher_resource_group_name = local.network_watcher_resource_group
+  workspace_location           = var.workspace_location
 }

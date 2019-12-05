@@ -621,15 +621,15 @@
 <path fill="none" stroke="black" d="M2798.64,-1151.8C2817.43,-1118.5 2863.49,-1045.24 2923.41,-1008 3039.87,-935.617 3088.51,-960.571 3223.41,-936 3413.12,-901.446 3941.72,-957.711 4084.41,-828 4138.66,-778.679 4120.41,-740.323 4120.41,-667 4120.41,-667 4120.41,-667 4120.41,-593 4120.41,-561.52 4166.39,-373.175 4183.41,-360 4218.9,-332.53 7369.54,-324.724 7414.41,-324 7662.81,-319.993 7954.29,-313.357 8109.32,-309.672"/>
 <polygon fill="black" stroke="black" points="8109.42,-313.171 8119.33,-309.434 8109.25,-306.173 8109.42,-313.171"/>
 </g>
-<!-- [root] var.deploy_connection_monitors -->
-<g id="node402" class="node"><title>[root] var.deploy_connection_monitors</title>
+<!-- [root] var.deploy_network_watcher -->
+<g id="node402" class="node"><title>[root] var.deploy_network_watcher</title>
 <polygon fill="none" stroke="black" points="3706.41,-1116 3510.41,-1116 3510.41,-1080 3712.41,-1080 3712.41,-1110 3706.41,-1116"/>
 <polyline fill="none" stroke="black" points="3706.41,-1116 3706.41,-1110 "/>
 <polyline fill="none" stroke="black" points="3712.41,-1110 3706.41,-1110 "/>
-<text text-anchor="middle" x="3611.41" y="-1094.3" font-family="Times New Roman,serif" font-size="14.00">var.deploy_connection_monitors</text>
+<text text-anchor="middle" x="3611.41" y="-1094.3" font-family="Times New Roman,serif" font-size="14.00">var.deploy_network_watcher</text>
 </g>
-<!-- [root] azurerm_network_watcher.vdc_watcher&#45;&gt;[root] var.deploy_connection_monitors -->
-<g id="edge62" class="edge"><title>[root] azurerm_network_watcher.vdc_watcher&#45;&gt;[root] var.deploy_connection_monitors</title>
+<!-- [root] azurerm_network_watcher.vdc_watcher&#45;&gt;[root] var.deploy_network_watcher -->
+<g id="edge62" class="edge"><title>[root] azurerm_network_watcher.vdc_watcher&#45;&gt;[root] var.deploy_network_watcher</title>
 <path fill="none" stroke="black" d="M2909.79,-1156.45C2925.47,-1154.9 2941.32,-1153.38 2956.41,-1152 3147.42,-1134.55 3370.03,-1117.16 3500.37,-1107.28"/>
 <polygon fill="black" stroke="black" points="3500.66,-1110.77 3510.36,-1106.52 3500.13,-1103.79 3500.66,-1110.77"/>
 </g>
@@ -2429,15 +2429,15 @@
 <path fill="none" stroke="black" d="M2532.91,-1368.42C2536.1,-1368.27 2539.26,-1368.13 2542.41,-1368 3834.41,-1313.93 7068.64,-1362.66 8361.41,-1332 8464.29,-1329.56 8581.54,-1324.5 8664.58,-1320.53"/>
 <polygon fill="black" stroke="black" points="8664.97,-1324.02 8674.79,-1320.04 8664.64,-1317.02 8664.97,-1324.02"/>
 </g>
-<!-- [root] module.iis_app.var.deploy_connection_monitors -->
-<g id="node178" class="node"><title>[root] module.iis_app.var.deploy_connection_monitors</title>
+<!-- [root] module.iis_app.var.deploy_network_watcher -->
+<g id="node178" class="node"><title>[root] module.iis_app.var.deploy_network_watcher</title>
 <polygon fill="none" stroke="black" points="4471.91,-1260 4186.91,-1260 4186.91,-1224 4477.91,-1224 4477.91,-1254 4471.91,-1260"/>
 <polyline fill="none" stroke="black" points="4471.91,-1260 4471.91,-1254 "/>
 <polyline fill="none" stroke="black" points="4477.91,-1254 4471.91,-1254 "/>
-<text text-anchor="middle" x="4332.41" y="-1238.3" font-family="Times New Roman,serif" font-size="14.00">module.iis_app.var.deploy_connection_monitors</text>
+<text text-anchor="middle" x="4332.41" y="-1238.3" font-family="Times New Roman,serif" font-size="14.00">module.iis_app.var.deploy_network_watcher</text>
 </g>
-<!-- [root] module.iis_app.azurerm_network_connection_monitor.devops_watcher&#45;&gt;[root] module.iis_app.var.deploy_connection_monitors -->
-<g id="edge374" class="edge"><title>[root] module.iis_app.azurerm_network_connection_monitor.devops_watcher&#45;&gt;[root] module.iis_app.var.deploy_connection_monitors</title>
+<!-- [root] module.iis_app.azurerm_network_connection_monitor.devops_watcher&#45;&gt;[root] module.iis_app.var.deploy_network_watcher -->
+<g id="edge374" class="edge"><title>[root] module.iis_app.azurerm_network_connection_monitor.devops_watcher&#45;&gt;[root] module.iis_app.var.deploy_network_watcher</title>
 <path fill="none" stroke="black" d="M2532.57,-1367.99C2650.03,-1357.58 2784.37,-1344 2842.41,-1332 2894.44,-1321.25 2904.02,-1304.88 2956.41,-1296 3218.78,-1251.51 3887.8,-1276.59 4153.41,-1260 4160.88,-1259.53 4168.53,-1259 4176.24,-1258.43"/>
 <polygon fill="black" stroke="black" points="4176.72,-1261.9 4186.42,-1257.65 4176.19,-1254.92 4176.72,-1261.9"/>
 </g>
@@ -3044,8 +3044,8 @@
 <path fill="none" stroke="black" d="M6554.22,-937.342C6550.91,-936.885 6547.63,-936.437 6544.41,-936 6448.73,-923.053 6340.82,-909.67 6257.42,-899.591"/>
 <polygon fill="black" stroke="black" points="6257.72,-896.102 6247.38,-898.379 6256.89,-903.052 6257.72,-896.102"/>
 </g>
-<!-- [root] module.iis_app.var.deploy_connection_monitors&#45;&gt;[root] var.deploy_connection_monitors -->
-<g id="edge438" class="edge"><title>[root] module.iis_app.var.deploy_connection_monitors&#45;&gt;[root] var.deploy_connection_monitors</title>
+<!-- [root] module.iis_app.var.deploy_network_watcher&#45;&gt;[root] var.deploy_network_watcher -->
+<g id="edge438" class="edge"><title>[root] module.iis_app.var.deploy_network_watcher&#45;&gt;[root] var.deploy_network_watcher</title>
 <path fill="none" stroke="black" d="M4478.08,-1224.63C4553.04,-1214.71 4631.1,-1201.41 4642.41,-1188 4652.72,-1175.77 4653.43,-1163.6 4642.41,-1152 4611.14,-1119.08 3983.21,-1105.07 3722.93,-1100.66"/>
 <polygon fill="black" stroke="black" points="3722.76,-1097.15 3712.7,-1100.48 3722.64,-1104.15 3722.76,-1097.15"/>
 </g>

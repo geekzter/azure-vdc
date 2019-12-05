@@ -315,7 +315,6 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
   resource_group_name          = azurerm_resource_group.app_rg.name
   sku                          = "Standard"
   capacity                     = 1
-  kafka_enabled                = false
   # TODO: Zone Redundant
   #zone_redundant               = true
 

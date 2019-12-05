@@ -27,6 +27,11 @@ resource "azurerm_log_analytics_workspace" "vcd_workspace" {
   retention_in_days            = 90 
 
   tags                         = local.tags
+
+  depends_on                   = [
+                                  # HACK: Not an actual dependency, but ensures this is available for flow logs, that are also dependent on this workspace
+                                  null_resource.network_watcher 
+                                 ]
 }
 
 resource "azurerm_log_analytics_linked_service" "automation" {
@@ -149,17 +154,27 @@ resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
   }
 }
 
+# Check if network watcher exists, there can only be one per region
+# data external network_watcher {
+#   program                      = ["pwsh", "-nop", "-Command",
+#                                   "../Scripts/get_network_watcher.ps1",
+#                                   "-Location",azurerm_resource_group.vdc_rg.location,
+#                                   "-SubscriptionId",data.azurerm_subscription.primary.subscription_id,
+#                                  ]
+# }
 
+locals {
+  network_watcher_name         = "NetworkWatcher_${var.location}"
+  network_watcher_resource_group = "NetworkWatcherRG"
+}
 
+resource null_resource network_watcher {
+  provisioner "local-exec" {
+    command                    = "../Scripts/create_network_watcher.ps1 -Location ${var.location} -NetworkWatcherName ${local.network_watcher_name} -ResourceGroupName ${local.network_watcher_resource_group}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
 
-# TODO: Issue with monitoring connections can cause deployment to fail when apply is repeatedly run
-resource "azurerm_network_watcher" "vdc_watcher" {
-  name                         = "${var.resource_prefix}-watcher"
-  location                     = azurerm_resource_group.vdc_rg.location
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-
-  count                        = var.deploy_connection_monitors ? 1 : 0
-  tags                         = local.tags
+  count                        = var.deploy_network_watcher ? 1 : 0
 }
 
 /*
@@ -245,6 +260,7 @@ resource "azurerm_dashboard" "vdc_dashboard" {
       prefix                   = var.resource_prefix
       environment              = local.environment
       suffix                   = local.suffix
+      subscription_guid        = data.azurerm_subscription.primary.subscription_id
       build_web_url            = var.build_id != "" ? "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build/results?buildId=${var.build_id}" : "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build"
       iaas_app_url             = local.iaas_app_url
       paas_app_url             = local.paas_app_url

@@ -91,6 +91,14 @@ output location {
   value       = var.location
 }
 
+output network_watcher_resource_group {
+  value       = local.network_watcher_resource_group
+}
+
+output network_watcher_name {
+  value       = local.network_watcher_name
+}
+
 output paas_app_eventhub_namespace {
   value       = module.paas_app.eventhub_namespace
 }
