@@ -64,6 +64,12 @@ try {
 
 if ($Destroy) {
     AzLogin
+
+    # Remove resources in the NetworkWatcher resource group
+    $resources = Get-AzResource -ResourceGroupName "NetworkWatcherRG" -Tag @{workspace=$Workspace}
+    $resources | Remove-AzResource -Force
+
+    # Remove resource groups
     $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
     if ((RemoveResourceGroups $resourceGroups -Force $Force)) {
         $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     

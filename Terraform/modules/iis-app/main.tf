@@ -215,11 +215,12 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
   )
 }
 
-# BUG: network_watcher_name assumed to be in same resource group, while likely in NetworkWatcherRG
+# BUG: Get's recreated every run
+#      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909
 # resource "azurerm_network_connection_monitor" "devops_watcher" {
 #   name                         = "${local.app_hostname}${count.index+1}-${var.app_devops["account"]}.visualstudio.com"
 #   location                     = var.location
-#   resource_group_name          = local.vdc_resource_group_name
+#   resource_group_name          = var.network_watcher_resource_group_name
 #   network_watcher_name         = var.network_watcher_name
 
 #   auto_start                   = true

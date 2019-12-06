@@ -504,7 +504,6 @@ resource "azurerm_sql_database" "app_sqldb" {
   tags                         = var.tags
 } 
 
-
 resource "azurerm_monitor_diagnostic_setting" "sql_database_logs" {
   name                         = "SqlDatabase_Logs"
   target_resource_id           = azurerm_sql_database.app_sqldb.id

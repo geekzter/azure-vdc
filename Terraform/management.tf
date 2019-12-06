@@ -199,3 +199,62 @@ resource "azurerm_virtual_machine_extension" "bastion_monitor" {
 
   tags                         = local.tags
 }
+
+resource "azurerm_virtual_machine_extension" "bastion_watcher" {
+  name                         = "bastion_watcher"
+  location                     = azurerm_resource_group.vdc_rg.location
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  virtual_machine_name         = azurerm_virtual_machine.bastion.name
+  publisher                    = "Microsoft.Azure.NetworkWatcher"
+  type                         = "NetworkWatcherAgentWindows"
+  type_handler_version         = "1.4"
+  auto_upgrade_minor_version   = true
+
+  count                        = var.deploy_network_watcher ? 1 : 0
+
+  tags                         = local.tags
+}
+
+# BUG: Get's recreated every run
+#      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909
+# resource "azurerm_network_connection_monitor" "storage_watcher" {
+#   name                         = "${module.paas_app.storage_account_name}-watcher"
+#   location                     = azurerm_resource_group.vdc_rg.location
+#   resource_group_name          = local.network_watcher_resource_group
+#   network_watcher_name         = local.network_watcher_name
+
+#   source {
+#     virtual_machine_id         = azurerm_virtual_machine.bastion.id
+#   }
+
+#   destination {
+#     address                    = module.paas_app.blob_storage_fqdn
+#     port                       = 443
+#   }
+
+#   count                        = var.deploy_network_watcher ? 1 : 0
+#   depends_on                   = [azurerm_virtual_machine_extension.bastion_watcher]
+
+#   tags                         = local.tags
+# }
+
+# resource "azurerm_network_connection_monitor" "eventhub_watcher" {
+#   name                         = "${module.paas_app.eventhub_name}-watcher"
+#   location                     = azurerm_resource_group.vdc_rg.location
+#   resource_group_name          = local.network_watcher_resource_group
+#   network_watcher_name         = local.network_watcher_name
+
+#   source {
+#     virtual_machine_id         = azurerm_virtual_machine.bastion.id
+#   }
+
+#   destination {
+#     address                    = module.paas_app.eventhub_namespace_fqdn
+#     port                       = 443
+#   }
+
+#   count                        = var.deploy_network_watcher ? 1 : 0
+#   depends_on                   = [azurerm_virtual_machine_extension.bastion_watcher]
+
+#   tags                         = local.tags
+# } 
