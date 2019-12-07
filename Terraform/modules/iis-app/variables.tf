@@ -33,6 +33,7 @@ variable diagnostics_workspace_workspace_id {
 }
 variable diagnostics_workspace_key {}
 variable network_watcher_name {}
+variable network_watcher_resource_group_name {}
 
 variable app_web_vms {}
 

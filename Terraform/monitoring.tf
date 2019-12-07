@@ -177,63 +177,6 @@ resource null_resource network_watcher {
   count                        = var.deploy_network_watcher ? 1 : 0
 }
 
-/*
-resource "azurerm_virtual_machine_extension" "bastion_watcher" {
-  name                         = "bastion_watcher"
-  location                     = azurerm_resource_group.vdc_rg.location
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  virtual_machine_name         = "${azurerm_virtual_machine.bastion.name}"
-  publisher                    = "Microsoft.Azure.NetworkWatcher"
-  type                         = "NetworkWatcherAgentWindows"
-  type_handler_version         = "1.4"
-  auto_upgrade_minor_version   = true
-
-  tags                         = local.tags
-}
-
-
-resource "azurerm_network_connection_monitor" "storage_watcher" {
-  name                         = "${azurerm_storage_account.app_storage.name}-watcher"
-  location                     = azurerm_resource_group.vdc_rg.location
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  network_watcher_name         = "${azurerm_network_watcher.vdc_watcher.name}"
-
-  source {
-    virtual_machine_id         = "${azurerm_virtual_machine.bastion.id}"
-  }
-
-  destination {
-    address                    = "${azurerm_storage_account.app_storage.primary_blob_host}"
-    port                       = 443
-  }
-
-  depends_on                   = [azurerm_virtual_machine_extension.bastion_watcher]
-
-  tags                         = local.tags
-}
-
-resource "azurerm_network_connection_monitor" "eventhub_watcher" {
-  name                         = "${azurerm_eventhub_namespace.app_eventhub.name}-watcher"
-  location                     = azurerm_resource_group.vdc_rg.location
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  network_watcher_name         = "${azurerm_network_watcher.vdc_watcher.name}"
-
-  source {
-    virtual_machine_id         = "${azurerm_virtual_machine.bastion.id}"
-  }
-
-  destination {
-    address                    = "${lower(azurerm_eventhub_namespace.app_eventhub.name)}.servicebus.windows.net"
-    port                       = 443
-  }
-
-  depends_on                   = [azurerm_virtual_machine_extension.bastion_watcher]
-
-  tags                         = local.tags
-} 
-
-*/
-
 resource "azurerm_application_insights" "vdc_insights" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-insights"
   location                     = azurerm_log_analytics_workspace.vcd_workspace.location

@@ -76,6 +76,10 @@ output storage_account_name {
     value = azurerm_storage_account.app_storage.name
 }
 
+output blob_storage_fqdn {
+    value = azurerm_storage_account.app_storage.primary_blob_host
+}
+
 output storage_fqdns {
     value = [
         azurerm_storage_account.app_storage.primary_blob_host,
