@@ -66,12 +66,18 @@ output sql_database {
 output sql_server {
     value = azurerm_sql_server.app_sqlserver.name
 }
+# output sql_server_endpoint_id {
+#     value = azurerm_private_link_endpoint.sqlserver_endpoint.id
+# }
 output sql_server_fqdn {
   value       = azurerm_sql_server.app_sqlserver.fully_qualified_domain_name
 }
 output sql_server_id {
     value = azurerm_sql_server.app_sqlserver.id
 }
+# output sql_server_private_ip_address {
+#     value = azurerm_private_link_endpoint.sqlserver_endpoint.private_ip_address
+# }
 output storage_account_name {
     value = azurerm_storage_account.app_storage.name
 }

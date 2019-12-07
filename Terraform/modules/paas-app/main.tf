@@ -63,6 +63,22 @@ resource "azurerm_storage_account" "app_storage" {
   depends_on                   = [azurerm_storage_container.archive_storage_container]
 }
 
+# BUG: Doesn't accept CIDR notation
+# resource "azurerm_storage_account_network_rules" "app_storage" {
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   storage_account_name         = azurerm_storage_account.app_storage.name
+
+#   default_action               = "Deny"
+#   bypass                       = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
+#   # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
+#   ip_rules                     = var.admin_ip_ranges
+#   # Allow the Firewall subnet
+#   virtual_network_subnet_ids   = [
+#                                   var.iag_subnet_id,
+#                                   var.integrated_subnet_id
+#   ]
+# }
+
 # BUG: 1.0;2019-11-29T15:10:06.7720881Z;GetContainerProperties;IpAuthorizationError;403;6;6;authenticated;XXXXXXX;XXXXXXX;blob;"https://XXXXXXX.blob.core.windows.net:443/data?restype=container";"/";ad97678d-101e-0016-5ec7-a608d2000000;0;10.139.212.72:44506;2018-11-09;481;0;130;246;0;;;;;;"Go/go1.12.6 (amd64-linux) go-autorest/v13.0.2 tombuildsstuff/giovanni/v0.5.0 storage/2018-11-09";;
 resource "azurerm_storage_container" "app_storage_container" {
   name                         = "data"
@@ -71,6 +87,7 @@ resource "azurerm_storage_container" "app_storage_container" {
 
   count                        = var.storage_import ? 1 : 0
 
+# depends_on                   = [azurerm_storage_account_network_rules.app_storage]
 }
 
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
@@ -327,11 +344,11 @@ resource "azurerm_eventhub_namespace" "app_eventhub" {
       ip_mask                  = chomp(data.http.localpublicip.body) # We need this to make changes
     }
     # # BUG: There is no variable named "var".
-    # dynamic "ip_rule" {
-    #   for_each                 = "${var.admin_ip_ranges}"
+    # dynamic ip_rule {
+    #   for_each                 = var.admin_ip_ranges
     #   content {
     #     action                 = "Allow"
-    #     ip_mask                = "${ip_rule.value}"
+    #     ip_mask                = ip_rule.value
     #   }
     # }
     virtual_network_rule {
@@ -460,6 +477,21 @@ resource "azurerm_sql_firewall_rule" "azureall" {
   start_ip_address             = "0.0.0.0"
   end_ip_address               = "0.0.0.0"
 } 
+
+# resource "azurerm_private_link_endpoint" "sqlserver_endpoint" {
+#   name                         = "${azurerm_sql_server.app_sqlserver.name}-endpoint"
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   location                     = azurerm_resource_group.app_rg.location
+#   subnet_id                    = var.data_subnet_id
+
+#   private_service_connection {
+#     is_manual_connection       = false
+#     name                       = "${azurerm_sql_server.app_sqlserver.name}-endpoint-connection"
+#     private_connection_resource_id = azurerm_sql_server.app_sqlserver.id
+#     #BUG: Error: private_service_connection.0.subresource_names.0 must only contain upper or lowercase letters, numbers, underscores, and periods
+#     subresource_names          = ["sqlServer"]
+#   }
+# }
 
 # If you have AD permissions it is better to use an AAD group for DBA's, and add DBA and TF to that group
 resource "azurerm_sql_active_directory_administrator" "dba" {

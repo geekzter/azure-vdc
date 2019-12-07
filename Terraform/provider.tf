@@ -5,5 +5,5 @@
 # ARM_SUBSCRIPTION_ID, ARM_CLIENT_ID, ARM_CLIENT_SECRET and ARM_TENANT_ID
 #
 provider "azurerm" {
-    version = "~> 1.37, < 2.0" 
+    version = "~> 1.38, < 2.0" 
 }

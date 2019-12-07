@@ -76,9 +76,9 @@ try {
     Pop-Location
 }
 
-$sqlDBPrivateLinkServiceConnectionName = "${appSqlServer}-connection"
+$sqlDBPrivateLinkServiceConnectionName = "${appSqlServer}-endpoint-connection"
 Write-Host "SQL DB Private Link Service connection will be named '$sqlDBPrivateLinkServiceConnectionName'"
-$sqlDBPrivateEndpointName = "${paasNetworkName}-sql-endpoint"
+$sqlDBPrivateEndpointName = "${appSqlServer}-endpoint"
 Write-Host "SQL DB Private Endpoint will be named '$sqlDBPrivateEndpointName'"
 $endpointSubnet = "data"
 
