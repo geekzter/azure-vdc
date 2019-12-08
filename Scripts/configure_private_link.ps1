@@ -16,21 +16,15 @@ param (
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
     [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
 ) 
+
+### Internal Functions
+. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+
 $Script:ErrorActionPreference = "Stop"
 if(-not($subscription)) { Throw "You must supply a value for subscription" }
 
 # Log on to Azure if not already logged on
-if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
-    Write-Host "Reconnecting to Azure with SPN..."
-    if(-not($tenantid)) { Throw "You must supply a value for tenantid" }
-    if(-not($clientid)) { Throw "You must supply a value for clientid" }
-    if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
-    # Use Terraform ARM Backend config to authenticate to Azure
-    $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-    $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-    $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
-}
-$null = Set-AzContext -Subscription $subscription
+AzLogin
 
 # Retrieve Azure resources config using Terraform
 try {
@@ -86,18 +80,18 @@ $endpointSubnet = "data"
 
 $virtualNetwork = Get-AzVirtualNetwork -ResourceGroupName $vdcResourceGroup -Name $paasNetworkName
 if ($virtualNetwork) {
-  $virtualNetwork
+  Write-Host "Found Virtual Network '$($virtualNetwork.Name)'"
 } else {
-  Write-Error "Virtual Network $paasNetworkName not found"
+  Write-Error "Virtual Network '$paasNetworkName' not found"
+  exit 1
 }
 
-$subnet = $virtualNetwork `
-  | Select-Object -ExpandProperty subnets `
-  | Where-Object  {$_.Name -eq $endpointSubnet}  
+$subnet = $virtualNetwork | Select-Object -ExpandProperty subnets | Where-Object {$_.Name -eq $endpointSubnet}  
 if ($subnet -and ![string]::IsNullOrEmpty($subnet)) {
-  $subnet
+  Write-Host "Found Subnet '$($subnet.Name)'"
 } else {
   Write-Error "Subnet '$endpointSubnet' not found in Virtual Network ${virtualNetwork.Name}"
+  exit 2
 }
 
 # Disable network policies, should not be needed at GA
@@ -106,36 +100,43 @@ if ($subnet.PrivateEndpointNetworkPolicies -ine "Disabled") {
   $virtualNetwork | Set-AzVirtualNetwork
 }
  
+Write-Host "Creating Private Link Connection '$sqlDBPrivateLinkServiceConnectionName'..."
 $privateEndpointConnection = New-AzPrivateLinkServiceConnection -Name "$sqlDBPrivateLinkServiceConnectionName" `
   -PrivateLinkServiceId $appSqlServerId `
   -GroupId "sqlServer" 
 if ($privateEndpointConnection) {
-  $privateEndpointConnection
+  Write-Host "Created Private Link Connection '$($privateEndpointConnection.Name)'"
 } else {
   Write-Error "Private Endpoint connection for '$appSqlServerId' is null"
+  exit 3
 }
 
-$privateEndpoint = New-AzPrivateEndpoint -ResourceGroupName $vdcResourceGroup `
+Write-Host "Creating Private EndPoint '$sqlDBPrivateEndpointName'..."
+$privateEndpoint = New-AzPrivateEndpoint -ResourceGroupName $appResourceGroup `
   -Name $sqlDBPrivateEndpointName `
   -Location $location `
   -Subnet $subnet `
-  -PrivateLinkServiceConnection $privateEndpointConnection
+  -PrivateLinkServiceConnection $privateEndpointConnection `
+  -Force
 if ($privateEndpoint) {
-  $privateEndpoint
+  Write-Host "Created Private EndPoint '$($privateEndpoint.Name)'"
 } else {
   Write-Error "Private Endpoint is null"
+  exit 4
 }
 
-$privateEndpoint = Get-AzPrivateEndpoint -Name $sqlDBPrivateEndpointName -ResourceGroupName $vdcResourceGroup
+$privateEndpoint = Get-AzPrivateEndpoint -Name $sqlDBPrivateEndpointName -ResourceGroupName $appResourceGroup
 $networkInterface = Get-AzResource -ResourceId $privateEndpoint.NetworkInterfaces[0].Id -ApiVersion "2019-04-01" 
  
 foreach ($ipconfig in $networkInterface.properties.ipConfigurations) { 
   foreach ($fqdn in $ipconfig.properties.privateLinkConnectionProperties.fqdns) { 
-    Write-Host "$($ipconfig.properties.privateIPAddress) $($fqdn)"  
     $recordName = $fqdn.split('.',2)[0] 
     $dnsZone = $fqdn.split('.',2)[1] 
-    New-AzPrivateDnsRecordSet -Name $recordName -RecordType A -ZoneName "privatelink.database.windows.net" `
+    Write-Host "Creating Private DNS A record $fqdn -> $($ipconfig.properties.privateIPAddress)..."
+    $dnsRecord = New-AzPrivateDnsRecordSet -Name $recordName -RecordType A -ZoneName "privatelink.database.windows.net" `
       -ResourceGroupName $vdcResourceGroup -Ttl 600 `
-      -PrivateDnsRecords (New-AzPrivateDnsRecordConfig -IPv4Address $ipconfig.properties.privateIPAddress)  
+      -PrivateDnsRecords (New-AzPrivateDnsRecordConfig -IPv4Address $ipconfig.properties.privateIPAddress) `
+      -Overwrite
+    Write-Host "Created Private DNS A record $($dnsRecord.Name).$($dnsRecord.ZoneName) -> $($dnsRecord.Records[0])"
   } 
 } 
