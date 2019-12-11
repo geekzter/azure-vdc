@@ -57,6 +57,11 @@ resource "azurerm_storage_account" "app_storage" {
     ]
   } 
 
+  provisioner "local-exec" {
+    command                    = "../Scripts/enable_storage_logging.ps1 -AppStorageAccount ${azurerm_storage_account.app_storage.name} -AppResourceGroup ${azurerm_resource_group.app_rg.name} "
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
   tags                         = var.tags
   
   # FIX for race condition: Error waiting for Azure Storage Account "vdccipaasappb1375stor" to be created: Future#WaitForCompletion: the number of retries has been exceeded: StatusCode=400 -- Original Error: Code="NetworkAclsValidationFailure" Message="Validation of network acls failure: SubnetsNotProvisioned:Cannot proceed with operation because subnets appservice of the virtual network /subscriptions//resourceGroups/vdc-ci-b1375/providers/Microsoft.Network/virtualNetworks/vdc-ci-b1375-paas-spoke-network are not provisioned. They are in Updating state.."
@@ -79,6 +84,7 @@ resource "azurerm_storage_account" "app_storage" {
 #   ]
 # }
 
+
 # BUG: 1.0;2019-11-29T15:10:06.7720881Z;GetContainerProperties;IpAuthorizationError;403;6;6;authenticated;XXXXXXX;XXXXXXX;blob;"https://XXXXXXX.blob.core.windows.net:443/data?restype=container";"/";ad97678d-101e-0016-5ec7-a608d2000000;0;10.139.212.72:44506;2018-11-09;481;0;130;246;0;;;;;;"Go/go1.12.6 (amd64-linux) go-autorest/v13.0.2 tombuildsstuff/giovanni/v0.5.0 storage/2018-11-09";;
 resource "azurerm_storage_container" "app_storage_container" {
   name                         = "data"
@@ -86,8 +92,6 @@ resource "azurerm_storage_container" "app_storage_container" {
   container_access_type        = "private"
 
   count                        = var.storage_import ? 1 : 0
-
-# depends_on                   = [azurerm_storage_account_network_rules.app_storage]
 }
 
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
@@ -108,6 +112,11 @@ resource "azurerm_storage_account" "archive_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.storage_replication_type
+
+  provisioner "local-exec" {
+    command                    = "../Scripts/enable_storage_logging.ps1 -AppStorageAccount ${azurerm_storage_account.archive_storage.name} -AppResourceGroup ${azurerm_resource_group.app_rg.name} "
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
 
   tags                         = var.tags
 }

@@ -5,6 +5,11 @@ resource "azurerm_storage_account" "vdc_diag_storage" {
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
 
+  provisioner "local-exec" {
+    command                    = "../Scripts/enable_storage_logging.ps1 -AppStorageAccount ${azurerm_storage_account.vdc_diag_storage.name} -AppResourceGroup ${azurerm_resource_group.vdc_rg.name} "
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
   tags                         = local.tags
 }
 
@@ -14,6 +19,11 @@ resource "azurerm_storage_account" "vdc_automation_storage" {
   location                     = local.automation_location
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
+
+  provisioner "local-exec" {
+    command                    = "../Scripts/enable_storage_logging.ps1 -AppStorageAccount ${azurerm_storage_account.vdc_automation_storage.name} -AppResourceGroup ${azurerm_resource_group.vdc_rg.name} "
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
 
   tags                         = local.tags
 }
