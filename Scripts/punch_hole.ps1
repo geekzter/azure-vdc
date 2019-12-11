@@ -42,7 +42,7 @@ try {
 # Use RIPE for both Ipv4 & Ipv6
 #$ipAddress=$(Invoke-RestMethod https://stat.ripe.net/data/whats-my-ip/data.json | Select-Object -ExpandProperty data | Select-Object -ExpandProperty ip)
 # Stick to ipinfo for Ipv4 only
-$ipAddress=$(Invoke-RestMethod https://ipinfo.io/ip)
+$ipAddress=$(Invoke-RestMethod https://ipinfo.io/ip).Trim()
 Write-Host "Public IP address is $ipAddress"
 
 # Get block(s) the public IP address belongs to
@@ -53,19 +53,25 @@ Write-Host "Public IP prefix is $ipPrefix"
 # Punch hole in PaaS Firewalls
 if ($appStorageAccount) {
     Write-Host "Adding rule for storage account $appStorageAccount to allow $ipAddress..."
-    $null = Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipAddress" -ErrorAction SilentlyContinue
+    $rule = Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipAddress" -ErrorAction SilentlyContinue
+    if ($rule) {
+        $rule
+        Write-Host "Added rule for storage account $appStorageAccount to allow $ipAddress"
+    }
     Write-Host "Adding rule for storage account $appStorageAccount to allow $ipPrefix..."
-    $null = Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipPrefix" -ErrorAction SilentlyContinue
+    $rule = Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipPrefix" -ErrorAction SilentlyContinue
+    if ($rule) {
+        $rule
+        Write-Host "Added rule for storage account $appStorageAccount to allow $ipPrefix"
+    }
     Write-Host "Network Rules for ${appStorageAccount}:"
     Get-AzStorageAccountNetworkRuleSet -ResourceGroupName $appResourceGroup -Name $appStorageAccount | Select-Object -ExpandProperty IpRules | Sort-Object -Property IPAddressOrRange | Format-Table
-
-    # Enable logging on storage account
-    Write-Host "Enabling blob logging for storage account $appStorageAccount..."
-    $storageKey = Get-AzStorageAccountKey -ResourceGroupName $appResourceGroup -AccountName $appStorageAccount | Where-Object {$_.KeyName -eq "key1"} | Select-Object -ExpandProperty Value
-    $storageContext = New-AzStorageContext -StorageAccountName $appStorageAccount -StorageAccountKey $storageKey
-    $null = Set-AzStorageServiceLoggingProperty -Context $storageContext -ServiceType Blob -LoggingOperations Delete,Read,Write -PassThru 
 }
 if ($appEventHubNamespace) {
-    Write-Host "Adding rule for event hub $appStorageAccount to allow $ipAddress..."
-    $null = Add-AzEventHubIPRule -ResourceGroupName $appResourceGroup -Name $appEventHubNamespace -IpMask "$ipAddress" -Action Allow -ErrorAction SilentlyContinue
+    Write-Host "Adding rule for event hub $appEventHubNamespace to allow $ipAddress..."
+    $rule = Add-AzEventHubIPRule -ResourceGroupName $appResourceGroup -Name $appEventHubNamespace -IpMask "$ipAddress" -Action Allow -ErrorAction SilentlyContinue
+    if ($rule) {
+        $rule.IpRules
+        Write-Host "Added rule for event hub $appEventHubNamespace to allow $ipAddress"
+    }
 }
