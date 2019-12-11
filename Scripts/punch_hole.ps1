@@ -39,7 +39,10 @@ try {
 }
 
 # Get public IP address
-$ipAddress=$(Invoke-RestMethod https://stat.ripe.net/data/whats-my-ip/data.json | Select-Object -ExpandProperty data | Select-Object -ExpandProperty ip)
+# Use RIPE for both Ipv4 & Ipv6
+#$ipAddress=$(Invoke-RestMethod https://stat.ripe.net/data/whats-my-ip/data.json | Select-Object -ExpandProperty data | Select-Object -ExpandProperty ip)
+# Stick to ipinfo for Ipv4 only
+$ipAddress=$(Invoke-RestMethod https://ipinfo.io/ip)
 Write-Host "Public IP address is $ipAddress"
 
 # Get block(s) the public IP address belongs to
