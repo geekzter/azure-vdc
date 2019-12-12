@@ -56,8 +56,13 @@ try {
 
         # Get public IP address
         Write-Host "`nPunch hole in Azure Firewall (for bastion)" -ForegroundColor Green 
-        $ipAddress=$(Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip)
-        Write-Information "Public IP address is $ipAddress"
+        $ipAddress=$(Invoke-RestMethod https://ipinfo.io/ip) # Ipv4
+        Write-Host "Public IP address is $ipAddress"
+
+        # Get block(s) the public IP address belongs to
+        # HACK: We need this to cater for changing public IP addresses e.g. Azure Pipelines Hosted Agents
+        $ipPrefix = Invoke-RestMethod https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
+        Write-Host "Public IP prefix is $ipPrefix"
 
         # Add rule to Azure Firewall
         $azFWName = $(terraform output "iag_name" 2>$null)
@@ -73,7 +78,8 @@ try {
         $rdpPort = $(terraform output "bastion_rdp_port" 2>$null)
 
         $azFW = Get-AzFirewall -Name $azFWName -ResourceGroupName $vdcResourceGroup
-        $bastionRule = New-AzFirewallNatRule -Name $bastionRuleName -Protocol "TCP" -SourceAddress $ipAddress -DestinationAddress $azFWPublicIPAddress -DestinationPort $rdpPort -TranslatedAddress $bastionAddress -TranslatedPort "3389"
+        #$bastionRule = New-AzFirewallNatRule -Name $bastionRuleName -Protocol "TCP" -SourceAddress $ipAddress -DestinationAddress $azFWPublicIPAddress -DestinationPort $rdpPort -TranslatedAddress $bastionAddress -TranslatedPort "3389"
+        $bastionRule = New-AzFirewallNatRule -Name $bastionRuleName -Protocol "TCP" -SourceAddress $ipPrefix -DestinationAddress $azFWPublicIPAddress -DestinationPort $rdpPort -TranslatedAddress $bastionAddress -TranslatedPort "3389"
 
         try {
             $ruleCollection = $azFW.GetNatRuleCollectionByName($azFWNATRulesName) 2>$null
@@ -91,7 +97,7 @@ try {
         }
 
         Write-Host "Updating Azure Firewall $azFWName..."
-        Set-AzFirewall -AzureFirewall $azFW
+        $null = Set-AzFirewall -AzureFirewall $azFW
     }
 
     if ($All -or $ShowCredentials -or $ConnectBastion) {
