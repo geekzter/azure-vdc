@@ -15,7 +15,7 @@ resource "azurerm_storage_account" "automation_storage" {
   account_replication_type     = var.app_storage_replication_type
 
   provisioner "local-exec" {
-    command                    = "../Scripts/enable_storage_logging.ps1 -AppStorageAccount ${azurerm_storage_account.automation_storage.name} -AppResourceGroup ${local.resource_group_name} "
+    command                    = "../Scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 }
