@@ -164,13 +164,6 @@ try {
         Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform plan stage may fail" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1")
 
-        # HACK: Create file to be used in Terraform to capture VNet ResourceGuid (not supported directly)
-        # "modules/paas-app/paas-spoke-vnet-resourceguid.tmp"
-        $paasSpokeResourceGuidFile = $(Join-Path modules paas-app paas-spoke-vnet-resourceguid.tmp)
-        Write-Debug "PaaS Spoke VNet ResourceGuid: $paasSpokeResourceGuidFile"
-        if (!(Test-Path $paasSpokeResourceGuidFile)) {
-            Set-Content -Path ($paasSpokeResourceGuidFile) -Value ($null)
-        }
     }
 
     if ($Plan -or $Apply) {
