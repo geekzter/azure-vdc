@@ -14,7 +14,6 @@ locals {
   # Last element of resource id is resource name
   integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
-  spoke_vnet_guid_file         = "${path.module}/paas-spoke-vnet-resourceguid.tmp"
 
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
