@@ -6,6 +6,20 @@ resource "random_string" "iag_domain_name_label" {
   special                     = false
 }
 
+resource "random_integer" "rdp_port" {
+  min     = 1024
+  max     = 65664
+  keepers = {
+    # Generate a new integer each time we switch to a new listener ARN
+    bastion                    = azurerm_virtual_machine.bastion.name
+    bastion_if                 = azurerm_network_interface.bas_if.mac_address 
+  }
+}
+
+locals {
+  rdp_port                     = var.rdp_port != null ? var.rdp_port : random_integer.rdp_port.result
+}
+
 resource "azurerm_public_ip" "iag_pip" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-iag-pip"
   location                     = azurerm_resource_group.vdc_rg.location
@@ -144,7 +158,7 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
 
   rule {
     name                       = "Allow Packaging tools"
-    description                = "The packaging (e.g. Chocolatey, NuGet) tools"
+    description                = "Packaging (e.g. Chocolatey, NuGet) tools"
 
     source_addresses           = [
       var.vdc_config["iaas_spoke_app_subnet"],
@@ -195,6 +209,7 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.githubusercontent.com",
       "*.hashicorp.com",
       "*.pivotal.io",
+      "*.smartscreen-prod.microsoft.com",
       "*.typescriptlang.org",
       "*.vo.msecnd.net", # Visual Studio Code
       "azcopy.azureedge.net",
@@ -212,7 +227,9 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "github-production-release-asset-2e65be.s3.amazonaws.com", 
       "github.com",
       "go.microsoft.com",
+      "licensing.mp.microsoft.com",
       "marketplace.visualstudio.com",
+      "sqlopsextensions.blob.core.windows.net",
       "visualstudio.microsoft.com",
       "xamarin-downloads.azureedge.net",
       "visualstudio-devdiv-c2s.msedge.net"
@@ -234,13 +251,13 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     ]
 
     fqdn_tags                  = [
+      "AzureActiveDirectory",
       "AzureBackup",
       "AzureMonitor",
       "MicrosoftActiveProtectionService",
       "WindowsDiagnostics",
       "WindowsUpdate"
     ]
-
   }
 
   rule {
@@ -254,21 +271,23 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
 
     target_fqdns               = [
       "*.azure-automation.net",
+      "*.delivery.mp.microsoft.com",
+      "*.do.dsp.mp.microsoft.com",
       "*.events.data.microsoft.com",
       "*.loganalytics.io",
       "*.ods.opinsights.azure.com",
       "*.oms.opinsights.azure.com",
-      "opinsightsweuomssa.blob.core.windows.net",
-      "scadvisorcontent.blob.core.windows.net",
       "*.systemcenteradvisor.com",
-      "scadvisor.accesscontrol.windows.net",
-      "scadvisorservice.accesscontrol.windows.net",
-      "management.core.windows.net",
-      "*.do.dsp.mp.microsoft.com",
-      "*.delivery.mp.microsoft.com",
       "*.update.microsoft.com",
       "*.windowsupdate.com",
       "checkappexec.microsoft.com",
+      "management.azure.com",
+      "management.core.windows.net",
+      "msft.sts.microsoft.com",
+      "opinsightsweuomssa.blob.core.windows.net",
+      "scadvisor.accesscontrol.windows.net",
+      "scadvisorcontent.blob.core.windows.net",
+      "scadvisorservice.accesscontrol.windows.net",
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_log_analytics_workspace.vcd_workspace.portal_url
     ]
@@ -277,7 +296,29 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
         port                   = "443"
         type                   = "Https"
     }
+  }
 
+  rule {
+    name                       = "Allow selected HTTP traffic"
+    description                = "Plain HTTP traffic for some applications that need it"
+
+    source_addresses           = [
+      var.vdc_config["vdc_range"],
+      var.vdc_config["vpn_range"]
+    ]
+
+    target_fqdns               = [
+    # "*.digicert.com",
+      "crl.microsoft.com",
+      "mscrl.microsoft.com",
+      "ocsp.msocsp.com",
+      "dl.delivery.mp.microsoft.com"
+    ]
+
+    protocol {
+        port                   = "80"
+        type                   = "Https"
+    }
   }
 } 
 
@@ -319,7 +360,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
 
     destination_ports          = [
     # "3389", # Default port
-      "${var.rdp_port}"
+      "${local.rdp_port}"
     ]
     destination_addresses      = [
       "${azurerm_public_ip.iag_pip.ip_address}",
@@ -362,6 +403,49 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     ]
   }
   
+  rule {
+    name = "AllowAzureActiveDirectory"
+
+    source_addresses           = [
+      var.vdc_config["vdc_range"],
+      var.vdc_config["vpn_range"]
+    ]
+
+    destination_ports          = [
+      "*",
+    ]
+    destination_addresses      = [
+      "AzureActiveDirectory",
+    ]
+
+    protocols                  = [
+      "TCP",
+      "UDP",
+    ]
+  }    
+
+  rule {
+    name = "AllowSqlServer"
+
+    source_addresses           = [
+      var.vdc_config["iaas_spoke_app_subnet"],
+      var.vdc_config["paas_spoke_appsvc_subnet"],
+      var.vdc_config["hub_mgmt_subnet"],
+    ]
+
+    destination_ports          = [
+      "*",
+    ]
+    destination_addresses      = [
+      "Sql",
+    ]
+
+    protocols                  = [
+      "TCP",
+    ]
+  }  
+
+
   rule {
     name = "AllowAllOutboundFromAppSubnet"
 

@@ -43,6 +43,9 @@ resource "azurerm_storage_account" "app_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.storage_replication_type
+  enable_advanced_threat_protection = true
+  enable_blob_encryption       = true
+  enable_https_traffic_only    = true
  
   network_rules {
     default_action             = "Deny"
@@ -111,6 +114,9 @@ resource "azurerm_storage_account" "archive_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.storage_replication_type
+  enable_advanced_threat_protection = true
+  enable_blob_encryption       = true
+  enable_https_traffic_only    = true
 
   provisioner "local-exec" {
     command                    = "../Scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "
@@ -477,14 +483,21 @@ resource "azurerm_sql_firewall_rule" "azure1" {
 #   depends_on                   = [azurerm_app_service.paas_web_app]
 # } 
 
-resource "azurerm_sql_firewall_rule" "azureall" {
-  name                         = "AllowAllWindowsAzureIPs" # Same name as Azure generated one
+# resource "azurerm_sql_firewall_rule" "azureall" {
+#   name                         = "AllowAllWindowsAzureIPs" # Same name as Azure generated one
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   server_name                  = azurerm_sql_server.app_sqlserver.name
+# # 0.0.0.0 represents Azure addresses, see https://docs.microsoft.com/en-us/rest/api/sql/firewallrules/createorupdate
+#   start_ip_address             = "0.0.0.0"
+#   end_ip_address               = "0.0.0.0"
+# } 
+
+resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
+  name                         = "AllowAzureFirewallSubnet"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
-# 0.0.0.0 represents Azure addresses, see https://docs.microsoft.com/en-us/rest/api/sql/firewallrules/createorupdate
-  start_ip_address             = "0.0.0.0"
-  end_ip_address               = "0.0.0.0"
-} 
+  subnet_id                    = var.iag_subnet_id
+}
 
 # resource "azurerm_private_link_endpoint" "sqlserver_endpoint" {
 #   name                         = "${azurerm_sql_server.app_sqlserver.name}-endpoint"
@@ -533,11 +546,16 @@ resource "azurerm_sql_database" "app_sqldb" {
     }
   }
 
-# Can be enabled through Azure policy instead
+  # Can be enabled through Azure policy instead
   threat_detection_policy {
     state                      = "Enabled"
     use_server_default         = "Enabled"
   }
+
+  # provisioner "local-exec" {
+  #   command                    = "../Scripts/grant_database_access.ps1 -UserName ${var.dba_login} -SqlDatabaseName ${self.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
+  #   interpreter                = ["pwsh", "-nop", "-Command"]
+  # }
 
   # TODO: Zone Redundant
 

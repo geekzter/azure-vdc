@@ -189,8 +189,8 @@ variable dba_login {}
 variable dba_object_id {}
 
 variable rdp_port {
-# default                      = "3389" # Default for protocol
-  default                      = "28934"
+# default                      = 3389 # Default for protocol
+  default                      = null
 }
 
 ########## Credentials #########

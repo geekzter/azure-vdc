@@ -43,11 +43,11 @@ output bastion_name {
 }
 
 output bastion_rdp {
-  value = "mstsc.exe /v:${azurerm_public_ip.iag_pip.ip_address}:${var.rdp_port}"
+  value = "mstsc.exe /v:${azurerm_public_ip.iag_pip.ip_address}:${local.rdp_port}"
 }
 
 output bastion_rdp_port {
-  value = var.rdp_port
+  value = local.rdp_port
 }
 
 output bastion_rdp_vpn {

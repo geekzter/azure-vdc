@@ -2,9 +2,9 @@
 
 ### Arguments
 param ( 
-    [parameter(Mandatory=$true)][string]$spName,
-    [parameter(Mandatory=$true)][string]$sqlDatabase,
-    [parameter(Mandatory=$true)][string]$sqlServerFQDN,
+    [parameter(Mandatory=$true)][string]$UserName,
+    [parameter(Mandatory=$true)][string]$SqlDatabaseName,
+    [parameter(Mandatory=$true)][string]$SqlServerFQDN,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
     [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
@@ -36,12 +36,12 @@ function GetAccessToken () {
 $token = GetAccessToken
 
 $conn = New-Object System.Data.SqlClient.SqlConnection
-$conn.ConnectionString = "Data Source=tcp:$($sqlServerFQDN),1433;Initial Catalog=$($sqlDatabase);Connection Timeout=30;" 
+$conn.ConnectionString = "Data Source=tcp:$($SqlServerFQDN),1433;Initial Catalog=$($SqlDatabaseName);Connection Timeout=30;" 
 $conn.AccessToken = $token
 
-Write-Host "Connecting to database $sqlServerFQDN/$sqlDatabase..."
+Write-Host "Connecting to database $SqlServerFQDN/$SqlDatabaseName..."
 $conn.Open()
-$query = (Get-Content grant-database-access.sql) -replace "sqldbname",$sqlDatabase -replace "spname",$spName
+$query = (Get-Content grant-database-access.sql) -replace "sqldbname",$SqlDatabaseName -replace "username",$UserName
 Write-Debug "Executing query:`n$query"
 $command = New-Object -TypeName System.Data.SqlClient.SqlCommand($query, $conn) 	
 # Problem: 'AADSTS65002: Consent between first party applications and resources must be configured via preauthorization

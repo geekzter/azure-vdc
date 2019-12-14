@@ -13,7 +13,8 @@
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/geekzter/bootstrap-os/master/windows/bootstrap_windows.ps1'))
 
 # Install software required for demo
-choco.exe install azure-data-studio microsoftazurestorageexplorer sql-server-management-studio vscode -r -y
+choco install azure-data-studio microsoftazurestorageexplorer sql-server-management-studio vscode -r -y
+choco install TelnetClient --source windowsfeatures -r -y
 
 # Clone VDC repository
 Push-Location ~\Source\Public

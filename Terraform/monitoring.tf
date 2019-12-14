@@ -4,6 +4,10 @@ resource "azurerm_storage_account" "vdc_diag_storage" {
   location                     = var.location
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
+  enable_advanced_threat_protection = true
+  enable_blob_encryption       = true
+  enable_https_traffic_only    = true
+
 
   provisioner "local-exec" {
     command                    = "../Scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "
@@ -19,6 +23,9 @@ resource "azurerm_storage_account" "vdc_automation_storage" {
   location                     = local.automation_location
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
+  enable_advanced_threat_protection = true
+  enable_blob_encryption       = true
+  enable_https_traffic_only    = true
 
   provisioner "local-exec" {
     command                    = "../Scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "

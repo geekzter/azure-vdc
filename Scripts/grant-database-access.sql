@@ -4,12 +4,12 @@ USE sqldbname
 
 select name,sid,issqluser from sys.sysusers
 
-IF NOT EXISTS(SELECT name FROM sys.database_principals WHERE name = 'spname')
+IF NOT EXISTS(SELECT name FROM sys.database_principals WHERE name = 'username')
 BEGIN 
-	CREATE USER [spname] FROM EXTERNAL PROVIDER;
+	CREATE USER [username] FROM EXTERNAL PROVIDER;
 END
-ALTER ROLE db_datareader ADD MEMBER [spname];
-ALTER ROLE db_datawriter ADD MEMBER [spname];
-ALTER ROLE db_ddladmin ADD MEMBER [spname];
+ALTER ROLE db_datareader ADD MEMBER [username];
+ALTER ROLE db_datawriter ADD MEMBER [username];
+ALTER ROLE db_ddladmin ADD MEMBER [username];
 
 --GO

@@ -49,6 +49,10 @@
                 "isOptional": true,
                 "name": "queryId",
                 "value": "183f4042-6fe0-4362-b2bd-7575cf2ddf98"
+              },
+              {
+                "isOptional": true,
+                "name": "formatResults"
               }
             ],
             "settings": {},
@@ -645,7 +649,7 @@
               },
               {
                 "name": "Query",
-                "value": "AzureDiagnostics \n| where Category == \"ApplicationGatewayAccessLog\" and httpStatus_d >= 500\n| project TimeGenerated, httpStatus_d, listenerName_s, backendPoolName_s, ruleName_s\n| order by TimeGenerated desc\n"
+                "value": "AzureDiagnostics\n| where Category == \"AzureFirewallNetworkRule\"\n| parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePortInt:int \" to \" TargetIP \":\" TargetPortInt:int *\n| parse msg_s with * \". Action: \" Action1a\n| parse msg_s with * \" was \" Action1b \" to \" NatDestination\n| parse msg_s with Protocol2 \" request from \" SourceIP2 \" to \" TargetIP2 \". Action: \" Action2\n| extend SourcePort = tostring(SourcePortInt),Port = tostring(TargetPortInt)\n| extend Action = case(Action1a == \"\", case(Action1b == \"\",Action2,Action1b), Action1a),Protocol = case(Protocol == \"\", Protocol2, Protocol),SourceIP = case(SourceIP == \"\", SourceIP2, SourceIP),TargetIP = case(TargetIP == \"\", TargetIP2, TargetIP),SourcePort = case(SourcePort == \"\", \"N/A\", SourcePort),Port = case(Port == \"\", \"N/A\", Port),NatDestination = case(NatDestination == \"\", \"N/A\", NatDestination)\n| where Action == \"Deny\"\n| order by TimeGenerated desc\n| project TimeGenerated, Protocol, SourceIP,TargetIP,Port\n"
               },
               {
                 "name": "TimeRange",
@@ -657,7 +661,7 @@
               },
               {
                 "name": "PartId",
-                "value": "42ad871f-2614-484d-8e7e-0b9a1a522403"
+                "value": "48cb1d1b-e95d-4949-a31e-f5bc2dda37e6"
               },
               {
                 "name": "PartTitle",
@@ -690,15 +694,20 @@
             ],
             "settings": {
               "content": {
+                "GridColumnsWidth": {
+                  "Protocol": "65px",
+                  "SourceIP": "96px",
+                  "TargetIP": "138px"
+                },
                 "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
-                "PartTitle": "Errors on HTTP inbound traffic (WAF)"
+                "PartTitle": "Denied non-HTTP traffic"
               }
             },
             "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
           },
           "position": {
             "colSpan": 6,
-            "rowSpan": 3,
+            "rowSpan": 4,
             "x": 4,
             "y": 12
           }
@@ -782,17 +791,71 @@
             "inputs": [
               {
                 "name": "ComponentId",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Insights/components/${prefix}-${environment}-${suffix}-insights"
+                "value": {
+                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
+                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
+                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
+                  "SubscriptionId": "${subscription_guid}"
+                }
+              },
+              {
+                "name": "Query",
+                "value": "AzureDiagnostics \n| where Category == \"ApplicationGatewayAccessLog\" and httpStatus_d >= 500\n| project TimeGenerated, httpStatus_d, listenerName_s, backendPoolName_s, ruleName_s\n| order by TimeGenerated desc\n"
+              },
+              {
+                "name": "TimeRange",
+                "value": "P1D"
+              },
+              {
+                "name": "Version",
+                "value": "1.0"
+              },
+              {
+                "name": "PartId",
+                "value": "42ad871f-2614-484d-8e7e-0b9a1a522403"
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics"
+              },
+              {
+                "name": "PartSubTitle",
+                "value": "${prefix}-${environment}-${suffix}-loganalytics"
+              },
+              {
+                "name": "resourceTypeMode",
+                "value": "workspace"
+              },
+              {
+                "name": "ControlType",
+                "value": "AnalyticsGrid"
+              },
+              {
+                "isOptional": true,
+                "name": "Dimensions"
+              },
+              {
+                "isOptional": true,
+                "name": "DashboardId"
+              },
+              {
+                "isOptional": true,
+                "name": "SpecificChart"
               }
             ],
-            "isAdapter": true,
-            "type": "Extension/AppInsightsExtension/PartType/AllWebTestsResponseTimeFullGalleryAdapterPart"
+            "settings": {
+              "content": {
+                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
+                "PartTitle": "Errors on HTTP inbound traffic (WAF)"
+              }
+            },
+            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
           },
           "position": {
             "colSpan": 6,
-            "rowSpan": 4,
+            "rowSpan": 3,
             "x": 4,
-            "y": 15
+            "y": 16
           }
         },
         "26": {
@@ -1155,10 +1218,11 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-70f8206d-4fcd-4d84-aa63-4b7dc897a828",
-              "StartboardPart-AnalyticsPart-70f8206d-4fcd-4d84-aa63-4b7dc897a82e",
-              "StartboardPart-MonitorChartPart-70f8206d-4fcd-4d84-aa63-4b7dc897a834",
-              "StartboardPart-AnalyticsPart-70f8206d-4fcd-4d84-aa63-4b7dc897a83a"
+              "StartboardPart-ApplicationMapPart-fa9c77ba-206b-4c1f-8287-264df373f01d",
+              "StartboardPart-AnalyticsPart-fa9c77ba-206b-4c1f-8287-264df373f023",
+              "StartboardPart-MonitorChartPart-fa9c77ba-206b-4c1f-8287-264df373f029",
+              "StartboardPart-AnalyticsPart-fa9c77ba-206b-4c1f-8287-264df373f031",
+              "StartboardPart-AnalyticsPart-fa9c77ba-206b-4c1f-8287-264df373f037"
             ],
             "model": {
               "format": "utc",
