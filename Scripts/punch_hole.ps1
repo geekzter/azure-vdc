@@ -26,6 +26,8 @@ try {
         $Script:appResourceGroup       = $(terraform output "paas_app_resource_group"       2>$null)
         $Script:appStorageAccount      = $(terraform output "paas_app_storage_account_name" 2>$null)
         $Script:appEventHubNamespace   = $(terraform output "paas_app_eventhub_namespace"   2>$null)
+        $Script:appSQLServer           = $(terraform output "paas_app_sql_server"           2>$null)
+        
 
         $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(Get-AzResourceGroup -Name $appResourceGroup -ErrorAction "SilentlyContinue")))
     }
@@ -73,5 +75,13 @@ if ($appEventHubNamespace) {
     if ($rule) {
         $rule.IpRules
         Write-Host "Added rule for event hub $appEventHubNamespace to allow $ipAddress"
+    }
+}
+if ($appSQLServer) {
+    Write-Host "Adding rule for SQL Server $appSQLServer to allow $ipAddress..."
+    $rule = New-AzSqlServerFirewallRule -FireWallRuleName "LetMeInRule" -StartIpAddress $ipAddress -EndIpAddress $ipAddress -ServerName $appSQLServer -ResourceGroupName $appResourceGroup -ErrorAction SilentlyContinue
+    if ($rule) {
+        $rule
+        Write-Host "Added rule for SQL Server $appSQLServer to allow $ipAddress"
     }
 }

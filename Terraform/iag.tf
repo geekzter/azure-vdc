@@ -10,7 +10,6 @@ resource "random_integer" "rdp_port" {
   min     = 1024
   max     = 65664
   keepers = {
-    # Generate a new integer each time we switch to a new listener ARN
     bastion                    = azurerm_virtual_machine.bastion.name
     bastion_if                 = azurerm_network_interface.bas_if.mac_address 
   }

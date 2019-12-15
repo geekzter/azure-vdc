@@ -483,14 +483,19 @@ resource "azurerm_sql_firewall_rule" "azure1" {
 #   depends_on                   = [azurerm_app_service.paas_web_app]
 # } 
 
-# resource "azurerm_sql_firewall_rule" "azureall" {
-#   name                         = "AllowAllWindowsAzureIPs" # Same name as Azure generated one
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   server_name                  = azurerm_sql_server.app_sqlserver.name
-# # 0.0.0.0 represents Azure addresses, see https://docs.microsoft.com/en-us/rest/api/sql/firewallrules/createorupdate
-#   start_ip_address             = "0.0.0.0"
-#   end_ip_address               = "0.0.0.0"
-# } 
+# Azure SQL Database Import Export Service runs on VMs in Azure
+# https://docs.microsoft.com/en-us/azure/sql-database/sql-database-networkaccess-overview
+resource "azurerm_sql_firewall_rule" "azureall" {
+  name                         = "AllowAllWindowsAzureIPs" # Same name as Azure generated one
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+# 0.0.0.0 represents Azure addresses, see https://docs.microsoft.com/en-us/rest/api/sql/firewallrules/createorupdate
+  start_ip_address             = "0.0.0.0"
+  end_ip_address               = "0.0.0.0"
+
+# Only needed during import
+  count                        = var.database_import ? 1 : 0
+} 
 
 resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
   name                         = "AllowAzureFirewallSubnet"
@@ -556,6 +561,12 @@ resource "azurerm_sql_database" "app_sqldb" {
   #   command                    = "../Scripts/grant_database_access.ps1 -UserName ${var.dba_login} -SqlDatabaseName ${self.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
   #   interpreter                = ["pwsh", "-nop", "-Command"]
   # }
+
+  # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
+  provisioner "local-exec" {
+    command                    = "Get-AzSqlServerFirewallRule -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} | Where-Object -Property FirewallRuleName -eq AllowAllWindowsAzureIPs | Remove-AzSqlServerFirewallRule -Force"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
 
   # TODO: Zone Redundant
 
