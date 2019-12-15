@@ -2,6 +2,7 @@ resource "azurerm_storage_account" "vdc_diag_storage" {
   name                         = "${lower(replace(local.vdc_resource_group,"-",""))}diagstor"
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   location                     = var.location
+  account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
   enable_advanced_threat_protection = true
@@ -21,6 +22,7 @@ resource "azurerm_storage_account" "vdc_automation_storage" {
   name                         = "${lower(replace(local.vdc_resource_group,"-",""))}autstorage"
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   location                     = local.automation_location
+  account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
   enable_advanced_threat_protection = true

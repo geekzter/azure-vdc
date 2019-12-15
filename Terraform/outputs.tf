@@ -127,6 +127,10 @@ output paas_app_service_fqdn {
     value = module.paas_app.app_service_fqdn
 }
 
+output paas_app_service_outbound_ip_addresses {
+    value = module.paas_app.app_service_outbound_ip_addresses
+}
+
 # output paas_app_service_msi_application_id1 {
 #     value = "${module.paas_app.app_service_msi_application_id1}"
 # }

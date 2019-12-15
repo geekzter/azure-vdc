@@ -461,30 +461,22 @@ resource "azurerm_sql_firewall_rule" "adminclient" {
   count                        = length(local.admin_ips)
 }
 
-# HACK: Not sure why backup restores are initated from this address
-resource "azurerm_sql_firewall_rule" "azure1" {
-  name                         = "AzureRule1"
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  server_name                  = azurerm_sql_server.app_sqlserver.name
-  start_ip_address             = "65.52.129.125"
-  end_ip_address               = "65.52.129.125"
-}
-
 # Add rule for ${azurerm_app_service.paas_web_app.outbound_ip_addresses} array
 # Note these are shared addresses, hence does not fully constrain access
 # resource "azurerm_sql_firewall_rule" "webapp" {
 #   name                         = "AllowWebApp${count.index}"
 #   resource_group_name          = azurerm_resource_group.app_rg.name
-#   server_name                  = "${azurerm_sql_server.app_sqlserver.name}"
-#   start_ip_address             = "${element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)}"
-#   end_ip_address               = "${element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)}"
-# # BUG: terraform bug. Throws as an error on first creation: "value of 'count' cannot be computed". Subsequent executions do work.
-#   count                        = "${length(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses))}"
+#   server_name                  = azurerm_sql_server.app_sqlserver.name
+#   start_ip_address             = element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)
+#   end_ip_address               = element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)
+# # BUG: terraform limitation. Throws as an error on first creation: "value of 'count' cannot be computed". Subsequent executions do work.
+#   count                        = length(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses))
 #   depends_on                   = [azurerm_app_service.paas_web_app]
 # } 
 
 # Azure SQL Database Import Export Service runs on VMs in Azure
 # https://docs.microsoft.com/en-us/azure/sql-database/sql-database-networkaccess-overview
+# This rule will be disabled after provisioning of the SQL Database (using local-exec and PowerShell)
 resource "azurerm_sql_firewall_rule" "azureall" {
   name                         = "AllowAllWindowsAzureIPs" # Same name as Azure generated one
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -502,6 +494,13 @@ resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
   subnet_id                    = var.iag_subnet_id
+
+  # Create SQL DB FW rule to allow App Service in
+  # Create on this resource to prevent circular dependency between module.paas_app.azurerm_sql_database.app_sqldb, module.paas_app.azurerm_app_service.paas_web_app, module.paas_app.azurerm_sql_server.app_sqlserver
+  provisioner "local-exec" {
+    command                    = "../Scripts/create_appsvc_sqldb_firewall_rules.ps1 -SqlServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -OutboundIPAddresses ${azurerm_app_service.paas_web_app.outbound_ip_addresses}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
 }
 
 # resource "azurerm_private_link_endpoint" "sqlserver_endpoint" {
