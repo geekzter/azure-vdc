@@ -503,20 +503,25 @@ resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
   }
 }
 
-# resource "azurerm_private_link_endpoint" "sqlserver_endpoint" {
-#   name                         = "${azurerm_sql_server.app_sqlserver.name}-endpoint"
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   location                     = azurerm_resource_group.app_rg.location
-#   subnet_id                    = var.data_subnet_id
+resource "azurerm_private_endpoint" "sqlserver_endpoint" {
+  name                         = "${azurerm_sql_server.app_sqlserver.name}-endpoint"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  location                     = azurerm_resource_group.app_rg.location
+  subnet_id                    = var.data_subnet_id
 
-#   private_service_connection {
-#     is_manual_connection       = false
-#     name                       = "${azurerm_sql_server.app_sqlserver.name}-endpoint-connection"
-#     private_connection_resource_id = azurerm_sql_server.app_sqlserver.id
-#     #BUG: Error: private_service_connection.0.subresource_names.0 must only contain upper or lowercase letters, numbers, underscores, and periods
-#     subresource_names          = ["sqlServer"]
-#   }
-# }
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_sql_server.app_sqlserver.name}-endpoint-connection"
+    private_connection_resource_id = azurerm_sql_server.app_sqlserver.id
+    subresource_names          = ["sqlServer"]
+  }
+
+  # This resource has no output attribute (yet) for private ip address, we need script to create the private DNS record
+  provisioner "local-exec" {
+    command                    = "../Scripts/configure_private_link.ps1 -PrivateEndpointId ${self.id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+}
 
 # If you have AD permissions it is better to use an AAD group for DBA's, and add DBA and TF to that group
 resource "azurerm_sql_active_directory_administrator" "dba" {

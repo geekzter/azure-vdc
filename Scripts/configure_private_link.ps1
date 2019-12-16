@@ -11,6 +11,7 @@
 
 param (    
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
+    [parameter(Mandatory=$false)][string]$PrivateEndpointId,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
@@ -70,62 +71,70 @@ try {
     Pop-Location
 }
 
-$sqlDBPrivateLinkServiceConnectionName = "${appSqlServer}-endpoint-connection"
-Write-Host "SQL DB Private Link Service connection will be named '$sqlDBPrivateLinkServiceConnectionName'"
-$sqlDBPrivateEndpointName = "${appSqlServer}-endpoint"
-Write-Host "SQL DB Private Endpoint will be named '$sqlDBPrivateEndpointName'"
-$endpointSubnet = "data"
+if (!$privateEndpointId) {
+  # Private Endpoint does not yet exist
+  $sqlDBPrivateLinkServiceConnectionName = "${appSqlServer}-endpoint-connection"
+  Write-Host "SQL DB Private Link Service connection will be named '$sqlDBPrivateLinkServiceConnectionName'"
+  $sqlDBPrivateEndpointName = "${appSqlServer}-endpoint"
+  Write-Host "SQL DB Private Endpoint will be named '$sqlDBPrivateEndpointName'"
+  $endpointSubnet = "data"
 
-# Source: https://docs.microsoft.com/en-us/azure/private-link/create-private-endpoint-powershell
+  # Source: https://docs.microsoft.com/en-us/azure/private-link/create-private-endpoint-powershell
 
-$virtualNetwork = Get-AzVirtualNetwork -ResourceGroupName $vdcResourceGroup -Name $paasNetworkName
-if ($virtualNetwork) {
-  Write-Host "Found Virtual Network '$($virtualNetwork.Name)'"
+  $virtualNetwork = Get-AzVirtualNetwork -ResourceGroupName $vdcResourceGroup -Name $paasNetworkName
+  if ($virtualNetwork) {
+    Write-Host "Found Virtual Network '$($virtualNetwork.Name)'"
+  } else {
+    Write-Error "Virtual Network '$paasNetworkName' not found"
+    exit 1
+  }
+
+  $subnet = $virtualNetwork | Select-Object -ExpandProperty subnets | Where-Object {$_.Name -eq $endpointSubnet}  
+  if ($subnet -and ![string]::IsNullOrEmpty($subnet)) {
+    Write-Host "Found Subnet '$($subnet.Name)'"
+  } else {
+    Write-Error "Subnet '$endpointSubnet' not found in Virtual Network ${virtualNetwork.Name}"
+    exit 2
+  }
+
+  # Disable network policies, should not be needed at GA
+  if ($subnet.PrivateEndpointNetworkPolicies -ine "Disabled") {
+    $subnet.PrivateEndpointNetworkPolicies = "Disabled"
+    $virtualNetwork | Set-AzVirtualNetwork
+  }
+  
+  Write-Host "Creating Private Link Connection '$sqlDBPrivateLinkServiceConnectionName'..."
+  $privateEndpointConnection = New-AzPrivateLinkServiceConnection -Name "$sqlDBPrivateLinkServiceConnectionName" `
+    -PrivateLinkServiceId $appSqlServerId `
+    -GroupId "sqlServer" 
+  if ($privateEndpointConnection) {
+    Write-Host "Created Private Link Connection '$($privateEndpointConnection.Name)'"
+  } else {
+    Write-Error "Private Endpoint connection for '$appSqlServerId' is null"
+    exit 3
+  }
+
+  Write-Host "Creating Private EndPoint '$sqlDBPrivateEndpointName'..."
+  $privateEndpoint = New-AzPrivateEndpoint -ResourceGroupName $appResourceGroup `
+    -Name $sqlDBPrivateEndpointName `
+    -Location $location `
+    -Subnet $subnet `
+    -PrivateLinkServiceConnection $privateEndpointConnection `
+    -Force
+  if ($privateEndpoint) {
+    Write-Host "Created Private EndPoint '$($privateEndpoint.Name)'"
+  } else {
+    Write-Error "Private Endpoint is null"
+    exit 4
+  }
+
+  $privateEndpoint = Get-AzPrivateEndpoint -Name $sqlDBPrivateEndpointName -ResourceGroupName $appResourceGroup
 } else {
-  Write-Error "Virtual Network '$paasNetworkName' not found"
-  exit 1
+  # Private Endpoint already exists (e.g. created by Terraform)
+  $privateEndpointResource = Get-AzResource -ResourceId $PrivateEndpointId
+  $privateEndpoint = Get-AzPrivateEndpoint -Name $privateEndpointResource.Name -ResourceGroupName $privateEndpointResource.ResourceGroupName
 }
 
-$subnet = $virtualNetwork | Select-Object -ExpandProperty subnets | Where-Object {$_.Name -eq $endpointSubnet}  
-if ($subnet -and ![string]::IsNullOrEmpty($subnet)) {
-  Write-Host "Found Subnet '$($subnet.Name)'"
-} else {
-  Write-Error "Subnet '$endpointSubnet' not found in Virtual Network ${virtualNetwork.Name}"
-  exit 2
-}
-
-# Disable network policies, should not be needed at GA
-if ($subnet.PrivateEndpointNetworkPolicies -ine "Disabled") {
-  $subnet.PrivateEndpointNetworkPolicies = "Disabled"
-  $virtualNetwork | Set-AzVirtualNetwork
-}
- 
-Write-Host "Creating Private Link Connection '$sqlDBPrivateLinkServiceConnectionName'..."
-$privateEndpointConnection = New-AzPrivateLinkServiceConnection -Name "$sqlDBPrivateLinkServiceConnectionName" `
-  -PrivateLinkServiceId $appSqlServerId `
-  -GroupId "sqlServer" 
-if ($privateEndpointConnection) {
-  Write-Host "Created Private Link Connection '$($privateEndpointConnection.Name)'"
-} else {
-  Write-Error "Private Endpoint connection for '$appSqlServerId' is null"
-  exit 3
-}
-
-Write-Host "Creating Private EndPoint '$sqlDBPrivateEndpointName'..."
-$privateEndpoint = New-AzPrivateEndpoint -ResourceGroupName $appResourceGroup `
-  -Name $sqlDBPrivateEndpointName `
-  -Location $location `
-  -Subnet $subnet `
-  -PrivateLinkServiceConnection $privateEndpointConnection `
-  -Force
-if ($privateEndpoint) {
-  Write-Host "Created Private EndPoint '$($privateEndpoint.Name)'"
-} else {
-  Write-Error "Private Endpoint is null"
-  exit 4
-}
-
-$privateEndpoint = Get-AzPrivateEndpoint -Name $sqlDBPrivateEndpointName -ResourceGroupName $appResourceGroup
 $networkInterface = Get-AzResource -ResourceId $privateEndpoint.NetworkInterfaces[0].Id -ApiVersion "2019-04-01" 
  
 foreach ($ipconfig in $networkInterface.properties.ipConfigurations) { 

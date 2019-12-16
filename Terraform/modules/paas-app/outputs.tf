@@ -66,9 +66,9 @@ output sql_database {
 output sql_server {
     value = azurerm_sql_server.app_sqlserver.name
 }
-# output sql_server_endpoint_id {
-#     value = azurerm_private_link_endpoint.sqlserver_endpoint.id
-# }
+output sql_server_endpoint_id {
+    value = azurerm_private_endpoint.sqlserver_endpoint.id
+}
 output sql_server_fqdn {
   value       = azurerm_sql_server.app_sqlserver.fully_qualified_domain_name
 }
