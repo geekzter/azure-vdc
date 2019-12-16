@@ -114,28 +114,32 @@ try {
         if ([string]::IsNullOrEmpty($sqlAADUser)) {
             Write-Host "No valid account found or provided to access Azure SQL Server" -ForegroundColor Yellow
         } else {
-            $appService = $(terraform output paas_app_service_name 2>$null)
-            $sqlDB = $(terraform output paas_app_sql_database 2>$null)
-            $sqlServerName = $(terraform output paas_app_sql_server 2>$null)
-            $sqlServerFQDN = $(terraform output paas_app_sql_server_fqdn 2>$null)
-
-            Write-Host "Determening current Azure Active Directory DBA for SQL Server $sqlServerName..."
-            $dba = Get-AzSqlServerActiveDirectoryAdministrator -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
-            if ($dba.DisplayName -ne $sqlAADUser) {
-                $previousDBA = $dba.DisplayName
-                Write-Host "Replacing $($dba.DisplayName) with $sqlAADUser as Azure Active Directory DBA for SQL Server $sqlServerName..."
-                $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $sqlAADUser -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
-            }
-            Write-Host "$($dba.DisplayName) is Azure Active Directory DBA for SQL Server $sqlServerName"
-
-            Write-Host "Adding Managed Identity $appService to $sqlServerName/$sqlDB..."
-            $queryFile = (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) grant-database-access.sql)
-            $query = (Get-Content $queryFile) -replace "username",$appService
-            sqlcmd -S $sqlServerFQDN -d $sqlDB -Q "$query" -G -U $sqlAADUser
-            if (($LASTEXITCODE -ne 0) -and ($previousDBA)) {
-                Write-Host "Replacing $($dba.DisplayName) with $previousDBA as Azure Active Directory DBA for SQL Server $sqlServerName..."                
-                $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $previousDBA -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+            if ($IsWindows) {
+                $appService = $(terraform output paas_app_service_name 2>$null)
+                $sqlDB = $(terraform output paas_app_sql_database 2>$null)
+                $sqlServerName = $(terraform output paas_app_sql_server 2>$null)
+                $sqlServerFQDN = $(terraform output paas_app_sql_server_fqdn 2>$null)
+    
+                Write-Host "Determening current Azure Active Directory DBA for SQL Server $sqlServerName..."
+                $dba = Get-AzSqlServerActiveDirectoryAdministrator -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                if ($dba.DisplayName -ne $sqlAADUser) {
+                    $previousDBA = $dba.DisplayName
+                    Write-Host "Replacing $($dba.DisplayName) with $sqlAADUser as Azure Active Directory DBA for SQL Server $sqlServerName..."
+                    $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $sqlAADUser -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                }
                 Write-Host "$($dba.DisplayName) is Azure Active Directory DBA for SQL Server $sqlServerName"
+    
+                Write-Host "Adding Managed Identity $appService to $sqlServerName/$sqlDB..."
+                $queryFile = (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) grant-database-access.sql)
+                $query = (Get-Content $queryFile) -replace "username",$appService
+                sqlcmd -S $sqlServerFQDN -d $sqlDB -Q "$query" -G -U $sqlAADUser
+                if (($LASTEXITCODE -ne 0) -and ($previousDBA)) {
+                    Write-Host "Replacing $($dba.DisplayName) with $previousDBA as Azure Active Directory DBA for SQL Server $sqlServerName..."                
+                    $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $previousDBA -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                    Write-Host "$($dba.DisplayName) is Azure Active Directory DBA for SQL Server $sqlServerName"
+                }
+            } else {
+                Write-Host "Unfortunately sqlcmd (currently) only supports AAD MFA login on Windows, skipping SQL Server access" -ForegroundColor Yellow
             }
         }
     }
