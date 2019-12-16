@@ -66,8 +66,8 @@ if ($appStorageAccount) {
         $rule
         Write-Host "Added rule for storage account $appStorageAccount to allow $ipPrefix"
     }
-    Write-Host "Network Rules for ${appStorageAccount}:"
-    Get-AzStorageAccountNetworkRuleSet -ResourceGroupName $appResourceGroup -Name $appStorageAccount | Select-Object -ExpandProperty IpRules | Sort-Object -Property IPAddressOrRange | Format-Table
+    #Write-Host "Network Rules for ${appStorageAccount}:"
+    #Get-AzStorageAccountNetworkRuleSet -ResourceGroupName $appResourceGroup -Name $appStorageAccount | Select-Object -ExpandProperty IpRules | Sort-Object -Property IPAddressOrRange | Format-Table
 }
 if ($appEventHubNamespace) {
     Write-Host "Adding rule for event hub $appEventHubNamespace to allow $ipAddress..."

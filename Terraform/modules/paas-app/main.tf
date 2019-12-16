@@ -518,7 +518,7 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
 
   # This resource has no output attribute (yet) for private ip address, we need script to create the private DNS record
   provisioner "local-exec" {
-    command                    = "../Scripts/configure_private_link.ps1 -PrivateEndpointId ${self.id}"
+    command                    = "../Scripts/configure_private_link.ps1 -PrivateEndpointId ${self.id} -VDCResourceGroupName ${local.vdc_resource_group_name}"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 }

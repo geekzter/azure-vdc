@@ -299,24 +299,16 @@
         "16": {
           "metadata": {
             "asset": {
-              "idInputName": "id"
+              "idInputName": "resourceId",
+              "type": "Server"
             },
             "inputs": [
               {
-                "isOptional": true,
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-hub-network"
-              },
-              {
-                "isOptional": true,
-                "name": "resourceId"
-              },
-              {
-                "isOptional": true,
-                "name": "menuid"
+                "name": "resourceId",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Sql/servers/${paas_app_resource_group_short}sqlserver"
               }
             ],
-            "type": "Extension/HubsExtension/PartType/ResourcePart"
+            "type": "Extension/SqlAzureExtension/PartType/ServerPart"
           },
           "position": {
             "colSpan": 2,
@@ -328,24 +320,16 @@
         "17": {
           "metadata": {
             "asset": {
-              "idInputName": "id"
+              "idInputName": "id",
+              "type": "PrivateDnsZone"
             },
             "inputs": [
               {
-                "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-iaas-spoke-network"
-              },
-              {
-                "isOptional": true,
-                "name": "resourceId"
-              },
-              {
-                "isOptional": true,
-                "name": "menuid"
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
               }
             ],
-            "type": "Extension/HubsExtension/PartType/ResourcePart"
+            "type": "Extension/Microsoft_Azure_PrivateDNS/PartType/PrivateDnsZonePart"
           },
           "position": {
             "colSpan": 2,
@@ -486,7 +470,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-paas-spoke-network"
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-hub-network"
               },
               {
                 "isOptional": true,
@@ -538,60 +522,28 @@
         "20": {
           "metadata": {
             "asset": {
-              "idInputName": "ComponentId",
-              "type": "ApplicationInsights"
+              "idInputName": "id"
             },
             "inputs": [
               {
-                "name": "ComponentId",
-                "value": "Network Insights AppGateways Minified"
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-iaas-spoke-network"
               },
               {
                 "isOptional": true,
-                "name": "ResourceIds",
-                "value": [
-                  "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.network/applicationgateways/${prefix}-${environment}-${suffix}-waf"
-                ]
+                "name": "resourceId"
               },
               {
                 "isOptional": true,
-                "name": "Type",
-                "value": "workbook"
-              },
-              {
-                "isOptional": true,
-                "name": "TimeContext"
-              },
-              {
-                "isOptional": true,
-                "name": "ConfigurationId",
-                "value": "Community-Workbooks/Network Insights/NetworkInsights-AppGatewayMetrics-Minified"
-              },
-              {
-                "isOptional": true,
-                "name": "ViewerMode"
-              },
-              {
-                "isOptional": true,
-                "name": "GalleryResourceType",
-                "value": "Network Insights AppGateways Minified"
-              },
-              {
-                "isOptional": true,
-                "name": "Version",
-                "value": "1.0"
+                "name": "menuid"
               }
             ],
-            "type": "Extension/AppInsightsExtension/PartType/NotebookPinnedPart",
-            "viewState": {
-              "content": {
-                "configurationId": "Community-Workbooks/Network Insights/NetworkInsights-AppGatewayMetrics-Minified"
-              }
-            }
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
           },
           "position": {
             "colSpan": 2,
-            "rowSpan": 2,
+            "rowSpan": 1,
             "x": 10,
             "y": 10
           }
@@ -632,6 +584,35 @@
           }
         },
         "22": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id"
+            },
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-paas-spoke-network"
+              },
+              {
+                "isOptional": true,
+                "name": "resourceId"
+              },
+              {
+                "isOptional": true,
+                "name": "menuid"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 11
+          }
+        },
+        "23": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -712,7 +693,68 @@
             "y": 12
           }
         },
-        "23": {
+        "24": {
+          "metadata": {
+            "asset": {
+              "idInputName": "ComponentId",
+              "type": "ApplicationInsights"
+            },
+            "inputs": [
+              {
+                "name": "ComponentId",
+                "value": "Network Insights AppGateways Minified"
+              },
+              {
+                "isOptional": true,
+                "name": "ResourceIds",
+                "value": [
+                  "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.network/applicationgateways/${prefix}-${environment}-${suffix}-waf"
+                ]
+              },
+              {
+                "isOptional": true,
+                "name": "Type",
+                "value": "workbook"
+              },
+              {
+                "isOptional": true,
+                "name": "TimeContext"
+              },
+              {
+                "isOptional": true,
+                "name": "ConfigurationId",
+                "value": "Community-Workbooks/Network Insights/NetworkInsights-AppGatewayMetrics-Minified"
+              },
+              {
+                "isOptional": true,
+                "name": "ViewerMode"
+              },
+              {
+                "isOptional": true,
+                "name": "GalleryResourceType",
+                "value": "Network Insights AppGateways Minified"
+              },
+              {
+                "isOptional": true,
+                "name": "Version",
+                "value": "1.0"
+              }
+            ],
+            "type": "Extension/AppInsightsExtension/PartType/NotebookPinnedPart",
+            "viewState": {
+              "content": {
+                "configurationId": "Community-Workbooks/Network Insights/NetworkInsights-AppGatewayMetrics-Minified"
+              }
+            }
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 2,
+            "x": 10,
+            "y": 12
+          }
+        },
+        "25": {
           "metadata": {
             "inputs": [
               {
@@ -747,7 +789,7 @@
             "y": 13
           }
         },
-        "24": {
+        "26": {
           "metadata": {
             "inputs": [
               {
@@ -782,7 +824,7 @@
             "y": 15
           }
         },
-        "25": {
+        "27": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -858,7 +900,7 @@
             "y": 16
           }
         },
-        "26": {
+        "28": {
           "metadata": {
             "inputs": [
               {
@@ -893,7 +935,7 @@
             "y": 17
           }
         },
-        "27": {
+        "29": {
           "metadata": {
             "inputs": [
               {
@@ -1218,11 +1260,11 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-fa9c77ba-206b-4c1f-8287-264df373f01d",
-              "StartboardPart-AnalyticsPart-fa9c77ba-206b-4c1f-8287-264df373f023",
-              "StartboardPart-MonitorChartPart-fa9c77ba-206b-4c1f-8287-264df373f029",
-              "StartboardPart-AnalyticsPart-fa9c77ba-206b-4c1f-8287-264df373f031",
-              "StartboardPart-AnalyticsPart-fa9c77ba-206b-4c1f-8287-264df373f037"
+              "StartboardPart-ApplicationMapPart-da62891c-c926-4cf4-86a8-0d17e33487cc",
+              "StartboardPart-AnalyticsPart-da62891c-c926-4cf4-86a8-0d17e33487d2",
+              "StartboardPart-MonitorChartPart-da62891c-c926-4cf4-86a8-0d17e33487d8",
+              "StartboardPart-AnalyticsPart-da62891c-c926-4cf4-86a8-0d17e33487e0",
+              "StartboardPart-AnalyticsPart-da62891c-c926-4cf4-86a8-0d17e33487e6"
             ],
             "model": {
               "format": "utc",

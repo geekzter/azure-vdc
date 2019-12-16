@@ -12,6 +12,7 @@
 param (    
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$PrivateEndpointId,
+    [parameter(Mandatory=$false)][string]$VDCResourceGroupName,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
@@ -27,51 +28,50 @@ if(-not($subscription)) { Throw "You must supply a value for subscription" }
 # Log on to Azure if not already logged on
 AzLogin
 
-# Retrieve Azure resources config using Terraform
-try {
-    Push-Location $tfdirectory
-
-    Invoke-Command -ScriptBlock {
-        $Private:ErrorActionPreference = "Continue"
-        $Script:appResourceGroup       = $(terraform output "paas_app_resource_group"       2>$null)
-        if ([string]::IsNullOrEmpty($appResourceGroup)) {
-          throw "Terraform output paas_app_resource_group is empty"
-        }
-        $Script:appEventHubNamespace   = $(terraform output "paas_app_eventhub_namespace"   2>$null)
-        if ([string]::IsNullOrEmpty($appEventHubNamespace)) {
-          throw "Terraform output paas_app_eventhub_namespace is empty"
-        }
-        $Script:appSqlServer           = $(terraform output "paas_app_sql_server"           2>$null)
-        if ([string]::IsNullOrEmpty($appSqlServer)) {
-          throw"Terraform output paas_app_sql_server is empty"
-        }
-        $Script:appSqlServerId         = $(terraform output "paas_app_sql_server_id"        2>$null)
-        if ([string]::IsNullOrEmpty($appSqlServerId)) {
-          throw "Terraform output paas_app_sql_server_id is empty"
-        }
-        $Script:appStorageAccount      = $(terraform output "paas_app_storage_account_name" 2>$null)
-        if ([string]::IsNullOrEmpty($appStorageAccount)) {
-          throw "Terraform output paas_app_storage_account_name is empty"
-        }
-        $Script:location               = $(terraform output "location"                      2>$null)
-        if ([string]::IsNullOrEmpty($location)) {
-          throw "Terraform output location is empty"
-        }
-        $Script:paasNetworkName        = $(terraform output "paas_vnet_name"                2>$null)
-        if ([string]::IsNullOrEmpty($paasNetworkName)) {
-          throw "Terraform output paas_vnet_name is empty"
-        }
-        $Script:vdcResourceGroup       = $(terraform output "vdc_resource_group"            2>$null)
-        if ([string]::IsNullOrEmpty($vdcResourceGroup)) {
-          throw "Terraform output vdc_resource_group is empty"
-        }
-    }
-
-} finally {
-    Pop-Location
-}
-
 if (!$privateEndpointId) {
+  # Retrieve Azure resources config using Terraform
+  try {
+      Push-Location $tfdirectory
+
+      Invoke-Command -ScriptBlock {
+          $Private:ErrorActionPreference = "Continue"
+          $Script:appResourceGroup       = $(terraform output "paas_app_resource_group"       2>$null)
+          if ([string]::IsNullOrEmpty($appResourceGroup)) {
+            throw "Terraform output paas_app_resource_group is empty"
+          }
+          $Script:appEventHubNamespace   = $(terraform output "paas_app_eventhub_namespace"   2>$null)
+          if ([string]::IsNullOrEmpty($appEventHubNamespace)) {
+            throw "Terraform output paas_app_eventhub_namespace is empty"
+          }
+          $Script:appSqlServer           = $(terraform output "paas_app_sql_server"           2>$null)
+          if ([string]::IsNullOrEmpty($appSqlServer)) {
+            throw"Terraform output paas_app_sql_server is empty"
+          }
+          $Script:appSqlServerId         = $(terraform output "paas_app_sql_server_id"        2>$null)
+          if ([string]::IsNullOrEmpty($appSqlServerId)) {
+            throw "Terraform output paas_app_sql_server_id is empty"
+          }
+          $Script:appStorageAccount      = $(terraform output "paas_app_storage_account_name" 2>$null)
+          if ([string]::IsNullOrEmpty($appStorageAccount)) {
+            throw "Terraform output paas_app_storage_account_name is empty"
+          }
+          $Script:location               = $(terraform output "location"                      2>$null)
+          if ([string]::IsNullOrEmpty($location)) {
+            throw "Terraform output location is empty"
+          }
+          $Script:paasNetworkName        = $(terraform output "paas_vnet_name"                2>$null)
+          if ([string]::IsNullOrEmpty($paasNetworkName)) {
+            throw "Terraform output paas_vnet_name is empty"
+          }
+          $Script:VDCResourceGroupName   = $(terraform output "vdc_resource_group"            2>$null)
+          if ([string]::IsNullOrEmpty($vdcResourceGroup)) {
+            throw "Terraform output vdc_resource_group is empty"
+          }
+      }
+  } finally {
+      Pop-Location
+  }
+
   # Private Endpoint does not yet exist
   $sqlDBPrivateLinkServiceConnectionName = "${appSqlServer}-endpoint-connection"
   Write-Host "SQL DB Private Link Service connection will be named '$sqlDBPrivateLinkServiceConnectionName'"
@@ -81,7 +81,7 @@ if (!$privateEndpointId) {
 
   # Source: https://docs.microsoft.com/en-us/azure/private-link/create-private-endpoint-powershell
 
-  $virtualNetwork = Get-AzVirtualNetwork -ResourceGroupName $vdcResourceGroup -Name $paasNetworkName
+  $virtualNetwork = Get-AzVirtualNetwork -ResourceGroupName $VDCResourceGroupName -Name $paasNetworkName
   if ($virtualNetwork) {
     Write-Host "Found Virtual Network '$($virtualNetwork.Name)'"
   } else {
@@ -143,7 +143,7 @@ foreach ($ipconfig in $networkInterface.properties.ipConfigurations) {
     $dnsZone = $fqdn.split('.',2)[1] 
     Write-Host "Creating Private DNS A record $fqdn -> $($ipconfig.properties.privateIPAddress)..."
     $dnsRecord = New-AzPrivateDnsRecordSet -Name $recordName -RecordType A -ZoneName "privatelink.database.windows.net" `
-      -ResourceGroupName $vdcResourceGroup -Ttl 600 `
+      -ResourceGroupName $VDCResourceGroupName -Ttl 600 `
       -PrivateDnsRecords (New-AzPrivateDnsRecordConfig -IPv4Address $ipconfig.properties.privateIPAddress) `
       -Overwrite
     Write-Host "Created Private DNS A record $($dnsRecord.Name).$($dnsRecord.ZoneName) -> $($dnsRecord.Records[0])"
