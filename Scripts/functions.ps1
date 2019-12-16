@@ -1,5 +1,5 @@
 function AzLogin () {
-    if (!(Get-AzTenant -TenantId $tenantid -ErrorAction SilentlyContinue)) {
+    if (!(Get-AzContext)) {
         Write-Host "Reconnecting to Azure with SPN..."
         if(-not($clientid)) { Throw "You must supply a value for clientid" }
         if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
