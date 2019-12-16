@@ -8,7 +8,7 @@ resource "random_string" "iag_domain_name_label" {
 
 resource "random_integer" "rdp_port" {
   min     = 1024
-  max     = 65664
+  max     = 64000
   keepers = {
     bastion                    = azurerm_virtual_machine.bastion.name
     bastion_if                 = azurerm_network_interface.bas_if.mac_address 
