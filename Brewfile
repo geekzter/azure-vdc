@@ -1,9 +1,15 @@
 # Install macOS dependecies with 'brew bundle' (requires Homebrew)
 # https://github.com/Homebrew/homebrew-bundle
 
+tap "microsoft/mssql-release", "https://github.com/Microsoft/homebrew-mssql-release"
+
 # Scripting
-cask "jq"
+brew "jq"
 cask "powershell"
+
+# SQL Server
+brew "msodbcsql"
+brew "mssql-tools"
 
 # Visual Studio Code
 cask "visual-studio-code"

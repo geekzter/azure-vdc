@@ -5,8 +5,9 @@
 param ( 
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace,
     [parameter(Mandatory=$false)][switch]$All=$false,
-    [parameter(Mandatory=$false)][switch]$ForceEntry=$false,
+    [parameter(Mandatory=$false)][switch]$Network=$false,
     [parameter(Mandatory=$false)][switch]$ShowCredentials=$false,
+    [parameter(Mandatory=$false)][switch]$SqlServer=$false,
     [parameter(Mandatory=$false)][switch]$StartBastion=$false,
     [parameter(Mandatory=$false)][switch]$ConnectBastion=$false,
     [parameter(Mandatory=$false)][switch]$wait=$false,
@@ -18,7 +19,7 @@ param (
 ) 
 
 # Provide at least one argument
-if (!($All -or $ConnectBastion -or $ForceEntry -or $ShowCredentials -or $StartBastion)) {
+if (!($All -or $ConnectBastion -or $Network -or $ShowCredentials -or $SqlServer -or $StartBastion)) {
     Write-Host "Please indicate what to do"
     Get-Help $MyInvocation.MyCommand.Definition
     exit
@@ -37,10 +38,11 @@ try {
     }
     Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
 
-    $bastionName = $(terraform output "bastion_name" 2>$null)
     $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
+    $paasAppResourceGroup = $(terraform output "paas_app_resource_group" 2>$null)
     
     if ($All -or $StartBastion -or $ConnectBastion) {
+        $Script:bastionName = $(terraform output "bastion_name" 2>$null)
         # Start bastion
         if ($bastionName) {
             Write-Host "`nStarting bastion" -ForegroundColor Green 
@@ -48,8 +50,7 @@ try {
         }
     }
 
-    if ($All -or $ForceEntry) {
-
+    if ($All -or $Network) {
         # Punch hole in PaaS Firewalls
         Write-Host "`nPunch hole in PaaS Firewalls" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
@@ -100,9 +101,58 @@ try {
         $null = Set-AzFirewall -AzureFirewall $azFW
     }
 
+    if ($All -or $SqlServer) {
+        $loggedInAccount = (Get-AzContext).Account
+        if ($loggedInAccount.Type -eq "User") {
+            $sqlAADUser = $loggedInAccount.Id
+        } else {
+            Write-Host "Current user $($loggedInAccount.Id) is a $($loggedInAccount.Type), Set-AzSqlServerActiveDirectoryAdministrator may fail..." -ForegroundColor Yellow
+            do {
+                Write-Host "Type email address of user to sign into Azure SQL Server (empty to skip):" -ForegroundColor Cyan
+                $sqlAADUser = Read-Host
+            } until (($sqlAADUser -match "^[a-zA-Z0-9.!£#$%&'^_`{}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$") -or [string]::IsNullOrEmpty($sqlAADUser))
+        }
+        if ([string]::IsNullOrEmpty($sqlAADUser)) {
+            Write-Host "No valid account found or provided to access Azure SQL Server, skipping configuration" -ForegroundColor Yellow
+        } else {
+            if ($IsWindows) {
+                $appService    = $(terraform output paas_app_service_name    2>$null)
+                $sqlDB         = $(terraform output paas_app_sql_database    2>$null)
+                $sqlServerName = $(terraform output paas_app_sql_server      2>$null)
+                $sqlServerFQDN = $(terraform output paas_app_sql_server_fqdn 2>$null)
+    
+                Write-Host "Determening current Azure Active Directory DBA for SQL Server $sqlServerName..."
+                $dba = Get-AzSqlServerActiveDirectoryAdministrator -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                if ($dba.DisplayName -ne $sqlAADUser) {
+                    $previousDBA = $dba.DisplayName
+                    Write-Host "Replacing $($dba.DisplayName) with $sqlAADUser as Azure Active Directory DBA for SQL Server $sqlServerName..."
+                    # BUG: Forbidden when logged in with Service Principal
+                    $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $sqlAADUser -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                }
+                Write-Host "$($dba.DisplayName) is Azure Active Directory DBA for SQL Server $sqlServerName"
+    
+                Write-Host "Adding Managed Identity $appService to $sqlServerName/$sqlDB..."
+                $queryFile = (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) grant-database-access.sql)
+                $query = (Get-Content $queryFile) -replace "username",$appService
+                sqlcmd -S $sqlServerFQDN -d $sqlDB -Q "$query" -G -U $sqlAADUser
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "Sign-in dialog aborted/cancelled" -ForegroundColor Yellow
+                    if ($previousDBA) {
+                        # Revert DBA change back to where we started
+                        Write-Host "Replacing $($dba.DisplayName) back to $previousDBA as Azure Active Directory DBA for SQL Server $sqlServerName..."              
+                        $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $previousDBA -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                        Write-Host "$($dba.DisplayName) is Azure Active Directory DBA for SQL Server $sqlServerName"
+                    }
+                }
+            } else {
+                Write-Host "Unfortunately sqlcmd (currently) only supports AAD MFA login on Windows, skipping SQL Server access configuration" -ForegroundColor Yellow
+            }
+        }
+    }
+
     if ($All -or $ShowCredentials -or $ConnectBastion) {
-        $Script:adminUser = $(terraform output admin_user)
-        $Script:adminPassword = $(terraform output admin_password)
+        $Script:adminUser = $(terraform output admin_user 2>$null)
+        $Script:adminPassword = $(terraform output admin_password 2>$null)
         $Script:bastionHost = "$(terraform output iag_public_ip):$(terraform output bastion_rdp_port)"
     }
 
