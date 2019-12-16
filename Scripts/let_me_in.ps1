@@ -106,18 +106,19 @@ try {
         if ($loggedInAccount.Type -eq "User") {
             $sqlAADUser = $loggedInAccount.Id
         } else {
+            Write-Host "Current user $($loggedInAccount.Id) is a $($loggedInAccount.Type), Set-AzSqlServerActiveDirectoryAdministrator may fail..." -ForegroundColor Yellow
             do {
                 Write-Host "Type email address of user to sign into Azure SQL Server (empty to skip):" -ForegroundColor Cyan
                 $sqlAADUser = Read-Host
             } until (($sqlAADUser -match "^[a-zA-Z0-9.!£#$%&'^_`{}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$") -or [string]::IsNullOrEmpty($sqlAADUser))
         }
         if ([string]::IsNullOrEmpty($sqlAADUser)) {
-            Write-Host "No valid account found or provided to access Azure SQL Server" -ForegroundColor Yellow
+            Write-Host "No valid account found or provided to access Azure SQL Server, skipping configuration" -ForegroundColor Yellow
         } else {
             if ($IsWindows) {
-                $appService = $(terraform output paas_app_service_name 2>$null)
-                $sqlDB = $(terraform output paas_app_sql_database 2>$null)
-                $sqlServerName = $(terraform output paas_app_sql_server 2>$null)
+                $appService    = $(terraform output paas_app_service_name    2>$null)
+                $sqlDB         = $(terraform output paas_app_sql_database    2>$null)
+                $sqlServerName = $(terraform output paas_app_sql_server      2>$null)
                 $sqlServerFQDN = $(terraform output paas_app_sql_server_fqdn 2>$null)
     
                 Write-Host "Determening current Azure Active Directory DBA for SQL Server $sqlServerName..."
@@ -125,6 +126,7 @@ try {
                 if ($dba.DisplayName -ne $sqlAADUser) {
                     $previousDBA = $dba.DisplayName
                     Write-Host "Replacing $($dba.DisplayName) with $sqlAADUser as Azure Active Directory DBA for SQL Server $sqlServerName..."
+                    # BUG: Forbidden when logged in with Service Principal
                     $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $sqlAADUser -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
                 }
                 Write-Host "$($dba.DisplayName) is Azure Active Directory DBA for SQL Server $sqlServerName"
@@ -133,13 +135,17 @@ try {
                 $queryFile = (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) grant-database-access.sql)
                 $query = (Get-Content $queryFile) -replace "username",$appService
                 sqlcmd -S $sqlServerFQDN -d $sqlDB -Q "$query" -G -U $sqlAADUser
-                if (($LASTEXITCODE -ne 0) -and ($previousDBA)) {
-                    Write-Host "Replacing $($dba.DisplayName) with $previousDBA as Azure Active Directory DBA for SQL Server $sqlServerName..."                
-                    $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $previousDBA -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
-                    Write-Host "$($dba.DisplayName) is Azure Active Directory DBA for SQL Server $sqlServerName"
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "Sign-in dialog aborted/cancelled" -ForegroundColor Yellow
+                    if ($previousDBA) {
+                        # Revert DBA change back to where we started
+                        Write-Host "Replacing $($dba.DisplayName) back to $previousDBA as Azure Active Directory DBA for SQL Server $sqlServerName..."              
+                        $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $previousDBA -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                        Write-Host "$($dba.DisplayName) is Azure Active Directory DBA for SQL Server $sqlServerName"
+                    }
                 }
             } else {
-                Write-Host "Unfortunately sqlcmd (currently) only supports AAD MFA login on Windows, skipping SQL Server access" -ForegroundColor Yellow
+                Write-Host "Unfortunately sqlcmd (currently) only supports AAD MFA login on Windows, skipping SQL Server access configuration" -ForegroundColor Yellow
             }
         }
     }
