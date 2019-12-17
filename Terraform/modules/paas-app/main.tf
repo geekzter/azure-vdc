@@ -499,7 +499,7 @@ resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
   # Create on this resource to prevent circular dependency between module.paas_app.azurerm_sql_database.app_sqldb, module.paas_app.azurerm_app_service.paas_web_app, module.paas_app.azurerm_sql_server.app_sqlserver
   provisioner "local-exec" {
     command                    = "../Scripts/create_appsvc_sqldb_firewall_rules.ps1 -SqlServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -OutboundIPAddresses ${azurerm_app_service.paas_web_app.outbound_ip_addresses}"
-    interpreter                = ["pwsh", "-Command"]
+    interpreter                = ["pwsh", "-nop", "-Command"]
   }
 }
 
@@ -519,7 +519,7 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
   # This resource has no output attribute (yet) for private ip address, we need script to create the private DNS record
   provisioner "local-exec" {
     command                    = "../Scripts/configure_private_link.ps1 -PrivateEndpointId ${self.id} -VDCResourceGroupName ${local.vdc_resource_group_name}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    interpreter                = ["pwsh", "-Command"]
   }
 }
 
