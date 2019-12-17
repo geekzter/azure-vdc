@@ -10,13 +10,14 @@
 #> 
 
 param (    
-    [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$PrivateEndpointId,
     [parameter(Mandatory=$false)][string]$VDCResourceGroupName,
+    [parameter(Mandatory=$false)][string]$Workspace,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
-    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
+    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET,
+    [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 
 ### Internal Functions
@@ -33,108 +34,36 @@ if (!$privateEndpointId) {
   try {
       Push-Location $tfdirectory
 
+      if ($Workspace) {
+          $currentWorkspace = $(terraform workspace show)
+          terraform workspace select $Workspace
+      } else {
+          $Workspace = $(terraform workspace show)
+      }
+      Write-Host "Using Terraform workspace '$Workspace'..."
+
       Invoke-Command -ScriptBlock {
           $Private:ErrorActionPreference = "Continue"
-          $Script:appResourceGroup       = $(terraform output "paas_app_resource_group"       2>$null)
-          if ([string]::IsNullOrEmpty($appResourceGroup)) {
-            throw "Terraform output paas_app_resource_group is empty"
+          $Script:PrivateEndpointId      = $(terraform output "paas_app_sql_server_endpoint_id" 2>$null)
+          if ([string]::IsNullOrEmpty($PrivateEndpointId)) {
+            throw "Terraform output paas_app_sql_server_endpoint_id is empty"
           }
-          $Script:appEventHubNamespace   = $(terraform output "paas_app_eventhub_namespace"   2>$null)
-          if ([string]::IsNullOrEmpty($appEventHubNamespace)) {
-            throw "Terraform output paas_app_eventhub_namespace is empty"
-          }
-          $Script:appSqlServer           = $(terraform output "paas_app_sql_server"           2>$null)
-          if ([string]::IsNullOrEmpty($appSqlServer)) {
-            throw"Terraform output paas_app_sql_server is empty"
-          }
-          $Script:appSqlServerId         = $(terraform output "paas_app_sql_server_id"        2>$null)
-          if ([string]::IsNullOrEmpty($appSqlServerId)) {
-            throw "Terraform output paas_app_sql_server_id is empty"
-          }
-          $Script:appStorageAccount      = $(terraform output "paas_app_storage_account_name" 2>$null)
-          if ([string]::IsNullOrEmpty($appStorageAccount)) {
-            throw "Terraform output paas_app_storage_account_name is empty"
-          }
-          $Script:location               = $(terraform output "location"                      2>$null)
-          if ([string]::IsNullOrEmpty($location)) {
-            throw "Terraform output location is empty"
-          }
-          $Script:paasNetworkName        = $(terraform output "paas_vnet_name"                2>$null)
-          if ([string]::IsNullOrEmpty($paasNetworkName)) {
-            throw "Terraform output paas_vnet_name is empty"
-          }
-          $Script:VDCResourceGroupName   = $(terraform output "vdc_resource_group"            2>$null)
-          if ([string]::IsNullOrEmpty($vdcResourceGroup)) {
+
+          $Script:VDCResourceGroupName   = $(terraform output "vdc_resource_group"              2>$null)
+          if ([string]::IsNullOrEmpty($VDCResourceGroupName)) {
             throw "Terraform output vdc_resource_group is empty"
           }
       }
   } finally {
+      if ($currentWorkspace) {
+        terraform workspace select $currentWorkspace
+      }
       Pop-Location
   }
-
-  # Private Endpoint does not yet exist
-  $sqlDBPrivateLinkServiceConnectionName = "${appSqlServer}-endpoint-connection"
-  Write-Host "SQL DB Private Link Service connection will be named '$sqlDBPrivateLinkServiceConnectionName'"
-  $sqlDBPrivateEndpointName = "${appSqlServer}-endpoint"
-  Write-Host "SQL DB Private Endpoint will be named '$sqlDBPrivateEndpointName'"
-  $endpointSubnet = "data"
-
-  # Source: https://docs.microsoft.com/en-us/azure/private-link/create-private-endpoint-powershell
-
-  $virtualNetwork = Get-AzVirtualNetwork -ResourceGroupName $VDCResourceGroupName -Name $paasNetworkName
-  if ($virtualNetwork) {
-    Write-Host "Found Virtual Network '$($virtualNetwork.Name)'"
-  } else {
-    Write-Error "Virtual Network '$paasNetworkName' not found"
-    exit 1
-  }
-
-  $subnet = $virtualNetwork | Select-Object -ExpandProperty subnets | Where-Object {$_.Name -eq $endpointSubnet}  
-  if ($subnet -and ![string]::IsNullOrEmpty($subnet)) {
-    Write-Host "Found Subnet '$($subnet.Name)'"
-  } else {
-    Write-Error "Subnet '$endpointSubnet' not found in Virtual Network ${virtualNetwork.Name}"
-    exit 2
-  }
-
-  # Disable network policies, should not be needed at GA
-  if ($subnet.PrivateEndpointNetworkPolicies -ine "Disabled") {
-    $subnet.PrivateEndpointNetworkPolicies = "Disabled"
-    $virtualNetwork | Set-AzVirtualNetwork
-  }
-  
-  Write-Host "Creating Private Link Connection '$sqlDBPrivateLinkServiceConnectionName'..."
-  $privateEndpointConnection = New-AzPrivateLinkServiceConnection -Name "$sqlDBPrivateLinkServiceConnectionName" `
-    -PrivateLinkServiceId $appSqlServerId `
-    -GroupId "sqlServer" 
-  if ($privateEndpointConnection) {
-    Write-Host "Created Private Link Connection '$($privateEndpointConnection.Name)'"
-  } else {
-    Write-Error "Private Endpoint connection for '$appSqlServerId' is null"
-    exit 3
-  }
-
-  Write-Host "Creating Private EndPoint '$sqlDBPrivateEndpointName'..."
-  $privateEndpoint = New-AzPrivateEndpoint -ResourceGroupName $appResourceGroup `
-    -Name $sqlDBPrivateEndpointName `
-    -Location $location `
-    -Subnet $subnet `
-    -PrivateLinkServiceConnection $privateEndpointConnection `
-    -Force
-  if ($privateEndpoint) {
-    Write-Host "Created Private EndPoint '$($privateEndpoint.Name)'"
-  } else {
-    Write-Error "Private Endpoint is null"
-    exit 4
-  }
-
-  $privateEndpoint = Get-AzPrivateEndpoint -Name $sqlDBPrivateEndpointName -ResourceGroupName $appResourceGroup
-} else {
-  # Private Endpoint already exists (e.g. created by Terraform)
-  $privateEndpointResource = Get-AzResource -ResourceId $PrivateEndpointId
-  $privateEndpoint = Get-AzPrivateEndpoint -Name $privateEndpointResource.Name -ResourceGroupName $privateEndpointResource.ResourceGroupName
 }
 
+$privateEndpointResource = Get-AzResource -ResourceId $PrivateEndpointId
+$privateEndpoint = Get-AzPrivateEndpoint -Name $privateEndpointResource.Name -ResourceGroupName $privateEndpointResource.ResourceGroupName
 $networkInterface = Get-AzResource -ResourceId $privateEndpoint.NetworkInterfaces[0].Id -ApiVersion "2019-04-01" 
 
 Import-Module Az.PrivateDns # Does not get loaded automatically sometimes (e.g. in subshell)

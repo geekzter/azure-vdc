@@ -309,13 +309,19 @@ variable deploy_auto_shutdown {
 }
 
 variable deploy_managed_bastion {
-  description                  = "Whether to deploy the Managed Bastion (preview)"
+  description                  = "Whether to deploy the Managed Bastion"
   default                      = true
   type                         = bool
 }
 
 variable deploy_network_watcher {
   description                  = "Whether to deploy connection monitors"
+  default                      = false
+  type                         = bool
+}
+
+variable deploy_private_dns_for_endpoint {
+  description                  = "Whether to create DNS records for Private Endpoint(s)"
   default                      = false
   type                         = bool
 }

@@ -21,6 +21,9 @@ variable database_template_storage_uri {
 variable data_subnet_id {}
 variable dba_login {}
 variable dba_object_id {}
+variable deploy_private_dns_for_endpoint {
+  type                         = bool
+}
 variable iag_subnet_id {}
 variable integrated_subnet_range {}
 variable integrated_subnet_id {}

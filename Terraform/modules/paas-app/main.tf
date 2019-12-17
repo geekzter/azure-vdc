@@ -516,11 +516,16 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
     subresource_names          = ["sqlServer"]
   }
 
+}
+
+resource null_resource sql_db_private_dns {
   # This resource has no output attribute (yet) for private ip address, we need script to create the private DNS record
   provisioner "local-exec" {
-    command                    = "../Scripts/configure_private_link.ps1 -PrivateEndpointId ${self.id} -VDCResourceGroupName ${local.vdc_resource_group_name}"
+    command                    = "../Scripts/configure_private_link.ps1 -PrivateEndpointId ${azurerm_private_endpoint.sqlserver_endpoint.id} -VDCResourceGroupName ${local.vdc_resource_group_name}"
     interpreter                = ["pwsh", "-Command"]
   }
+
+  count                        = var.deploy_private_dns_for_endpoint ? 1 : 0
 }
 
 # If you have AD permissions it is better to use an AAD group for DBA's, and add DBA and TF to that group
