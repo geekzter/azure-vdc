@@ -136,7 +136,8 @@ if (!$privateEndpointId) {
 }
 
 $networkInterface = Get-AzResource -ResourceId $privateEndpoint.NetworkInterfaces[0].Id -ApiVersion "2019-04-01" 
- 
+
+Import-Module Az.PrivateDns # Does not get loaded automatically sometimes (e.g. Azure Pipeline)
 foreach ($ipconfig in $networkInterface.properties.ipConfigurations) { 
   foreach ($fqdn in $ipconfig.properties.privateLinkConnectionProperties.fqdns) { 
     $recordName = $fqdn.split('.',2)[0] 
