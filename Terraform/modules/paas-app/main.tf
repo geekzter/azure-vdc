@@ -393,6 +393,12 @@ resource "azurerm_sql_server" "app_sqlserver" {
 # TODO: Remove credentials, and/or store in Key Vault
   administrator_login          = var.admin_username
   administrator_login_password = local.password
+
+  # Configure auditing
+  provisioner "local-exec" {
+    command                    = "Set-AzSqlServerAudit -ServerName ${self.name} -ResourceGroupName ${self.resource_group_name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
   
   tags                         = var.tags
 }
@@ -506,6 +512,7 @@ resource "azurerm_sql_database" "app_sqldb" {
     use_server_default         = "Enabled"
   }
 
+  # Add App Service MSI AAD SP to Database
   # provisioner "local-exec" {
   #   command                    = "../Scripts/grant_database_access.ps1 -UserName ${var.dba_login} -SqlDatabaseName ${self.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
   #   interpreter                = ["pwsh", "-nop", "-Command"]
@@ -514,6 +521,12 @@ resource "azurerm_sql_database" "app_sqldb" {
   # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
   provisioner "local-exec" {
     command                    = "Get-AzSqlServerFirewallRule -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} | Where-Object -Property FirewallRuleName -eq AllowAllWindowsAzureIPs | Remove-AzSqlServerFirewallRule -Force"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  # Configure auditing
+  provisioner "local-exec" {
+    command                    = "Set-AzSqlDatabaseAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -DatabaseName ${self.name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
