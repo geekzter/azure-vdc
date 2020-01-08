@@ -46,18 +46,18 @@ resource "azurerm_storage_account" "app_storage" {
   enable_blob_encryption       = true
   enable_https_traffic_only    = true
  
-  # using azurerm_storage_account_network_rules
-  # network_rules {
-  #   default_action             = "Deny"
-  #   bypass                     = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
-  #   # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
-  #   ip_rules                   = var.admin_ip_ranges
-  #   # Allow the Firewall subnet
-  #   virtual_network_subnet_ids = [
-  #                                var.iag_subnet_id,
-  #                                var.integrated_subnet_id
-  #   ]
-  # } 
+  # not using azurerm_storage_account_network_rules
+  network_rules {
+    default_action             = "Deny"
+    bypass                     = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
+    # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
+    ip_rules                   = var.admin_ip_ranges
+    # Allow the Firewall subnet
+    virtual_network_subnet_ids = [
+                                 var.iag_subnet_id,
+                                 var.integrated_subnet_id
+    ]
+  } 
 
   provisioner "local-exec" {
     command                    = "../Scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "
@@ -75,20 +75,21 @@ resource azurerm_advanced_threat_protection app_storage {
   enabled                      = true
 }
 
-resource "azurerm_storage_account_network_rules" "app_storage" {
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  storage_account_name         = azurerm_storage_account.app_storage.name
+# BUG: Error updating Azure Storage Account Network Rules "vdcdemopaasappr460stor" (Resource Group "vdc-demo-paasapp-r460"): storage.AccountsClient#Update: Failure responding to request: StatusCode=400 -- Original Error: autorest/azure: Service returned an error. Status=400 Code="NetworkAclsValidationFailure" Message="Validation of network acls failure: SubnetsNotProvisioned:Cannot proceed with operation because subnets azurefirewallsubnet of the virtual network /subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/resourceGroups/vdc-demo-r460/providers/Microsoft.Network/virtualNetworks/vdc-demo-r460-hub-network are not provisioned. They are in Updating state.."
+# resource "azurerm_storage_account_network_rules" "app_storage" {
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   storage_account_name         = azurerm_storage_account.app_storage.name
 
-  default_action               = "Deny"
-  bypass                       = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
-  # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
-  ip_rules                     = var.admin_ip_ranges
-  # Allow the Firewall subnet
-  virtual_network_subnet_ids   = [
-                                  var.iag_subnet_id,
-                                  var.integrated_subnet_id
-  ]
-}
+#   default_action               = "Deny"
+#   bypass                       = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
+#   # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
+#   ip_rules                     = var.admin_ip_ranges
+#   # Allow the Firewall subnet
+#   virtual_network_subnet_ids   = [
+#                                   var.iag_subnet_id,
+#                                   var.integrated_subnet_id
+#   ]
+# }
 
 # BUG: 1.0;2019-11-29T15:10:06.7720881Z;GetContainerProperties;IpAuthorizationError;403;6;6;authenticated;XXXXXXX;XXXXXXX;blob;"https://XXXXXXX.blob.core.windows.net:443/data?restype=container";"/";ad97678d-101e-0016-5ec7-a608d2000000;0;10.139.212.72:44506;2018-11-09;481;0;130;246;0;;;;;;"Go/go1.12.6 (amd64-linux) go-autorest/v13.0.2 tombuildsstuff/giovanni/v0.5.0 storage/2018-11-09";;
 resource "azurerm_storage_container" "app_storage_container" {
@@ -98,7 +99,7 @@ resource "azurerm_storage_container" "app_storage_container" {
 
   count                        = var.storage_import ? 1 : 0
 
-  depends_on                   = [azurerm_storage_account_network_rules.app_storage]
+# depends_on                   = [azurerm_storage_account_network_rules.app_storage]
 }
 
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
