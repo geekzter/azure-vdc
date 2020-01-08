@@ -302,6 +302,12 @@ variable vpn_root_cert_file {
   description                  = "The relative path to the certificate CER file used for P2S root"
 }
 
+variable deploy_app_service_network_integration {
+  description                  = "Whether to App Service Regional Virtual network Integration]"
+  default                      = true
+  type                         = bool
+}
+
 variable deploy_auto_shutdown {
   description                  = "Whether to deploy the Auto shutdown function"
   default                      = true

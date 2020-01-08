@@ -5,6 +5,7 @@ resource_environment           = "dev"
 location                       = "eastus"
 workspace_location             = "westeurope"
 
+deploy_app_service_network_integration = true
 deploy_auto_shutdown           = true
 deploy_network_watcher         = true
 deploy_managed_bastion         = false

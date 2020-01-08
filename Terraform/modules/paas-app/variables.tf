@@ -21,6 +21,9 @@ variable database_template_storage_uri {
 variable data_subnet_id {}
 variable dba_login {}
 variable dba_object_id {}
+variable deploy_app_service_network_integration {
+  type                         = bool
+}
 variable deploy_private_dns_for_endpoint {
   type                         = bool
 }

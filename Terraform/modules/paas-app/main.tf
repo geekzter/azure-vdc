@@ -284,71 +284,14 @@ resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
   }
 }
 
-# data "azuread_application" "app_service_msi" {
-#   object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
-# }
-# data "azuread_service_principal" "app_service_msi" {
-#   object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
-# }
+resource azurerm_app_service_virtual_network_swift_connection network {
+  app_service_id               = azurerm_app_service.paas_web_app.id
+  subnet_id                    = var.integrated_subnet_id
 
-# Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
-# resource "null_resource" "spoke_vnet_guid" {
-#   # Changes to any instance of the cluster requires re-provisioning
-#   triggers = {
-#     allways                    = "${timestamp()}" # Trigger every run
-#   # vnet_name                  = "${local.integrated_vnet_name}"
-#   }
-
-#   provisioner "local-exec" {
-#     # Bootstrap script called with private_ip of each node in the clutser
-#     command = "Get-AzVirtualNetwork -Name ${local.integrated_vnet_name} -ResourceGroupName ${local.vdc_resource_group_name} | Select-Object -ExpandProperty ResourceGuid >${local.spoke_vnet_guid_file}"
-#     interpreter = ["pwsh", "-c"]
-#   }
-
-#   depends_on                   = [var.integrated_vnet_id]
-# }
-
-# resource "azurerm_template_deployment" "app_service_network_association" {
-#   name                         = "${azurerm_app_service.paas_web_app.name}-network-association"
-#   resource_group_name          = "${local.vdc_resource_group_name}"
-#   deployment_mode              = "Incremental"
-
-#   template_body                = "${file("${path.module}/appsvc-network-association.json")}"
-
-#   parameters                   = {
-#     location                   = var.location
-#     addressPrefix              = "${var.integrated_subnet_range}" # Required parameter when updating subnet to add association
-#     appServicePlanId           = "${azurerm_app_service_plan.paas_plan.id}"
-#     integratedVNetName         = "${local.integrated_vnet_name}"
-#     integratedSubnetId         = "${var.integrated_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
-#     integratedSubnetName       = "${local.integrated_subnet_name}"
-#   }
-
-#   depends_on                   = [azurerm_app_service.paas_web_app] # Explicit dependency for ARM templates
-# } 
-
-# resource "azurerm_template_deployment" "app_service_network_connection" {
-#   name                         = "${azurerm_app_service.paas_web_app.name}-network-connection"
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   deployment_mode              = "Incremental"
-
-#   template_body                = "${file("${path.module}/appsvc-network-connection.json")}"
-
-#   parameters                   = {
-#     location                   = azurerm_resource_group.app_rg.location
-#     functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
-#     integratedVNetId           = "${var.integrated_vnet_id}"
-#     integratedSubnetId         = "${var.integrated_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
-#     integratedSubnetName       = "${local.integrated_subnet_name}"
-#     # Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
-#     vnetResourceGuid           = "${trimspace(file(local.spoke_vnet_guid_file))}"
-#   }
-
-#   depends_on                   = [azurerm_app_service.paas_web_app,azurerm_template_deployment.app_service_network_association,null_resource.spoke_vnet_guid] # Explicit dependency for ARM templates
-# }
+  count                        = var.deploy_app_service_network_integration ? 1 : 0
+}
 
 ### Event Hub
-
 resource "azurerm_eventhub_namespace" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}eventhubNamespace"
   location                     = azurerm_resource_group.app_rg.location
