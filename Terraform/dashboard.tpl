@@ -992,6 +992,83 @@
             "y": 0
           }
         },
+        "30": {
+          "metadata": {
+            "asset": {
+              "idInputName": "ComponentId",
+              "type": "ApplicationInsights"
+            },
+            "inputs": [
+              {
+                "name": "ComponentId",
+                "value": {
+                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
+                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
+                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
+                  "SubscriptionId": "${subscription_guid}"
+                }
+              },
+              {
+                "name": "Query",
+                "value": "AzureDiagnostics\n| where Category == 'SQLSecurityAuditEvents'\n| project event_time_t, statement_s, succeeded_s, affected_rows_d, client_ip_s\n| order by event_time_t desc\n| take 100\n"
+              },
+              {
+                "name": "TimeRange",
+                "value": "P1D"
+              },
+              {
+                "name": "Version",
+                "value": "1.0"
+              },
+              {
+                "name": "PartId",
+                "value": "4b9491b1-a6ea-4a30-a11a-2eb5d4107d35"
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics"
+              },
+              {
+                "name": "PartSubTitle",
+                "value": "${prefix}-${environment}-${suffix}-loganalytics"
+              },
+              {
+                "name": "resourceTypeMode",
+                "value": "workspace"
+              },
+              {
+                "name": "ControlType",
+                "value": "AnalyticsGrid"
+              },
+              {
+                "isOptional": true,
+                "name": "Dimensions"
+              },
+              {
+                "isOptional": true,
+                "name": "DashboardId"
+              },
+              {
+                "isOptional": true,
+                "name": "SpecificChart"
+              }
+            ],
+            "settings": {
+              "content": {
+                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
+                "PartTitle": "SQL Client Queries",
+                "Query": "AzureDiagnostics\n| where Category == 'SQLSecurityAuditEvents'\n| project event_time_t, client_ip_s, statement_s, affected_rows_d\n| order by event_time_t desc\n| take 100"
+              }
+            },
+            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
+          },
+          "position": {
+            "colSpan": 6,
+            "rowSpan": 4,
+            "x": 4,
+            "y": 19
+          }
+        },
         "4": {
           "metadata": {
             "inputs": [
@@ -1260,11 +1337,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-da62891c-c926-4cf4-86a8-0d17e33487cc",
-              "StartboardPart-AnalyticsPart-da62891c-c926-4cf4-86a8-0d17e33487d2",
-              "StartboardPart-MonitorChartPart-da62891c-c926-4cf4-86a8-0d17e33487d8",
-              "StartboardPart-AnalyticsPart-da62891c-c926-4cf4-86a8-0d17e33487e0",
-              "StartboardPart-AnalyticsPart-da62891c-c926-4cf4-86a8-0d17e33487e6"
+              "StartboardPart-ApplicationMapPart-85ba45b6-8260-4dac-8732-9ca398dd001d",
+              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd0023",
+              "StartboardPart-MonitorChartPart-85ba45b6-8260-4dac-8732-9ca398dd0029",
+              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd0033",
+              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd003b",
+              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd0041"
             ],
             "model": {
               "format": "utc",

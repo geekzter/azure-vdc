@@ -414,19 +414,6 @@ resource "azurerm_sql_firewall_rule" "adminclient" {
   count                        = length(local.admin_ips)
 }
 
-# Add rule for ${azurerm_app_service.paas_web_app.outbound_ip_addresses} array
-# Note these are shared addresses, hence does not fully constrain access
-# resource "azurerm_sql_firewall_rule" "webapp" {
-#   name                         = "AllowWebApp${count.index}"
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   server_name                  = azurerm_sql_server.app_sqlserver.name
-#   start_ip_address             = element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)
-#   end_ip_address               = element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)
-# # BUG: terraform limitation. Throws as an error on first creation: "value of 'count' cannot be computed". Subsequent executions do work.
-#   count                        = length(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses))
-#   depends_on                   = [azurerm_app_service.paas_web_app]
-# } 
-
 # Azure SQL Database Import Export Service runs on VMs in Azure
 # https://docs.microsoft.com/en-us/azure/sql-database/sql-database-networkaccess-overview
 # This rule will be disabled after provisioning of the SQL Database (using local-exec and PowerShell)
