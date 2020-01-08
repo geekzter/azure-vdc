@@ -13,7 +13,6 @@ resource "azurerm_storage_account" "automation_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
-  enable_advanced_threat_protection = true
   enable_blob_encryption       = true
   enable_https_traffic_only    = true
 
@@ -21,6 +20,11 @@ resource "azurerm_storage_account" "automation_storage" {
     command                    = "../Scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
+}
+
+resource azurerm_advanced_threat_protection automation_storage {
+  target_resource_id           = azurerm_storage_account.automation_storage.id
+  enabled                      = true
 }
 
 resource "azurerm_app_service_plan" "vdc_functions" {

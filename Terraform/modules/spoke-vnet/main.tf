@@ -214,15 +214,27 @@ resource "azurerm_network_security_group" "spoke_nsg" {
   }
 }
 
-resource null_resource flow_logs {
-  # TODO: Use azurerm_network_watcher_flow_log resource, once available
-  provisioner "local-exec" {
-    command                    = "Set-AzNetworkWatcherConfigFlowLog -NetworkWatcherName ${var.network_watcher_name} -ResourceGroupName ${var.network_watcher_resource_group_name} -TargetResourceId ${azurerm_network_security_group.spoke_nsg.id} -StorageAccountId ${var.diagnostics_storage_id} -WorkspaceGUID ${var.diagnostics_workspace_workspace_id} -WorkspaceResourceId ${var.diagnostics_workspace_resource_id} -WorkspaceLocation ${var.workspace_location} -EnableFlowLog $true -EnableTrafficAnalytics"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+resource azurerm_network_watcher_flow_log spoke_nsg {
+  network_watcher_name         = var.network_watcher_name
+  resource_group_name          = var.network_watcher_resource_group_name
+
+  network_security_group_id    = azurerm_network_security_group.spoke_nsg.id
+  storage_account_id           = var.diagnostics_storage_id
+  enabled                      = true
+
+  retention_policy {
+    enabled                    = true
+    days                       = 7
+  }
+
+  traffic_analytics {
+    enabled                    = true
+    workspace_id               = var.diagnostics_workspace_workspace_id
+    workspace_region           = var.workspace_location
+    workspace_resource_id      = var.diagnostics_workspace_resource_id
   }
 
   count                        = var.deploy_network_watcher ? 1 : 0
-  depends_on                   = [azurerm_network_security_group.spoke_nsg]
 }
 
 resource "azurerm_subnet" "subnet" {

@@ -43,21 +43,21 @@ resource "azurerm_storage_account" "app_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.storage_replication_type
-  enable_advanced_threat_protection = true
   enable_blob_encryption       = true
   enable_https_traffic_only    = true
  
-  network_rules {
-    default_action             = "Deny"
-    bypass                     = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
-    # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
-    ip_rules                   = var.admin_ip_ranges
-    # Allow the Firewall subnet
-    virtual_network_subnet_ids = [
-                                 var.iag_subnet_id,
-                                 var.integrated_subnet_id
-    ]
-  } 
+  # using azurerm_storage_account_network_rules
+  # network_rules {
+  #   default_action             = "Deny"
+  #   bypass                     = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
+  #   # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
+  #   ip_rules                   = var.admin_ip_ranges
+  #   # Allow the Firewall subnet
+  #   virtual_network_subnet_ids = [
+  #                                var.iag_subnet_id,
+  #                                var.integrated_subnet_id
+  #   ]
+  # } 
 
   provisioner "local-exec" {
     command                    = "../Scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "
@@ -70,22 +70,25 @@ resource "azurerm_storage_account" "app_storage" {
   depends_on                   = [azurerm_storage_container.archive_storage_container]
 }
 
-# BUG: Doesn't accept CIDR notation
-# resource "azurerm_storage_account_network_rules" "app_storage" {
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   storage_account_name         = azurerm_storage_account.app_storage.name
+resource azurerm_advanced_threat_protection app_storage {
+  target_resource_id           = azurerm_storage_account.app_storage.id
+  enabled                      = true
+}
 
-#   default_action               = "Deny"
-#   bypass                       = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
-#   # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
-#   ip_rules                     = var.admin_ip_ranges
-#   # Allow the Firewall subnet
-#   virtual_network_subnet_ids   = [
-#                                   var.iag_subnet_id,
-#                                   var.integrated_subnet_id
-#   ]
-# }
+resource "azurerm_storage_account_network_rules" "app_storage" {
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  storage_account_name         = azurerm_storage_account.app_storage.name
 
+  default_action               = "Deny"
+  bypass                       = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
+  # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
+  ip_rules                     = var.admin_ip_ranges
+  # Allow the Firewall subnet
+  virtual_network_subnet_ids   = [
+                                  var.iag_subnet_id,
+                                  var.integrated_subnet_id
+  ]
+}
 
 # BUG: 1.0;2019-11-29T15:10:06.7720881Z;GetContainerProperties;IpAuthorizationError;403;6;6;authenticated;XXXXXXX;XXXXXXX;blob;"https://XXXXXXX.blob.core.windows.net:443/data?restype=container";"/";ad97678d-101e-0016-5ec7-a608d2000000;0;10.139.212.72:44506;2018-11-09;481;0;130;246;0;;;;;;"Go/go1.12.6 (amd64-linux) go-autorest/v13.0.2 tombuildsstuff/giovanni/v0.5.0 storage/2018-11-09";;
 resource "azurerm_storage_container" "app_storage_container" {
@@ -94,6 +97,8 @@ resource "azurerm_storage_container" "app_storage_container" {
   container_access_type        = "private"
 
   count                        = var.storage_import ? 1 : 0
+
+  depends_on                   = [azurerm_storage_account_network_rules.app_storage]
 }
 
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
@@ -114,7 +119,6 @@ resource "azurerm_storage_account" "archive_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.storage_replication_type
-  enable_advanced_threat_protection = true
   enable_blob_encryption       = true
   enable_https_traffic_only    = true
 
@@ -124,6 +128,11 @@ resource "azurerm_storage_account" "archive_storage" {
   }
 
   tags                         = var.tags
+}
+
+resource azurerm_advanced_threat_protection archive_storage {
+  target_resource_id           = azurerm_storage_account.archive_storage.id
+  enabled                      = true
 }
 
 resource "azurerm_storage_container" "archive_storage_container" {

@@ -7,7 +7,7 @@ workspace_location             = "westeurope"
 
 deploy_auto_shutdown           = true
 deploy_network_watcher         = true
-deploy_managed_bastion         = true
+deploy_managed_bastion         = false
 deploy_private_dns_for_endpoint= true
 deploy_vpn                     = false
 paas_app_storage_import        = true
