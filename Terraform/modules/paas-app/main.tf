@@ -393,12 +393,6 @@ resource "azurerm_sql_server" "app_sqlserver" {
 # TODO: Remove credentials, and/or store in Key Vault
   administrator_login          = var.admin_username
   administrator_login_password = local.password
-
-  # Configure auditing
-  provisioner "local-exec" {
-    command                    = "Set-AzSqlServerAudit -ServerName ${self.name} -ResourceGroupName ${self.resource_group_name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
-  }
   
   tags                         = var.tags
 }
@@ -524,7 +518,13 @@ resource "azurerm_sql_database" "app_sqldb" {
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
-  # Configure auditing
+  # Configure server auditing
+  provisioner "local-exec" {
+    command                    = "Set-AzSqlServerAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  # Configure database auditing
   provisioner "local-exec" {
     command                    = "Set-AzSqlDatabaseAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -DatabaseName ${self.name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
     interpreter                = ["pwsh", "-nop", "-Command"]

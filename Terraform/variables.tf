@@ -122,7 +122,7 @@ variable vdc_oms_solutions {
     "AzureSQLAnalytics",
   # "AzureWebAppsAnalytics", # Depricated
   # "Backup", # Depricated
-    "CapacityPerformance",
+  # "CapacityPerformance", # Not found
   # "ChangeTracking",
   # "CompatibilityAssessment",
   # "ContainerInsights",
