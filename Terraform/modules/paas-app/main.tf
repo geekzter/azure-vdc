@@ -43,10 +43,10 @@ resource "azurerm_storage_account" "app_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.storage_replication_type
-  enable_advanced_threat_protection = true
   enable_blob_encryption       = true
   enable_https_traffic_only    = true
  
+  # not using azurerm_storage_account_network_rules
   network_rules {
     default_action             = "Deny"
     bypass                     = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
@@ -70,7 +70,12 @@ resource "azurerm_storage_account" "app_storage" {
   depends_on                   = [azurerm_storage_container.archive_storage_container]
 }
 
-# BUG: Doesn't accept CIDR notation
+resource azurerm_advanced_threat_protection app_storage {
+  target_resource_id           = azurerm_storage_account.app_storage.id
+  enabled                      = true
+}
+
+# BUG: Error updating Azure Storage Account Network Rules "vdcdemopaasappr460stor" (Resource Group "vdc-demo-paasapp-r460"): storage.AccountsClient#Update: Failure responding to request: StatusCode=400 -- Original Error: autorest/azure: Service returned an error. Status=400 Code="NetworkAclsValidationFailure" Message="Validation of network acls failure: SubnetsNotProvisioned:Cannot proceed with operation because subnets azurefirewallsubnet of the virtual network /subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/resourceGroups/vdc-demo-r460/providers/Microsoft.Network/virtualNetworks/vdc-demo-r460-hub-network are not provisioned. They are in Updating state.."
 # resource "azurerm_storage_account_network_rules" "app_storage" {
 #   resource_group_name          = azurerm_resource_group.app_rg.name
 #   storage_account_name         = azurerm_storage_account.app_storage.name
@@ -86,7 +91,6 @@ resource "azurerm_storage_account" "app_storage" {
 #   ]
 # }
 
-
 # BUG: 1.0;2019-11-29T15:10:06.7720881Z;GetContainerProperties;IpAuthorizationError;403;6;6;authenticated;XXXXXXX;XXXXXXX;blob;"https://XXXXXXX.blob.core.windows.net:443/data?restype=container";"/";ad97678d-101e-0016-5ec7-a608d2000000;0;10.139.212.72:44506;2018-11-09;481;0;130;246;0;;;;;;"Go/go1.12.6 (amd64-linux) go-autorest/v13.0.2 tombuildsstuff/giovanni/v0.5.0 storage/2018-11-09";;
 resource "azurerm_storage_container" "app_storage_container" {
   name                         = "data"
@@ -94,6 +98,8 @@ resource "azurerm_storage_container" "app_storage_container" {
   container_access_type        = "private"
 
   count                        = var.storage_import ? 1 : 0
+
+# depends_on                   = [azurerm_storage_account_network_rules.app_storage]
 }
 
 resource "azurerm_storage_blob" "app_storage_blob_sample" {
@@ -114,7 +120,6 @@ resource "azurerm_storage_account" "archive_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.storage_replication_type
-  enable_advanced_threat_protection = true
   enable_blob_encryption       = true
   enable_https_traffic_only    = true
 
@@ -124,6 +129,11 @@ resource "azurerm_storage_account" "archive_storage" {
   }
 
   tags                         = var.tags
+}
+
+resource azurerm_advanced_threat_protection archive_storage {
+  target_resource_id           = azurerm_storage_account.archive_storage.id
+  enabled                      = true
 }
 
 resource "azurerm_storage_container" "archive_storage_container" {
@@ -275,71 +285,14 @@ resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
   }
 }
 
-# data "azuread_application" "app_service_msi" {
-#   object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
-# }
-# data "azuread_service_principal" "app_service_msi" {
-#   object_id                    = "${azurerm_app_service.paas_web_app.identity.0.principal_id}"
-# }
+resource azurerm_app_service_virtual_network_swift_connection network {
+  app_service_id               = azurerm_app_service.paas_web_app.id
+  subnet_id                    = var.integrated_subnet_id
 
-# Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
-# resource "null_resource" "spoke_vnet_guid" {
-#   # Changes to any instance of the cluster requires re-provisioning
-#   triggers = {
-#     allways                    = "${timestamp()}" # Trigger every run
-#   # vnet_name                  = "${local.integrated_vnet_name}"
-#   }
-
-#   provisioner "local-exec" {
-#     # Bootstrap script called with private_ip of each node in the clutser
-#     command = "Get-AzVirtualNetwork -Name ${local.integrated_vnet_name} -ResourceGroupName ${local.vdc_resource_group_name} | Select-Object -ExpandProperty ResourceGuid >${local.spoke_vnet_guid_file}"
-#     interpreter = ["pwsh", "-c"]
-#   }
-
-#   depends_on                   = [var.integrated_vnet_id]
-# }
-
-# resource "azurerm_template_deployment" "app_service_network_association" {
-#   name                         = "${azurerm_app_service.paas_web_app.name}-network-association"
-#   resource_group_name          = "${local.vdc_resource_group_name}"
-#   deployment_mode              = "Incremental"
-
-#   template_body                = "${file("${path.module}/appsvc-network-association.json")}"
-
-#   parameters                   = {
-#     location                   = var.location
-#     addressPrefix              = "${var.integrated_subnet_range}" # Required parameter when updating subnet to add association
-#     appServicePlanId           = "${azurerm_app_service_plan.paas_plan.id}"
-#     integratedVNetName         = "${local.integrated_vnet_name}"
-#     integratedSubnetId         = "${var.integrated_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
-#     integratedSubnetName       = "${local.integrated_subnet_name}"
-#   }
-
-#   depends_on                   = [azurerm_app_service.paas_web_app] # Explicit dependency for ARM templates
-# } 
-
-# resource "azurerm_template_deployment" "app_service_network_connection" {
-#   name                         = "${azurerm_app_service.paas_web_app.name}-network-connection"
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   deployment_mode              = "Incremental"
-
-#   template_body                = "${file("${path.module}/appsvc-network-connection.json")}"
-
-#   parameters                   = {
-#     location                   = azurerm_resource_group.app_rg.location
-#     functionsAppServiceAppName = "${azurerm_app_service.paas_web_app.name}"
-#     integratedVNetId           = "${var.integrated_vnet_id}"
-#     integratedSubnetId         = "${var.integrated_subnet_id}" # Dummy parameter to assure dependency on delegated subnet
-#     integratedSubnetName       = "${local.integrated_subnet_name}"
-#     # Workaround for https://github.com/terraform-providers/terraform-provider-azurerm/issues/2325
-#     vnetResourceGuid           = "${trimspace(file(local.spoke_vnet_guid_file))}"
-#   }
-
-#   depends_on                   = [azurerm_app_service.paas_web_app,azurerm_template_deployment.app_service_network_association,null_resource.spoke_vnet_guid] # Explicit dependency for ARM templates
-# }
+  count                        = var.deploy_app_service_network_integration ? 1 : 0
+}
 
 ### Event Hub
-
 resource "azurerm_eventhub_namespace" "app_eventhub" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}eventhubNamespace"
   location                     = azurerm_resource_group.app_rg.location
@@ -461,19 +414,6 @@ resource "azurerm_sql_firewall_rule" "adminclient" {
   count                        = length(local.admin_ips)
 }
 
-# Add rule for ${azurerm_app_service.paas_web_app.outbound_ip_addresses} array
-# Note these are shared addresses, hence does not fully constrain access
-# resource "azurerm_sql_firewall_rule" "webapp" {
-#   name                         = "AllowWebApp${count.index}"
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   server_name                  = azurerm_sql_server.app_sqlserver.name
-#   start_ip_address             = element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)
-#   end_ip_address               = element(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses), count.index)
-# # BUG: terraform limitation. Throws as an error on first creation: "value of 'count' cannot be computed". Subsequent executions do work.
-#   count                        = length(split(",", azurerm_app_service.paas_web_app.outbound_ip_addresses))
-#   depends_on                   = [azurerm_app_service.paas_web_app]
-# } 
-
 # Azure SQL Database Import Export Service runs on VMs in Azure
 # https://docs.microsoft.com/en-us/azure/sql-database/sql-database-networkaccess-overview
 # This rule will be disabled after provisioning of the SQL Database (using local-exec and PowerShell)
@@ -566,6 +506,7 @@ resource "azurerm_sql_database" "app_sqldb" {
     use_server_default         = "Enabled"
   }
 
+  # Add App Service MSI AAD SP to Database
   # provisioner "local-exec" {
   #   command                    = "../Scripts/grant_database_access.ps1 -UserName ${var.dba_login} -SqlDatabaseName ${self.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
   #   interpreter                = ["pwsh", "-nop", "-Command"]
@@ -574,6 +515,18 @@ resource "azurerm_sql_database" "app_sqldb" {
   # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
   provisioner "local-exec" {
     command                    = "Get-AzSqlServerFirewallRule -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} | Where-Object -Property FirewallRuleName -eq AllowAllWindowsAzureIPs | Remove-AzSqlServerFirewallRule -Force"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  # Configure server auditing
+  provisioner "local-exec" {
+    command                    = "Set-AzSqlServerAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  # Configure database auditing
+  provisioner "local-exec" {
+    command                    = "Set-AzSqlDatabaseAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -DatabaseName ${self.name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 

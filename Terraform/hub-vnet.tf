@@ -41,15 +41,27 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
   }
 }
 
-resource null_resource flow_logs {
-  # TODO: Use azurerm_network_watcher_flow_log resource, once available
-  provisioner "local-exec" {
-    command                    = "Set-AzNetworkWatcherConfigFlowLog -NetworkWatcherName ${local.network_watcher_name} -ResourceGroupName ${local.network_watcher_resource_group} -TargetResourceId ${azurerm_network_security_group.mgmt_nsg.id} -StorageAccountId ${azurerm_storage_account.vdc_diag_storage.id} -WorkspaceGUID ${azurerm_log_analytics_workspace.vcd_workspace.workspace_id} -WorkspaceResourceId ${azurerm_log_analytics_workspace.vcd_workspace.id} -WorkspaceLocation ${local.workspace_location} -EnableFlowLog $true -EnableTrafficAnalytics"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+resource azurerm_network_watcher_flow_log mgmt_nsg {
+  network_watcher_name         = local.network_watcher_name
+  resource_group_name          = local.network_watcher_resource_group
+
+  network_security_group_id    = azurerm_network_security_group.mgmt_nsg.id
+  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
+  enabled                      = true
+
+  retention_policy {
+    enabled                    = true
+    days                       = 7
+  }
+
+  traffic_analytics {
+    enabled                    = true
+    workspace_id               = azurerm_log_analytics_workspace.vcd_workspace.workspace_id
+    workspace_region           = local.workspace_location
+    workspace_resource_id      = azurerm_log_analytics_workspace.vcd_workspace.id
   }
 
   count                        = var.deploy_network_watcher ? 1 : 0
-  depends_on                   = [azurerm_network_security_group.mgmt_nsg,null_resource.network_watcher]
 }
 
 # ******************* Routing ******************* #

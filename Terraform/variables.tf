@@ -122,7 +122,7 @@ variable vdc_oms_solutions {
     "AzureSQLAnalytics",
   # "AzureWebAppsAnalytics", # Depricated
   # "Backup", # Depricated
-    "CapacityPerformance",
+  # "CapacityPerformance", # Not found
   # "ChangeTracking",
   # "CompatibilityAssessment",
   # "ContainerInsights",
@@ -137,7 +137,7 @@ variable vdc_oms_solutions {
   # "HDInsightSpark",
   # "HDInsightStorm",
     "InfrastructureInsights",
-    "InternalWindowsEvent",
+  # "InternalWindowsEvent", # Not found
   # "KeyVault",
   # "KeyVaultAnalytics",
   # "LogicAppB2B",
@@ -300,6 +300,12 @@ variable vpn_root_cert_name {
 
 variable vpn_root_cert_file {
   description                  = "The relative path to the certificate CER file used for P2S root"
+}
+
+variable deploy_app_service_network_integration {
+  description                  = "Whether to App Service Regional Virtual network Integration]"
+  default                      = true
+  type                         = bool
 }
 
 variable deploy_auto_shutdown {

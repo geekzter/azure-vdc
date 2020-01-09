@@ -5,7 +5,6 @@ resource "azurerm_storage_account" "vdc_diag_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
-  enable_advanced_threat_protection = true
   enable_blob_encryption       = true
   enable_https_traffic_only    = true
 
@@ -18,6 +17,11 @@ resource "azurerm_storage_account" "vdc_diag_storage" {
   tags                         = local.tags
 }
 
+resource azurerm_advanced_threat_protection vdc_diag_storage {
+  target_resource_id           = azurerm_storage_account.vdc_diag_storage.id
+  enabled                      = true
+}
+
 resource "azurerm_storage_account" "vdc_automation_storage" {
   name                         = "${lower(replace(local.vdc_resource_group,"-",""))}autstorage"
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -25,7 +29,6 @@ resource "azurerm_storage_account" "vdc_automation_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
-  enable_advanced_threat_protection = true
   enable_blob_encryption       = true
   enable_https_traffic_only    = true
 
@@ -35,6 +38,11 @@ resource "azurerm_storage_account" "vdc_automation_storage" {
   }
 
   tags                         = local.tags
+}
+
+resource azurerm_advanced_threat_protection vdc_automation_storage {
+  target_resource_id           = azurerm_storage_account.vdc_automation_storage.id
+  enabled                      = true
 }
 
 resource "azurerm_log_analytics_workspace" "vcd_workspace" {

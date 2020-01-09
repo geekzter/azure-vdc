@@ -1,0 +1,5 @@
+AzureDiagnostics
+| where Category == 'SQLSecurityAuditEvents'
+| project event_time_t, client_ip_s, statement_s, succeeded_s, affected_rows_d
+| order by event_time_t desc
+| take 100
