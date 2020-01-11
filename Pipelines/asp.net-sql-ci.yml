@@ -51,7 +51,7 @@ steps:
     rootFolderOrFile: '$(agent.builddirectory)\package\Content\D_C\a\1\s\Apps\PaaS-ASP.NET-SQLDB\DotNetAppSqlDb\obj\Release\Package\PackageTmp'
     includeRootFolder: false
     archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)\ZipDeploy.zip'
+    archiveFile: '$(Pipeline.Workspace)\ZipDeploy.zip'
     replaceExistingArchive: true
 
 - task: PublishSymbols@2
@@ -70,6 +70,6 @@ steps:
 # Publish as Pipeline artifact, so tools such as az cli can deploy it
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: '$(Pipeline.artifactstagingdirectory)'
+    targetPath: '$(Pipeline.Workspace)'
     artifact: 'aspnetsql2'
     publishLocation: 'pipeline'
