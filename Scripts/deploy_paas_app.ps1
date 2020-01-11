@@ -9,6 +9,7 @@
 #> 
 param (    
     [parameter(Mandatory=$false,HelpMessage="The workspace tag to filter use")][string] $Workspace,
+    [parameter(Mandatory=$false)][int]$MaxTests=60,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
@@ -50,7 +51,7 @@ $runid = $(az pipelines runs list --result succeeded --top 1 --query "[?definiti
 Write-Information "Last successful run of $buildDefinitionName is $runid"
 
 # Download pipeline artifact (build artifact won't work)
-Write-Host "Downloading artifacts from build $runid to $tmpDir..."
+Write-Host "Downloading artifacts from $buildDefinitionName build $runid to $tmpDir..."
 az pipelines runs artifact download --run-id $runid --artifact-name aspnetsql2 --path $tmpDir
 
 # Publish web app
@@ -60,10 +61,9 @@ $null = az webapp deployment source config-zip -g $appResourceGroup -n $appAppSe
 Write-Host "Web app $appAppServiceName published at $appUrl"
 
 # Test & Warm up 
-$maxTests = 60
 $test = 0
-Write-Host "Testing $appUrl (max $maxTests times)" -NoNewLine
-while (!$responseOK -and ($test -lt $maxTests)) {
+Write-Host "Testing $appUrl (max $MaxTests times)" -NoNewLine
+while (!$responseOK -and ($test -lt $MaxTests)) {
     try {
         $test++
         Write-Host "." -NoNewLine
@@ -76,7 +76,7 @@ while (!$responseOK -and ($test -lt $maxTests)) {
     }
     catch {
         $responseOK = $false
-        if ($test -ge $maxTests) {
+        if ($test -ge $MaxTests) {
             throw
         } else {
             Start-Sleep -Milliseconds 500
