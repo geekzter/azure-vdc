@@ -40,6 +40,7 @@ steps:
 
 # Extract WebDeploy zip
 - task: ExtractFiles@1
+  displayName: 'Extract WebDeploy package'
   inputs:
     archiveFilePatterns: '$(build.artifactstagingdirectory)\*.zip'
     destinationFolder: '$(agent.builddirectory)\package'
@@ -47,6 +48,7 @@ steps:
 
 # Now create a zip of just wwwroot
 - task: ArchiveFiles@2
+  displayName: 'Create ZipDeploy package'
   inputs:
     rootFolderOrFile: '$(agent.builddirectory)\package\Content\D_C\a\1\s\Apps\PaaS-ASP.NET-SQLDB\DotNetAppSqlDb\obj\Release\Package\PackageTmp'
     includeRootFolder: false
