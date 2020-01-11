@@ -38,6 +38,22 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
+# Extract WebDeploy zip
+- task: ExtractFiles@1
+  inputs:
+    archiveFilePatterns: '$(build.artifactstagingdirectory)\*.zip'
+    destinationFolder: '$(agent.builddirectory)'
+    cleanDestinationFolder: true
+
+# Now create a zip of just wwwroot
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(agent.builddirectory)\Content\D_C\a\1\s\Apps\PaaS-ASP.NET-SQLDB\DotNetAppSqlDb\obj\Release\Package\PackageTmp'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/ZipDeploy.zip'
+    replaceExistingArchive: true
+
 - task: PublishSymbols@2
   displayName: 'Publish symbols path'
   inputs:
@@ -45,14 +61,9 @@ steps:
     PublishSymbols: false
   continueOnError: true
 
+# Publish as Pipeline artifact, so az cli can deploy it
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact'
   inputs:
     PathtoPublish: '$(build.artifactstagingdirectory)'
     ArtifactName: aspnetsql
-
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: '$(build.artifactstagingdirectory)'
-    artifact: 'aspnetsql2'
-    publishLocation: 'pipeline'
