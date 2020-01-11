@@ -61,7 +61,7 @@ steps:
     PublishSymbols: false
   continueOnError: true
 
-# Publish as Pipeline artifact, so az cli can deploy it
+# Publish as Pipeline artifact, so tools such as az cli can deploy it
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact'
   inputs:
