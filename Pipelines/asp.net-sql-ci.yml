@@ -42,13 +42,13 @@ steps:
 - task: ExtractFiles@1
   inputs:
     archiveFilePatterns: '$(build.artifactstagingdirectory)\*.zip'
-    destinationFolder: '$(agent.builddirectory)'
+    destinationFolder: '$(agent.builddirectory)\package'
     cleanDestinationFolder: true
 
 # Now create a zip of just wwwroot
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(agent.builddirectory)\Content\D_C\a\1\s\Apps\PaaS-ASP.NET-SQLDB\DotNetAppSqlDb\obj\Release\Package\PackageTmp'
+    rootFolderOrFile: '$(agent.builddirectory)\package\Content\D_C\a\1\s\Apps\PaaS-ASP.NET-SQLDB\DotNetAppSqlDb\obj\Release\Package\PackageTmp'
     includeRootFolder: false
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)\ZipDeploy.zip'
