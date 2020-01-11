@@ -61,9 +61,15 @@ steps:
     PublishSymbols: false
   continueOnError: true
 
-# Publish as Pipeline artifact, so tools such as az cli can deploy it
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact'
   inputs:
     PathtoPublish: '$(build.artifactstagingdirectory)'
     ArtifactName: aspnetsql
+
+# Publish as Pipeline artifact, so tools such as az cli can deploy it
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Pipeline.artifactstagingdirectory)'
+    artifact: 'aspnetsql2'
+    publishLocation: 'pipeline'
