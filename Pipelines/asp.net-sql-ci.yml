@@ -51,7 +51,7 @@ steps:
     rootFolderOrFile: '$(agent.builddirectory)\Content\D_C\a\1\s\Apps\PaaS-ASP.NET-SQLDB\DotNetAppSqlDb\obj\Release\Package\PackageTmp'
     includeRootFolder: false
     archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/ZipDeploy.zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)\ZipDeploy.zip'
     replaceExistingArchive: true
 
 - task: PublishSymbols@2
