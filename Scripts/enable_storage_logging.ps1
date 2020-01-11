@@ -1,5 +1,11 @@
 #!/usr/bin/env pwsh
-
+<# 
+.SYNOPSIS 
+    Enables storage diagnostics
+ 
+.DESCRIPTION 
+    This is a temporary workaround until storage logging can be enabled from within Terraform
+#> 
 param (    
     [parameter(Mandatory=$false)][string]$StorageAccountName,
     [parameter(Mandatory=$false)][string]$ResourceGroupName

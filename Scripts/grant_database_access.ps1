@@ -1,5 +1,9 @@
 #!/usr/bin/env pwsh
+<# 
+.SYNOPSIS 
+    Grants access to given AAD user/service principal name
 
+#> 
 ### Arguments
 param ( 
     [parameter(Mandatory=$true)][string]$UserName,

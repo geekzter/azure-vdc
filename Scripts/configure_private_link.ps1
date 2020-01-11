@@ -1,5 +1,4 @@
 #!/usr/bin/env pwsh
-
 <# 
 .SYNOPSIS 
     Creates Private Endpoints for PaaS services (SQLDB, Storage)
@@ -8,7 +7,6 @@
     This is a temporary workaround until private link is supported by Terraform
     As some API's are in beta and not always working, it is also a mix of Azure PowerShell and Azure CLI
 #> 
-
 param (    
     [parameter(Mandatory=$false)][string]$PrivateEndpointId,
     [parameter(Mandatory=$false)][string]$VDCResourceGroupName,

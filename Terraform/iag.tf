@@ -273,6 +273,7 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.ods.opinsights.azure.com",
       "*.oms.opinsights.azure.com",
       "*.systemcenteradvisor.com",
+      "*.telemetry.microsoft.com",
       "*.update.microsoft.com",
       "*.windowsupdate.com",
       "checkappexec.microsoft.com",
@@ -303,11 +304,14 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     ]
 
     target_fqdns               = [
-    # "*.digicert.com",
+      "*.digicert.com",
+    # "adl.windows.com",
       "crl.microsoft.com",
       "mscrl.microsoft.com",
       "ocsp.msocsp.com",
-      "dl.delivery.mp.microsoft.com"
+      "dl.delivery.mp.microsoft.com",
+    # "www.microsoft.com"
+      "www.msftconnecttest.com"
     ]
 
     protocol {

@@ -1,5 +1,8 @@
 #!/usr/bin/env pwsh
-
+<# 
+.SYNOPSIS 
+    Removes the state lock from Terraform backend storage
+#> 
 param (    
     [parameter(Mandatory=$false,HelpMessage="The workspace to break lease for")][string] $Workspace,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")

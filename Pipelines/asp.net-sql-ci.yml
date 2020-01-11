@@ -16,7 +16,7 @@ variables:
 
 steps:
 - task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@2
-  displayName: 'Run CredScan'
+  displayName: 'Scan for Credentials'
   inputs:
     debugMode: false
 
@@ -27,6 +27,7 @@ steps:
     restoreSolution: '$(solution)'
 
 - task: VSBuild@1
+  displayName: 'Build ASP.NET App'
   inputs:
     solution: '$(solution)'
     msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
@@ -34,9 +35,28 @@ steps:
     configuration: '$(buildConfiguration)'
 
 - task: VSTest@2
+  displayName: 'Test ASP.NET App'
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+
+# Extract WebDeploy zip
+- task: ExtractFiles@1
+  displayName: 'Extract WebDeploy package'
+  inputs:
+    archiveFilePatterns: '$(build.artifactstagingdirectory)\*.zip'
+    destinationFolder: '$(agent.builddirectory)\package'
+    cleanDestinationFolder: true
+
+# Now create a zip of just wwwroot
+- task: ArchiveFiles@2
+  displayName: 'Create ZipDeploy package'
+  inputs:
+    rootFolderOrFile: '$(agent.builddirectory)\package\Content\D_C\a\1\s\Apps\PaaS-ASP.NET-SQLDB\DotNetAppSqlDb\obj\Release\Package\PackageTmp'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(build.artifactstagingdirectory)\ZipDeploy.zip'
+    replaceExistingArchive: true
 
 - task: PublishSymbols@2
   displayName: 'Publish symbols path'
@@ -46,7 +66,15 @@ steps:
   continueOnError: true
 
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact'
+  displayName: 'Publish Build Artifacts'
   inputs:
     PathtoPublish: '$(build.artifactstagingdirectory)'
     ArtifactName: aspnetsql
+
+# Publish as Pipeline artifact, so tools such as az cli can download it
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish Pipeline Artifacts'
+  inputs:
+    targetPath: '$(build.artifactstagingdirectory)'
+    artifact: 'aspnetsql2'
+    publishLocation: 'pipeline'

@@ -1,5 +1,11 @@
 #!/usr/bin/env pwsh
-
+<# 
+.SYNOPSIS 
+    Creates allow rules for PaaS firewalls for the current connection
+ 
+.DESCRIPTION 
+    This script is invoked from other scripts
+#> 
 param (    
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
@@ -54,34 +60,34 @@ Write-Host "Public IP prefix is $ipPrefix"
 
 # Punch hole in PaaS Firewalls
 if ($appStorageAccount) {
-    Write-Host "Adding rule for storage account $appStorageAccount to allow $ipAddress..."
+    Write-Host "Adding rule for storage account $appStorageAccount to allow address $ipAddress..."
     $rule = Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipAddress" -ErrorAction SilentlyContinue
     if ($rule) {
         $rule
-        Write-Host "Added rule for storage account $appStorageAccount to allow $ipAddress"
+        Write-Host "Added rule for storage account $appStorageAccount to allow address $ipAddress"
     }
-    Write-Host "Adding rule for storage account $appStorageAccount to allow $ipPrefix..."
+    Write-Host "Adding rule for storage account $appStorageAccount to allow prefix $ipPrefix..."
     $rule = Add-AzStorageAccountNetworkRule -ResourceGroupName $appResourceGroup -Name $appStorageAccount -IPAddressOrRange "$ipPrefix" -ErrorAction SilentlyContinue
     if ($rule) {
         $rule
-        Write-Host "Added rule for storage account $appStorageAccount to allow $ipPrefix"
+        Write-Host "Added rule for storage account $appStorageAccount to allow prefix $ipPrefix"
     }
     #Write-Host "Network Rules for ${appStorageAccount}:"
     #Get-AzStorageAccountNetworkRuleSet -ResourceGroupName $appResourceGroup -Name $appStorageAccount | Select-Object -ExpandProperty IpRules | Sort-Object -Property IPAddressOrRange | Format-Table
 }
 if ($appEventHubNamespace) {
-    Write-Host "Adding rule for event hub $appEventHubNamespace to allow $ipAddress..."
+    Write-Host "Adding rule for event hub $appEventHubNamespace to allow address $ipAddress..."
     $rule = Add-AzEventHubIPRule -ResourceGroupName $appResourceGroup -Name $appEventHubNamespace -IpMask "$ipAddress" -Action Allow -ErrorAction SilentlyContinue
     if ($rule) {
         $rule.IpRules
-        Write-Host "Added rule for event hub $appEventHubNamespace to allow $ipAddress"
+        Write-Host "Added rule for event hub $appEventHubNamespace to allow address $ipAddress"
     }
 }
 if ($appSQLServer) {
-    Write-Host "Adding rule for SQL Server $appSQLServer to allow $ipAddress..."
+    Write-Host "Adding rule for SQL Server $appSQLServer to allow address $ipAddress..."
     $rule = New-AzSqlServerFirewallRule -FireWallRuleName "LetMeInRule" -StartIpAddress $ipAddress -EndIpAddress $ipAddress -ServerName $appSQLServer -ResourceGroupName $appResourceGroup -ErrorAction SilentlyContinue
     if ($rule) {
         $rule
-        Write-Host "Added rule for SQL Server $appSQLServer to allow $ipAddress"
+        Write-Host "Added rule for SQL Server $appSQLServer to allow address $ipAddress"
     }
 }

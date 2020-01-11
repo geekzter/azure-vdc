@@ -1,7 +1,8 @@
 #!/usr/bin/env pwsh
-
-# Clean up Azure resources left over
-
+<# 
+.SYNOPSIS 
+    Clean up Azure resources left over
+#> 
 ### Arguments
 param ( 
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,

@@ -136,7 +136,7 @@ variable vdc_oms_solutions {
   # "HDInsightKafka",
   # "HDInsightSpark",
   # "HDInsightStorm",
-    "InfrastructureInsights",
+  # "InfrastructureInsights", # Not found
   # "InternalWindowsEvent", # Not found
   # "KeyVault",
   # "KeyVaultAnalytics",

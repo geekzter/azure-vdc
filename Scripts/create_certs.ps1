@@ -1,3 +1,7 @@
+<# 
+.SYNOPSIS 
+    Creates certificates for VPN
+#> 
 param  
 ( 
    [parameter(Mandatory=$false)][string]$certdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Certificates")
