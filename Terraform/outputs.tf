@@ -54,6 +54,14 @@ output bastion_rdp_vpn {
   value = "mstsc.exe /v:${var.vdc_config["hub_bastion_address"]}"
 }
 
+output devops_org_url {
+  value = "https://dev.azure.com/${var.app_devops["account"]}"
+}
+
+output devops_project {
+  value = var.app_devops["team_project"]
+}
+
 output dashboard_id {
   value = azurerm_dashboard.vdc_dashboard.id
 }
