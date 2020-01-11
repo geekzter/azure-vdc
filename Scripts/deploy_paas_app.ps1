@@ -1,11 +1,15 @@
 #!/usr/bin/env pwsh
-
+<# 
+.SYNOPSIS 
+    Deploys Web App ASP.NET artifacts
+ 
+.DESCRIPTION 
+    This scripts pulls a pre-created ZipDeploy package from Pipeline artifacts and publishes it to the App Service Web App.
+    It eliminates the need for a release pipeline just to test the Web App.
+#> 
 param (    
     [parameter(Mandatory=$false,HelpMessage="The workspace tag to filter use")][string] $Workspace,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
-    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
-    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
-    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 
@@ -25,7 +29,7 @@ try {
     }
 
     if ([string]::IsNullOrEmpty($appAppServiceName)) {
-        Write-Host "Resources have not been created, nothing to do deploy" -ForeGroundColor Yellow
+        Write-Host "App Service has not been created, nothing to do deploy to" -ForeGroundColor Yellow
         exit 
     }
 } finally {
@@ -46,7 +50,7 @@ $runid = $(az pipelines runs list --result succeeded --top 1 --query "[?definiti
 Write-Information "Last successful run of $buildDefinitionName is $runid"
 
 # Download pipeline artifact (build artifact won't work)
-Write-Host "Downloading artifacts from from build $runid to $tmpDir..."
+Write-Host "Downloading artifacts from build $runid to $tmpDir..."
 az pipelines runs artifact download --run-id $runid --artifact-name aspnetsql2 --path $tmpDir
 
 # Publish web app

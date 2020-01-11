@@ -181,15 +181,6 @@ resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
   }
 }
 
-# Check if network watcher exists, there can only be one per region
-# data external network_watcher {
-#   program                      = ["pwsh", "-nop", "-Command",
-#                                   "../Scripts/get_network_watcher.ps1",
-#                                   "-Location",azurerm_resource_group.vdc_rg.location,
-#                                   "-SubscriptionId",data.azurerm_subscription.primary.subscription_id,
-#                                  ]
-# }
-
 locals {
   network_watcher_name         = "NetworkWatcher_${var.location}"
   network_watcher_resource_group = "NetworkWatcherRG"
