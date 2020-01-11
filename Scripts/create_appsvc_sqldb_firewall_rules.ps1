@@ -1,5 +1,4 @@
 #!/usr/bin/env pwsh
-
 <# 
 .SYNOPSIS 
     Intended to be used from Terraform local-exec provisioner
@@ -7,7 +6,6 @@
 .DESCRIPTION 
     This is intended to be run from Terraform, and works around the terraform limitation "value of 'count' cannot be computed"
 #> 
-
 ### Arguments
 param ( 
     [parameter(Mandatory=$true)][string]$SqlServerName,

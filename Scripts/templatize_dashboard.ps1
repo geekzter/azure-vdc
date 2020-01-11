@@ -1,5 +1,10 @@
 #!/usr/bin/env pwsh
-
+<# 
+.SYNOPSIS 
+    This script creates/updates dashboard.tpl with updates made to the dashboard in the Azure Portal
+.DESCRIPTION 
+    This template updated/created (dashboard.tpl) is a Terraform template. This script will replace literals with template tokens as needed, such that new deployments will use values pertaining to that deployment.
+#> 
 param ( 
     [parameter(Mandatory=$false)][string]$InputFile,
     [parameter(Mandatory=$false)][string]$OutputFile="dashboard.tpl",

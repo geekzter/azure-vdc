@@ -1,5 +1,9 @@
 #!/usr/bin/env pwsh
+<# 
+.SYNOPSIS 
+    List resources created
 
+#> 
 param (    
     [parameter(Mandatory=$false,HelpMessage="The environment tag to filter use")][string] $Environment,
     [parameter(Mandatory=$false,HelpMessage="The workspace tag to filter use")][string] $Workspace,

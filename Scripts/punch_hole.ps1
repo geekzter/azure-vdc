@@ -1,5 +1,11 @@
 #!/usr/bin/env pwsh
-
+<# 
+.SYNOPSIS 
+    Creates allow rules for PaaS firewalls for the current connection
+ 
+.DESCRIPTION 
+    This script is invoked from other scripts
+#> 
 param (    
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,

@@ -62,12 +62,17 @@ Write-Host "Web app $appAppServiceName published at $appUrl"
 # Test & Warm up 
 $maxTests = 60
 $test = 0
-Write-Host "Testing $appUrl (max $maxTests times)..." -NoNewLine
+Write-Host "Testing $appUrl (max $maxTests times)" -NoNewLine
 while (!$responseOK -and ($test -lt $maxTests)) {
     try {
         $test++
         Write-Host "." -NoNewLine
         $homePageResponse = Invoke-WebRequest -UseBasicParsing -Uri $appUrl
+        if ($homePageResponse.StatusCode -lt 400) {
+            $responseOK = $true
+        } else {
+            $responseOK = $false
+        }
     }
     catch {
         $responseOK = $false

@@ -1,5 +1,9 @@
 #!/usr/bin/env pwsh
+<# 
+.SYNOPSIS 
+    Get the terraform version installed, latest available, or used before
 
+#> 
 param ( 
     [parameter(Mandatory=$false)][ValidateSet('Installed','Latest','Preferred')][string]$Version="Installed",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")

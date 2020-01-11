@@ -1,6 +1,9 @@
 #!/usr/bin/env pwsh
+<# 
+.SYNOPSIS 
+    This creates allow rules for the current connection, start bastion, and displays credentials needed
 
-
+#> 
 ### Arguments
 param ( 
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace,

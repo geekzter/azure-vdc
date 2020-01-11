@@ -1,5 +1,11 @@
 #!/usr/bin/env pwsh
-
+<# 
+.SYNOPSIS 
+    Start Virtual Machines deployed
+ 
+.DESCRIPTION 
+    Terraform plan may need VM's to be started for certain resources e.g. VM extensions
+#> 
 param  
 (    
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace,
