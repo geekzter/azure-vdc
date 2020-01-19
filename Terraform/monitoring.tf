@@ -224,10 +224,12 @@ resource "azurerm_dashboard" "vdc_dashboard" {
       subscription_guid        = data.azurerm_subscription.primary.subscription_id
       appinsights_id           = azurerm_application_insights.vdc_insights.app_id
       build_web_url            = var.build_id != "" ? "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build/results?buildId=${var.build_id}" : "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build"
+      container_registry_name  = var.shared_container_registry_name
       iaas_app_url             = local.iaas_app_url
       paas_app_url             = local.paas_app_url
       paas_app_resource_group_short = local.paas_app_resource_group_short
       release_web_url          = var.release_web_url != "" ? var.release_web_url : "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_release"
+      shared_rg                = var.shared_resources_group
       vso_url                  = var.vso_url != "" ? var.vso_url : "https://online.visualstudio.com/"
   })
 }

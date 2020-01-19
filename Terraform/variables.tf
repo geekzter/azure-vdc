@@ -279,6 +279,13 @@ variable paas_app_storage_import {
   type                         = bool
   default                      = true
 }
+variable shared_container_registry_name {
+  description                  = "Name of the Container Registry to pull images from"
+}
+variable shared_resources_group {
+  description                  = "Resource group of shared (data) resources e.g. Container Registry, DNS"
+  default                      = "Shared"
+}
 variable vanity_domainname {
   description                  = "The domain part of the vanity url"
 }

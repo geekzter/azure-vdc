@@ -9,18 +9,6 @@ resource "random_string" "password" {
   override_special             = "." 
 }
 
-locals {
-  admin_ips                    = "${tolist(var.admin_ips)}"
-  # Last element of resource id is resource name
-  integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
-  integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
-
-  resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
-  password                     = ".Az9${random_string.password.result}"
-  vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
-
-}
-
 data "http" "localpublicip" {
 # Get public IP address of the machine running this terraform template
   url                          = "http://ipinfo.io/ip"
@@ -28,6 +16,27 @@ data "http" "localpublicip" {
 }
 
 data "azurerm_client_config" "current" {}
+
+data "azurerm_container_registry" "vdc_images" {
+  name                         = var.shared_container_registry_name
+  resource_group_name          = var.shared_resources_group
+}
+
+locals {
+  admin_ips                    = "${tolist(var.admin_ips)}"
+  # Last element of resource id is resource name
+  integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
+  integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
+  linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/vdc-aspnet-core-sqldb:latest" 
+# linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/vdc/aspnet-core-sqldb:latest" 
+# linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/${data.azurerm_container_registry.vdc_images.admin_username}/vdc-aspnet-core-sqldb:latest" 
+# linux_fx_version             = "DOCKER|appsvcsample/static-site:latest"
+# linux_fx_version             = "DOCKER|appsvcsample/python-helloworld:latest"
+  resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
+  password                     = ".Az9${random_string.password.result}"
+  vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
+
+}
 
 resource "azurerm_resource_group" "app_rg" {
   name                         = var.resource_group_name
@@ -147,6 +156,8 @@ resource "azurerm_app_service_plan" "paas_plan" {
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
 
+  kind                         = "Linux"
+  reserved                     = true
   sku {
     tier                       = "PremiumV2"
     size                       = "P1v2"
@@ -162,13 +173,17 @@ resource "azurerm_app_service" "paas_web_app" {
   app_service_plan_id          = azurerm_app_service_plan.paas_plan.id
 
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = var.diagnostics_instrumentation_key
-  # "APPINSIGHTS_PROFILERFEATURE_VERSION" = "1.0.0"
-  # "APPINSIGHTS_SNAPSHOTFEATURE_VERSION" = "1.0.0"
-  # "APPLICATIONINSIGHTS_CONNECTION_STRING" = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
-  # "ApplicationInsightsAgent_EXTENSION_VERSION" = "~2"
-    "ASPNETCORE_ENVIRONMENT" = "Production"
-    "WEBSITE_HTTPLOGGING_RETENTION_DAYS" = "90"
+    APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
+    APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
+    ASPNETCORE_ENVIRONMENT     = "Production"
+    # "DOCKER_REGISTRY_SERVER_URL"   = "https://index.docker.io"
+    DOCKER_REGISTRY_SERVER_URL      = "https://${data.azurerm_container_registry.vdc_images.login_server}"
+    # TODO: Use MSI
+    #       https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication-managed-identity
+    DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.vdc_images.admin_username}"
+    DOCKER_REGISTRY_SERVER_PASSWORD = "${data.azurerm_container_registry.vdc_images.admin_password}"
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
+    WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
   }
 
   connection_string {
@@ -206,12 +221,13 @@ resource "azurerm_app_service" "paas_web_app" {
 
   site_config {
     always_on                  = true # Better demo experience, no warmup needed
+    app_command_line           = ""
     default_documents          = [
                                  "default.aspx",
                                  "default.htm",
                                  "index.html"
                                  ]
-    dotnet_framework_version   = "v4.0"
+  # dotnet_framework_version   = "v4.0"
     ftps_state                 = "Disabled"
 
     ip_restriction {
@@ -223,11 +239,23 @@ resource "azurerm_app_service" "paas_web_app" {
         virtual_network_subnet_id = ip_restriction.value
       }
     }
-    # TODO: Remove once moved to containers
-    scm_type                   = "LocalGit"
+
+    linux_fx_version           = local.linux_fx_version
+    # LocalGit removed since using containers for deployment
+    scm_type                   = "None"
   }
 
+  # lifecycle {
+  #   ignore_changes = [
+  #     "site_config.0.linux_fx_version", # deployments are made outside of Terraform
+  #   ]
+  # }
+
   tags                         = var.tags
+
+# We can't wait for App Service specific rules due to circular dependency.
+# The all rule will be removed after App Service rules and SQL DB have been provisioned
+# depends_on                   = [azurerm_sql_firewall_rule.azureall] 
 }
 
 resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
@@ -290,12 +318,13 @@ resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
   }
 }
 
-resource azurerm_app_service_virtual_network_swift_connection network {
-  app_service_id               = azurerm_app_service.paas_web_app.id
-  subnet_id                    = var.integrated_subnet_id
+# TODO: re-enable (doesn't work with containers yet)
+# resource azurerm_app_service_virtual_network_swift_connection network {
+#   app_service_id               = azurerm_app_service.paas_web_app.id
+#   subnet_id                    = var.integrated_subnet_id
 
-  count                        = var.deploy_app_service_network_integration ? 1 : 0
-}
+#   count                        = var.deploy_app_service_network_integration ? 1 : 0
+# }
 
 ### Event Hub
 resource "azurerm_eventhub_namespace" "app_eventhub" {
@@ -395,7 +424,7 @@ resource "azurerm_sql_server" "app_sqlserver" {
   resource_group_name          = azurerm_resource_group.app_rg.name
   location                     = azurerm_resource_group.app_rg.location
   version                      = "12.0"
-# TODO: Remove credentials, and/or store in Key Vault
+# Credentials are mandatory, but password is randmon and declared as output variable
   administrator_login          = var.admin_username
   administrator_login_password = local.password
   
@@ -439,11 +468,13 @@ resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
   subnet_id                    = var.iag_subnet_id
+}
 
+resource null_resource app_service_rules {
   # Create SQL DB FW rule to allow App Service in
   # Create on this resource to prevent circular dependency between module.paas_app.azurerm_sql_database.app_sqldb, module.paas_app.azurerm_app_service.paas_web_app, module.paas_app.azurerm_sql_server.app_sqlserver
   provisioner "local-exec" {
-    command                    = "../Scripts/create_appsvc_sqldb_firewall_rules.ps1 -SqlServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -OutboundIPAddresses ${azurerm_app_service.paas_web_app.outbound_ip_addresses}"
+    command                    = "../Scripts/create_appsvc_sqldb_firewall_rules.ps1 -SqlServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name} -OutboundIPAddresses ${azurerm_app_service.paas_web_app.outbound_ip_addresses}"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 }
@@ -517,12 +548,6 @@ resource "azurerm_sql_database" "app_sqldb" {
   #   interpreter                = ["pwsh", "-nop", "-Command"]
   # }
 
-  # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
-  provisioner "local-exec" {
-    command                    = "Get-AzSqlServerFirewallRule -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} | Where-Object -Property FirewallRuleName -eq AllowAllWindowsAzureIPs | Remove-AzSqlServerFirewallRule -Force"
-    interpreter                = ["pwsh", "-nop", "-Command"]
-  }
-
   # Configure server auditing
   provisioner "local-exec" {
     command                    = "Set-AzSqlServerAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
@@ -539,6 +564,17 @@ resource "azurerm_sql_database" "app_sqldb" {
 
   tags                         = var.tags
 } 
+
+# TODO: re-enable
+# resource null_resource no_all_azure_rules {
+#   # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
+#   provisioner "local-exec" {
+#     command                    = "Get-AzSqlServerFirewallRule -ServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name} | Where-Object -Property FirewallRuleName -eq AllowAllWindowsAzureIPs | Remove-AzSqlServerFirewallRule -Force"
+#     interpreter                = ["pwsh", "-nop", "-Command"]
+#   }
+
+#   depends_on                   = [null_resource.app_service_rules, azurerm_sql_database.app_sqldb]
+# }
 
 resource "azurerm_monitor_diagnostic_setting" "sql_database_logs" {
   name                         = "SqlDatabase_Logs"
