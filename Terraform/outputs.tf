@@ -9,6 +9,10 @@ output admin_password {
   value       = local.password
 }
 
+output application_insights_id {
+  value       = azurerm_application_insights.vdc_insights.app_id
+}
+
 output app_storage_fqdns {
   value       = [
     azurerm_firewall_application_rule_collection.iag_app_rules.rule.0.target_fqdns

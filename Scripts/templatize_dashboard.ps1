@@ -48,11 +48,12 @@ try {
 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
-        $Script:dashboardID = $(terraform output "dashboard_id"                  2>$null)
-        $Script:appRGShort  = $(terraform output "paas_app_resource_group_short" 2>$null)
-        $Script:prefix      = $(terraform output "resource_prefix"               2>$null)
-        $Script:suffix      = $(terraform output "resource_suffix"               2>$null)
-        $Script:environment = $(terraform output "resource_environment"          2>$null)
+        $Script:dashboardID   = $(terraform output "dashboard_id"                  2>$null)
+        $Script:appInsightsID = $(terraform output "application_insights_id"       2>$null)
+        $Script:appRGShort    = $(terraform output "paas_app_resource_group_short" 2>$null)
+        $Script:prefix        = $(terraform output "resource_prefix"               2>$null)
+        $Script:suffix        = $(terraform output "resource_suffix"               2>$null)
+        $Script:environment   = $(terraform output "resource_environment"          2>$null)
     }
 
     if ([string]::IsNullOrEmpty($prefix) -or [string]::IsNullOrEmpty($environment) -or [string]::IsNullOrEmpty($suffix)) {
@@ -85,6 +86,9 @@ if ($InputFile) {
 }
 
 $template = $template -Replace "/subscriptions/........-....-....-................./", "`$`{subscription`}/"
+if ($appInsightsID) {
+    $template = $template -Replace "${appInsightsID}", "`$`{appinsights_id`}"
+}
 if ($prefix) {
     $template = $template -Replace "${prefix}-", "`$`{prefix`}-"
 }
@@ -107,6 +111,9 @@ $template = $template -Replace "http[s?]://[\w\.]*webapp[\w\.]*/", "`$`{paas_app
 $template = $template -Replace "https://dev.azure.com[^`']*_build[^`']*`'", "`$`{build_web_url`}`'"
 $template = $template -Replace "https://dev.azure.com[^`']*_release[^`']*`'", "`$`{release_web_url`}`'"
 $template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"
+$template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"
+$template = $template -Replace "[\w]*\.portal.azure.com", "portal.azure.com"
+$template = $template -Replace "@microsoft.onmicrosoft.com", "@"
 
 # Check for remnants of tokens that should've been caught
 $enviromentMatches = $template -match $environment

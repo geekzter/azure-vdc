@@ -16,7 +16,7 @@ variable database_import {
 variable database_template_storage_key {
 }
 variable database_template_storage_uri {
-  default                      = "https://ewimages.blob.core.windows.net/databasetemplates/DotNetAppSqlDb20181207093001_db-2018-12-7-10-37.bacpac"
+  default                      = "https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac"
 }
 variable data_subnet_id {}
 variable dba_login {}

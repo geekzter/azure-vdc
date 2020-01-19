@@ -163,6 +163,11 @@ resource "azurerm_app_service" "paas_web_app" {
 
   app_settings = {
     "APPINSIGHTS_INSTRUMENTATIONKEY" = var.diagnostics_instrumentation_key
+  # "APPINSIGHTS_PROFILERFEATURE_VERSION" = "1.0.0"
+  # "APPINSIGHTS_SNAPSHOTFEATURE_VERSION" = "1.0.0"
+  # "APPLICATIONINSIGHTS_CONNECTION_STRING" = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
+  # "ApplicationInsightsAgent_EXTENSION_VERSION" = "~2"
+    "ASPNETCORE_ENVIRONMENT" = "Production"
     "WEBSITE_HTTPLOGGING_RETENTION_DAYS" = "90"
   }
 
@@ -218,8 +223,8 @@ resource "azurerm_app_service" "paas_web_app" {
         virtual_network_subnet_id = ip_restriction.value
       }
     }
+    # TODO: Remove once moved to containers
     scm_type                   = "LocalGit"
-  # virtual_network_name       = local.integrated_vnet_name
   }
 
   tags                         = var.tags

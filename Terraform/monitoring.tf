@@ -222,6 +222,7 @@ resource "azurerm_dashboard" "vdc_dashboard" {
       environment              = local.environment
       suffix                   = local.suffix
       subscription_guid        = data.azurerm_subscription.primary.subscription_id
+      appinsights_id           = azurerm_application_insights.vdc_insights.app_id
       build_web_url            = var.build_id != "" ? "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build/results?buildId=${var.build_id}" : "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build"
       iaas_app_url             = local.iaas_app_url
       paas_app_url             = local.paas_app_url

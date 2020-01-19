@@ -9,7 +9,7 @@
             "settings": {
               "content": {
                 "settings": {
-                  "content": "__Description__\n<p>\nThis project contains a hub & spoke Virtual Datacenter deployment. \n</p>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
+                  "content": "\nThis project contains a hub & spoke Virtual Datacenter deployment. \n<br/>\n<br/>\n<a href='https://portal.azure.com/#@/dashboard/arm${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.portal/dashboards/${appinsights_id}-dashboard' target='_blank'>Application Insights Dashboard</a>\n<br/>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='https://${prefix}-${environment}-paasapp-${suffix}-appsvc-app.scm.azurewebsites.net/api/dump' target='_blank'>PaaS App log files</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
                   "subtitle": "",
                   "title": "Automated VDC"
                 }
@@ -1337,12 +1337,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-85ba45b6-8260-4dac-8732-9ca398dd001d",
-              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd0023",
-              "StartboardPart-MonitorChartPart-85ba45b6-8260-4dac-8732-9ca398dd0029",
-              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd0033",
-              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd003b",
-              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd0041"
+              "StartboardPart-ApplicationMapPart-184a9853-29cb-4d5d-a637-f27f6d2a310d",
+              "StartboardPart-AnalyticsPart-184a9853-29cb-4d5d-a637-f27f6d2a3113",
+              "StartboardPart-MonitorChartPart-184a9853-29cb-4d5d-a637-f27f6d2a3119",
+              "StartboardPart-AnalyticsPart-184a9853-29cb-4d5d-a637-f27f6d2a3123",
+              "StartboardPart-AnalyticsPart-184a9853-29cb-4d5d-a637-f27f6d2a312b",
+              "StartboardPart-AnalyticsPart-184a9853-29cb-4d5d-a637-f27f6d2a3131"
             ],
             "model": {
               "format": "utc",
