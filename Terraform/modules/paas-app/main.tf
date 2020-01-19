@@ -176,8 +176,8 @@ resource "azurerm_app_service" "paas_web_app" {
     APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
     ASPNETCORE_ENVIRONMENT     = "Production"
-    # "DOCKER_REGISTRY_SERVER_URL"   = "https://index.docker.io"
-    DOCKER_REGISTRY_SERVER_URL      = "https://${data.azurerm_container_registry.vdc_images.login_server}"
+    # DOCKER_REGISTRY_SERVER_URL = "https://index.docker.io"
+    DOCKER_REGISTRY_SERVER_URL = "https://${data.azurerm_container_registry.vdc_images.login_server}"
     # TODO: Use MSI
     #       https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication-managed-identity
     DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.vdc_images.admin_username}"
@@ -319,12 +319,12 @@ resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
 }
 
 # TODO: re-enable (doesn't work with containers yet)
-# resource azurerm_app_service_virtual_network_swift_connection network {
-#   app_service_id               = azurerm_app_service.paas_web_app.id
-#   subnet_id                    = var.integrated_subnet_id
+resource azurerm_app_service_virtual_network_swift_connection network {
+  app_service_id               = azurerm_app_service.paas_web_app.id
+  subnet_id                    = var.integrated_subnet_id
 
-#   count                        = var.deploy_app_service_network_integration ? 1 : 0
-# }
+  count                        = var.deploy_app_service_network_integration ? 1 : 0
+}
 
 ### Event Hub
 resource "azurerm_eventhub_namespace" "app_eventhub" {
@@ -565,16 +565,15 @@ resource "azurerm_sql_database" "app_sqldb" {
   tags                         = var.tags
 } 
 
-# TODO: re-enable
-# resource null_resource no_all_azure_rules {
-#   # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
-#   provisioner "local-exec" {
-#     command                    = "Get-AzSqlServerFirewallRule -ServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name} | Where-Object -Property FirewallRuleName -eq AllowAllWindowsAzureIPs | Remove-AzSqlServerFirewallRule -Force"
-#     interpreter                = ["pwsh", "-nop", "-Command"]
-#   }
+resource null_resource no_all_azure_rules {
+  # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
+  provisioner "local-exec" {
+    command                    = "Get-AzSqlServerFirewallRule -ServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name} | Where-Object -Property FirewallRuleName -eq AllowAllWindowsAzureIPs | Remove-AzSqlServerFirewallRule -Force"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
 
-#   depends_on                   = [null_resource.app_service_rules, azurerm_sql_database.app_sqldb]
-# }
+  depends_on                   = [null_resource.app_service_rules, azurerm_sql_database.app_sqldb]
+}
 
 resource "azurerm_monitor_diagnostic_setting" "sql_database_logs" {
   name                         = "SqlDatabase_Logs"
