@@ -243,7 +243,8 @@ resource "azurerm_app_service" "paas_web_app" {
       }
     }
 
-    linux_fx_version           = local.linux_fx_version
+    # Required for containers
+  # linux_fx_version           = local.linux_fx_version
     # LocalGit removed since using containers for deployment
     scm_type                   = "None"
   }
