@@ -29,8 +29,6 @@ locals {
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
   linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/vdc-aspnet-core-sqldb:latest" 
 # linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/vdc/aspnet-core-sqldb:latest" 
-# linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/${data.azurerm_container_registry.vdc_images.admin_username}/vdc-aspnet-core-sqldb:latest" 
-# linux_fx_version             = "DOCKER|appsvcsample/static-site:latest"
 # linux_fx_version             = "DOCKER|appsvcsample/python-helloworld:latest"
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
@@ -156,8 +154,10 @@ resource "azurerm_app_service_plan" "paas_plan" {
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
 
-  kind                         = "Linux"
-  reserved                     = true
+  # Required for containers
+# kind                         = "Linux"
+# reserved                     = true
+
   sku {
     tier                       = "PremiumV2"
     size                       = "P1v2"
@@ -176,13 +176,16 @@ resource "azurerm_app_service" "paas_web_app" {
     APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
     ASPNETCORE_ENVIRONMENT     = "Production"
-    # DOCKER_REGISTRY_SERVER_URL = "https://index.docker.io"
-    DOCKER_REGISTRY_SERVER_URL = "https://${data.azurerm_container_registry.vdc_images.login_server}"
-    # TODO: Use MSI
-    #       https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication-managed-identity
-    DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.vdc_images.admin_username}"
-    DOCKER_REGISTRY_SERVER_PASSWORD = "${data.azurerm_container_registry.vdc_images.admin_password}"
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
+
+    # Required for containers
+  # # DOCKER_REGISTRY_SERVER_URL = "https://index.docker.io"
+  # DOCKER_REGISTRY_SERVER_URL = "https://${data.azurerm_container_registry.vdc_images.login_server}"
+  # # TODO: Use MSI
+  # #       https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication-managed-identity
+  # DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.vdc_images.admin_username}"
+  # DOCKER_REGISTRY_SERVER_PASSWORD = "${data.azurerm_container_registry.vdc_images.admin_password}"
+  # WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
+
     WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
   }
 
@@ -245,6 +248,7 @@ resource "azurerm_app_service" "paas_web_app" {
     scm_type                   = "None"
   }
 
+  # Uncomment for container deployment
   # lifecycle {
   #   ignore_changes = [
   #     "site_config.0.linux_fx_version", # deployments are made outside of Terraform
