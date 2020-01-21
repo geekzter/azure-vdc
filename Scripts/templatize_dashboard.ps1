@@ -48,11 +48,14 @@ try {
 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
-        $Script:dashboardID = $(terraform output "dashboard_id"                  2>$null)
-        $Script:appRGShort  = $(terraform output "paas_app_resource_group_short" 2>$null)
-        $Script:prefix      = $(terraform output "resource_prefix"               2>$null)
-        $Script:suffix      = $(terraform output "resource_suffix"               2>$null)
-        $Script:environment = $(terraform output "resource_environment"          2>$null)
+        $Script:dashboardID    = $(terraform output "dashboard_id"                   2>$null)
+        $Script:appInsightsID  = $(terraform output "application_insights_id"        2>$null)
+        $Script:appRGShort     = $(terraform output "paas_app_resource_group_short"  2>$null)
+        $Script:prefix         = $(terraform output "resource_prefix"                2>$null)
+        $Script:suffix         = $(terraform output "resource_suffix"                2>$null)
+        $Script:environment    = $(terraform output "resource_environment"           2>$null)
+        $Script:sharedRegistry = $(terraform output "shared_container_registry_name" 2>$null)
+        $Script:sharedRG       = $(terraform output "shared_resources_group"         2>$null)
     }
 
     if ([string]::IsNullOrEmpty($prefix) -or [string]::IsNullOrEmpty($environment) -or [string]::IsNullOrEmpty($suffix)) {
@@ -85,6 +88,9 @@ if ($InputFile) {
 }
 
 $template = $template -Replace "/subscriptions/........-....-....-................./", "`$`{subscription`}/"
+if ($appInsightsID) {
+    $template = $template -Replace "${appInsightsID}", "`$`{appinsights_id`}"
+}
 if ($prefix) {
     $template = $template -Replace "${prefix}-", "`$`{prefix`}-"
 }
@@ -107,6 +113,11 @@ $template = $template -Replace "http[s?]://[\w\.]*webapp[\w\.]*/", "`$`{paas_app
 $template = $template -Replace "https://dev.azure.com[^`']*_build[^`']*`'", "`$`{build_web_url`}`'"
 $template = $template -Replace "https://dev.azure.com[^`']*_release[^`']*`'", "`$`{release_web_url`}`'"
 $template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"
+$template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"
+$template = $template -Replace "[\w]*\.portal.azure.com", "portal.azure.com"
+$template = $template -Replace "@microsoft.onmicrosoft.com", "@"
+$template = $template -Replace "/resourceGroups/${sharedRG}", "/resourceGroups/`$`{shared_rg`}"
+$template = $template -Replace "/registries/${sharedRegistry}", "/registries/`$`{container_registry_name`}"
 
 # Check for remnants of tokens that should've been caught
 $enviromentMatches = $template -match $environment

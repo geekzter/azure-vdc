@@ -9,6 +9,10 @@ output admin_password {
   value       = local.password
 }
 
+output application_insights_id {
+  value       = azurerm_application_insights.vdc_insights.app_id
+}
+
 output app_storage_fqdns {
   value       = [
     azurerm_firewall_application_rule_collection.iag_app_rules.rule.0.target_fqdns
@@ -135,6 +139,10 @@ output paas_app_service_fqdn {
     value = module.paas_app.app_service_fqdn
 }
 
+output paas_app_service_linux_fx_version {
+    value     = module.paas_app.linux_fx_version
+}
+
 output paas_app_service_outbound_ip_addresses {
     value = module.paas_app.app_service_outbound_ip_addresses
 }
@@ -217,6 +225,13 @@ output resource_environment {
 }
 output resource_suffix {
   value       = local.suffix
+}
+
+output shared_container_registry_name {
+  value       = var.shared_container_registry_name
+}
+output shared_resources_group {
+  value       = var.shared_resources_group
 }
 
 output vdc_resource_group {

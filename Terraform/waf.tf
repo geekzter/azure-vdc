@@ -8,7 +8,7 @@ resource "random_string" "waf_domain_name_label" {
 
 data "azurerm_dns_zone" "vanity_domain" {
   name                         = var.vanity_domainname
-  resource_group_name          = "Shared"
+  resource_group_name          = var.shared_resources_group
   count                        = var.use_vanity_domain_and_ssl ? 1 : 0
 }
 

@@ -22,3 +22,7 @@ brew "tfenv"
 cask "dotnet-sdk"
 tap "azure/functions"
 brew "azure-functions-core-tools"
+
+# .NET Core
+tap "isen-ng/dotnet-sdk-versions"
+cask "dotnet-sdk-2.2.400"

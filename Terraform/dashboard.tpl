@@ -9,7 +9,7 @@
             "settings": {
               "content": {
                 "settings": {
-                  "content": "__Description__\n<p>\nThis project contains a hub & spoke Virtual Datacenter deployment. \n</p>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
+                  "content": "\nThis project contains a hub & spoke Virtual Datacenter deployment. \n<br/>\n<br/>\n<a href='https://portal.azure.com/#@/dashboard/arm${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.portal/dashboards/${appinsights_id}-dashboard' target='_blank'>Application Insights Dashboard</a>\n<br/>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='https://${prefix}-${environment}-paasapp-${suffix}-appsvc-app.scm.azurewebsites.net/api/dump' target='_blank'>PaaS App log files</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
                   "subtitle": "",
                   "title": "Automated VDC"
                 }
@@ -696,6 +696,62 @@
         "24": {
           "metadata": {
             "asset": {
+              "idInputName": "id",
+              "type": "RegistryResource"
+            },
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${shared_rg}/providers/Microsoft.ContainerRegistry/registries/${container_registry_name}"
+              }
+            ],
+            "type": "Extension/Microsoft_Azure_ContainerRegistries/PartType/ResourcePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 12
+          }
+        },
+        "25": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-19T12:10:07.715Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
+            "y": 13
+          }
+        },
+        "26": {
+          "metadata": {
+            "asset": {
               "idInputName": "ComponentId",
               "type": "ApplicationInsights"
             },
@@ -751,45 +807,10 @@
             "colSpan": 2,
             "rowSpan": 2,
             "x": 10,
-            "y": 12
-          }
-        },
-        "25": {
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
-              },
-              {
-                "isOptional": true,
-                "name": "solutionId"
-              },
-              {
-                "isOptional": true,
-                "name": "timeInterval",
-                "value": {
-                  "_Now": "2019-11-19T12:10:07.715Z",
-                  "_duration": 86400000,
-                  "_end": null
-                }
-              },
-              {
-                "binding": "timeRange",
-                "isOptional": true,
-                "name": "timeRange"
-              }
-            ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
-          },
-          "position": {
-            "colSpan": 4,
-            "rowSpan": 2,
-            "x": 0,
             "y": 13
           }
         },
-        "26": {
+        "27": {
           "metadata": {
             "inputs": [
               {
@@ -824,7 +845,7 @@
             "y": 15
           }
         },
-        "27": {
+        "28": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -900,7 +921,7 @@
             "y": 16
           }
         },
-        "28": {
+        "29": {
           "metadata": {
             "inputs": [
               {
@@ -935,7 +956,29 @@
             "y": 17
           }
         },
-        "29": {
+        "3": {
+          "metadata": {
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "resourceGroup"
+              },
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+          },
+          "position": {
+            "colSpan": 5,
+            "rowSpan": 4,
+            "x": 12,
+            "y": 0
+          }
+        },
+        "30": {
           "metadata": {
             "inputs": [
               {
@@ -970,29 +1013,7 @@
             "y": 19
           }
         },
-        "3": {
-          "metadata": {
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "resourceGroup"
-              },
-              {
-                "isOptional": true,
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
-              }
-            ],
-            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
-          },
-          "position": {
-            "colSpan": 5,
-            "rowSpan": 4,
-            "x": 12,
-            "y": 0
-          }
-        },
-        "30": {
+        "31": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -1337,12 +1358,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-85ba45b6-8260-4dac-8732-9ca398dd001d",
-              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd0023",
-              "StartboardPart-MonitorChartPart-85ba45b6-8260-4dac-8732-9ca398dd0029",
-              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd0033",
-              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd003b",
-              "StartboardPart-AnalyticsPart-85ba45b6-8260-4dac-8732-9ca398dd0041"
+              "StartboardPart-ApplicationMapPart-19c61224-cb11-4efb-9a52-60e627d2c5e9",
+              "StartboardPart-AnalyticsPart-19c61224-cb11-4efb-9a52-60e627d2c5ef",
+              "StartboardPart-MonitorChartPart-19c61224-cb11-4efb-9a52-60e627d2c5f5",
+              "StartboardPart-AnalyticsPart-19c61224-cb11-4efb-9a52-60e627d2c5ff",
+              "StartboardPart-AnalyticsPart-19c61224-cb11-4efb-9a52-60e627d2c607",
+              "StartboardPart-AnalyticsPart-19c61224-cb11-4efb-9a52-60e627d2c60d"
             ],
             "model": {
               "format": "utc",

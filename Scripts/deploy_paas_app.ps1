@@ -36,9 +36,12 @@ try {
 } finally {
     Pop-Location
 }
-$buildDefinitionName = "asp.net-sql-ci" # From asp.net-sql-ci.yml
-$packageName = "ZipDeploy.zip" # From asp.net-sql-ci.yml
-$tmpDir = [System.IO.Path]::GetTempPath()
+# Variables taken from from pipeline yaml
+$buildDefinitionName = "asp.net-core-sql-ci" 
+$artifactName = "aspnetcoresql"
+$packageName = "publish.zip" 
+$configuration = "Release"
+$dotnetVersion = "2.2"
 
 # We need this for Azure DevOps
 az extension add --name azure-devops 
@@ -50,13 +53,26 @@ az devops configure --defaults organization=$devOpsOrgUrl project=$devOpsProject
 $runid = $(az pipelines runs list --result succeeded --top 1 --query "[?definition.name == '$buildDefinitionName'].id | [0]")
 Write-Information "Last successful run of $buildDefinitionName is $runid"
 
+# Determine & create download directory
+$tmpDir = [System.IO.Path]::GetTempPath()
+$downloadDir = Join-Path $tmpDir $runid 
+$packagePath = Join-Path $downloadDir "s" "bin" $configuration "netcoreapp${dotnetVersion}" $packageName
+if (!(Test-Path $tmpDir)) {
+    New-Item -Path $tmpDir -Name $runid -ItemType "Directory"
+}
+
 # Download pipeline artifact (build artifact won't work)
-Write-Host "Downloading artifacts from $buildDefinitionName build $runid to $tmpDir..."
-az pipelines runs artifact download --run-id $runid --artifact-name aspnetsql2 --path $tmpDir
+Write-Host "Downloading artifacts from $buildDefinitionName build $runid to $downloadDir..."
+az pipelines runs artifact download --run-id $runid --artifact-name $artifactName --path $downloadDir
+
+if (!(Test-Path $packagePath)) {
+    Write-Error "Package $packagePath not found"
+    exit 1
+}
 
 # Publish web app
 Write-Host "Publishing $packageName to web app $appAppServiceName..."
-$null = az webapp deployment source config-zip -g $appResourceGroup -n $appAppServiceName --src $tmpDir/$packageName
+$null = az webapp deployment source config-zip -g $appResourceGroup -n $appAppServiceName --src $packagePath
 
 Write-Host "Web app $appAppServiceName published at $appUrl"
 
