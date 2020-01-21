@@ -57,7 +57,7 @@ Write-Information "Last successful run of $buildDefinitionName is $runid"
 $tmpDir = [System.IO.Path]::GetTempPath()
 $downloadDir = Join-Path $tmpDir $runid 
 if (!(Test-Path $downloadDir)) {
-    New-Item -Path $tmpDir -Name $runid -ItemType "Directory"
+    $null = New-Item -Path $tmpDir -Name $runid -ItemType "Directory"
 }
 $packagePath = Join-Path $downloadDir "s" "bin" $configuration "netcoreapp${dotnetVersion}" $packageName
 
