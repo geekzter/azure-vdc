@@ -56,10 +56,10 @@ Write-Information "Last successful run of $buildDefinitionName is $runid"
 # Determine & create download directory
 $tmpDir = [System.IO.Path]::GetTempPath()
 $downloadDir = Join-Path $tmpDir $runid 
-$packagePath = Join-Path $downloadDir "s" "bin" $configuration "netcoreapp${dotnetVersion}" $packageName
-if (!(Test-Path $tmpDir)) {
+if (!(Test-Path $downloadDir)) {
     New-Item -Path $tmpDir -Name $runid -ItemType "Directory"
 }
+$packagePath = Join-Path $downloadDir "s" "bin" $configuration "netcoreapp${dotnetVersion}" $packageName
 
 # Download pipeline artifact (build artifact won't work)
 Write-Host "Downloading artifacts from $buildDefinitionName build $runid to $downloadDir..."
