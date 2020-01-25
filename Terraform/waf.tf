@@ -251,6 +251,11 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
       target_listener_name     = "${module.paas_app.app_resource_group}-https-listener"
     }
   }
+  # https://docs.microsoft.com/en-us/azure/application-gateway/rewrite-http-headers#modify-a-redirection-url
+  # Matches URL to STS as well
+  # https://github.com/MicrosoftDocs/azure-docs/issues/42508
+  # This won't wortk either: ^(https?):\/\/vdc\-dev\-paasapp\-dvwb\-appsvc\-app\.azurewebsites\.net(.*)$
+  # Regex matc
   # rewrite_rule_set {
   #   name                       = "paas-rewrite-rules"
   #   rewrite_rule {
