@@ -513,12 +513,12 @@ resource null_resource sql_db_private_dns {
 resource "azurerm_sql_active_directory_administrator" "dba" {
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
-# login                        = var.dba_login
+  login                        = var.dba_login
   tenant_id                    = data.azurerm_client_config.current.tenant_id
-# object_id                    = var.dba_object_id
+  object_id                    = var.dba_object_id
 # HACK: Not least privilege, but req'd as automation SP does not have sufficient permissions
-  login                        = "client"
-  object_id                    = azurerm_app_service.paas_web_app.identity.0.principal_id
+# login                        = "client"
+# object_id                    = azurerm_app_service.paas_web_app.identity.0.principal_id
 } 
 
 resource "azurerm_sql_database" "app_sqldb" {
