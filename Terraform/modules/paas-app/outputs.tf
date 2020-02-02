@@ -17,6 +17,9 @@ output app_service_msi_object_id {
 # value       = azurerm_app_service.paas_web_app.identity.0.principal_id
   value       = azurerm_user_assigned_identity.paas_web_app_identity.principal_id
 }
+output app_service_msi_name {
+  value       = azurerm_user_assigned_identity.paas_web_app_identity.name
+}
 output app_service_name {
     value = azurerm_app_service.paas_web_app.name
 }

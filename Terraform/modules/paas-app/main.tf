@@ -169,7 +169,7 @@ resource "azurerm_app_service_plan" "paas_plan" {
 # Use user assigned identity, so we can get hold of the Application/Client ID
 # This also prevents a bidirectional dependency between App Service & SQL Database
 resource "azurerm_user_assigned_identity" "paas_web_app_identity" {
-  name                         = "${var.resource_group_name}-appsvc-app"
+  name                         = "${var.resource_group_name}-appsvc-identity"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
 }
@@ -528,9 +528,6 @@ resource "azurerm_sql_active_directory_administrator" "dba" {
   login                        = var.dba_login
   tenant_id                    = data.azurerm_client_config.current.tenant_id
   object_id                    = var.dba_object_id
-# HACK: Not least privilege, but req'd as automation SP does not have sufficient permissions
-# login                        = "client"
-# object_id                    = azurerm_app_service.paas_web_app.identity.0.principal_id
 } 
 
 resource "azurerm_sql_database" "app_sqldb" {
@@ -561,7 +558,7 @@ resource "azurerm_sql_database" "app_sqldb" {
 
   # Add App Service MSI to Database
   provisioner "local-exec" {
-    command                    = "../Scripts/grant_database_access.ps1 -UserName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -UserClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${self.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
+    command                    = "../Scripts/grant_database_access.ps1 -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${self.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
