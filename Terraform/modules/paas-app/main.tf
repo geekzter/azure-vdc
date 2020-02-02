@@ -166,6 +166,14 @@ resource "azurerm_app_service_plan" "paas_plan" {
   tags                         = var.tags
 }
 
+# Use user assigned identity, so we can get hold of the Application/Client ID
+# This also prevents a bidirectional dependency between App Service & SQL Database
+resource "azurerm_user_assigned_identity" "paas_web_app_identity" {
+  name                         = "${var.resource_group_name}-appsvc-app"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
+}
+
 resource "azurerm_app_service" "paas_web_app" {
   name                         = "${var.resource_group_name}-appsvc-app"
   location                     = azurerm_resource_group.app_rg.location
@@ -173,6 +181,9 @@ resource "azurerm_app_service" "paas_web_app" {
   app_service_plan_id          = azurerm_app_service_plan.paas_plan.id
 
   app_settings = {
+    # User assigned ID needs to be provided explicitely, this will be pciked up by the .NET application
+    # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/Data/MyDatabaseContext.cs
+    APP_CLIENT_ID              = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
     APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
     ASPNETCORE_ENVIRONMENT     = "Production"
@@ -197,7 +208,8 @@ resource "azurerm_app_service" "paas_web_app" {
   }
 
   identity {
-    type                       = "SystemAssigned"
+    type                       = "UserAssigned"
+    identity_ids               = [azurerm_user_assigned_identity.paas_web_app_identity.id]
   }
 
   logs {
@@ -547,11 +559,11 @@ resource "azurerm_sql_database" "app_sqldb" {
     use_server_default         = "Enabled"
   }
 
-  # Add App Service MSI AAD SP to Database
-  # provisioner "local-exec" {
-  #   command                    = "../Scripts/grant_database_access.ps1 -UserName ${var.dba_login} -SqlDatabaseName ${self.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
-  #   interpreter                = ["pwsh", "-nop", "-Command"]
-  # }
+  # Add App Service MSI to Database
+  provisioner "local-exec" {
+    command                    = "../Scripts/grant_database_access.ps1 -UserName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -UserClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${self.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
 
   # Configure server auditing
   provisioner "local-exec" {

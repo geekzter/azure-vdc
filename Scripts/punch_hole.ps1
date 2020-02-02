@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 <# 
 .SYNOPSIS 
-    Creates allow rules for PaaS firewalls for the current connection
+    Creates allow rules for PaaS firewalls for the current connection. This connections are required for Terraform to function.
  
 .DESCRIPTION 
     This script is invoked from other scripts
@@ -85,7 +85,7 @@ if ($appEventHubNamespace) {
 }
 if ($appSQLServer) {
     Write-Host "Adding rule for SQL Server $appSQLServer to allow address $ipAddress..."
-    $rule = New-AzSqlServerFirewallRule -FireWallRuleName "LetMeInRule" -StartIpAddress $ipAddress -EndIpAddress $ipAddress -ServerName $appSQLServer -ResourceGroupName $appResourceGroup -ErrorAction SilentlyContinue
+    $rule = New-AzSqlServerFirewallRule -FireWallRuleName "LetMeInRule $ipAddress" -StartIpAddress $ipAddress -EndIpAddress $ipAddress -ServerName $appSQLServer -ResourceGroupName $appResourceGroup -ErrorAction SilentlyContinue
     if ($rule) {
         $rule
         Write-Host "Added rule for SQL Server $appSQLServer to allow address $ipAddress"

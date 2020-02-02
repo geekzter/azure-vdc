@@ -10,8 +10,12 @@ output app_service_fqdn {
 # output app_service_msi_application_id2 {
 #   value       = "${data.azuread_service_principal.app_service_msi.application_id}"
 # }
+output app_service_msi_client_id {
+  value       = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
+}
 output app_service_msi_object_id {
-  value       = azurerm_app_service.paas_web_app.identity.0.principal_id
+# value       = azurerm_app_service.paas_web_app.identity.0.principal_id
+  value       = azurerm_user_assigned_identity.paas_web_app_identity.principal_id
 }
 output app_service_name {
     value = azurerm_app_service.paas_web_app.name

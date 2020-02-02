@@ -153,6 +153,9 @@ output paas_app_service_outbound_ip_addresses {
 # output paas_app_service_msi_application_id2 {
 #     value = "${module.paas_app.app_service_msi_application_id2}"
 # }
+output paas_app_service_msi_client_id {
+    value = module.paas_app.app_service_msi_client_id
+}
 output paas_app_service_msi_object_id {
     value = module.paas_app.app_service_msi_object_id
 }

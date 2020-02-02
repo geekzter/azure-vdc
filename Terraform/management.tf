@@ -128,9 +128,7 @@ resource "azurerm_virtual_machine" "bastion" {
 
 # resource "azurerm_virtual_machine_extension" "bastion_aadlogin" {
 #   name                         = "${azurerm_virtual_machine.bastion.name}/AADLoginForWindows"
-#   location                     = azurerm_resource_group.vdc_rg.location
-#   resource_group_name          = azurerm_resource_group.vdc_rg.name
-#   virtual_machine_name         = "${azurerm_virtual_machine.bastion.name}"
+#   virtual_machine_id           = "${azurerm_virtual_machine.bastion.id}"
 #   publisher                    = "Microsoft.Azure.ActiveDirectory"
 #   type                         = "AADLoginForWindows"
 #   type_handler_version         = "0.3"
@@ -141,9 +139,7 @@ resource "azurerm_virtual_machine" "bastion" {
 
 resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
   name                         = "bastion_bginfo"
-  location                     = azurerm_resource_group.vdc_rg.location
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  virtual_machine_name         = azurerm_virtual_machine.bastion.name
+  virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.Compute"
   type                         = "BGInfo"
   type_handler_version         = "2.1"
@@ -154,9 +150,7 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
 
 resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
   name                         = "bastion_dependency_monitor"
-  location                     = azurerm_resource_group.vdc_rg.location
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  virtual_machine_name         = azurerm_virtual_machine.bastion.name
+  virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"
   type_handler_version         = "9.5"
@@ -178,9 +172,7 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
 
 resource "azurerm_virtual_machine_extension" "bastion_monitor" {
   name                         = "bastion_monitor"
-  location                     = azurerm_resource_group.vdc_rg.location
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  virtual_machine_name         = azurerm_virtual_machine.bastion.name
+  virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
@@ -202,9 +194,7 @@ resource "azurerm_virtual_machine_extension" "bastion_monitor" {
 
 resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   name                         = "bastion_watcher"
-  location                     = azurerm_resource_group.vdc_rg.location
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  virtual_machine_name         = azurerm_virtual_machine.bastion.name
+  virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.Azure.NetworkWatcher"
   type                         = "NetworkWatcherAgentWindows"
   type_handler_version         = "1.4"

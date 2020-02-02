@@ -145,7 +145,7 @@ module paas_app {
   database_import              = var.paas_app_database_import
   database_template_storage_key= var.app_database_template_storage_key
   data_subnet_id               = lookup(module.paas_spoke_vnet.subnet_ids,"data","")
-  dba_login                    = "Terraform"
+  dba_login                    = "Automation"
   dba_object_id                = data.azurerm_client_config.current.service_principal_object_id
 # dba_login                    = var.dba_login
 # dba_object_id                = var.dba_object_id

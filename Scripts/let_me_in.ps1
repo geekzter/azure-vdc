@@ -13,7 +13,7 @@ param (
     [parameter(Mandatory=$false)][switch]$SqlServer=$false,
     [parameter(Mandatory=$false)][switch]$StartBastion=$false,
     [parameter(Mandatory=$false)][switch]$ConnectBastion=$false,
-    [parameter(Mandatory=$false)][switch]$wait=$false,
+    [parameter(Mandatory=$false)][switch]$Wait=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
@@ -64,7 +64,7 @@ try {
         Write-Host "Public IP address is $ipAddress"
 
         # Get block(s) the public IP address belongs to
-        # HACK: We need this to cater for changing public IP addresses e.g. Azure Pipelines Hosted Agents
+        # HACK: We need this (prefix) to cater for changing public IP addresses e.g. Azure Pipelines Hosted Agents
         $ipPrefix = Invoke-RestMethod https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
         Write-Host "Public IP prefix is $ipPrefix"
 
@@ -75,15 +75,12 @@ try {
             exit
         }
         $azFWPublicIPAddress = $(terraform output "iag_public_ip" 2>$null)
-        #$azFWNATRulesName = $(terraform output "iag_nat_rules" 2>$null)
         $azFWNATRulesName = "$azFWName-letmein-rules"
-        $bastionRuleName = "AllowInboundRDP"
         $bastionAddress = $(terraform output "bastion_address" 2>$null)
         $rdpPort = $(terraform output "bastion_rdp_port" 2>$null)
 
         $azFW = Get-AzFirewall -Name $azFWName -ResourceGroupName $vdcResourceGroup
-        #$bastionRule = New-AzFirewallNatRule -Name $bastionRuleName -Protocol "TCP" -SourceAddress $ipAddress -DestinationAddress $azFWPublicIPAddress -DestinationPort $rdpPort -TranslatedAddress $bastionAddress -TranslatedPort "3389"
-        $bastionRule = New-AzFirewallNatRule -Name $bastionRuleName -Protocol "TCP" -SourceAddress $ipPrefix -DestinationAddress $azFWPublicIPAddress -DestinationPort $rdpPort -TranslatedAddress $bastionAddress -TranslatedPort "3389"
+        $bastionRule = New-AzFirewallNatRule -Name "AllowInboundRDP from $ipPrefix" -Protocol "TCP" -SourceAddress $ipPrefix -DestinationAddress $azFWPublicIPAddress -DestinationPort $rdpPort -TranslatedAddress $bastionAddress -TranslatedPort "3389"
 
         try {
             $ruleCollection = $azFW.GetNatRuleCollectionByName($azFWNATRulesName) 2>$null
@@ -92,7 +89,7 @@ try {
         }
         if ($ruleCollection) {
             Write-Host "NAT Rule collection $azFWNATRulesName found, adding bastion rule..."
-            $ruleCollection.RemoveRuleByName($bastionRuleName)
+            $ruleCollection.RemoveRuleByName($bastionRule.Name)
             $ruleCollection.AddRule($bastionRule)
         } else {
             Write-Host "NAT Rule collection $azFWNATRulesName not found, creating with bastion rule..."

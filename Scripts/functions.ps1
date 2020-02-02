@@ -11,6 +11,18 @@ function AzLogin () {
     $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
 }
 
+# From: https://blog.bredvid.no/handling-azure-managed-identity-access-to-azure-sql-in-an-azure-devops-pipeline-1e74e1beb10b
+function ConvertTo-Sid {
+    param (
+        [string]$appId
+    )
+    [guid]$guid = [System.Guid]::Parse($appId)
+    foreach ($byte in $guid.ToByteArray()) {
+        $byteGuid += [System.String]::Format("{0:X2}", $byte)
+    }
+    return "0x" + $byteGuid
+}
+
 function DeleteArmResources () {
     # Delete resources created with ARM templates, Terraform doesn't know about those
     Invoke-Command -ScriptBlock {
