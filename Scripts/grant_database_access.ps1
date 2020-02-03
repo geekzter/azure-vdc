@@ -30,5 +30,5 @@ if ($DBAName -and $DBAObjectId) {
     $dbaSqlParameters = @{dba_name=$MSIName;dba_sid=$dbaSID}
     $scriptDirectory = (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).FullName 
     $dbaSqlScript = (Join-Path $scriptDirectory "grant-dbas-database-access.sql")
-    Execute-Sql -QueryFile $dbaSqlScript -Parameters $dbaSqlParameters -SqlDatabaseName "Master" -SqlServerFQDN $SqlServerFQDN
+    Execute-Sql -QueryFile $dbaSqlScript -Parameters $dbaSqlParameters -SqlServerFQDN $SqlServerFQDN
 }

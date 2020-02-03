@@ -66,14 +66,20 @@ function DeleteArmResources () {
 function Execute-Sql (
     [parameter(Mandatory=$true)][string]$QueryFile,
     [parameter(Mandatory=$true)][hashtable]$Parameters,
-    [parameter(Mandatory=$true)][string]$SqlDatabaseName,
+    [parameter(Mandatory=$false)][string]$SqlDatabaseName,
     [parameter(Mandatory=$true)][string]$SqlServerFQDN
 ) {
     
     # Prepare SQL Connection
     $token = GetAccessToken
     $conn = New-Object System.Data.SqlClient.SqlConnection
-    $conn.ConnectionString = "Data Source=tcp:$($SqlServerFQDN),1433;Initial Catalog=$($SqlDatabaseName);Connection Timeout=30;" 
+    if ($SqlDatabaseName -and ($SqlDatabaseName -ine "master")) {
+        $conn.ConnectionString = "Data Source=tcp:$($SqlServerFQDN),1433;Initial Catalog=$($SqlDatabaseName);Encrypt=True;Connection Timeout=30;" 
+    } else {
+        $SqlDatabaseName = "Master"
+        $conn.ConnectionString = "Data Source=tcp:$($SqlServerFQDN),1433;Encrypt=True;Connection Timeout=30;" 
+    }
+
     $conn.AccessToken = $token
 
     try {
@@ -89,7 +95,7 @@ function Execute-Sql (
             #$sqlParameter = $command.Parameters.AddWithValue($parameterName,$Parameters[$parameterName])
             #Write-Debug $sqlParameter
         }
-        $query = $query -replace "--.*$","" # Remove line comments
+        $query = $query -replace "$","`n" # Preserve line feeds
         $command = New-Object -TypeName System.Data.SqlClient.SqlCommand($query, $conn)
  
         # Execute SQL Command
