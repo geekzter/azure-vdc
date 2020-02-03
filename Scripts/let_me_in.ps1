@@ -124,13 +124,16 @@ try {
     
                 Write-Host "Determening current Azure Active Directory DBA for SQL Server $sqlServerName..."
                 $dba = Get-AzSqlServerActiveDirectoryAdministrator -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is current Azure Active Directory DBA for SQL Server $sqlServerName"
                 if ($dba.DisplayName -ne $sqlAADUser) {
-                    $previousDBA = $dba.DisplayName
+                    $previousDBAName = $dba.DisplayName
+                    $previousDBAObjectId = $dba.ObjectId
+                    $previousDBA = $dba
                     Write-Host "Replacing $($dba.DisplayName) with $sqlAADUser as Azure Active Directory DBA for SQL Server $sqlServerName..."
                     # BUG: Forbidden when logged in with Service Principal
                     $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $sqlAADUser -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                    Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is now Azure Active Directory DBA for SQL Server $sqlServerName"
                 }
-                Write-Host "$($dba.DisplayName) is Azure Active Directory DBA for SQL Server $sqlServerName"
     
                 Write-Host "Adding Managed Identity $msiName to $sqlServerName/$sqlDB..."
                 $queryFile = (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) grant-msi-database-access.sql)
@@ -139,11 +142,12 @@ try {
                 sqlcmd -S $sqlServerFQDN -d $sqlDB -Q "$query" -G -U $sqlAADUser
                 if ($LASTEXITCODE -ne 0) {
                     Write-Host "Sign-in dialog aborted/cancelled" -ForegroundColor Yellow
-                    if ($previousDBA) {
+                    if ($previousDBAName) {
                         # Revert DBA change back to where we started
-                        Write-Host "Replacing $($dba.DisplayName) back to $previousDBA as Azure Active Directory DBA for SQL Server $sqlServerName..."              
-                        $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $previousDBA -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
-                        Write-Host "$($dba.DisplayName) is Azure Active Directory DBA for SQL Server $sqlServerName"
+                        Write-Host "Replacing $($dba.DisplayName) ($($dba.ObjectId)) back to $previousDBAName ($previousDBAObjectId) as Azure Active Directory DBA for SQL Server $sqlServerName..."              
+                        # BUG: Set-AzSqlServerActiveDirectoryAdministrator : Cannot find the Azure Active Directory object 'GeekzterAutomator'. Please make sure that the user or group you are authorizing is you are authorizing is registered in the current subscription's Azure Active directory
+                        $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $previousDBAName -ObjectId $previousDBAObjectId -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                        Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is now Azure Active Directory DBA for SQL Server $sqlServerName"
                     }
                 }
             }
