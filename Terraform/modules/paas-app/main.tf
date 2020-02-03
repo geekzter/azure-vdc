@@ -521,13 +521,13 @@ resource null_resource sql_db_private_dns {
   count                        = var.deploy_private_dns_for_endpoint ? 1 : 0
 }
 
-# If you have AD permissions it is better to use an AAD group for DBA's, and add DBA and TF to that group
-resource "azurerm_sql_active_directory_administrator" "dba" {
+# This is for Terraform acting as the AAD DBA (e.g. to execute change scripts)
+resource "azurerm_sql_active_directory_administrator" "terraform" {
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = var.dba_login
+  login                        = "Automation"
+  object_id                    = data.azurerm_client_config.current.service_principal_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
-  object_id                    = var.dba_object_id
 } 
 
 resource "azurerm_sql_database" "app_sqldb" {
@@ -556,12 +556,6 @@ resource "azurerm_sql_database" "app_sqldb" {
     use_server_default         = "Enabled"
   }
 
-  # Add App Service MSI to Database
-  provisioner "local-exec" {
-    command                    = "../Scripts/grant_database_access.ps1 -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${self.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
-  }
-
   # Configure server auditing
   provisioner "local-exec" {
     command                    = "Set-AzSqlServerAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
@@ -579,6 +573,18 @@ resource "azurerm_sql_database" "app_sqldb" {
   tags                         = var.tags
 } 
 
+resource null_resource sql_database_msi_access {
+  # Add App Service MSI to Database
+  provisioner "local-exec" {
+    command                    = "../Scripts/grant_database_access.ps1 -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${azurerm_sql_database.app_sqldb.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  # Terraform change scripts require Terraform to be the AAD DBA
+  depends_on                   = [azurerm_sql_active_directory_administrator.terraform]
+}
+
+
 resource null_resource no_all_azure_rules {
   # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
   provisioner "local-exec" {
@@ -588,6 +594,17 @@ resource null_resource no_all_azure_rules {
 
   depends_on                   = [null_resource.app_service_rules, azurerm_sql_database.app_sqldb]
 }
+
+# Set to the real DBA
+resource "azurerm_sql_active_directory_administrator" "dba" {
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  login                        = var.dba_login
+  object_id                    = var.dba_object_id
+  tenant_id                    = data.azurerm_client_config.current.tenant_id
+
+  depends_on                   = [null_resource.sql_database_msi_access]
+} 
 
 resource "azurerm_monitor_diagnostic_setting" "sql_database_logs" {
   name                         = "SqlDatabase_Logs"
