@@ -43,6 +43,12 @@ resource "azurerm_resource_group" "app_rg" {
   tags                         = var.tags
 }
 
+resource "azurerm_role_assignment" "demo_admin" {
+  scope                        = azurerm_resource_group.app_rg.id
+  role_definition_name         = "Contributor"
+  principal_id                 = var.admin_object_id
+}
+
 resource "azurerm_storage_account" "app_storage" {
   name                         = "${local.resource_group_name_short}stor"
   location                     = azurerm_resource_group.app_rg.location
@@ -599,8 +605,8 @@ resource null_resource no_all_azure_rules {
 resource "azurerm_sql_active_directory_administrator" "dba" {
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = var.dba_login
-  object_id                    = var.dba_object_id
+  login                        = var.admin_login
+  object_id                    = var.admin_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 
   depends_on                   = [null_resource.sql_database_msi_access]

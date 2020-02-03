@@ -117,6 +117,7 @@ variable app_subnet_id {
 variable data_subnet_id {
   description                  = "The id of the subnet to deploy db tier VM's in"
 }
+variable admin_object_id {}
 variable vm_agent_dependency {
   description                  = "A dummy value that is used to force dependency"
 }

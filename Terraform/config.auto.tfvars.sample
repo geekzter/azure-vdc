@@ -31,9 +31,9 @@ app_devops                     = {
 }
 # $env:TF_VAR_app_devops = '{account="vstsaccount",team_project="VDC",web_deployment_group="AppServers",db_deployment_group="DBServers",pat="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}'
 
+admin_login                    = "user@tenant.onmicrosoft.com"
+admin_object_id                = "00000000-0000-0000-0000-000000000000"
 app_database_template_storage_key = "aaaaaaaaaaaaaaaaaaaaa/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
-dba_login                      = "user@tenant.onmicrosoft.com"
-dba_object_id                  = "00000000-0000-0000-0000-000000000000"
 shared_container_registry_name = "myregistry"
 shared_resources_group         = "Shared"
 vso_url                        = "https://online.visualstudio.com/environment/00000000-0000-0000-0000-000000000000"

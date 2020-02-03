@@ -74,8 +74,9 @@ module iis_app {
   location                     = azurerm_resource_group.vdc_rg.location
   tags                         = local.tags
 
-  admin_username               = var.admin_username
+  admin_object_id              = var.admin_object_id
   admin_password               = local.password
+  admin_username               = var.admin_username
   app_devops                   = var.app_devops
   app_url                      = local.iaas_app_url
   app_web_vms                  = var.app_web_vms
@@ -137,6 +138,8 @@ module paas_app {
 
   admin_ips                    = local.admin_ips
   admin_ip_ranges              = local.admin_cidr_ranges
+  admin_login                  = var.admin_login
+  admin_object_id              = var.admin_object_id
   admin_username               = var.admin_username
   management_subnet_ids        = concat(module.paas_spoke_vnet.management_subnet_ids,
                                  [
@@ -145,8 +148,6 @@ module paas_app {
   database_import              = var.paas_app_database_import
   database_template_storage_key= var.app_database_template_storage_key
   data_subnet_id               = lookup(module.paas_spoke_vnet.subnet_ids,"data","")
-  dba_login                    = var.dba_login
-  dba_object_id                = var.dba_object_id
   deploy_app_service_network_integration = var.deploy_app_service_network_integration
   deploy_private_dns_for_endpoint = var.deploy_private_dns_for_endpoint
   iag_subnet_id                = azurerm_subnet.iag_subnet.id

@@ -19,8 +19,8 @@ variable database_template_storage_uri {
   default                      = "https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac"
 }
 variable data_subnet_id {}
-variable dba_login {}
-variable dba_object_id {}
+variable admin_login {}
+variable admin_object_id {}
 variable deploy_app_service_network_integration {
   type                         = bool
 }

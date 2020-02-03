@@ -13,6 +13,12 @@ resource "azurerm_resource_group" "app_rg" {
   tags                         = var.tags
 }
 
+resource "azurerm_role_assignment" "demo_admin" {
+  scope                        = azurerm_resource_group.app_rg.id
+  role_definition_name         = "Contributor"
+  principal_id                 = var.admin_object_id
+}
+
 resource "azurerm_network_interface" "app_web_if" {
   name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-nic"
   location                     = azurerm_resource_group.app_rg.location
