@@ -185,9 +185,11 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
   backend_http_settings {
     name                       = "${module.paas_app.app_resource_group}-config"
     cookie_based_affinity      = "Disabled"
-    path                       = "/"
-    port                       = 80
-    protocol                   = "Http"
+  # host_name                  = module.paas_app.app_service_fqdn
+  # path                       = "/"
+    port                       = 443
+    probe_name                 = "paas-app-probe"
+    protocol                   = "Https"
     request_timeout            = 1
     pick_host_name_from_backend_address = true
   }
@@ -241,6 +243,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
       http_listener_name       = "${module.paas_app.app_resource_group}-https-listener"
       backend_address_pool_name = "${module.paas_app.app_resource_group}-webservers"
       backend_http_settings_name = "${module.paas_app.app_resource_group}-config"
+      rewrite_rule_set_name    = "paas-rewrite-rules"
     }
   }
   dynamic "redirect_configuration" {
@@ -251,26 +254,51 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
       target_listener_name     = "${module.paas_app.app_resource_group}-https-listener"
     }
   }
-  # https://docs.microsoft.com/en-us/azure/application-gateway/rewrite-http-headers#modify-a-redirection-url
-  # Matches URL to STS as well
-  # https://github.com/MicrosoftDocs/azure-docs/issues/42508
-  # This won't wortk either: ^(https?):\/\/vdc\-dev\-paasapp\-dvwb\-appsvc\-app\.azurewebsites\.net(.*)$
-  # Regex matc
-  # rewrite_rule_set {
-  #   name                       = "paas-rewrite-rules"
-  #   rewrite_rule {
-  #     name                     = "paas-rewrite-host"
-  #     rule_sequence            = 1
-  #     condition {
-  #       variable               = "Location"
-  #       pattern                = "(https:?):\\/\\/.*azurewebsites\\.net(.*)$"
-  #     }
-  #     response_header_configuration {
-  #       header_name            = "Location"
-  #       header_value           = "{http_resp_Location_1}://${local.paas_app_fqdn}{http_resp_Location_2}" 
-  #     }
-  #   }
-  # }
+  # These rules rewrite the App Service URL with the vanity domain one
+  rewrite_rule_set {
+    name                       = "paas-rewrite-rules"
+    rewrite_rule {
+      name                     = "paas-rewrite-response-location"
+      rule_sequence            = 1
+      condition {
+        variable               = "http_resp_Location"
+        pattern                = "(https?):\\/\\/${module.paas_app.app_service_fqdn}(.*)$"
+        ignore_case            = true
+      }
+      response_header_configuration {
+        header_name            = "Location"
+        header_value           = "{http_resp_Location_1}://${local.paas_app_fqdn}{http_resp_Location_2}" 
+      }
+    }
+    rewrite_rule {
+      name                     = "paas-rewrite-response-redirect"
+      rule_sequence            = 2
+      condition {
+        variable               = "http_resp_Location"
+        pattern                = "(.*)redirect_uri=https%3A%2F%2F${module.paas_app.app_service_fqdn}(.*)$"
+        ignore_case            = true
+      }
+      response_header_configuration {
+        header_name            = "Location"
+        header_value           = "{http_resp_Location_1}redirect_uri=https%3A%2F%2F${local.paas_app_fqdn}{http_resp_Location_2}" 
+      }
+    }
+  }
+  probe {
+    name                       = "paas-app-probe"
+    path                       = "/"
+    pick_host_name_from_backend_http_settings = true
+    protocol                   = "Https"
+    interval                   = 5
+    timeout                    = 30
+    unhealthy_threshold        = 3
+    match {
+      body                     = ""
+      status_code              = ["200-399","401"]
+    }
+  }
+  # TODO:
+  # Allow redirect URL https://vdcdevwebapp.geekzter.io/.auth/login/aad/callback
 
   waf_configuration {
     enabled                    = true
