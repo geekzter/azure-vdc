@@ -4,12 +4,6 @@ output app_resource_group {
 output app_service_fqdn {
     value = azurerm_app_service.paas_web_app.default_site_hostname
 }
-# output app_service_msi_application_id1 {
-#   value       = "${data.azuread_application.app_service_msi.application_id}"
-# }
-# output app_service_msi_application_id2 {
-#   value       = "${data.azuread_service_principal.app_service_msi.application_id}"
-# }
 output app_service_msi_client_id {
   value       = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
 }

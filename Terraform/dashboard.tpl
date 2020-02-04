@@ -9,7 +9,7 @@
             "settings": {
               "content": {
                 "settings": {
-                  "content": "\nThis project contains a hub & spoke Virtual Datacenter deployment. \n<br/>\n<br/>\n<a href='https://portal.azure.com/#@/dashboard/arm${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.portal/dashboards/${appinsights_id}-dashboard' target='_blank'>Application Insights Dashboard</a>\n<br/>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='https://${prefix}-${environment}-paasapp-${suffix}-appsvc-app.scm.azurewebsites.net/api/dump' target='_blank'>PaaS App log files</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
+                  "content": "\nThis project contains a hub & spoke Virtual Datacenter deployment. \n<br/>\n<br/>\n<a href='https://portal.azure.com/#@/dashboard/arm${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.portal/dashboards/${appinsights_id}-dashboard' target='_blank'>Application Insights Dashboard</a>\n<br/>\n<a href='https://${prefix}-${environment}-paasapp-${suffix}-appsvc-app.scm.azurewebsites.net/' target='_blank'>App Service Kudu Console</a>\n<br/>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Online Environment</a>\n",
                   "subtitle": "",
                   "title": "Automated VDC"
                 }
@@ -68,16 +68,16 @@
         "10": {
           "metadata": {
             "asset": {
-              "idInputName": "id",
-              "type": "Website"
+              "idInputName": "resourceId",
+              "type": "Server"
             },
             "inputs": [
               {
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Web/sites/${prefix}-${environment}-paasapp-${suffix}-appsvc-app"
+                "name": "resourceId",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Sql/servers/${paas_app_resource_group_short}sqlserver"
               }
             ],
-            "type": "Extension/WebsitesExtension/PartType/SingleWebsitePart"
+            "type": "Extension/SqlAzureExtension/PartType/ServerPart"
           },
           "position": {
             "colSpan": 2,
@@ -299,16 +299,16 @@
         "16": {
           "metadata": {
             "asset": {
-              "idInputName": "resourceId",
-              "type": "Server"
+              "idInputName": "id",
+              "type": "PrivateDnsZone"
             },
             "inputs": [
               {
-                "name": "resourceId",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Sql/servers/${paas_app_resource_group_short}sqlserver"
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
               }
             ],
-            "type": "Extension/SqlAzureExtension/PartType/ServerPart"
+            "type": "Extension/Microsoft_Azure_PrivateDNS/PartType/PrivateDnsZonePart"
           },
           "position": {
             "colSpan": 2,
@@ -320,16 +320,24 @@
         "17": {
           "metadata": {
             "asset": {
-              "idInputName": "id",
-              "type": "PrivateDnsZone"
+              "idInputName": "id"
             },
             "inputs": [
               {
+                "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-hub-network"
+              },
+              {
+                "isOptional": true,
+                "name": "resourceId"
+              },
+              {
+                "isOptional": true,
+                "name": "menuid"
               }
             ],
-            "type": "Extension/Microsoft_Azure_PrivateDNS/PartType/PrivateDnsZonePart"
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
           },
           "position": {
             "colSpan": 2,
@@ -470,7 +478,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-hub-network"
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-iaas-spoke-network"
               },
               {
                 "isOptional": true,
@@ -528,7 +536,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-iaas-spoke-network"
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-paas-spoke-network"
               },
               {
                 "isOptional": true,
@@ -586,24 +594,16 @@
         "22": {
           "metadata": {
             "asset": {
-              "idInputName": "id"
+              "idInputName": "id",
+              "type": "RegistryResource"
             },
             "inputs": [
               {
-                "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-paas-spoke-network"
-              },
-              {
-                "isOptional": true,
-                "name": "resourceId"
-              },
-              {
-                "isOptional": true,
-                "name": "menuid"
+                "value": "${subscription}/resourceGroups/${shared_rg}/providers/Microsoft.ContainerRegistry/registries/${container_registry_name}"
               }
             ],
-            "type": "Extension/HubsExtension/PartType/ResourcePart"
+            "type": "Extension/Microsoft_Azure_ContainerRegistries/PartType/ResourcePart"
           },
           "position": {
             "colSpan": 2,
@@ -696,62 +696,6 @@
         "24": {
           "metadata": {
             "asset": {
-              "idInputName": "id",
-              "type": "RegistryResource"
-            },
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${shared_rg}/providers/Microsoft.ContainerRegistry/registries/${container_registry_name}"
-              }
-            ],
-            "type": "Extension/Microsoft_Azure_ContainerRegistries/PartType/ResourcePart"
-          },
-          "position": {
-            "colSpan": 2,
-            "rowSpan": 1,
-            "x": 10,
-            "y": 12
-          }
-        },
-        "25": {
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
-              },
-              {
-                "isOptional": true,
-                "name": "solutionId"
-              },
-              {
-                "isOptional": true,
-                "name": "timeInterval",
-                "value": {
-                  "_Now": "2019-11-19T12:10:07.715Z",
-                  "_duration": 86400000,
-                  "_end": null
-                }
-              },
-              {
-                "binding": "timeRange",
-                "isOptional": true,
-                "name": "timeRange"
-              }
-            ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
-          },
-          "position": {
-            "colSpan": 4,
-            "rowSpan": 2,
-            "x": 0,
-            "y": 13
-          }
-        },
-        "26": {
-          "metadata": {
-            "asset": {
               "idInputName": "ComponentId",
               "type": "ApplicationInsights"
             },
@@ -807,10 +751,45 @@
             "colSpan": 2,
             "rowSpan": 2,
             "x": 10,
+            "y": 12
+          }
+        },
+        "25": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-19T12:10:07.715Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
             "y": 13
           }
         },
-        "27": {
+        "26": {
           "metadata": {
             "inputs": [
               {
@@ -845,7 +824,7 @@
             "y": 15
           }
         },
-        "28": {
+        "27": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -921,7 +900,7 @@
             "y": 16
           }
         },
-        "29": {
+        "28": {
           "metadata": {
             "inputs": [
               {
@@ -956,29 +935,7 @@
             "y": 17
           }
         },
-        "3": {
-          "metadata": {
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "resourceGroup"
-              },
-              {
-                "isOptional": true,
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
-              }
-            ],
-            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
-          },
-          "position": {
-            "colSpan": 5,
-            "rowSpan": 4,
-            "x": 12,
-            "y": 0
-          }
-        },
-        "30": {
+        "29": {
           "metadata": {
             "inputs": [
               {
@@ -1013,7 +970,29 @@
             "y": 19
           }
         },
-        "31": {
+        "3": {
+          "metadata": {
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "resourceGroup"
+              },
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+          },
+          "position": {
+            "colSpan": 5,
+            "rowSpan": 4,
+            "x": 12,
+            "y": 0
+          }
+        },
+        "30": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -1137,15 +1116,15 @@
           "metadata": {
             "asset": {
               "idInputName": "id",
-              "type": "Website"
+              "type": "CloudNativeFirewall"
             },
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Web/sites/${prefix}-${environment}-${suffix}-functions"
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/azureFirewalls/${prefix}-${environment}-${suffix}-iag"
               }
             ],
-            "type": "Extension/WebsitesExtension/PartType/SingleWebsitePart"
+            "type": "Extension/Microsoft_Azure_HybridNetworking/PartType/CloudNativeFirewallPart"
           },
           "position": {
             "colSpan": 2,
@@ -1325,15 +1304,15 @@
           "metadata": {
             "asset": {
               "idInputName": "id",
-              "type": "CloudNativeFirewall"
+              "type": "Website"
             },
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/azureFirewalls/${prefix}-${environment}-${suffix}-iag"
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Web/sites/${prefix}-${environment}-paasapp-${suffix}-appsvc-app"
               }
             ],
-            "type": "Extension/Microsoft_Azure_HybridNetworking/PartType/CloudNativeFirewallPart"
+            "type": "Extension/WebsitesExtension/PartType/SingleWebsitePart"
           },
           "position": {
             "colSpan": 2,
@@ -1358,12 +1337,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-19c61224-cb11-4efb-9a52-60e627d2c5e9",
-              "StartboardPart-AnalyticsPart-19c61224-cb11-4efb-9a52-60e627d2c5ef",
-              "StartboardPart-MonitorChartPart-19c61224-cb11-4efb-9a52-60e627d2c5f5",
-              "StartboardPart-AnalyticsPart-19c61224-cb11-4efb-9a52-60e627d2c5ff",
-              "StartboardPart-AnalyticsPart-19c61224-cb11-4efb-9a52-60e627d2c607",
-              "StartboardPart-AnalyticsPart-19c61224-cb11-4efb-9a52-60e627d2c60d"
+              "StartboardPart-ApplicationMapPart-5b5b96d1-3243-47a2-9948-7b16dadc2188",
+              "StartboardPart-AnalyticsPart-5b5b96d1-3243-47a2-9948-7b16dadc218e",
+              "StartboardPart-MonitorChartPart-5b5b96d1-3243-47a2-9948-7b16dadc2194",
+              "StartboardPart-AnalyticsPart-5b5b96d1-3243-47a2-9948-7b16dadc219e",
+              "StartboardPart-AnalyticsPart-5b5b96d1-3243-47a2-9948-7b16dadc21a8",
+              "StartboardPart-AnalyticsPart-5b5b96d1-3243-47a2-9948-7b16dadc21ae"
             ],
             "model": {
               "format": "utc",

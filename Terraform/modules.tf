@@ -158,6 +158,7 @@ module paas_app {
   shared_resources_group       = var.shared_resources_group
   storage_import               = var.paas_app_storage_import
   storage_replication_type     = var.app_storage_replication_type
+  vanity_url                   = local.paas_app_url
   waf_subnet_id                = azurerm_subnet.waf_subnet.id
 
   diagnostics_instrumentation_key = azurerm_application_insights.vdc_insights.instrumentation_key

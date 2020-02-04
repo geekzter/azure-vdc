@@ -7,6 +7,7 @@ variable tags {
 variable admin_ips {}
 variable admin_ip_ranges {}
 variable admin_username {}
+#variable aad_auth_client_id {}
 variable management_subnet_ids {
   type                         = list
 }
@@ -37,6 +38,7 @@ variable storage_import {
   type                         = bool
 }
 variable storage_replication_type {}
+variable vanity_url {}
 variable waf_subnet_id {}
 
 variable diagnostics_instrumentation_key {}

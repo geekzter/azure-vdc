@@ -206,6 +206,17 @@ resource "azurerm_app_service" "paas_web_app" {
     WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
   }
 
+  # BUG: The page cannot be displayed because an internal server error has occurred (when accessed via AppGW using vanity domain name)     fftp
+  # auth_settings {
+  #   enabled                    = true
+  #   active_directory {
+  #     client_id                = var.aad_auth_client_id
+  #   }
+  #   allowed_external_redirect_urls = [var.vanity_url]
+  #   default_provider           = "AzureActiveDirectory"
+  #   unauthenticated_client_action = "RedirectToLoginPage"
+  # }
+
   connection_string {
     name                       = "MyDbConnection"
     type                       = "SQLAzure"
