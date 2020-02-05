@@ -185,8 +185,8 @@ variable admin_ip_ranges {
 variable admin_ips {
   default                      = []
 }
-variable dba_login {}
-variable dba_object_id {}
+variable admin_login {}
+variable admin_object_id {}
 
 variable rdp_port {
 # default                      = 3389 # Default for protocol

@@ -13,6 +13,12 @@ resource "azurerm_resource_group" "app_rg" {
   tags                         = var.tags
 }
 
+resource "azurerm_role_assignment" "demo_admin" {
+  scope                        = azurerm_resource_group.app_rg.id
+  role_definition_name         = "Contributor"
+  principal_id                 = var.admin_object_id
+}
+
 resource "azurerm_network_interface" "app_web_if" {
   name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-nic"
   location                     = azurerm_resource_group.app_rg.location
@@ -96,9 +102,7 @@ resource "azurerm_virtual_machine" "app_web_vm" {
 
 resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   name                         = "app_web_vm_watcher"
-  location                     = azurerm_resource_group.app_rg.location
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  virtual_machine_name         = element(azurerm_virtual_machine.app_web_vm.*.name, count.index)
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.NetworkWatcher"
   type                         = "NetworkWatcherAgentWindows"
   type_handler_version         = "1.4"
@@ -109,9 +113,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   name                         = "app_web_vm_bginfo"
-  location                     = azurerm_resource_group.app_rg.location
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  virtual_machine_name         = element(azurerm_virtual_machine.app_web_vm.*.name, count.index)
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Compute"
   type                         = "BGInfo"
   type_handler_version         = "2.1"
@@ -119,13 +121,14 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   count                        = var.app_web_vm_number
 
   tags                         = var.tags
+
+  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_watcher]
 }
 
 resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
   name                         = "app_web_vm_release"
-  location                     = azurerm_resource_group.app_rg.location
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  virtual_machine_name         = element(azurerm_virtual_machine.app_web_vm.*.name, count.index)
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
   type                         = "TeamServicesAgent"
   type_handler_version         = "1.26"
@@ -153,13 +156,14 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
+
+  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_bginfo]
 }
 
 resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
   name                         = "app_web_vm_dependency_monitor"
-  location                     = azurerm_resource_group.app_rg.location
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  virtual_machine_name         = element(azurerm_virtual_machine.app_web_vm.*.name, count.index)
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"
   type_handler_version         = "9.5"
@@ -183,13 +187,14 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
+
+  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_pipeline]
 }
 
 resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
   name                         = "app_web_vm_monitor"
-  location                     = azurerm_resource_group.app_rg.location
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  virtual_machine_name         = element(azurerm_virtual_machine.app_web_vm.*.name, count.index)
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
@@ -213,6 +218,9 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
+
+  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_dependency_monitor]
 }
 
 # BUG: Get's recreated every run
@@ -381,9 +389,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
   name                         = "app_db_vm_watcher"
-  location                     = azurerm_resource_group.app_rg.location
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  virtual_machine_name         = element(azurerm_virtual_machine.app_db_vm.*.name, count.index)
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.NetworkWatcher"
   type                         = "NetworkWatcherAgentWindows"
   type_handler_version         = "1.4"
@@ -395,9 +401,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   name                         = "app_db_vm_bginfo"
-  location                     = azurerm_resource_group.app_rg.location
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  virtual_machine_name         = element(azurerm_virtual_machine.app_db_vm.*.name, count.index)
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Compute"
   type                         = "BGInfo"
   type_handler_version         = "2.1"
@@ -405,13 +409,14 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   count                        = var.app_db_vm_number
 
   tags                         = var.tags
+
+  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_watcher]
 }
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
   name                         = "app_db_vm_release"
-  location                     = azurerm_resource_group.app_rg.location
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  virtual_machine_name         = element(azurerm_virtual_machine.app_db_vm.*.name, count.index)
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
   type                         = "TeamServicesAgent"
   type_handler_version         = "1.26"
@@ -439,13 +444,14 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
+
+  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_bginfo]
 }
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   name                         = "app_db_vm_dependency_monitor"
-  location                     = azurerm_resource_group.app_rg.location
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  virtual_machine_name         = element(azurerm_virtual_machine.app_db_vm.*.name, count.index)
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"
   type_handler_version         = "9.5"
@@ -469,13 +475,14 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
+
+  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_pipeline]
 }
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
   name                         = "app_db_vm_monitor"
-  location                     = azurerm_resource_group.app_rg.location
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  virtual_machine_name         = element(azurerm_virtual_machine.app_db_vm.*.name, count.index)
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
@@ -499,6 +506,9 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
+
+  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_dependency_monitor]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {

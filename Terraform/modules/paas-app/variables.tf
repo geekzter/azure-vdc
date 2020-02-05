@@ -7,6 +7,7 @@ variable tags {
 variable admin_ips {}
 variable admin_ip_ranges {}
 variable admin_username {}
+#variable aad_auth_client_id {}
 variable management_subnet_ids {
   type                         = list
 }
@@ -19,8 +20,8 @@ variable database_template_storage_uri {
   default                      = "https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac"
 }
 variable data_subnet_id {}
-variable dba_login {}
-variable dba_object_id {}
+variable admin_login {}
+variable admin_object_id {}
 variable deploy_app_service_network_integration {
   type                         = bool
 }
@@ -37,6 +38,7 @@ variable storage_import {
   type                         = bool
 }
 variable storage_replication_type {}
+variable vanity_url {}
 variable waf_subnet_id {}
 
 variable diagnostics_instrumentation_key {}

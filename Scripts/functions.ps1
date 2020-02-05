@@ -11,6 +11,18 @@ function AzLogin () {
     $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
 }
 
+# From: https://blog.bredvid.no/handling-azure-managed-identity-access-to-azure-sql-in-an-azure-devops-pipeline-1e74e1beb10b
+function ConvertTo-Sid {
+    param (
+        [string]$appId
+    )
+    [guid]$guid = [System.Guid]::Parse($appId)
+    foreach ($byte in $guid.ToByteArray()) {
+        $byteGuid += [System.String]::Format("{0:X2}", $byte)
+    }
+    return "0x" + $byteGuid
+}
+
 function DeleteArmResources () {
     # Delete resources created with ARM templates, Terraform doesn't know about those
     Invoke-Command -ScriptBlock {
@@ -51,6 +63,77 @@ function DeleteArmResources () {
     }
 }
 
+function Execute-Sql (
+    [parameter(Mandatory=$true)][string]$QueryFile,
+    [parameter(Mandatory=$true)][hashtable]$Parameters,
+    [parameter(Mandatory=$false)][string]$SqlDatabaseName,
+    [parameter(Mandatory=$true)][string]$SqlServerFQDN
+) {
+    
+    # Prepare SQL Connection
+    $token = GetAccessToken
+    $conn = New-Object System.Data.SqlClient.SqlConnection
+    if ($SqlDatabaseName -and ($SqlDatabaseName -ine "master")) {
+        $conn.ConnectionString = "Data Source=tcp:$($SqlServerFQDN),1433;Initial Catalog=$($SqlDatabaseName);Encrypt=True;Connection Timeout=30;" 
+    } else {
+        $SqlDatabaseName = "Master"
+        $conn.ConnectionString = "Data Source=tcp:$($SqlServerFQDN),1433;Encrypt=True;Connection Timeout=30;" 
+    }
+
+    $conn.AccessToken = $token
+
+    try {
+        # Connect to SQL Server
+        Write-Host "Connecting to database $SqlServerFQDN/$SqlDatabaseName..."
+        $conn.Open()
+
+        # Prepare SQL Command
+        $query = Get-Content $QueryFile
+        foreach ($parameterName in $Parameters.Keys) {
+            $query = $query -replace "@$parameterName",$Parameters[$parameterName]
+            # TODO: Use parameterized query to protect against SQL injection
+            #$sqlParameter = $command.Parameters.AddWithValue($parameterName,$Parameters[$parameterName])
+            #Write-Debug $sqlParameter
+        }
+        $query = $query -replace "$","`n" # Preserve line feeds
+        $command = New-Object -TypeName System.Data.SqlClient.SqlCommand($query, $conn)
+ 
+        # Execute SQL Command
+        Write-Debug "Executing query:`n$query"
+        $Result = $command.ExecuteNonQuery()
+        $Result
+    } finally {
+        $conn.Close()
+    }
+}
+
+function GetAccessToken (
+    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
+    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
+    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
+) {
+    # From https://blog.bredvid.no/handling-azure-managed-identity-access-to-azure-sql-in-an-azure-devops-pipeline-1e74e1beb10b
+    $resourceAppIdURI = 'https://database.windows.net/'
+    $tokenResponse = Invoke-RestMethod -Method Post -UseBasicParsing `
+        -Uri "https://login.windows.net/$($tenantid)/oauth2/token" `
+        -Body @{
+            resource=$resourceAppIdURI
+            client_id=$clientid
+            grant_type='client_credentials'
+            client_secret=$clientsecret
+        } -ContentType 'application/x-www-form-urlencoded'
+
+    if ($tokenResponse) {
+        Write-Debug "Access token type is $($tokenResponse.token_type), expires $($tokenResponse.expires_on)"
+        $token = $tokenResponse.access_token
+        Write-Debug "Access token is $token"
+    } else {
+        Write-Error "Unable to obtain access token"
+    }
+
+    return $token
+}
+
 function GetCurrentBranch () {
     if (Get-Command git -ErrorAction SilentlyContinue) {
         Invoke-Command -ScriptBlock {
@@ -59,6 +142,7 @@ function GetCurrentBranch () {
         }
     }
 }
+
 function PrintCurrentBranch () {
     $branch = GetCurrentBranch
     if (![string]::IsNullOrEmpty($branch)) {

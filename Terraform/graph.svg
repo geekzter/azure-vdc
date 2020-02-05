@@ -4374,22 +4374,22 @@
 <path fill="none" stroke="black" d="M15869.6,-1007.97C15809,-997.613 15731.5,-984.383 15669.1,-973.736"/>
 <polygon fill="black" stroke="black" points="15669.7,-970.283 15659.3,-972.05 15668.5,-977.183 15669.7,-970.283"/>
 </g>
-<!-- [root] module.paas_app.var.dba_login -->
-<g id="node276" class="node"><title>[root] module.paas_app.var.dba_login</title>
+<!-- [root] module.paas_app.var.admin_login -->
+<g id="node276" class="node"><title>[root] module.paas_app.var.admin_login</title>
 <polygon fill="none" stroke="black" points="13852.4,-1404 13662.4,-1404 13662.4,-1368 13858.4,-1368 13858.4,-1398 13852.4,-1404"/>
 <polyline fill="none" stroke="black" points="13852.4,-1404 13852.4,-1398 "/>
 <polyline fill="none" stroke="black" points="13858.4,-1398 13852.4,-1398 "/>
-<text text-anchor="middle" x="13760.4" y="-1382.3" font-family="Times New Roman,serif" font-size="14.00">module.paas_app.var.dba_login</text>
+<text text-anchor="middle" x="13760.4" y="-1382.3" font-family="Times New Roman,serif" font-size="14.00">module.paas_app.var.admin_login</text>
 </g>
-<!-- [root] module.paas_app.var.dba_object_id -->
-<g id="node277" class="node"><title>[root] module.paas_app.var.dba_object_id</title>
+<!-- [root] module.paas_app.var.admin_object_id -->
+<g id="node277" class="node"><title>[root] module.paas_app.var.admin_object_id</title>
 <polygon fill="none" stroke="black" points="870.908,-1404 655.908,-1404 655.908,-1368 876.908,-1368 876.908,-1398 870.908,-1404"/>
 <polyline fill="none" stroke="black" points="870.908,-1404 870.908,-1398 "/>
 <polyline fill="none" stroke="black" points="876.908,-1398 870.908,-1398 "/>
-<text text-anchor="middle" x="766.408" y="-1382.3" font-family="Times New Roman,serif" font-size="14.00">module.paas_app.var.dba_object_id</text>
+<text text-anchor="middle" x="766.408" y="-1382.3" font-family="Times New Roman,serif" font-size="14.00">module.paas_app.var.admin_object_id</text>
 </g>
-<!-- [root] module.paas_app.var.dba_object_id&#45;&gt;[root] data.azurerm_client_config.current -->
-<g id="edge577" class="edge"><title>[root] module.paas_app.var.dba_object_id&#45;&gt;[root] data.azurerm_client_config.current</title>
+<!-- [root] module.paas_app.var.admin_object_id&#45;&gt;[root] data.azurerm_client_config.current -->
+<g id="edge577" class="edge"><title>[root] module.paas_app.var.admin_object_id&#45;&gt;[root] data.azurerm_client_config.current</title>
 <path fill="none" stroke="black" d="M821.891,-1367.97C854.163,-1358.06 895.019,-1345.51 928.871,-1335.12"/>
 <polygon fill="black" stroke="black" points="930.143,-1338.39 938.675,-1332.11 928.088,-1331.7 930.143,-1338.39"/>
 </g>
@@ -5587,19 +5587,19 @@
 <polyline fill="none" stroke="black" points="17860.9,-1398 17854.9,-1398 "/>
 <text text-anchor="middle" x="17789.4" y="-1382.3" font-family="Times New Roman,serif" font-size="14.00">var.app_web_vm_size</text>
 </g>
-<!-- [root] var.dba_login -->
-<g id="node399" class="node"><title>[root] var.dba_login</title>
+<!-- [root] var.admin_login -->
+<g id="node399" class="node"><title>[root] var.admin_login</title>
 <polygon fill="none" stroke="black" points="17965.9,-1404 17878.9,-1404 17878.9,-1368 17971.9,-1368 17971.9,-1398 17965.9,-1404"/>
 <polyline fill="none" stroke="black" points="17965.9,-1404 17965.9,-1398 "/>
 <polyline fill="none" stroke="black" points="17971.9,-1398 17965.9,-1398 "/>
-<text text-anchor="middle" x="17925.4" y="-1382.3" font-family="Times New Roman,serif" font-size="14.00">var.dba_login</text>
+<text text-anchor="middle" x="17925.4" y="-1382.3" font-family="Times New Roman,serif" font-size="14.00">var.admin_login</text>
 </g>
-<!-- [root] var.dba_object_id -->
-<g id="node400" class="node"><title>[root] var.dba_object_id</title>
+<!-- [root] var.admin_object_id -->
+<g id="node400" class="node"><title>[root] var.admin_object_id</title>
 <polygon fill="none" stroke="black" points="18102.9,-1404 17989.9,-1404 17989.9,-1368 18108.9,-1368 18108.9,-1398 18102.9,-1404"/>
 <polyline fill="none" stroke="black" points="18102.9,-1404 18102.9,-1398 "/>
 <polyline fill="none" stroke="black" points="18108.9,-1398 18102.9,-1398 "/>
-<text text-anchor="middle" x="18049.4" y="-1382.3" font-family="Times New Roman,serif" font-size="14.00">var.dba_object_id</text>
+<text text-anchor="middle" x="18049.4" y="-1382.3" font-family="Times New Roman,serif" font-size="14.00">var.admin_object_id</text>
 </g>
 <!-- [root] meta.count&#45;boundary (EachMode fixup) -->
 <g id="node425" class="node"><title>[root] meta.count&#45;boundary (EachMode fixup)</title>
@@ -5921,13 +5921,13 @@
 <path fill="none" stroke="black" d="M13342.8,-1455.56C13855.8,-1451.08 15294.4,-1435.69 15332.4,-1404 15394.8,-1351.97 15368.8,-1267.94 15300.4,-1224 15210.4,-1166.15 15155.6,-1240.57 15062.4,-1188 15036.3,-1173.29 15015.6,-1145.57 15002.7,-1124.95"/>
 <polygon fill="black" stroke="black" points="15005.7,-1123.12 14997.6,-1116.34 14999.7,-1126.71 15005.7,-1123.12"/>
 </g>
-<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.paas_app.var.dba_login -->
-<g id="edge210" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.paas_app.var.dba_login</title>
+<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.paas_app.var.admin_login -->
+<g id="edge210" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.paas_app.var.admin_login</title>
 <path fill="none" stroke="black" d="M13287.4,-1444.89C13385.5,-1434.96 13525.9,-1419.99 13648.4,-1404 13649.7,-1403.83 13651,-1403.66 13652.3,-1403.49"/>
 <polygon fill="black" stroke="black" points="13653,-1406.93 13662.4,-1402.12 13652,-1399.99 13653,-1406.93"/>
 </g>
-<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.paas_app.var.dba_object_id -->
-<g id="edge211" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.paas_app.var.dba_object_id</title>
+<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.paas_app.var.admin_object_id -->
+<g id="edge211" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] module.paas_app.var.admin_object_id</title>
 <path fill="none" stroke="black" d="M12983.4,-1456.26C11470.6,-1450.06 930.865,-1406.76 891.408,-1404 890.087,-1403.91 888.758,-1403.81 887.423,-1403.71"/>
 <polygon fill="black" stroke="black" points="887.346,-1400.19 877.086,-1402.83 886.756,-1407.16 887.346,-1400.19"/>
 </g>
@@ -6201,13 +6201,13 @@
 <path fill="none" stroke="black" d="M13344,-1456.98C14128.8,-1456.61 17224.4,-1452.13 17707.3,-1403.92"/>
 <polygon fill="black" stroke="black" points="17708,-1407.37 17717.5,-1402.84 17707.2,-1400.4 17708,-1407.37"/>
 </g>
-<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] var.dba_login -->
-<g id="edge266" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] var.dba_login</title>
+<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] var.admin_login -->
+<g id="edge266" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] var.admin_login</title>
 <path fill="none" stroke="black" d="M13343.4,-1456.4C14168,-1453.46 17558.1,-1439.38 17868.8,-1403.54"/>
 <polygon fill="black" stroke="black" points="17869.4,-1406.98 17878.9,-1402.2 17868.5,-1400.04 17869.4,-1406.98"/>
 </g>
-<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] var.dba_object_id -->
-<g id="edge267" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] var.dba_object_id</title>
+<!-- [root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] var.admin_object_id -->
+<g id="edge267" class="edge"><title>[root] meta.count&#45;boundary (EachMode fixup)&#45;&gt;[root] var.admin_object_id</title>
 <path fill="none" stroke="black" d="M13343.3,-1456.18C14179.7,-1452.23 17660.2,-1434.13 17979.4,-1403.73"/>
 <polygon fill="black" stroke="black" points="17980.2,-1407.16 17989.7,-1402.6 17979.4,-1400.2 17980.2,-1407.16"/>
 </g>

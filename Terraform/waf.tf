@@ -53,8 +53,17 @@ locals {
   ssl_range_inverted           = range(var.use_vanity_domain_and_ssl ? 0 : 1) # Contains one item only if var.use_vanity_domain_and_ssl = false
   iaas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_iaas_app_cname[0].name}.${azurerm_dns_cname_record.waf_iaas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
   iaas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.iaas_app_fqdn}/"
+  iaas_app_backend_pool        = "${module.iis_app.app_resource_group}-webservers"
+  iaas_app_backend_setting     = "${module.iis_app.app_resource_group}-config"
+  iaas_app_http_listener       = "${module.iis_app.app_resource_group}-http-listener"
+  iaas_app_https_listener      = "${module.iis_app.app_resource_group}-https-listener"
   paas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_paas_app_cname[0].name}.${azurerm_dns_cname_record.waf_paas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
   paas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.paas_app_fqdn}/"
+  paas_app_backend_pool        = "${module.paas_app.app_resource_group}-appsvc"
+  paas_app_backend_setting     = "${module.paas_app.app_resource_group}-config"
+  paas_app_http_listener       = "${module.paas_app.app_resource_group}-http-listener"
+  paas_app_https_listener      = "${module.paas_app.app_resource_group}-https-listener"
+  waf_frontend_ip_config       = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
 }
 
 resource "azurerm_application_gateway" "waf" {
@@ -76,7 +85,7 @@ resource "azurerm_application_gateway" "waf" {
     subnet_id                  = azurerm_subnet.waf_subnet.id
   }
   frontend_ip_configuration {
-    name                       = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
+    name                       = local.waf_frontend_ip_config
     public_ip_address_id       = azurerm_public_ip.waf_pip.id
   }
   frontend_port {
@@ -105,11 +114,11 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
 
   #### IaaS IIS App
   backend_address_pool {
-    name                       = "${module.iis_app.app_resource_group}-webservers"
+    name                       = local.iaas_app_backend_pool 
     ip_addresses               = var.app_web_vms
   }
   backend_http_settings {
-    name                       = "${module.iis_app.app_resource_group}-config"
+    name                       = local.iaas_app_backend_setting
     cookie_based_affinity      = "Disabled"
     path                       = "/"
     port                       = 80
@@ -117,8 +126,8 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     request_timeout            = 1
   }
   http_listener {
-    name                       = "${module.iis_app.app_resource_group}-http-listener"
-    frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
+    name                       = local.iaas_app_http_listener 
+    frontend_ip_configuration_name = local.waf_frontend_ip_config
     frontend_port_name         = "http"
     host_name                  = local.iaas_app_fqdn
     protocol                   = "Http"
@@ -127,8 +136,8 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
   dynamic "http_listener" {
     for_each = local.ssl_range
     content {
-      name                     = "${module.iis_app.app_resource_group}-https-listener"
-      frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
+      name                     = local.iaas_app_https_listener
+      frontend_ip_configuration_name = local.waf_frontend_ip_config
       frontend_port_name       = "https"
       protocol                 = "Https"
       host_name                = local.iaas_app_fqdn
@@ -141,9 +150,9 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.iis_app.app_resource_group}-http-rule"
       rule_type                = "Basic"
-      http_listener_name       = "${module.iis_app.app_resource_group}-http-listener"
-      backend_address_pool_name  = "${module.iis_app.app_resource_group}-webservers"
-      backend_http_settings_name = "${module.iis_app.app_resource_group}-config"
+      http_listener_name       = local.iaas_app_http_listener 
+      backend_address_pool_name  = iaas_app_backend_pool 
+      backend_http_settings_name = local.iaas_app_backend_setting
     }
   }
   dynamic "request_routing_rule" {
@@ -153,7 +162,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.iis_app.app_resource_group}-http-to-https-rule"
       rule_type                = "Basic"
-      http_listener_name       = "${module.iis_app.app_resource_group}-http-listener"
+      http_listener_name       = local.iaas_app_http_listener 
       redirect_configuration_name = "${module.iis_app.app_resource_group}-http-to-https"
     }
   }
@@ -163,9 +172,9 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.iis_app.app_resource_group}-https-rule"
       rule_type                = "Basic"
-      http_listener_name       = "${module.iis_app.app_resource_group}-https-listener"
-      backend_address_pool_name = "${module.iis_app.app_resource_group}-webservers"
-      backend_http_settings_name = "${module.iis_app.app_resource_group}-config"
+      http_listener_name       = local.iaas_app_https_listener
+      backend_address_pool_name = local.iaas_app_backend_pool 
+      backend_http_settings_name = local.iaas_app_backend_setting
     }
   }
   dynamic "redirect_configuration" {
@@ -173,27 +182,35 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.iis_app.app_resource_group}-http-to-https"
       redirect_type            = "Temporary" # HTTP 302
-      target_listener_name     = "${module.iis_app.app_resource_group}-https-listener"
+      target_listener_name     = local.iaas_app_https_listener
     }
   }
 
   #### PaaS App Service App
   backend_address_pool {
-    name                       = "${module.paas_app.app_resource_group}-webservers"
+    name                       = local.paas_app_backend_pool
     fqdns                      = ["${module.paas_app.app_service_fqdn}"]
   }
   backend_http_settings {
-    name                       = "${module.paas_app.app_resource_group}-config"
+    name                       = local.paas_app_backend_setting
     cookie_based_affinity      = "Disabled"
-    path                       = "/"
-    port                       = 80
-    protocol                   = "Http"
+  # host_name                  = module.paas_app.app_service_fqdn
+  # path                       = "/"
+    # BUG: When using AAD Authentication:
+    #      Using port 80 causes too many redirects 
+    #      Using port 443 causes HTTP 401.71 status errors on every request 
+    #       (however, the request completes succesfully)
+    #       The URL on the detailed error message is https icw port 80
+    #       https://vdc-dev-paasapp-xxxx-appsvc-app:80/
+    port                       = 443
+    probe_name                 = "paas-app-probe"
+    protocol                   = "Https"
     request_timeout            = 1
     pick_host_name_from_backend_address = true
   }
   http_listener {
-    name                       = "${module.paas_app.app_resource_group}-http-listener"
-    frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
+    name                       = local.paas_app_http_listener
+    frontend_ip_configuration_name = local.waf_frontend_ip_config
     frontend_port_name         = "http"
     host_name                  = local.paas_app_fqdn
     protocol                   = "Http"
@@ -202,8 +219,8 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
   dynamic "http_listener" {
     for_each = local.ssl_range
     content {
-      name                     = "${module.paas_app.app_resource_group}-https-listener"
-      frontend_ip_configuration_name = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
+      name                     = local.paas_app_https_listener
+      frontend_ip_configuration_name = local.waf_frontend_ip_config
       frontend_port_name       = "https"
       protocol                 = "Https"
       host_name                = local.paas_app_fqdn
@@ -216,9 +233,9 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.paas_app.app_resource_group}-http-rule"
       rule_type                = "Basic"
-      http_listener_name       = "${module.paas_app.app_resource_group}-http-listener"
-      backend_address_pool_name  = "${module.paas_app.app_resource_group}-webservers"
-      backend_http_settings_name = "${module.paas_app.app_resource_group}-config"
+      http_listener_name       = local.paas_app_http_listener
+      backend_address_pool_name  = local.paas_app_backend_pool
+      backend_http_settings_name = local.paas_app_backend_setting
     }
   }
   dynamic "request_routing_rule" {
@@ -228,7 +245,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.paas_app.app_resource_group}-http-to-https-rule"
       rule_type                = "Basic"
-      http_listener_name       = "${module.paas_app.app_resource_group}-http-listener"
+      http_listener_name       = local.paas_app_http_listener
       redirect_configuration_name = "${module.paas_app.app_resource_group}-http-to-https"
     }
   }
@@ -238,9 +255,10 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.paas_app.app_resource_group}-https-rule"
       rule_type                = "Basic"
-      http_listener_name       = "${module.paas_app.app_resource_group}-https-listener"
-      backend_address_pool_name = "${module.paas_app.app_resource_group}-webservers"
-      backend_http_settings_name = "${module.paas_app.app_resource_group}-config"
+      http_listener_name       = local.paas_app_https_listener
+      backend_address_pool_name = local.paas_app_backend_pool
+      backend_http_settings_name = local.paas_app_backend_setting
+      rewrite_rule_set_name    = "paas-rewrite-rules"
     }
   }
   dynamic "redirect_configuration" {
@@ -248,24 +266,54 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.paas_app.app_resource_group}-http-to-https"
       redirect_type            = "Temporary" # HTTP 302
-      target_listener_name     = "${module.paas_app.app_resource_group}-https-listener"
+      target_listener_name     = local.paas_app_https_listener
     }
   }
-  # rewrite_rule_set {
-  #   name                       = "paas-rewrite-rules"
-  #   rewrite_rule {
-  #     name                     = "paas-rewrite-host"
-  #     rule_sequence            = 1
-  #     condition {
-  #       variable               = "Location"
-  #       pattern                = "(https:?):\\/\\/.*azurewebsites\\.net(.*)$"
-  #     }
-  #     response_header_configuration {
-  #       header_name            = "Location"
-  #       header_value           = "{http_resp_Location_1}://${local.paas_app_fqdn}{http_resp_Location_2}" 
-  #     }
-  #   }
-  # }
+  # These rules rewrite the App Service URL with the vanity domain one
+  rewrite_rule_set {
+    name                       = "paas-rewrite-rules"
+    rewrite_rule {
+      name                     = "paas-rewrite-response-location"
+      rule_sequence            = 1
+      condition {
+        variable               = "http_resp_Location"
+        pattern                = "(https?):\\/\\/${module.paas_app.app_service_fqdn}(.*)$"
+        ignore_case            = true
+      }
+      response_header_configuration {
+        header_name            = "Location"
+        header_value           = "{http_resp_Location_1}://${local.paas_app_fqdn}{http_resp_Location_2}" 
+      }
+    }
+    rewrite_rule {
+      name                     = "paas-rewrite-response-redirect"
+      rule_sequence            = 2
+      condition {
+        variable               = "http_resp_Location"
+        pattern                = "(.*)redirect_uri=https%3A%2F%2F${module.paas_app.app_service_fqdn}(.*)$"
+        ignore_case            = true
+      }
+      response_header_configuration {
+        header_name            = "Location"
+        header_value           = "{http_resp_Location_1}redirect_uri=https%3A%2F%2F${local.paas_app_fqdn}{http_resp_Location_2}" 
+      }
+    }
+  }
+  probe {
+    name                       = "paas-app-probe"
+    path                       = "/"
+    pick_host_name_from_backend_http_settings = true
+    protocol                   = "Https"
+    interval                   = 5
+    timeout                    = 30
+    unhealthy_threshold        = 3
+    match {
+      body                     = ""
+      status_code              = ["200-399","401"]
+    }
+  }
+  # TODO:
+  # Allow redirect URL https://vdcdevwebapp.geekzter.io/.auth/login/aad/callback
 
   waf_configuration {
     enabled                    = true

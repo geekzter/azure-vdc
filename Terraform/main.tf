@@ -77,6 +77,12 @@ resource "azurerm_resource_group" "vdc_rg" {
   tags                         = local.tags
 }
 
+resource "azurerm_role_assignment" "demo_admin" {
+  scope                        = azurerm_resource_group.vdc_rg.id
+  role_definition_name         = "Contributor"
+  principal_id                 = var.admin_object_id
+}
+
 data "http" "localpublicip" {
 # Get public IP address of the machine running this terraform template
   url                          = "http://ipinfo.io/ip"
