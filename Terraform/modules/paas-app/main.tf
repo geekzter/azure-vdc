@@ -206,7 +206,7 @@ resource "azurerm_app_service" "paas_web_app" {
     WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
   }
 
-  # BUG: The page cannot be displayed because an internal server error has occurred (when accessed via AppGW using vanity domain name)     fftp
+  # BUG: The page cannot be displayed because an internal server error has occurred (when accessed via AppGW using vanity domain name) 
   # auth_settings {
   #   enabled                    = true
   #   active_directory {

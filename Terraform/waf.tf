@@ -196,7 +196,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     cookie_based_affinity      = "Disabled"
   # host_name                  = module.paas_app.app_service_fqdn
   # path                       = "/"
-    # BUG: When using AAd Authentication:
+    # BUG: When using AAD Authentication:
     #      Using port 80 causes too many redirects 
     #      Using port 443 causes HTTP 401.71 status errors on every request 
     #       (however, the request completes succesfully)
