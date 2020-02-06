@@ -695,6 +695,58 @@
         },
         "24": {
           "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Automation/automationAccounts/${prefix}-${environment}-${suffix}-automation"
+              }
+            ],
+            "type": "Extension/Microsoft_Azure_Automation/PartType/AccountDashboardBladePinnedPart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 12
+          }
+        },
+        "25": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-19T12:10:07.715Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
+            "y": 13
+          }
+        },
+        "26": {
+          "metadata": {
             "asset": {
               "idInputName": "ComponentId",
               "type": "ApplicationInsights"
@@ -751,45 +803,10 @@
             "colSpan": 2,
             "rowSpan": 2,
             "x": 10,
-            "y": 12
-          }
-        },
-        "25": {
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
-              },
-              {
-                "isOptional": true,
-                "name": "solutionId"
-              },
-              {
-                "isOptional": true,
-                "name": "timeInterval",
-                "value": {
-                  "_Now": "2019-11-19T12:10:07.715Z",
-                  "_duration": 86400000,
-                  "_end": null
-                }
-              },
-              {
-                "binding": "timeRange",
-                "isOptional": true,
-                "name": "timeRange"
-              }
-            ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
-          },
-          "position": {
-            "colSpan": 4,
-            "rowSpan": 2,
-            "x": 0,
             "y": 13
           }
         },
-        "26": {
+        "27": {
           "metadata": {
             "inputs": [
               {
@@ -824,7 +841,7 @@
             "y": 15
           }
         },
-        "27": {
+        "28": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -900,7 +917,7 @@
             "y": 16
           }
         },
-        "28": {
+        "29": {
           "metadata": {
             "inputs": [
               {
@@ -935,7 +952,29 @@
             "y": 17
           }
         },
-        "29": {
+        "3": {
+          "metadata": {
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "resourceGroup"
+              },
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+          },
+          "position": {
+            "colSpan": 5,
+            "rowSpan": 4,
+            "x": 12,
+            "y": 0
+          }
+        },
+        "30": {
           "metadata": {
             "inputs": [
               {
@@ -970,29 +1009,7 @@
             "y": 19
           }
         },
-        "3": {
-          "metadata": {
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "resourceGroup"
-              },
-              {
-                "isOptional": true,
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
-              }
-            ],
-            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
-          },
-          "position": {
-            "colSpan": 5,
-            "rowSpan": 4,
-            "x": 12,
-            "y": 0
-          }
-        },
-        "30": {
+        "31": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -1337,12 +1354,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-5b5b96d1-3243-47a2-9948-7b16dadc2188",
-              "StartboardPart-AnalyticsPart-5b5b96d1-3243-47a2-9948-7b16dadc218e",
-              "StartboardPart-MonitorChartPart-5b5b96d1-3243-47a2-9948-7b16dadc2194",
-              "StartboardPart-AnalyticsPart-5b5b96d1-3243-47a2-9948-7b16dadc219e",
-              "StartboardPart-AnalyticsPart-5b5b96d1-3243-47a2-9948-7b16dadc21a8",
-              "StartboardPart-AnalyticsPart-5b5b96d1-3243-47a2-9948-7b16dadc21ae"
+              "StartboardPart-ApplicationMapPart-68ef16e4-393a-4841-9d92-3d8f3686901f",
+              "StartboardPart-AnalyticsPart-68ef16e4-393a-4841-9d92-3d8f36869025",
+              "StartboardPart-MonitorChartPart-68ef16e4-393a-4841-9d92-3d8f3686902b",
+              "StartboardPart-AnalyticsPart-68ef16e4-393a-4841-9d92-3d8f36869035",
+              "StartboardPart-AnalyticsPart-68ef16e4-393a-4841-9d92-3d8f3686903d",
+              "StartboardPart-AnalyticsPart-68ef16e4-393a-4841-9d92-3d8f36869043"
             ],
             "model": {
               "format": "utc",

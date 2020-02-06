@@ -237,3 +237,7 @@ output shared_resources_group {
 output vdc_resource_group {
   value       = azurerm_resource_group.vdc_rg.name
 }
+
+output virtual_machine_ids {
+  value       = local.virtual_machine_ids
+}

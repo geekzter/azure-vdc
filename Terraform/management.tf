@@ -248,3 +248,17 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 
 #   tags                         = local.tags
 # } 
+
+locals {
+  virtual_machine_ids            = concat(module.iis_app.virtual_machine_ids, [azurerm_virtual_machine.bastion.id])
+  virtual_machine_ids_string     = join(",",local.virtual_machine_ids)
+}
+
+resource null_resource windows_updates {
+  # Create SQL DB FW rule to allow App Service in
+  # Create on this resource to prevent circular dependency between module.paas_app.azurerm_sql_database.app_sqldb, module.paas_app.azurerm_app_service.paas_web_app, module.paas_app.azurerm_sql_server.app_sqlserver
+  provisioner "local-exec" {
+    command                      = "../Scripts/schedule_vm_updates.ps1 -AutomationAccountName ${azurerm_automation_account.automation.name} -ResourceGroupName ${azurerm_automation_account.automation.resource_group_name} -VMResourceId ${local.virtual_machine_ids_string}"
+    interpreter                  = ["pwsh", "-nop", "-Command"]
+  }
+}

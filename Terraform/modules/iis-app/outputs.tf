@@ -10,3 +10,7 @@ output app_resource_group {
 output app_resource_group_id {
   value       = azurerm_resource_group.app_rg.id
 }
+
+output virtual_machine_ids {
+  value       = concat(azurerm_virtual_machine.app_db_vm.*.id,azurerm_virtual_machine.app_web_vm.*.id)
+}
