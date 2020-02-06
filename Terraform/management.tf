@@ -261,10 +261,11 @@ resource null_resource windows_updates {
     interpreter                  = ["pwsh", "-nop", "-Command"]
   }
 
-  #concat(module.iis_app.monotoring_agent_ids),
   depends_on                     =[
                                     azurerm_log_analytics_linked_service.automation,
                                     azurerm_log_analytics_solution.oms_solutions,
-                                    azurerm_virtual_machine_extension.bastion_monitor
+                                    azurerm_virtual_machine_extension.bastion_monitor,
+                                    module.iis_app.monitoring_agent_ids,
+                                    module.iis_app
                                   ]
 }
