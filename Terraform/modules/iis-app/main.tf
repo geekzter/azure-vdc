@@ -121,9 +121,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   count                        = var.app_web_vm_number
 
   tags                         = var.tags
-
-  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_watcher]
 }
 
 resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
@@ -156,9 +153,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
-
-  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_bginfo]
 }
 
 resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
@@ -187,9 +181,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
-
-  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_pipeline]
 }
 
 resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
@@ -219,8 +210,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
     )
   )
 
-  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_dependency_monitor]
+  # BUG: "Multiple VMExtensions per handler not supported for OS type 'Windows'""
 }
 
 # BUG: Get's recreated every run
@@ -409,9 +399,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   count                        = var.app_db_vm_number
 
   tags                         = var.tags
-
-  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_watcher]
 }
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
@@ -444,9 +431,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
-
-  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_bginfo]
 }
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
@@ -475,10 +459,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
-
-  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_pipeline]
-}
+}`
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
   name                         = "app_db_vm_monitor"
@@ -507,8 +488,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
     )
   )
 
-  # FIX for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_dependency_monitor]
+  # BUG: "Multiple VMExtensions per handler not supported for OS type 'Windows'""
 }
 
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {
