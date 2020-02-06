@@ -7,8 +7,8 @@
     Create an Azure Automation Update Management schedule
 #> 
 param (    
-    [parameter(Mandatory=$false)][string]$StartTime=(Get-Date).AddMinutes(6).ToString("hh:mm"),
-    [parameter(Mandatory=$false)][ValidateSet("Daily", "Once")][string[]]$Frequency=@("Once"),
+    [parameter(Mandatory=$false)][string]$StartTime=(Get-Date).AddMinutes(6).ToString("HH:mm"), # Must be > 5 minutes
+    [parameter(Mandatory=$false)][ValidateSet("Daily", "Once")][string]$Frequency="Once",
     [parameter(Mandatory=$false)][string[]]$VMResourceId,
     [parameter(Mandatory=$false)][string]$AutomationAccountName,
     [parameter(Mandatory=$false)][string]$ResourceGroupName,
@@ -63,15 +63,24 @@ if (!$VMResourceId) {
 # From https://docs.microsoft.com/en-us/powershell/module/az.automation/new-azautomationschedule
 $duration = New-TimeSpan -Hours 2
 $scheduleName = "$Frequency at $StartTime" -Replace ":",""
-Write-Host $scheduleName
-$schedule = New-AzAutomationSchedule -ResourceGroupName $ResourceGroupName `
+Write-Verbose "Creating Automation Schedule '$scheduleName'..."
+if ($Frequency -ieq "Once") {
+  $schedule = New-AzAutomationSchedule -ResourceGroupName $ResourceGroupName `
                                                   -AutomationAccountName $AutomationAccountName `
                                                   -Name $scheduleName `
                                                   -StartTime $StartTime `
                                                   -TimeZone "Etc/UTC"`
-                                                  -DaysOfWeek Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday `
-                                                  -WeekInterval 1 `
+                                                  -OneTime `
                                                   -ForUpdateConfiguration
+} else {
+  $schedule = New-AzAutomationSchedule -ResourceGroupName $ResourceGroupName `
+                                                  -AutomationAccountName $AutomationAccountName `
+                                                  -Name $scheduleName `
+                                                  -StartTime $StartTime `
+                                                  -TimeZone "Etc/UTC"`
+                                                  -DayInterval 1 `
+                                                  -ForUpdateConfiguration
+}
 
 New-AzAutomationSoftwareUpdateConfiguration -ResourceGroupName $ResourceGroupName `
                                                  -AutomationAccountName $AutomationAccountName `

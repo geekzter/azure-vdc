@@ -258,7 +258,9 @@ resource null_resource windows_updates {
   # Create SQL DB FW rule to allow App Service in
   # Create on this resource to prevent circular dependency between module.paas_app.azurerm_sql_database.app_sqldb, module.paas_app.azurerm_app_service.paas_web_app, module.paas_app.azurerm_sql_server.app_sqlserver
   provisioner "local-exec" {
-    command                      = "../Scripts/schedule_vm_updates.ps1 -AutomationAccountName ${azurerm_automation_account.automation.name} -ResourceGroupName ${azurerm_automation_account.automation.resource_group_name} -VMResourceId ${local.virtual_machine_ids_string} -Frequency Daily -StartTime 21:00"
+    command                      = "../Scripts/schedule_vm_updates.ps1 -AutomationAccountName ${azurerm_automation_account.automation.name} -ResourceGroupName ${azurerm_automation_account.automation.resource_group_name} -VMResourceId ${local.virtual_machine_ids_string} -Frequency Daily -StartTime ${var.update_management_time}"
     interpreter                  = ["pwsh", "-nop", "-Command"]
   }
+
+  depends_on                     = [azurerm_log_analytics_linked_service.automation,azurerm_log_analytics_solution.oms_solutions]
 }
