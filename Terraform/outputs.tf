@@ -27,6 +27,14 @@ output arm_resource_ids {
                        )
 }
 
+output automation_account {
+  value       = azurerm_automation_account.automation.name
+}
+
+output automation_account_resource_group {
+  value       = azurerm_automation_account.automation.resource_group_name
+}
+
 output bastion_address {
   value       = var.vdc_config["hub_bastion_address"]
 }
@@ -238,6 +246,6 @@ output vdc_resource_group {
   value       = azurerm_resource_group.vdc_rg.name
 }
 
-output virtual_machine_ids {
-  value       = local.virtual_machine_ids
+output virtual_machine_ids_string {
+  value       = local.virtual_machine_ids_string
 }
