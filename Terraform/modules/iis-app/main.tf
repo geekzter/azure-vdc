@@ -459,7 +459,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
-}`
+}
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
   name                         = "app_db_vm_monitor"
