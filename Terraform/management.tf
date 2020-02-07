@@ -138,7 +138,7 @@ resource "azurerm_virtual_machine" "bastion" {
 # } 
 
 resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
-  name                         = "bastion_bginfo"
+  name                         = "BGInfo"
   virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.Compute"
   type                         = "BGInfo"
@@ -149,7 +149,7 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
 }
 
 resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
-  name                         = "bastion_dependency_monitor"
+  name                         = "DAExtension"
   virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"
@@ -171,7 +171,7 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
 }
 
 resource "azurerm_virtual_machine_extension" "bastion_monitor" {
-  name                         = "bastion_monitor"
+  name                         = "MicrosoftMonitoringAgent"
   virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
   type                         = "MicrosoftMonitoringAgent"
@@ -193,7 +193,7 @@ resource "azurerm_virtual_machine_extension" "bastion_monitor" {
 }
 
 resource "azurerm_virtual_machine_extension" "bastion_watcher" {
-  name                         = "bastion_watcher"
+  name                         = "AzureNetworkWatcherExtension"
   virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.Azure.NetworkWatcher"
   type                         = "NetworkWatcherAgentWindows"
@@ -248,3 +248,24 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 
 #   tags                         = local.tags
 # } 
+
+locals {
+  virtual_machine_ids            = concat(module.iis_app.virtual_machine_ids, [azurerm_virtual_machine.bastion.id])
+  virtual_machine_ids_string     = join(",",local.virtual_machine_ids)
+}
+
+resource null_resource windows_updates {
+  # Create Windows Update Schedule
+  provisioner "local-exec" {
+    command                      = "../Scripts/schedule_vm_updates.ps1 -AutomationAccountName ${azurerm_automation_account.automation.name} -ResourceGroupName ${azurerm_automation_account.automation.resource_group_name} -VMResourceId ${local.virtual_machine_ids_string} -Frequency Daily -StartTime ${var.update_management_time}"
+    interpreter                  = ["pwsh", "-nop", "-Command"]
+  }
+
+  depends_on                     =[
+                                    azurerm_log_analytics_linked_service.automation,
+                                    azurerm_log_analytics_solution.oms_solutions,
+                                    azurerm_virtual_machine_extension.bastion_monitor,
+                                    module.iis_app.monitoring_agent_ids,
+                                    module.iis_app
+                                  ]
+}
