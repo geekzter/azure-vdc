@@ -112,7 +112,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   tags                         = var.tags
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
-  name                         = "app_web_vm_bginfo"
+  name                         = "BGInfo"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Compute"
   type                         = "BGInfo"
@@ -126,7 +126,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_watcher]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
-  name                         = "app_web_vm_release"
+  name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
   type                         = "TeamServicesAgent"
@@ -160,7 +160,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
   depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_bginfo]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
-  name                         = "app_web_vm_dependency_monitor"
+  name                         = "DAExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"
@@ -396,7 +396,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
   tags                         = var.tags
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
-  name                         = "app_db_vm_bginfo"
+  name                         = "BGInfo"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Compute"
   type                         = "BGInfo"
@@ -410,7 +410,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_watcher]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
-  name                         = "app_db_vm_release"
+  name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
   type                         = "TeamServicesAgent"
@@ -444,7 +444,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
   depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_bginfo]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
-  name                         = "app_db_vm_dependency_monitor"
+  name                         = "DAExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"

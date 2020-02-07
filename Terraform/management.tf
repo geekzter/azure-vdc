@@ -138,7 +138,7 @@ resource "azurerm_virtual_machine" "bastion" {
 # } 
 
 resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
-  name                         = "bastion_bginfo"
+  name                         = "BGInfo"
   virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.Compute"
   type                         = "BGInfo"
@@ -149,7 +149,7 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
 }
 
 resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
-  name                         = "bastion_dependency_monitor"
+  name                         = "DAExtension"
   virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"
@@ -171,7 +171,7 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
 }
 
 resource "azurerm_virtual_machine_extension" "bastion_monitor" {
-  name                         = "bastion_monitor"
+  name                         = "MicrosoftMonitoringAgent"
   virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
   type                         = "MicrosoftMonitoringAgent"
@@ -193,7 +193,7 @@ resource "azurerm_virtual_machine_extension" "bastion_monitor" {
 }
 
 resource "azurerm_virtual_machine_extension" "bastion_watcher" {
-  name                         = "bastion_watcher"
+  name                         = "AzureNetworkWatcherExtension"
   virtual_machine_id           = azurerm_virtual_machine.bastion.id
   publisher                    = "Microsoft.Azure.NetworkWatcher"
   type                         = "NetworkWatcherAgentWindows"
