@@ -590,10 +590,21 @@ resource "azurerm_sql_database" "app_sqldb" {
   tags                         = var.tags
 } 
 
-resource null_resource sql_database_msi_access {
-  # Add App Service MSI to Database
+resource null_resource sql_database_access {
+  # Always run this
+  triggers                     = {
+    always_run                 = "${timestamp()}"
+  }
+
+  # Add App Service MSI and DBA to Database
   provisioner "local-exec" {
-    command                    = "../Scripts/grant_database_access.ps1 -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${azurerm_sql_database.app_sqldb.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
+    command                    = "../Scripts/grant_database_access.ps1 -DBAName ${var.admin_login} -DBAObjectId ${var.admin_object_id} -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${azurerm_sql_database.app_sqldb.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  # Replace AAD DBA
+  provisioner "local-exec" {
+    command                    = "Set-AzSqlServerActiveDirectoryAdministrator -DisplayName ${var.admin_login} -ObjectId ${var.admin_object_id} -ServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name}"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
@@ -612,16 +623,16 @@ resource null_resource no_all_azure_rules {
   depends_on                   = [null_resource.app_service_rules, azurerm_sql_database.app_sqldb]
 }
 
-# Set to the real DBA
-resource "azurerm_sql_active_directory_administrator" "dba" {
-  server_name                  = azurerm_sql_server.app_sqlserver.name
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = var.admin_login
-  object_id                    = var.admin_object_id
-  tenant_id                    = data.azurerm_client_config.current.tenant_id
+# # Set to the real DBA
+# resource "azurerm_sql_active_directory_administrator" "dba" {
+#   server_name                  = azurerm_sql_server.app_sqlserver.name
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   login                        = var.admin_login
+#   object_id                    = var.admin_object_id
+#   tenant_id                    = data.azurerm_client_config.current.tenant_id
 
-  depends_on                   = [null_resource.sql_database_msi_access]
-} 
+#   depends_on                   = [null_resource.sql_database_access]
+# } 
 
 resource "azurerm_monitor_diagnostic_setting" "sql_database_logs" {
   name                         = "SqlDatabase_Logs"

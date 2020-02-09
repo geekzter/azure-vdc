@@ -100,8 +100,8 @@ function Execute-Sql (
  
         # Execute SQL Command
         Write-Debug "Executing query:`n$query"
-        $Result = $command.ExecuteNonQuery()
-        $Result
+        $result = $command.ExecuteNonQuery()
+        $result
     } finally {
         $conn.Close()
     }
