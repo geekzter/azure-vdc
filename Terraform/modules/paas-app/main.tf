@@ -16,6 +16,7 @@ data "http" "localpublicip" {
 }
 
 data "azurerm_client_config" "current" {}
+data "azurerm_subscription" "primary" {}
 
 data "azurerm_container_registry" "vdc_images" {
   name                         = var.shared_container_registry_name
@@ -575,13 +576,13 @@ resource "azurerm_sql_database" "app_sqldb" {
 
   # Configure server auditing
   provisioner "local-exec" {
-    command                    = "Set-AzSqlServerAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
+    command                    = "Set-AzContext -Subscription ${data.azurerm_subscription.primary.subscription_id} -TenantId ${data.azurerm_client_config.current.tenant_id};Set-AzSqlServerAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
   # Configure database auditing
   provisioner "local-exec" {
-    command                    = "Set-AzSqlDatabaseAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -DatabaseName ${self.name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
+    command                    = "Set-AzContext -Subscription ${data.azurerm_subscription.primary.subscription_id} -TenantId ${data.azurerm_client_config.current.tenant_id};Set-AzSqlDatabaseAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -DatabaseName ${self.name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
@@ -604,7 +605,7 @@ resource null_resource sql_database_access {
 
   # Replace AAD DBA
   provisioner "local-exec" {
-    command                    = "Set-AzSqlServerActiveDirectoryAdministrator -DisplayName ${var.admin_login} -ObjectId ${var.admin_object_id} -ServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name}"
+    command                    = "Set-AzContext -Subscription ${data.azurerm_subscription.primary.subscription_id} -TenantId ${data.azurerm_client_config.current.tenant_id};Set-AzSqlServerActiveDirectoryAdministrator -DisplayName ${var.admin_login} -ObjectId ${var.admin_object_id} -ServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name}"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
@@ -616,7 +617,7 @@ resource null_resource sql_database_access {
 resource null_resource no_all_azure_rules {
   # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
   provisioner "local-exec" {
-    command                    = "Get-AzSqlServerFirewallRule -ServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name} | Where-Object -Property FirewallRuleName -eq AllowAllWindowsAzureIPs | Remove-AzSqlServerFirewallRule -Force"
+    command                    = "Set-AzContext -Subscription ${data.azurerm_subscription.primary.subscription_id} -TenantId ${data.azurerm_client_config.current.tenant_id};Get-AzSqlServerFirewallRule -ServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name} | Where-Object -Property FirewallRuleName -eq AllowAllWindowsAzureIPs | Remove-AzSqlServerFirewallRule -Force"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
