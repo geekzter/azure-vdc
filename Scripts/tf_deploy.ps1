@@ -171,6 +171,10 @@ try {
         if ($StickySuffix) {
             SetSuffix
         }
+        # Taint resources that should be recreated every time
+        #Invoke "terraform taint -allow-missing 'module.paas_app.azurerm_sql_active_directory_administrator.dba'"
+
+        # Create plan
         Invoke "terraform plan $varArgs -parallelism=$Parallelism -out='$PlanFile'" 
     }
 

@@ -349,6 +349,12 @@ variable deploy_vpn {
   type                         = bool
 }
 
+variable replace_dba {
+  description                  = "Whether to replace automation DBA"
+  default                      = false
+  type                         = bool
+}
+
 variable use_vanity_domain_and_ssl {
   description                  = "Whether to use SSL (HTTPS) for demo application"
   default                      = false
