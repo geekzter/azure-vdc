@@ -68,6 +68,7 @@ switch ($Trace) {
         $env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
+        Get-InstalledModule Az
     }
     Default {
         $Script:warningPreference = "Continue"
@@ -78,6 +79,7 @@ switch ($Trace) {
         $env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
+        Get-InstalledModule Az
     }
 }
 if ($env:TF_LOG_PATH -and (Test-Path $env:TF_LOG_PATH))
