@@ -643,7 +643,7 @@ resource "azurerm_sql_active_directory_administrator" "dba" {
   object_id                    = var.admin_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 
-  depends_on                   = [null_resource.dba_database_access,azurerm_sql_active_directory_administrator.terraform]
+  depends_on                   = [null_resource.dba_database_access,null_resource.msi_database_access,azurerm_sql_active_directory_administrator.terraform]
 } 
 
 resource "azurerm_monitor_diagnostic_setting" "sql_database_logs" {
