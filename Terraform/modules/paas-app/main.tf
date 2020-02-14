@@ -540,12 +540,35 @@ resource null_resource sql_db_private_dns {
 }
 
 # This is for Terraform acting as the AAD DBA (e.g. to execute change scripts)
-resource "azurerm_sql_active_directory_administrator" "terraform" {
+resource "azurerm_sql_active_directory_administrator" "import_dba" {
+  # Configure as Terraform identity at import (creation) time, otherwise as DBA
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = "Automation"
-  object_id                    = data.azurerm_client_config.current.service_principal_object_id
+  login                        = var.database_import ? "Automation" : var.admin_login
+  object_id                    = var.database_import ? data.azurerm_client_config.current.service_principal_object_id : var.admin_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
+} 
+
+resource null_resource sql_database_access {
+  # Add App Service MSI and DBA to Database
+  provisioner "local-exec" {
+    command                    = "../Scripts/grant_database_access.ps1 -DBAName ${var.admin_login} -DBAObjectId ${var.admin_object_id} -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${azurerm_sql_database.app_sqldb.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  # Terraform change scripts require Terraform to be the AAD DBA
+  depends_on                   = [azurerm_sql_active_directory_administrator.import_dba]
+}
+
+# Set to the real DBA
+resource "azurerm_sql_active_directory_administrator" "dba" {
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  login                        = var.admin_login
+  object_id                    = var.admin_object_id
+  tenant_id                    = data.azurerm_client_config.current.tenant_id
+
+  depends_on                   = [null_resource.sql_database_access,azurerm_sql_active_directory_administrator.import_dba]
 } 
 
 resource "azurerm_sql_database" "app_sqldb" {
@@ -591,40 +614,6 @@ resource "azurerm_sql_database" "app_sqldb" {
   tags                         = var.tags
 } 
 
-resource null_resource msi_database_access {
-  # # Always run this
-  # triggers                     = {
-  #   always_run                 = "${timestamp()}"
-  # }
-
-  # Add App Service MSI and DBA to Database
-  provisioner "local-exec" {
-    command                    = "../Scripts/grant_database_access.ps1 -DBAName ${var.admin_login} -DBAObjectId ${var.admin_object_id} -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${azurerm_sql_database.app_sqldb.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
-  }
-
-  # Terraform change scripts require Terraform to be the AAD DBA
-  depends_on                   = [azurerm_sql_active_directory_administrator.terraform]
-}
-
-resource null_resource dba_database_access {
-  # Always run this
-  triggers                     = {
-    always_run                 = "${timestamp()}"
-  }
-
-  # Replace AAD DBA
-  provisioner "local-exec" {
-    command                    = "Set-AzContext -Subscription ${data.azurerm_subscription.primary.subscription_id} -TenantId ${data.azurerm_client_config.current.tenant_id};Set-AzSqlServerActiveDirectoryAdministrator -DisplayName ${var.admin_login} -ObjectId ${var.admin_object_id} -ServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
-  }
-
-  count                        = var.replace_dba ? 1 : 0
-
-  # Terraform change scripts require Terraform to be the AAD DBA
-  depends_on                   = [null_resource.msi_database_access]
-}
-
 resource null_resource no_all_azure_rules {
   # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
   provisioner "local-exec" {
@@ -634,17 +623,6 @@ resource null_resource no_all_azure_rules {
 
   depends_on                   = [null_resource.app_service_rules, azurerm_sql_database.app_sqldb]
 }
-
-# Set to the real DBA
-resource "azurerm_sql_active_directory_administrator" "dba" {
-  server_name                  = azurerm_sql_server.app_sqlserver.name
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = var.admin_login
-  object_id                    = var.admin_object_id
-  tenant_id                    = data.azurerm_client_config.current.tenant_id
-
-  depends_on                   = [null_resource.dba_database_access,null_resource.msi_database_access,azurerm_sql_active_directory_administrator.terraform]
-} 
 
 resource "azurerm_monitor_diagnostic_setting" "sql_database_logs" {
   name                         = "SqlDatabase_Logs"

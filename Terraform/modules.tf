@@ -154,7 +154,6 @@ module paas_app {
   integrated_subnet_id         = lookup(module.paas_spoke_vnet.subnet_ids,"appservice","")
   integrated_subnet_range      = var.vdc_config["paas_spoke_appsvc_subnet"]
   integrated_vnet_id           = module.paas_spoke_vnet.spoke_virtual_network_id
-  replace_dba                  = var.replace_dba
   shared_container_registry_name = var.shared_container_registry_name
   shared_resources_group       = var.shared_resources_group
   storage_import               = var.paas_app_storage_import

@@ -16,9 +16,7 @@ param (
     [parameter(Mandatory=$false)][switch]$Wait=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
-    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
-    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
-    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
+    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID
 ) 
 
 # Provide at least one argument
@@ -29,7 +27,7 @@ if (!($All -or $ConnectBastion -or $Network -or $ShowCredentials -or $SqlServer 
 }
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
-AzLogin
+AzLogin -AsUser
 
 try {
     # Terraform config

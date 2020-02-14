@@ -8,7 +8,7 @@
     It eliminates the need for a release pipeline just to test the Web App.
 #> 
 param (    
-    [parameter(Mandatory=$false,HelpMessage="The workspace tag to filter use")][string] $Workspace,
+    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace,
     [parameter(Mandatory=$false)][int]$MaxTests=60,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
@@ -16,6 +16,9 @@ param (
 
 try {
     Push-Location $tfdirectory
+    if ($Workspace) {
+        terraform workspace select $Workspace
+    }
     if ($MyInvocation.InvocationName -ne "&") {
         Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
     }

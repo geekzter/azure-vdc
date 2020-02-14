@@ -32,9 +32,6 @@ variable iag_subnet_id {}
 variable integrated_subnet_range {}
 variable integrated_subnet_id {}
 variable integrated_vnet_id {}
-variable replace_dba {
-  type                         = bool
-}
 variable shared_container_registry_name {}
 variable shared_resources_group {}
 variable storage_import {
