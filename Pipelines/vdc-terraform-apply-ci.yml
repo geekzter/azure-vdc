@@ -21,11 +21,9 @@ steps:
 - task: DownloadSecureFile@1
   displayName: 'Download VPN root certificate'
   inputs:
-#   secureFile: '$(TF_VAR_vpn_root_cert_file)'
     secureFile: '$(ssl-certificate)'
 
 - task: DownloadSecureFile@1
   displayName: 'Download SSL certificate'
   inputs:
-#   secureFile: '$(TF_VAR_vanity_certificate_path)'
     secureFile: '$(vpn-root-certificate)'
