@@ -19,7 +19,7 @@ steps:
   displayName: 'Run a multi-line script'
 
 - task: DownloadSecureFile@1
-  displayName: 'Download VPN root certificate'
+  displayName: 'Download SSL certificate'
   inputs:
-    secureFile: 'P2SRootCert.cer'
+    secureFile: 'STAR_geekzter_io.pfx'
 
