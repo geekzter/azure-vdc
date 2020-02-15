@@ -52,7 +52,7 @@ steps:
     Inline: |
       # You can write your azure powershell scripts inline here. 
       # You can also pass predefined and custom variables to this script using arguments
-      Get-AZContext
+      Get-AzContext
 
 # - task: AzurePowerShell@4
 #   displayName: 'Terraform init and apply'
