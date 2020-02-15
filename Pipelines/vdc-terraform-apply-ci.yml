@@ -26,5 +26,4 @@ steps:
 - task: DownloadSecureFile@1
   displayName: 'Download VPN root certificate'
   inputs:
-    secureFile: 'P2SRootCert.cer'
-
+    secureFile: P2SRootCert.cer
