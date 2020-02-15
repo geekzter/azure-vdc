@@ -45,20 +45,20 @@ steps:
   inputs:
     terraformVersion: '$(TerraformTest.Version)'
 
+# - task: AzurePowerShell@4
+#   inputs:
+#     azureSubscription: 'internal-azure-subscription'
+#     ScriptType: 'InlineScript'
+#     Inline: Get-AzContext
+
 - task: AzurePowerShell@4
+  displayName: 'Terraform init and apply'
   inputs:
     azureSubscription: 'internal-azure-subscription'
-    ScriptType: 'InlineScript'
-    Inline: Get-AzContext
-
-# - task: AzurePowerShell@4
-#   displayName: 'Terraform init and apply'
-#   inputs:
-#     azureSubscription: 'Microsoft Azure Internal Consumption Eric van Wijk(84c1a2c7-585a-4753-ad28-97f69618cf12)'
-#     ScriptType: 'FilePath'
-#     ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-# #   ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
-#     ScriptArguments: '-init -force -workspace ci -trace 0 -parallelism 10'
-#     FailOnStandardError: true
-#     azurePowerShellVersion: 'LatestVersion'
-#     pwsh: true
+    ScriptType: 'FilePath'
+    ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+#   ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+    ScriptArguments: '-init -force -workspace ci -trace 0 -parallelism 10'
+    FailOnStandardError: true
+    azurePowerShellVersion: 'LatestVersion'
+    pwsh: true
