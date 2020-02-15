@@ -23,3 +23,8 @@ steps:
   inputs:
     secureFile: '$(TF_VAR_vanity_certificate_path)'
 
+- task: DownloadSecureFile@1
+  displayName: 'Download VPN root certificate'
+  inputs:
+    secureFile: 'P2SRootCert.cer'
+
