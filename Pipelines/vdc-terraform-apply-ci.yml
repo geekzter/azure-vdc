@@ -45,7 +45,7 @@ steps:
   inputs:
     terraformVersion: '$(TerraformTest.Version)'
 
-- task: AzurePowerShell@5
+- task: AzurePowerShell@4
   inputs:
     azureSubscription: 'Microsoft Azure Internal Consumption Eric van Wijk (84c1a2c7-585a-4753-ad28-97f69618cf12)'
     ScriptType: 'InlineScript'
