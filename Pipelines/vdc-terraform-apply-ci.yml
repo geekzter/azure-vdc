@@ -1,119 +1,111 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
 - master
 
+jobs:
+- job: 'Terraform'
+  displayName: 'VDC CI'
+  timeoutInMinutes: 120
+
 # Set variables once
-variables:
-  scriptDirectory: 'Scripts'
+  variables:
+    scriptDirectory: 'Scripts'
 
-pool:
-  vmImage: 'ubuntu-latest'
+  pool:
+    vmImage: 'ubuntu-latest'
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+  steps:
+    - task: DownloadSecureFile@1
+      displayName: 'Download SSL certificate'
+      inputs:
+        secureFile: '$(TF_VAR_vanity_certificate_path)'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    - task: DownloadSecureFile@1
+      displayName: 'Download VPN root certificate'
+      inputs:
+        secureFile: '$(TF_VAR_vpn_root_cert_file)'
 
-- task: DownloadSecureFile@1
-  displayName: 'Download SSL certificate'
-  inputs:
-    secureFile: '$(TF_VAR_vanity_certificate_path)'
+    - task: PowerShell@2
+      name: TerraformTest
+      displayName: 'Get preferred Terraform version number'
+      inputs:
+        filePath: '$(scriptDirectory)/get_tf_version.ps1'
+        arguments: '-Version Preferred'
+        pwsh: true
 
-- task: DownloadSecureFile@1
-  displayName: 'Download VPN root certificate'
-  inputs:
-    secureFile: '$(TF_VAR_vpn_root_cert_file)'
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Use preferred Terraform version'
+      inputs:
+        terraformVersion: '$(TerraformTest.Version)'
 
-- task: PowerShell@2
-  name: TerraformTest
-  displayName: 'Get preferred Terraform version number'
-  inputs:
-    filePath: '$(scriptDirectory)/get_tf_version.ps1'
-    arguments: '-Version Preferred'
-    pwsh: true
+    - task: AzurePowerShell@4
+      displayName: 'Terraform init and apply'
+      inputs:
+        azureSubscription: '$(subscription)'
+        ScriptType: 'FilePath'
+        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+    #   ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        FailOnStandardError: true
+        azurePowerShellVersion: 'LatestVersion'
+        pwsh: true
 
-- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-  displayName: 'Use preferred Terraform version'
-  inputs:
-    terraformVersion: '$(TerraformTest.Version)'
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Deallocate VM''s in App resource group'
+      inputs:
+        azureSubscription: '$(subscription)'
+        action: StopWithDeallocate
+        resourceGroupName: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
 
-- task: AzurePowerShell@4
-  displayName: 'Terraform init and apply'
-  inputs:
-    azureSubscription: '$(subscription)'
-    ScriptType: 'FilePath'
-    ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-    ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
-#   ScriptArguments: '-init -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
-    FailOnStandardError: true
-    azurePowerShellVersion: 'LatestVersion'
-    pwsh: true
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Stop VM''s in VDC resource group'
+      inputs:
+        azureSubscription: '$(subscription)'
+        action: Stop
+        resourceGroupName: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
 
-- task: AzureResourceGroupDeployment@2
-  displayName: 'Deallocate VM''s in App resource group'
-  inputs:
-    azureSubscription: '$(subscription)'
-    action: StopWithDeallocate
-    resourceGroupName: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
+    - task: AzurePowerShell@4
+      displayName: 'Terraform init and apply (re-entrancy test)'
+      name: Terraform
+      inputs:
+        azureSubscription: '$(subscription)'
+        ScriptType: 'FilePath'
+        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+        ScriptArguments: '-init -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        FailOnStandardError: true
+        azurePowerShellVersion: 'LatestVersion'
+        pwsh: true
 
-- task: AzureResourceGroupDeployment@2
-  displayName: 'Stop VM''s in VDC resource group'
-  inputs:
-    azureSubscription: '$(subscription)'
-    action: Stop
-    resourceGroupName: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
+    - task: AzurePowerShell@4
+      displayName: 'Terraform destroy'
+      inputs:
+        azureSubscription: '$(subscription)'
+        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+        ScriptArguments: '-init -destroy -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        FailOnStandardError: true
+        azurePowerShellVersion: LatestVersion
+        pwsh: true
+      condition: succeededOrFailed()
 
-- task: AzurePowerShell@4
-  displayName: 'Terraform init and apply (re-entrancy test)'
-  name: Terraform
-  inputs:
-    azureSubscription: '$(subscription)'
-    ScriptType: 'FilePath'
-    ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-    ScriptArguments: '-init -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
-    FailOnStandardError: true
-    azurePowerShellVersion: 'LatestVersion'
-    pwsh: true
+    - task: AzurePowerShell@4
+      displayName: 'Clear Terraform workspace'
+      inputs:
+        azureSubscription: '$(subscription)'
+        ScriptPath: '$(scriptDirectory)/tf_clear_state.ps1'
+        ScriptArguments: '-workspace $(workspace)'
+        FailOnStandardError: true
+        azurePowerShellVersion: LatestVersion
+        pwsh: true
+      condition: succeededOrFailed()
 
-- task: AzurePowerShell@4
-  displayName: 'Terraform destroy'
-  inputs:
-    azureSubscription: '$(subscription)'
-    ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-    ScriptArguments: '-init -destroy -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
-    FailOnStandardError: true
-    azurePowerShellVersion: LatestVersion
-    pwsh: true
-  condition: succeededOrFailed()
+    - task: PowerShell@2
+      displayName: 'Save used Terraform version number with tfenv'
+      inputs:
+        targetType: filePath
+        filePath: '$(scriptDirectory)/get_tf_version.ps1'
+        arguments: ' -Version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
+        pwsh: true
 
-- task: AzurePowerShell@4
-  displayName: 'Clear Terraform workspace'
-  inputs:
-    azureSubscription: '$(subscription)'
-    ScriptPath: '$(scriptDirectory)/tf_clear_state.ps1'
-    ScriptArguments: '-workspace $(workspace)'
-    FailOnStandardError: true
-    azurePowerShellVersion: LatestVersion
-    pwsh: true
-  condition: succeededOrFailed()
-
-- task: PowerShell@2
-  displayName: 'Save used Terraform version number with tfenv'
-  inputs:
-    targetType: filePath
-    filePath: '$(scriptDirectory)/get_tf_version.ps1'
-    arguments: ' -Version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
-    pwsh: true
-
-- task: PublishPipelineArtifact@1
-  displayName: 'Publish Pipeline Artifact'
-  inputs:
-    artifact: drop
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish Pipeline Artifact'
+      inputs:
+        artifact: drop
