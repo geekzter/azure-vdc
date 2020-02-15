@@ -53,9 +53,3 @@ steps:
     pwsh: true
     workingDirectory: Scripts
 
-- powershell: |
-   Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip
-
-  pwsh: true
-  displayName: 'Show public IP address'
-
