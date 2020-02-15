@@ -21,9 +21,5 @@ steps:
 - task: DownloadSecureFile@1
   displayName: 'Download VPN root certificate'
   inputs:
-    secureFile: '$(ssl-certificate)'
+    secureFile: 'STAR_geekzter_io.pfx'
 
-- task: DownloadSecureFile@1
-  displayName: 'Download SSL certificate'
-  inputs:
-    secureFile: '$(vpn-root-certificate)'
