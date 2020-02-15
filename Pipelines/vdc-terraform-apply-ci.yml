@@ -72,7 +72,8 @@ steps:
     resourceGroupName: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
 
 - task: AzurePowerShell@4
-  displayName: 'Terraform init and apply'
+  displayName: 'Terraform init and apply (re-entrancy test)'
+  name: Terraform
   inputs:
     azureSubscription: '$(subscription)'
     ScriptType: 'FilePath'
