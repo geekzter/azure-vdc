@@ -51,8 +51,8 @@ steps:
     azureSubscription: '$(subscription)'
     ScriptType: 'FilePath'
     ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-#   ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
-    ScriptArguments: '-init -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+    ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+#   ScriptArguments: '-init -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
     FailOnStandardError: true
     azurePowerShellVersion: 'LatestVersion'
     pwsh: true
