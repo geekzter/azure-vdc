@@ -27,8 +27,11 @@ Execute-Sql -QueryFile $msiSqlScript -Parameters $msiSqlParameters -SqlDatabaseN
 
 if ($DBAName -and $DBAObjectId) {
     $dbaSID = ConvertTo-Sid $DBAObjectId
-    $dbaSqlParameters = @{dba_name=$MSIName;dba_sid=$dbaSID}
+    $dbaSqlParameters = @{dba_name=$DBAName;dba_sid=$dbaSID}
     $scriptDirectory = (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).FullName 
     $dbaSqlScript = (Join-Path $scriptDirectory "grant-dbas-database-access.sql")
-    Execute-Sql -QueryFile $dbaSqlScript -Parameters $dbaSqlParameters -SqlServerFQDN $SqlServerFQDN
+    # Can't connect to Master to make DBA server admin
+    #Execute-Sql -QueryFile $dbaSqlScript -Parameters $dbaSqlParameters -SqlServerFQDN $SqlServerFQDN
+    # Connect to database instead
+    Execute-Sql -QueryFile $dbaSqlScript -Parameters $dbaSqlParameters -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN
 }

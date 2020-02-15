@@ -1,4 +1,3 @@
--- Should run in master database
 DECLARE @sql VARCHAR(4096)
 SELECT @@version
 
@@ -12,7 +11,11 @@ BEGIN
 	SELECT @sql = 'CREATE USER [@dba_name] WITH SID = @dba_sid, TYPE=X'
 	EXEC (@sql)
 END
-ALTER ROLE dbmanager ADD MEMBER [@dba_name];
+--ALTER ROLE dbmanager ADD MEMBER [@dba_name];
+ALTER ROLE db_owner ADD MEMBER [@dba_name];
+ALTER ROLE db_owner ADD MEMBER [@dba_name];
+ALTER ROLE db_owner ADD MEMBER [@dba_name];
+ALTER ROLE db_owner ADD MEMBER [@dba_name];
 
 SELECT name 
 FROM sys.sysusers 

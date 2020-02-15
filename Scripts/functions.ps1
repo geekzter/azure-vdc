@@ -1,12 +1,22 @@
-function AzLogin () {
+function AzLogin (
+    [parameter(Mandatory=$false)][switch]$AsUser
+) {
     if (!(Get-AzContext)) {
         Write-Host "Reconnecting to Azure with SPN..."
         if(-not($clientid)) { Throw "You must supply a value for clientid" }
         if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
-        # Use Terraform ARM Backend config to authenticate to Azure
-        $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-        $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
+        if ($AsUser) {
+            Connect-AzAccount -Tenant $tenantid -Subscription $subscription
+        } else {
+            # Use Terraform ARM Backend config to authenticate to Azure
+            $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
+            $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
+            $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
+        }
+    } else {
+        if ($AsUser -and ((Get-AzContext).Account.Type -ine "User")) {
+            Connect-AzAccount -Tenant $tenantid -Subscription $subscription
+        } 
     }
     $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
 }
@@ -100,8 +110,11 @@ function Execute-Sql (
  
         # Execute SQL Command
         Write-Debug "Executing query:`n$query"
-        $Result = $command.ExecuteNonQuery()
-        $Result
+        $result = $command.ExecuteNonQuery()
+        $result
+    } catch [System.Data.SqlException] {
+        Write-Error $_ # Make sure this gets written to error stream
+        throw
     } finally {
         $conn.Close()
     }

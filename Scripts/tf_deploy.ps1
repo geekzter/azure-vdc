@@ -173,6 +173,8 @@ try {
         if ($StickySuffix) {
             SetSuffix
         }
+
+        # Create plan
         Invoke "terraform plan $varArgs -parallelism=$Parallelism -out='$PlanFile'" 
     }
 

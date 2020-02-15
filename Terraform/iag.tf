@@ -309,14 +309,14 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "crl.microsoft.com",
       "mscrl.microsoft.com",
       "ocsp.msocsp.com",
-      "dl.delivery.mp.microsoft.com",
+    # "dl.delivery.mp.microsoft.com",
     # "www.microsoft.com"
       "www.msftconnecttest.com"
     ]
 
     protocol {
         port                   = "80"
-        type                   = "Https"
+        type                   = "Http"
     }
   }
 } 
