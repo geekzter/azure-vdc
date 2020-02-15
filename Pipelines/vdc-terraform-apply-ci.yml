@@ -28,7 +28,6 @@ steps:
   inputs:
     secureFile: '$(TF_VAR_vpn_root_cert_file)'
 
-
 - task: PowerShell@2
   displayName: 'Get preferred Terraform version number'
   inputs:
