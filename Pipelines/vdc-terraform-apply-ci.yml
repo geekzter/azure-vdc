@@ -18,12 +18,59 @@ steps:
     echo See https://aka.ms/yaml
   displayName: 'Run a multi-line script'
 
-#- task: DownloadSecureFile@1
-#  displayName: 'Download SSL certificate'
-#  inputs:
-#    secureFile: '$(TF_VAR_vanity_certificate_path)'
+- task: DownloadSecureFile@1
+  displayName: 'Download SSL certificate'
+  inputs:
+    secureFile: '$(TF_VAR_vanity_certificate_path)'
 
 - task: DownloadSecureFile@1
   displayName: 'Download VPN root certificate'
   inputs:
-    secureFile: 'P2SRootCert.cer'
+    secureFile: '$(TF_VAR_vpn_root_cert_file)'
+
+
+- task: PowerShell@2
+  displayName: 'Get preferred Terraform version number'
+  inputs:
+    targetType: filePath
+    filePath: './Scripts/get_tf_version.ps1'
+    arguments: ' -Version Preferred'
+    pwsh: true
+
+- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+  displayName: 'Use preferred Terraform version'
+  inputs:
+    terraformVersion: '$(TerraformTest.Version)'
+
+- powershell: |
+   # This module may not be present (yet)
+   Get-InstalledModule Az.PrivateDnsz -AllVersions -ErrorAction SilentlyContinue
+   Install-Module -Name Az.PrivateDns -Scope CurrentUser -Force -AllowClobber
+   Get-InstalledModule Az.PrivateDns -AllVersions
+   Get-InstalledModule Az.PrivateDns
+   Import-Module Az.PrivateDns
+   Get-Module Az.PrivateDns
+   Get-Command 'New-AzPrivateDnsRecordConfig'
+   Get-Module Az.Accounts -ListAvailable
+  failOnStderr: true
+  pwsh: true
+  displayName: 'PowerShell Pre-Requisites'
+  enabled: false
+
+- task: AzurePowerShell@4
+  displayName: 'Terraform init & apply'
+  inputs:
+    azureSubscription: 'Microsoft Azure Internal Consumption Eric van Wijk (84c1a2c7-585a-4753-ad28-97f69618cf12)'
+    ScriptPath: 'Scripts/tf_deploy.ps1'
+    ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+    FailOnStandardError: true
+    azurePowerShellVersion: LatestVersion
+    pwsh: true
+    workingDirectory: Scripts
+
+- powershell: |
+   Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip
+   
+  pwsh: true
+  displayName: 'Show public IP address'
+
