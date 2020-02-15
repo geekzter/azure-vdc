@@ -56,3 +56,17 @@ steps:
     FailOnStandardError: true
     azurePowerShellVersion: 'LatestVersion'
     pwsh: true
+
+- task: AzureResourceGroupDeployment@2
+  displayName: 'Deallocate VM''s in App resource group'
+  inputs:
+    azureSubscription: '$(subscription)'
+    action: StopWithDeallocate
+    resourceGroupName: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
+
+- task: AzureResourceGroupDeployment@2
+  displayName: 'Stop VM''s in VDC resource group'
+  inputs:
+    azureSubscription: '$(subscription)'
+    action: Stop
+    resourceGroupName: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
