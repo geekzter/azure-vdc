@@ -8,10 +8,16 @@ jobs:
 
 # Set variables once
   variables:
+    iaasResourceGroup: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
+    paasResourceGroup: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-paasapp-$(TF_VAR_resource_suffix)'
+    vdcResourceGroup: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
     scriptDirectory: 'Scripts'
 
   pool:
     vmImage: 'ubuntu-latest'
+
+  workspace:
+    clean: all
 
   steps:
     - task: DownloadSecureFile@1
@@ -54,14 +60,14 @@ jobs:
       inputs:
         azureSubscription: '$(subscription)'
         action: StopWithDeallocate
-        resourceGroupName: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
+        resourceGroupName: '$(iaasResourceGroup)'
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Stop VM''s in VDC resource group'
       inputs:
         azureSubscription: '$(subscription)'
         action: Stop
-        resourceGroupName: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
+        resourceGroupName: '$(vdcResourceGroup)'
 
     - task: AzurePowerShell@4
       displayName: 'Terraform init and apply (re-entrancy test)'
@@ -86,12 +92,39 @@ jobs:
         pwsh: true
       condition: succeededOrFailed()
 
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Tear down IaaS App resource group'
+      inputs:
+        azureSubscription: '$(subscription)'
+        action: DeleteRG
+        resourceGroupName: '$(iaasResourceGroup)'
+      continueOnError: true
+      condition: always()
+
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Tear down PaaS App resource group'
+      inputs:
+        azureSubscription: '$(subscription)'
+        action: DeleteRG
+        resourceGroupName: '$(paasResourceGroup)'
+      continueOnError: true
+      condition: always()
+
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Tear down VDC resource group'
+      inputs:
+        azureSubscription: '$(subscription)'
+        action: DeleteRG
+        resourceGroupName: '$(vdcResourceGroup)'
+      continueOnError: true
+      condition: always()
+
     - task: AzurePowerShell@4
       displayName: 'Clear Terraform workspace'
       inputs:
         azureSubscription: '$(subscription)'
         ScriptPath: '$(scriptDirectory)/tf_clear_state.ps1'
-        ScriptArguments: '-workspace $(workspace)'
+        ScriptArguments: '-workspace $(workspace) -Destroy -Force'
         FailOnStandardError: true
         azurePowerShellVersion: LatestVersion
         pwsh: true
