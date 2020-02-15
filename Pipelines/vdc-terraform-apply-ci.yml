@@ -17,3 +17,14 @@ steps:
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
   displayName: 'Run a multi-line script'
+
+- task: DownloadSecureFile@1
+  displayName: 'Download VPN root certificate'
+  inputs:
+    secureFile: $(TF_VAR_vpn_root_cert_file)
+
+- task: DownloadSecureFile@1
+  displayName: 'Download SSL certificate'
+  inputs:
+    secureFile: $(TF_VAR_vanity_certificate_path)
+
