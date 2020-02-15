@@ -105,14 +105,6 @@ steps:
   condition: succeededOrFailed()
 
 - task: PowerShell@2
-  displayName: 'Save used Terraform version number'
-  inputs:
-    targetType: filePath
-    filePath: '$(scriptDirectory)/get_tf_version.ps1'
-    arguments: ' -Version installed | Out-File $(Build.ArtifactStagingDirectory)/terraform-version.txt'
-    pwsh: true
-
-- task: PowerShell@2
   displayName: 'Save used Terraform version number with tfenv'
   inputs:
     targetType: filePath
@@ -124,4 +116,3 @@ steps:
   displayName: 'Publish Pipeline Artifact'
   inputs:
     artifact: drop
-
