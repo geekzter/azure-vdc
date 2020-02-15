@@ -45,12 +45,6 @@ steps:
   inputs:
     terraformVersion: '$(TerraformTest.Version)'
 
-# - task: AzurePowerShell@4
-#   inputs:
-#     azureSubscription: 'internal-azure-subscription'
-#     ScriptType: 'InlineScript'
-#     Inline: Get-AzContext
-
 - task: AzurePowerShell@4
   displayName: 'Terraform init and apply'
   inputs:
