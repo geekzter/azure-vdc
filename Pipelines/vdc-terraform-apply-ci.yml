@@ -37,19 +37,18 @@ steps:
     arguments: ' -Version Preferred'
     pwsh: true
 
-- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-  displayName: 'Use preferred Terraform version'
-  inputs:
-    terraformVersion: '$(TerraformTest.Version)'
+#- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+#  displayName: 'Use preferred Terraform version'
+#  inputs:
+#    terraformVersion: '$(TerraformTest.Version)'
 
-- task: AzurePowerShell@4
-  displayName: 'Terraform init & apply'
-  inputs:
-    azureSubscription: 'Microsoft Azure Internal Consumption Eric van Wijk (84c1a2c7-585a-4753-ad28-97f69618cf12)'
-    ScriptPath: 'Scripts/tf_deploy.ps1'
-    ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
-    FailOnStandardError: true
-    azurePowerShellVersion: LatestVersion
-    pwsh: true
-    workingDirectory: Scripts
-
+#- task: AzurePowerShell@4
+#  displayName: 'Terraform init & apply'
+#  inputs:
+#    azureSubscription: 'Microsoft Azure Internal Consumption Eric van Wijk (84c1a2c7-585a-4753-ad28-97f69618cf12)'
+#    ScriptPath: 'Scripts/tf_deploy.ps1'
+#    ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+#    FailOnStandardError: true
+#    azurePowerShellVersion: LatestVersion
+#    pwsh: true
+#    workingDirectory: Scripts
