@@ -18,12 +18,12 @@ steps:
     echo See https://aka.ms/yaml
   displayName: 'Run a multi-line script'
 
-- task: DownloadSecureFile@1
-  displayName: 'Download SSL certificate'
-  inputs:
-    secureFile: '$(TF_VAR_vanity_certificate_path)'
+#- task: DownloadSecureFile@1
+#  displayName: 'Download SSL certificate'
+#  inputs:
+#    secureFile: '$(TF_VAR_vanity_certificate_path)'
 
 - task: DownloadSecureFile@1
   displayName: 'Download VPN root certificate'
   inputs:
-    secureFile: P2SRootCert.cer
+    secureFile: 'P2SRootCert.cer'
