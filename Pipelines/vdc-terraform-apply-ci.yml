@@ -148,7 +148,7 @@ jobs:
 - job: 'Deploy'
   dependsOn: 'Reprovision'
   displayName: 'Deploy & Test PaaS Application'
-  timeoutInMinutes: 120
+  timeoutInMinutes: 30
 
   variables:
     appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
