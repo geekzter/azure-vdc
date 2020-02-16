@@ -154,7 +154,7 @@ jobs:
         specificBuildWithTriggering: true
         buildVersionToDownload: 'latest'
         artifactName: 'aspnetcoresql'
-        targetPath: '$(Pipeline.Workspace)/_asp.net-core-sql-ci'
+        targetPath: '$(Pipeline.Workspace)/aspnetcoresql'
 
     - task: PowerShell@2
       displayName: 'List ASP.NET Core App Artifacts'
@@ -163,7 +163,7 @@ jobs:
         script: 'Get-ChildItem . -Recurse | Select-Object FullName'
         errorActionPreference: 'continue'
         pwsh: true
-        workingDirectory: '$(Pipeline.Workspace)/_asp.net-core-sql-ci'
+        workingDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
 
     # Deploy PaaS Application
     - task: AzureWebApp@1
@@ -172,7 +172,7 @@ jobs:
         azureSubscription: '$(subscription)'
         appType: webApp
         appName: '$(appServiceName)'
-        package: '$(Pipeline.Workspace)/_asp.net-core-sql-ci/aspnetcoresql/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
+        package: '$(Pipeline.Workspace)/aspnetcoresql/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
 
     # Test PaaS Application
     - task: PowerShell@2
