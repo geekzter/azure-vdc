@@ -156,12 +156,13 @@ jobs:
         artifactName: 'aspnetcoresql'
         targetPath: '$(Pipeline.Workspace)/_asp.net-core-sql-ci'
 
-    - task: Bash@3
+    - task: PowerShell@2
       displayName: 'List ASP.NET Core App Artifacts'
       inputs:
         targetType: 'inline'
-        script: |
-          find . -type f
+        script: 'Get-ChildItem . -Recurse | Select-Object FullName'
+        errorActionPreference: 'continue'
+        pwsh: true
         workingDirectory: '$(Pipeline.Workspace)/_asp.net-core-sql-ci'
 
     # Deploy PaaS Application
