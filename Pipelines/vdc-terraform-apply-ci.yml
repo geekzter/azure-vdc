@@ -224,7 +224,7 @@ jobs:
         azurePowerShellVersion: LatestVersion
         pwsh: true
       condition: succeededOrFailed()
-      enabled: false
+      enabled: true
 
     - task: PowerShell@2
       displayName: 'Save used Terraform version number with tfenv'
@@ -244,9 +244,9 @@ jobs:
 - job: 'CleanUp'
   dependsOn: 'Destroy'
   displayName: 'Clean Up'
-# condition: failed()
+  condition: failed()
   # Disable job
-  condition: eq(1,2)
+# condition: eq(1,2)
   timeoutInMinutes: 120
 
   # Set variables once
