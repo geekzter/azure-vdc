@@ -136,7 +136,6 @@ jobs:
     appBuild: 'Release'
     paasAppUrl: $[ dependencies.Reprovision.outputs['Terraform.paas_app_url'] ]
     scriptDirectory: 'Scripts'
-    terraformVersion: $[ dependencies.Reprovision.outputs['TerraformTest.Version'] ]
 
   pool:
     name: $(pool)
@@ -188,6 +187,24 @@ jobs:
         failOnStderr: true
         pwsh: true
 
+
+# Destroy infrastructure
+- job: 'Destroy'
+  dependsOn: 'Deploy'
+  displayName: 'Destroy infrastructure'
+  timeoutInMinutes: 120
+
+# Set variables once
+  variables:
+    scriptDirectory: 'Scripts'
+    terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
+
+  pool:
+    name: $(pool)
+    demands:
+    - Agent.OS -equals Linux
+
+  steps:
     - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
       inputs:
@@ -203,6 +220,7 @@ jobs:
         azurePowerShellVersion: LatestVersion
         pwsh: true
       condition: succeededOrFailed()
+      enabled: false
 
     - task: PowerShell@2
       displayName: 'Save used Terraform version number with tfenv'
@@ -220,8 +238,11 @@ jobs:
 
 # Clean up resources        
 - job: 'CleanUp'
-  dependsOn: 'Deploy'
+  dependsOn: 'Destroy'
   displayName: 'Clean Up'
+# condition: failed()
+  # Disable job
+  condition: eq(1,2)
   timeoutInMinutes: 120
 
   # Set variables once
