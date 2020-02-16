@@ -48,13 +48,14 @@ jobs:
         terraformVersion: '$(TerraformTest.Version)'
 
     - task: AzurePowerShell@4
+      name: Terraform
       displayName: 'Terraform init and apply'
       inputs:
         azureSubscription: '$(subscription)'
         ScriptType: 'FilePath'
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
-    #   ScriptArguments: '-init -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+    #   ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -109,8 +110,8 @@ jobs:
         resourceGroupName: '$(vdcResourceGroup)'
 
     - task: AzurePowerShell@4
-      displayName: 'Terraform init and apply (re-entrance test)'
       name: Terraform
+      displayName: 'Terraform init and apply (re-entrance test)'
       inputs:
         azureSubscription: '$(subscription)'
         ScriptType: 'FilePath'
