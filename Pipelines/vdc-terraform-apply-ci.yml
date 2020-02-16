@@ -122,15 +122,16 @@ jobs:
 
 # Deploy PaaS application 
 - job: 'Deploy'
-  displayName: 'Terraform (re-entrance test)'
+  displayName: 'Deploy & Test PaaS application'
   timeoutInMinutes: 120
 
 # Set variables once
   variables:
-    iaasResourceGroup: $[ dependencies.Provision.outputs['Terraform.iaas_app_resource_group'] ]
-    vdcResourceGroup: $[ dependencies.Provision.outputs['Terraform.vdc_resource_group'] ]
+    appServiceName: $[ dependencies.Reprovision.outputs['Terraform.paas_app_service_name'] ]
+    appBuild: 'Release'
+    paasAppUrl: $[ dependencies.Reprovision.outputs['Terraform.paas_app_url'] ]
     scriptDirectory: 'Scripts'
-    terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
+    terraformVersion: $[ dependencies.Reprovision.outputs['TerraformTest.Version'] ]
 
   pool:
     name: $(pool)
@@ -138,8 +139,44 @@ jobs:
     - Agent.OS -equals Linux
 
   steps:
-    # TODO: Download PaaS Application Pipeline artifacts
-    # TODO: Deploy PaaS Application
+    # Download PaaS Application Pipeline artifacts
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        buildType: 'specific'
+        project: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
+        definition: '63'
+        specificBuildWithTriggering: true
+        buildVersionToDownload: 'latest'
+        artifactName: 'aspnetcoresql'
+        targetPath: '$(Pipeline.Workspace)/_asp.net-core-sql-ci'
+
+    # Deploy PaaS Application
+    - task: AzureWebApp@1
+      displayName: 'Deploy ASP.NET Core App'
+      inputs:
+        azureSubscription: '$(subscription)'
+        appType: webApp
+        appName: '$(appServiceName)'
+        package: '$(Pipeline.Workspace)/_asp.net-core-sql-ci/aspnetcoresql/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
+
+    # Test PaaS Application
+    - task: PowerShell@2
+      displayName: 'Test ASP.NET Core App'
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Wait for the WAF to get ready
+          Start-Sleep -Seconds 30
+          
+          # Request page
+          Invoke-WebRequest $(paasAppUrl)
+        failOnStderr: true
+        pwsh: true
+
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Use preferred Terraform version'
+      inputs:
+        terraformVersion: '$(terraformVersion)'
 
     - task: AzurePowerShell@4
       displayName: 'Terraform destroy'
