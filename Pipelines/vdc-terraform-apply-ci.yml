@@ -248,8 +248,8 @@ jobs:
 # Clean up resources        
 - job: 'CleanUp'
   dependsOn:
-      - Destroy
-      - Reprovision
+    - Destroy
+    - Reprovision
   displayName: 'Clean Up'
   condition: failed()
 # condition: eq(1,2) # Disable job
