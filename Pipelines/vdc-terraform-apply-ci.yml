@@ -62,6 +62,7 @@ jobs:
 
 # Provision again to test for issue's that only come up when resources already exist 
 - job: 'Reprovision'
+  dependsOn: 'Provision'
   displayName: 'Terraform (re-entrance test)'
   timeoutInMinutes: 120
 
@@ -122,6 +123,7 @@ jobs:
 
 # Deploy PaaS application 
 - job: 'Deploy'
+  dependsOn: 'Reprovision'
   displayName: 'Deploy & Test PaaS application'
   timeoutInMinutes: 120
 
@@ -205,6 +207,7 @@ jobs:
 
 # Clean up resources        
 - job: 'CleanUp'
+  dependsOn: 'Deploy'
   displayName: 'Clean Up'
   timeoutInMinutes: 120
 
