@@ -96,7 +96,7 @@ jobs:
       inputs:
         terraformVersion: '$(terraformVersion)'
 
-    # Deallocate/Stop MV's to force tf_deploy.ps1 to test for stooped VM's
+    # Deallocate/Stop MV's to force tf_deploy.ps1 to test for stopped VM's
     # Stopped VM's do not allow extensions to be installed
     - task: AzureResourceGroupDeployment@2
       displayName: 'Deallocate VM''s in App resource group'
@@ -247,7 +247,9 @@ jobs:
 
 # Clean up resources        
 - job: 'CleanUp'
-  dependsOn: 'Destroy'
+  dependsOn:
+      - Destroy
+      - Reprovision
   displayName: 'Clean Up'
   condition: failed()
 # condition: eq(1,2) # Disable job
