@@ -146,6 +146,7 @@ jobs:
   steps:
     # Download PaaS Application Pipeline artifacts
     - task: DownloadPipelineArtifact@2
+      displayName: 'Download ASP.NET Core App Artifacts'
       inputs:
         buildType: 'specific'
         project: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
@@ -154,6 +155,14 @@ jobs:
         buildVersionToDownload: 'latest'
         artifactName: 'aspnetcoresql'
         targetPath: '$(Pipeline.Workspace)/_asp.net-core-sql-ci'
+
+    - task: Bash@3
+      displayName: 'List ASP.NET Core App Artifacts'
+      inputs:
+        targetType: 'inline'
+        script: |
+          find . -type f
+        workingDirectory: '$(Pipeline.Workspace)/_asp.net-core-sql-ci'
 
     # Deploy PaaS Application
     - task: AzureWebApp@1
