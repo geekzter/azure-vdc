@@ -132,6 +132,7 @@ jobs:
 
 # Set variables once
   variables:
+    appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
     appServiceName: $[ dependencies.Reprovision.outputs['Terraform.paas_app_service_name'] ]
     appBuild: 'Release'
     paasAppUrl: $[ dependencies.Reprovision.outputs['Terraform.paas_app_url'] ]
@@ -153,16 +154,17 @@ jobs:
         specificBuildWithTriggering: true
         buildVersionToDownload: 'latest'
         artifactName: 'aspnetcoresql'
-        targetPath: '$(Pipeline.Workspace)/aspnetcoresql'
+        targetPath: '$(appArtifactDirectory)'
 
     - task: PowerShell@2
       displayName: 'List ASP.NET Core App Artifacts'
+      enabled: false
       inputs:
         targetType: 'inline'
         script: 'Get-ChildItem . -Recurse | Select-Object FullName'
         errorActionPreference: 'continue'
         pwsh: true
-        workingDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
+        workingDirectory: '$(appArtifactDirectory)'
 
     # Deploy PaaS Application
     - task: AzureWebApp@1
@@ -171,7 +173,7 @@ jobs:
         azureSubscription: '$(subscription)'
         appType: webApp
         appName: '$(appServiceName)'
-        package: '$(Pipeline.Workspace)/aspnetcoresql/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
+        package: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
 
     # Test PaaS Application
     - task: PowerShell@2
