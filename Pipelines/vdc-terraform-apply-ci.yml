@@ -52,9 +52,9 @@ jobs:
         ScriptType: 'FilePath'
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         # To start from scratch, use these arguments:
-      # ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
         # To continue where a previous (broken) build left of, use these arguments:
-        ScriptArguments: '-init -apply -force -stickysuffix -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+      # ScriptArguments: '-init -apply -force -stickysuffix -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
