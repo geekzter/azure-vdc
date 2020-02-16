@@ -4,11 +4,30 @@ trigger:
 - master
 
 jobs:
+- job: 'Prep'
+  displayName: 'Start Self-Hosted Agent'
+
+  variables:
+    agentResourceGroup: 'PipelineAgents'
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+    # Start the VM that is hosting the agent that will run the rest of the pipeline
+    # This VM is prepped by: https://github.com/geekzter/azure-pipeline-agents
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Start Self-Hosted Agent(s)'
+      inputs:
+        azureSubscription: '$(subscription)'
+        action: 'Start'
+        resourceGroupName: '$(agentResourceGroup)'
+  
 - job: 'Provision'
+  dependsOn: 'Prep'
   displayName: 'Provision Infrastructure with Terraform'
   timeoutInMinutes: 120
 
-# Set variables once
   variables:
     scriptDirectory: 'Scripts'
 
@@ -67,7 +86,6 @@ jobs:
   displayName: 'Provision Infrastructure with Terraform (re-entrance test)'
   timeoutInMinutes: 120
 
-# Set variables once
   variables:
     iaasResourceGroup: $[ dependencies.Provision.outputs['Terraform.iaas_app_resource_group'] ]
     vdcResourceGroup: $[ dependencies.Provision.outputs['Terraform.vdc_resource_group'] ]
@@ -132,7 +150,6 @@ jobs:
   displayName: 'Deploy & Test PaaS Application'
   timeoutInMinutes: 120
 
-# Set variables once
   variables:
     appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
     appBuild: 'Release'
@@ -203,7 +220,6 @@ jobs:
   displayName: 'Destroy Infrastructure with Terraform'
   timeoutInMinutes: 120
 
-# Set variables once
   variables:
     scriptDirectory: 'Scripts'
     terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
@@ -255,7 +271,6 @@ jobs:
 # condition: eq(1,2) # Disable job
   timeoutInMinutes: 120
 
-  # Set variables once
   variables:
     iaasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.iaas_app_resource_group'] ]
     paasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.paas_app_resource_group'] ]
