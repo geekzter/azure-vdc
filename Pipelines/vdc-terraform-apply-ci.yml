@@ -10,9 +10,6 @@ jobs:
 
 # Set variables once
   variables:
-    iaasResourceGroup: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
-    paasResourceGroup: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-paasapp-$(TF_VAR_resource_suffix)'
-    vdcResourceGroup: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
     scriptDirectory: 'Scripts'
 
   pool:
