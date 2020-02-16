@@ -1,9 +1,11 @@
+# ARM_*, TF_VAR_* variables are shared so defined in Variable Groups defined in Library
+
 trigger:
 - master
 
 jobs:
-- job: 'Terraform'
-  displayName: 'VDC CI'
+- job: 'Provision'
+  displayName: 'Terraform'
   timeoutInMinutes: 120
 
 # Set variables once
@@ -57,6 +59,40 @@ jobs:
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
 
+
+# Provision again to test for issue's that only come up when resources already exist 
+- job: 'Reprovision'
+  displayName: 'Terraform (re-entrance test)'
+  timeoutInMinutes: 120
+
+# Set variables once
+  variables:
+    iaasResourceGroup: $[ dependencies.Provision.outputs['Terraform.iaas_app_resource_group'] ]
+    vdcResourceGroup: $[ dependencies.Provision.outputs['Terraform.vdc_resource_group'] ]
+    scriptDirectory: 'Scripts'
+    terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
+
+  pool:
+    name: $(pool)
+    demands:
+    - Agent.OS -equals Linux
+
+  steps:
+    - task: DownloadSecureFile@1
+      displayName: 'Download SSL certificate'
+      inputs:
+        secureFile: '$(TF_VAR_vanity_certificate_path)'
+
+    - task: DownloadSecureFile@1
+      displayName: 'Download VPN root certificate'
+      inputs:
+        secureFile: '$(TF_VAR_vpn_root_cert_file)'
+
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Use preferred Terraform version'
+      inputs:
+        terraformVersion: '$(terraformVersion)'
+
     - task: AzureResourceGroupDeployment@2
       displayName: 'Deallocate VM''s in App resource group'
       inputs:
@@ -72,7 +108,7 @@ jobs:
         resourceGroupName: '$(vdcResourceGroup)'
 
     - task: AzurePowerShell@4
-      displayName: 'Terraform init and apply (re-entrancy test)'
+      displayName: 'Terraform init and apply (re-entrance test)'
       name: Terraform
       inputs:
         azureSubscription: '$(subscription)'
@@ -82,6 +118,28 @@ jobs:
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
+
+
+# Deploy PaaS application 
+- job: 'Deploy'
+  displayName: 'Terraform (re-entrance test)'
+  timeoutInMinutes: 120
+
+# Set variables once
+  variables:
+    iaasResourceGroup: $[ dependencies.Provision.outputs['Terraform.iaas_app_resource_group'] ]
+    vdcResourceGroup: $[ dependencies.Provision.outputs['Terraform.vdc_resource_group'] ]
+    scriptDirectory: 'Scripts'
+    terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
+
+  pool:
+    name: $(pool)
+    demands:
+    - Agent.OS -equals Linux
+
+  steps:
+    # TODO: Download PaaS Application Pipeline artifacts
+    # TODO: Deploy PaaS Application
 
     - task: AzurePowerShell@4
       displayName: 'Terraform destroy'
@@ -94,6 +152,41 @@ jobs:
         pwsh: true
       condition: succeededOrFailed()
 
+    - task: PowerShell@2
+      displayName: 'Save used Terraform version number with tfenv'
+      inputs:
+        targetType: filePath
+        filePath: '$(scriptDirectory)/get_tf_version.ps1'
+        arguments: ' -Version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
+        pwsh: true
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish Initialized Terraform workspace (with tested version of providers)'
+      inputs:
+        artifact: drop
+
+
+# Clean up resources        
+- job: 'CleanUp'
+  displayName: 'Clean Up'
+  timeoutInMinutes: 120
+
+  # Set variables once
+  variables:
+    iaasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.iaas_app_resource_group'] ]
+    paasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.paas_app_resource_group'] ]
+    vdcResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.vdc_resource_group'] ]
+    scriptDirectory: 'Scripts'
+
+  pool:
+    name: $(pool)
+    demands:
+    - Agent.OS -equals Linux
+
+  workspace:
+    clean: all
+
+  steps:
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down IaaS App resource group'
       inputs:
@@ -130,17 +223,4 @@ jobs:
         FailOnStandardError: true
         azurePowerShellVersion: LatestVersion
         pwsh: true
-      condition: succeededOrFailed()
-
-    - task: PowerShell@2
-      displayName: 'Save used Terraform version number with tfenv'
-      inputs:
-        targetType: filePath
-        filePath: '$(scriptDirectory)/get_tf_version.ps1'
-        arguments: ' -Version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
-        pwsh: true
-
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish Initialized Terraform workspace (inc. providers)'
-      inputs:
-        artifact: drop
+      condition: always()
