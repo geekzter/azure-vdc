@@ -36,9 +36,10 @@ jobs:
       displayName: 'Get preferred Terraform version number'
       inputs:
         filePath: '$(scriptDirectory)/get_tf_version.ps1'
-        arguments: '-Version Preferred'
+        arguments: '-version Preferred'
         pwsh: true
 
+    # We could do this with tfenv, however there is no task for that
     - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
       inputs:
@@ -79,6 +80,7 @@ jobs:
     - Agent.OS -equals Linux
 
   steps:
+    # Assume workspace is empty and re-download secure files
     - task: DownloadSecureFile@1
       displayName: 'Download SSL certificate'
       inputs:
@@ -94,6 +96,8 @@ jobs:
       inputs:
         terraformVersion: '$(terraformVersion)'
 
+    # Deallocate/Stop MV's to force tf_deploy.ps1 to test for stooped VM's
+    # Stopped VM's do not allow extensions to be installed
     - task: AzureResourceGroupDeployment@2
       displayName: 'Deallocate VM''s in App resource group'
       inputs:
@@ -108,6 +112,7 @@ jobs:
         action: Stop
         resourceGroupName: '$(vdcResourceGroup)'
 
+    # Test for failures that only occur when resources already exist
     - task: AzurePowerShell@4
       name: Terraform
       displayName: 'Terraform init and apply (re-entrance test)'
@@ -130,9 +135,11 @@ jobs:
 # Set variables once
   variables:
     appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
-    appServiceName: $[ dependencies.Reprovision.outputs['Terraform.paas_app_service_name'] ]
     appBuild: 'Release'
-    paasAppUrl: $[ dependencies.Reprovision.outputs['Terraform.paas_app_url'] ]
+    appPipeline: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
+    appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
+    appServiceName: $[ dependencies.Reprovision.outputs['Terraform.paas_app_service_name'] ]
+    appUrl: $[ dependencies.Reprovision.outputs['Terraform.paas_app_url'] ]
     scriptDirectory: 'Scripts'
 
   pool:
@@ -142,11 +149,12 @@ jobs:
 
   steps:
     # Download PaaS Application Pipeline artifacts
+    # This references a pipeline where this repo got built: https://github.com/geekzter/dotnetcore-sqldb-tutorial
     - task: DownloadPipelineArtifact@2
       displayName: 'Download ASP.NET Core App Artifacts'
       inputs:
         buildType: 'specific'
-        project: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
+        project: '$(appPipeline)'
         definition: '63'
         specificBuildWithTriggering: true
         buildVersionToDownload: 'latest'
@@ -155,7 +163,7 @@ jobs:
 
     - task: PowerShell@2
       displayName: 'List ASP.NET Core App Artifacts'
-      enabled: false
+      enabled: false # Used for debug only, e.g. if the publish.zip package got moved
       inputs:
         targetType: 'inline'
         script: 'Get-ChildItem . -Recurse | Select-Object FullName'
@@ -170,7 +178,7 @@ jobs:
         azureSubscription: '$(subscription)'
         appType: webApp
         appName: '$(appServiceName)'
-        package: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
+        package: '$(appPackage)'
 
     # Test PaaS Application
     - task: PowerShell@2
@@ -182,7 +190,7 @@ jobs:
           Start-Sleep -Seconds 30
           
           # Request page
-          Invoke-WebRequest $(paasAppUrl)
+          Invoke-WebRequest $(appUrl)
         failOnStderr: true
         pwsh: true
 
@@ -228,7 +236,7 @@ jobs:
       inputs:
         targetType: filePath
         filePath: '$(scriptDirectory)/get_tf_version.ps1'
-        arguments: ' -Version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
+        arguments: ' -version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
         pwsh: true
 
     - task: PublishPipelineArtifact@1
@@ -242,8 +250,7 @@ jobs:
   dependsOn: 'Destroy'
   displayName: 'Clean Up'
   condition: failed()
-  # Disable job
-# condition: eq(1,2)
+# condition: eq(1,2) # Disable job
   timeoutInMinutes: 120
 
   # Set variables once
@@ -294,7 +301,7 @@ jobs:
       inputs:
         azureSubscription: '$(subscription)'
         ScriptPath: '$(scriptDirectory)/tf_clear_state.ps1'
-        ScriptArguments: '-workspace $(workspace) -Destroy -Force'
+        ScriptArguments: '-workspace $(workspace) -destroy -force'
         FailOnStandardError: true
         azurePowerShellVersion: LatestVersion
         pwsh: true
