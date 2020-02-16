@@ -14,6 +14,8 @@ jobs:
     scriptDirectory: 'Scripts'
 
   pool:
+    demands:
+    - Agent.OS -equals Linux
     vmImage: 'ubuntu-latest'
 
   workspace:
