@@ -385,6 +385,7 @@ jobs:
       displayName: 'Use preferred Terraform version'
       inputs:
         terraformVersion: '$(terraformVersion)'
+      condition: always()
 
     # Clear Terraform workspace, just in case
     # This also destroys any resources that may not have deleted before
