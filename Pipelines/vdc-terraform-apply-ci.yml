@@ -1,6 +1,6 @@
 # This pipeline assumes ARM_*, TF_VAR_* variables are defined in Variable Groups defined in Library
 #
-# ARM_* environment variables are required by Terraform azurrm provider:
+# ARM_* environment variables are required by Terraform azurerm provider:
 # https://www.terraform.io/docs/providers/azurerm/index.html
 # This can be specified in a variable group
 #
@@ -16,12 +16,15 @@
 trigger:
 - master
 
+# Global variables shared by all jobs
+variables:
+  agentOS: 'Linux'
+  agentResourceGroup: 'PipelineAgents'
+  scriptDirectory: '$(Build.SourcesDirectory)/Scripts'
+
 jobs:
 - job: 'Prep'
   displayName: 'Start Self-Hosted Agent'
-
-  variables:
-    agentResourceGroup: 'PipelineAgents'
 
   pool:
     vmImage: 'ubuntu-latest'
@@ -41,13 +44,10 @@ jobs:
   displayName: 'Provision Infrastructure with Terraform'
   timeoutInMinutes: 120
 
-  variables:
-    scriptDirectory: 'Scripts'
-
   pool:
     name: $(pool)
     demands:
-    - Agent.OS -equals Linux
+    - Agent.OS -equals $(agentOS)
 
   workspace:
     clean: all
@@ -64,6 +64,7 @@ jobs:
         secureFile: '$(TF_VAR_vpn_root_cert_file)'
 
     - task: PowerShell@2
+      # Name is required so Terraform version number exported by get_tf_version.ps1 can be referenced by subsequent Pipeline steps
       name: TerraformTest
       displayName: 'Get preferred Terraform version number'
       inputs:
@@ -78,7 +79,8 @@ jobs:
         terraformVersion: '$(TerraformTest.Version)'
 
     - task: AzurePowerShell@4
-      name: Terraform
+      # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
+      name: Terraform 
       displayName: 'Terraform init & apply'
       inputs:
         azureSubscription: '$(subscription)'
@@ -100,15 +102,16 @@ jobs:
   timeoutInMinutes: 120
 
   variables:
+    # Get resource group names from Terraform output
     iaasResourceGroup: $[ dependencies.Provision.outputs['Terraform.iaas_app_resource_group'] ]
     vdcResourceGroup: $[ dependencies.Provision.outputs['Terraform.vdc_resource_group'] ]
-    scriptDirectory: 'Scripts'
+    # Use earlier detected Terraform version
     terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
 
   pool:
     name: $(pool)
     demands:
-    - Agent.OS -equals Linux
+    - Agent.OS -equals $(agentOS)
 
   steps:
     # Assume workspace is empty and re-download secure files
@@ -145,6 +148,7 @@ jobs:
 
     # Test for failures that only occur when resources already exist
     - task: AzurePowerShell@4
+      # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
       name: Terraform
       displayName: 'Terraform init and apply (re-entrance test)'
       inputs:
@@ -166,16 +170,18 @@ jobs:
   variables:
     appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
     appBuild: 'Release'
+    # This references this pipeline:
+    # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
     appPipeline: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
     appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
+    # Get App Service name & url from Terraform output
     appServiceName: $[ dependencies.Reprovision.outputs['Terraform.paas_app_service_name'] ]
     appUrl: $[ dependencies.Reprovision.outputs['Terraform.paas_app_url'] ]
-    scriptDirectory: 'Scripts'
 
   pool:
     name: $(pool)
     demands:
-    - Agent.OS -equals Linux
+    - Agent.OS -equals $(agentOS)
 
   steps:
     # Download PaaS Application Pipeline artifacts
@@ -235,13 +241,13 @@ jobs:
   timeoutInMinutes: 120
 
   variables:
-    scriptDirectory: 'Scripts'
+    # Use earlier detected Terraform version
     terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
 
   pool:
     name: $(pool)
     demands:
-    - Agent.OS -equals Linux
+    - Agent.OS -equals $(agentOS)
 
   steps:
     - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
@@ -249,6 +255,7 @@ jobs:
       inputs:
         terraformVersion: '$(terraformVersion)'
 
+    # Terraform will destroy all resources it created, using its backend state
     - task: AzurePowerShell@4
       displayName: 'Terraform destroy'
       inputs:
@@ -261,6 +268,7 @@ jobs:
       condition: succeededOrFailed()
       enabled: true
 
+    # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
     - task: PowerShell@2
       displayName: 'Save used Terraform version number with tfenv'
       inputs:
@@ -286,15 +294,15 @@ jobs:
   timeoutInMinutes: 120
 
   variables:
+    # Get resource group names from Terraform output
     iaasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.iaas_app_resource_group'] ]
     paasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.paas_app_resource_group'] ]
     vdcResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.vdc_resource_group'] ]
-    scriptDirectory: 'Scripts'
 
   pool:
     name: $(pool)
     demands:
-    - Agent.OS -equals Linux
+    - Agent.OS -equals $(agentOS)
 
   workspace:
     clean: all
@@ -327,6 +335,8 @@ jobs:
       continueOnError: true
       condition: always()
 
+    # Clear Terraform workspace, just in case
+    # This also destroys any resources that may not have deleted before
     - task: AzurePowerShell@4
       displayName: 'Clear Terraform workspace'
       inputs:
