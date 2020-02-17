@@ -5,7 +5,27 @@
 #  - Destroy infrastructure
 
 trigger:
-- master
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - '*' 
+    exclude:
+    - 'Apps/*'
+
+pr:
+  branches:
+    include:
+    - '*'
+
+schedules:
+  - cron: "0 5 * * *" # UTC
+    displayName: Daily early morning build (UTC)
+    always: true # Run if there are no changes
+    branches:
+      include:
+      - master
 
 # Global variables shared by all jobs
 variables:
@@ -305,8 +325,8 @@ jobs:
 # Clean up resources        
 - job: 'CleanUp'
   dependsOn:
+    - Provision
     - Destroy
-    - Reprovision
   displayName: 'Clean Up'
   condition: failed()
 # condition: eq(1,2) # Disable job
@@ -314,9 +334,11 @@ jobs:
 
   variables:
     # Get resource group names from Terraform output
-    iaasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.iaas_app_resource_group'] ]
-    paasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.paas_app_resource_group'] ]
-    vdcResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.vdc_resource_group'] ]
+    iaasResourceGroup: $[ dependencies.Provision.outputs['Terraform.iaas_app_resource_group'] ]
+    paasResourceGroup: $[ dependencies.Provision.outputs['Terraform.paas_app_resource_group'] ]
+    vdcResourceGroup: $[ dependencies.Provision.outputs['Terraform.vdc_resource_group'] ]
+    # Use earlier detected Terraform version
+    terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
 
   pool:
     name: $(agentPool)
@@ -353,6 +375,11 @@ jobs:
         resourceGroupName: '$(vdcResourceGroup)'
       continueOnError: true
       condition: always()
+
+    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Use preferred Terraform version'
+      inputs:
+        terraformVersion: '$(terraformVersion)'
 
     # Clear Terraform workspace, just in case
     # This also destroys any resources that may not have deleted before
