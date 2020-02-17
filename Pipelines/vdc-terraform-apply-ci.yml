@@ -9,7 +9,7 @@ trigger:
 
 # Global variables shared by all jobs
 variables:
-  # Vriable Groups are referenced, but defined elsewhere (Library)
+  # Variable Groups are referenced, but defined elsewhere (Library)
 
   # This pipeline assumes ARM_*, TF_VAR_* variables are defined in Variable Groups defined in Library
   # ARM_* environment variables are required by Terraform azurerm provider (both for resources as Terraform backend):
