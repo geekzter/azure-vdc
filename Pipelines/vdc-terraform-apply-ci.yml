@@ -47,7 +47,7 @@ variables:
   # https://www.terraform.io/docs/configuration/variables.html#environment-variables
   # 'vdc' contains global settings common to all VDC pipelines
 - group: 'vdc'
-  # 'vdc' contains build (non-release) settings
+  # 'vdc-ci' contains build (non-release) settings
 - group: 'vdc-ci'
   # 'vdc-vanity-domain' contains certificate, domain information
 - group: 'vdc-vanity-domain'
