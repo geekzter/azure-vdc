@@ -125,6 +125,7 @@ jobs:
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         ScriptType: 'FilePath'
+        # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         # To start from scratch, use these arguments:
         ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
@@ -195,6 +196,7 @@ jobs:
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         ScriptType: 'FilePath'
+        # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         ScriptArguments: '-init -apply -force -stickysuffix -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
@@ -303,6 +305,7 @@ jobs:
       displayName: 'Terraform destroy'
       inputs:
         azureSubscription: '$(subscriptionConnection)'
+        # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         ScriptArguments: '-init -destroy -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
@@ -320,13 +323,16 @@ jobs:
         arguments: ' -version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
         pwsh: true
 
+    # Publish Initialized Terraform workspace
+    # This workspace can be downloaded as artifacts in a release pipeline. 
+    # That release pipeline will than run with tested versions of Terraform and Terraform providers, without the need for 'terraform init'
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish Initialized Terraform workspace (with tested version of providers)'
+      displayName: 'Publish Initialized Terraform workspace'
       inputs:
         artifact: drop
 
 
-# Clean up resources        
+# Clean up resources, in the event 'terraform destroy' fails   
 - job: 'CleanUp'
   dependsOn:
     - Provision
