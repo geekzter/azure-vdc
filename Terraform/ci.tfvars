@@ -2,12 +2,12 @@
 
 resource_environment           = "ci"
 resource_prefix                = "vdc"
-location                       = "southcentralus"
-workspace_location             = "southcentralus"
+location                       = "westeurope"
+workspace_location             = "westeurope"
 
-deploy_auto_shutdown           = true
+deploy_auto_shutdown           = false
 deploy_network_watcher         = false
 deploy_managed_bastion         = true
-deploy_private_dns_for_endpoint= false
+deploy_private_dns_for_endpoint= true
 deploy_vpn                     = true
 use_vanity_domain_and_ssl      = true
