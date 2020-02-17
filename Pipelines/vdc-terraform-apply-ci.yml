@@ -35,7 +35,7 @@ jobs:
     - task: AzureResourceGroupDeployment@2
       displayName: 'Start Self-Hosted Agent(s)'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         action: 'Start'
         resourceGroupName: '$(agentResourceGroup)'
   
@@ -45,7 +45,7 @@ jobs:
   timeoutInMinutes: 120
 
   pool:
-    name: $(pool)
+    name: $(agentPool)
     demands:
     - Agent.OS -equals $(agentOS)
 
@@ -83,7 +83,7 @@ jobs:
       name: Terraform 
       displayName: 'Terraform init & apply'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         ScriptType: 'FilePath'
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         # To start from scratch, use these arguments:
@@ -109,7 +109,7 @@ jobs:
     terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
 
   pool:
-    name: $(pool)
+    name: $(agentPool)
     demands:
     - Agent.OS -equals $(agentOS)
 
@@ -135,14 +135,14 @@ jobs:
     - task: AzureResourceGroupDeployment@2
       displayName: 'Deallocate VM''s in App resource group'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         action: StopWithDeallocate
         resourceGroupName: '$(iaasResourceGroup)'
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Stop VM''s in VDC resource group'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         action: Stop
         resourceGroupName: '$(vdcResourceGroup)'
 
@@ -152,7 +152,7 @@ jobs:
       name: Terraform
       displayName: 'Terraform init and apply (re-entrance test)'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         ScriptType: 'FilePath'
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         ScriptArguments: '-init -apply -force -stickysuffix -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
@@ -179,7 +179,7 @@ jobs:
     appUrl: $[ dependencies.Reprovision.outputs['Terraform.paas_app_url'] ]
 
   pool:
-    name: $(pool)
+    name: $(agentPool)
     demands:
     - Agent.OS -equals $(agentOS)
 
@@ -212,7 +212,7 @@ jobs:
     - task: AzureWebApp@1
       displayName: 'Deploy ASP.NET Core App'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         appType: webApp
         appName: '$(appServiceName)'
         package: '$(appPackage)'
@@ -245,7 +245,7 @@ jobs:
     terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
 
   pool:
-    name: $(pool)
+    name: $(agentPool)
     demands:
     - Agent.OS -equals $(agentOS)
 
@@ -259,7 +259,7 @@ jobs:
     - task: AzurePowerShell@4
       displayName: 'Terraform destroy'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         ScriptArguments: '-init -destroy -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
@@ -300,7 +300,7 @@ jobs:
     vdcResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.vdc_resource_group'] ]
 
   pool:
-    name: $(pool)
+    name: $(agentPool)
     demands:
     - Agent.OS -equals $(agentOS)
 
@@ -311,7 +311,7 @@ jobs:
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down IaaS App resource group'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         action: DeleteRG
         resourceGroupName: '$(iaasResourceGroup)'
       continueOnError: true
@@ -320,7 +320,7 @@ jobs:
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down PaaS App resource group'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         action: DeleteRG
         resourceGroupName: '$(paasResourceGroup)'
       continueOnError: true
@@ -329,7 +329,7 @@ jobs:
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down VDC resource group'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         action: DeleteRG
         resourceGroupName: '$(vdcResourceGroup)'
       continueOnError: true
@@ -340,7 +340,7 @@ jobs:
     - task: AzurePowerShell@4
       displayName: 'Clear Terraform workspace'
       inputs:
-        azureSubscription: '$(subscription)'
+        azureSubscription: '$(subscriptionConnection)'
         ScriptPath: '$(scriptDirectory)/tf_clear_state.ps1'
         ScriptArguments: '-workspace $(workspace) -destroy -force'
         FailOnStandardError: true
