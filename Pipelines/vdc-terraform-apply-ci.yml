@@ -81,6 +81,7 @@ jobs:
 - job: 'Provision'
   dependsOn: 'Prep'
   displayName: 'Provision Infrastructure with Terraform'
+  condition: succeeded()
   timeoutInMinutes: 120
 
   pool:
@@ -138,6 +139,7 @@ jobs:
 - job: 'Reprovision'
   dependsOn: 'Provision'
   displayName: 'Provision Infrastructure with Terraform (re-entrance test)'
+  condition: succeededOrFailed()
   timeoutInMinutes: 120
 
   variables:
@@ -204,6 +206,7 @@ jobs:
 - job: 'Deploy'
   dependsOn: 'Reprovision'
   displayName: 'Deploy & Test PaaS Application'
+  condition: succeeded()
   timeoutInMinutes: 30
 
   variables:
@@ -277,6 +280,7 @@ jobs:
     - Deploy
     - Provision
   displayName: 'Destroy Infrastructure with Terraform'
+  condition: succeededOrFailed()
   timeoutInMinutes: 120
 
   variables:
@@ -326,6 +330,7 @@ jobs:
 - job: 'CleanUp'
   dependsOn:
     - Provision
+    - Reprovision
     - Destroy
   displayName: 'Clean Up'
   condition: failed()
@@ -334,9 +339,9 @@ jobs:
 
   variables:
     # Get resource group names from Terraform output
-    iaasResourceGroup: $[ dependencies.Provision.outputs['Terraform.iaas_app_resource_group'] ]
-    paasResourceGroup: $[ dependencies.Provision.outputs['Terraform.paas_app_resource_group'] ]
-    vdcResourceGroup: $[ dependencies.Provision.outputs['Terraform.vdc_resource_group'] ]
+    iaasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.iaas_app_resource_group'] ]
+    paasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.paas_app_resource_group'] ]
+    vdcResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.vdc_resource_group'] ]
     # Use earlier detected Terraform version
     terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
 
@@ -356,7 +361,7 @@ jobs:
         action: DeleteRG
         resourceGroupName: '$(iaasResourceGroup)'
       continueOnError: true
-      condition: always()
+      condition: succeededOrFailed()
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down PaaS App resource group'
@@ -365,7 +370,7 @@ jobs:
         action: DeleteRG
         resourceGroupName: '$(paasResourceGroup)'
       continueOnError: true
-      condition: always()
+      condition: succeededOrFailed()
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down VDC resource group'
@@ -374,7 +379,7 @@ jobs:
         action: DeleteRG
         resourceGroupName: '$(vdcResourceGroup)'
       continueOnError: true
-      condition: always()
+      condition: succeededOrFailed()
 
     - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
