@@ -31,13 +31,7 @@ schedules:
 variables:
   # Variable Groups are referenced, but defined elsewhere (Library)
 
-  # This pipeline assumes ARM_*, TF_VAR_* variables are defined in Variable Groups defined in Library
-  # ARM_* environment variables are required by Terraform azurerm provider (both for resources as Terraform backend):
-  # https://www.terraform.io/docs/providers/azurerm/index.html
-  # https://www.terraform.io/docs/backends/types/azurerm.html
-  # These are defined in variable group 'terraform'
-#- group: 'terraform'
-
+  # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
   # The Terraform VDC project requires quite a number of settings, see:
   # https://github.com/geekzter/azure-vdc/blob/master/Terraform/variables.tf
   # https://github.com/geekzter/azure-vdc/blob/master/Terraform/config.auto.tfvars.sample
@@ -110,7 +104,10 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
         scriptLocation: inlineScript
-        # Use Pipeline Service Principal and Service Connection to configure Terraform azurerm provider
+        # ARM_* environment variables are required by Terraform azurerm provider (both for resources as Terraform backend):
+        # https://www.terraform.io/docs/providers/azurerm/index.html
+        # https://www.terraform.io/docs/backends/types/azurerm.html
+        # Use Pipeline Service Principal and Service Connection to set up these variables
         inlineScript: |
           $env:ARM_CLIENT_ID=$env:servicePrincipalId
           $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
