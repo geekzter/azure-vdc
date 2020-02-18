@@ -159,7 +159,7 @@ jobs:
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         # To start from scratch, use these arguments:
-        ScriptArguments: '-init -clear -apply -force -output -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
         # To continue where a previous (broken) build left of, use these arguments:
       # ScriptArguments: '-init -apply -force -stickysuffix -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
@@ -241,7 +241,7 @@ jobs:
         ScriptType: 'FilePath'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        ScriptArguments: '-init -apply -force -output -stickysuffix -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -apply -force -stickysuffix -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -403,10 +403,6 @@ jobs:
   timeoutInMinutes: 120
 
   variables:
-    # Get resource group names from Terraform output
-    iaasResourceGroup: $[ dependencies.Reprovision.outputs['terraform.iaas_app_resource_group'] ]
-    paasResourceGroup: $[ dependencies.Reprovision.outputs['terraform.paas_app_resource_group'] ]
-    vdcResourceGroup: $[ dependencies.Reprovision.outputs['terraform.vdc_resource_group'] ]
     # Use earlier prepared Terraform config
     terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
@@ -423,12 +419,41 @@ jobs:
     clean: all
 
   steps:
+    - task: TerraformInstaller@0
+      displayName: 'Use preferred Terraform version'
+      inputs:
+        terraformVersion: '$(terraformVersion)'
+      condition: always()
+      
+    # Get Terraform output variables so we no what to clean up
+    - task: AzurePowerShell@4
+      # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
+      name: terraform
+      displayName: 'Terraform output'
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        ScriptType: 'FilePath'
+        # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
+        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+        ScriptArguments: '-output -workspace $(workspace) -trace $(trace)'
+        FailOnStandardError: true
+        azurePowerShellVersion: 'LatestVersion'
+        pwsh: true
+      env:
+        # Use prepared Terraform environment variables
+        ARM_CLIENT_ID: '$(terraformClientId)'
+        ARM_CLIENT_SECRET: '$(terraformClientSecret)'
+        ARM_PROVIDER_STRICT: '$(terraformArmStrict)'
+        ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
+        ARM_TENANT_ID: '$(terraformTenantId)'
+        TF_IN_AUTOMATION: 'true'
+
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down IaaS App resource group'
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: DeleteRG
-        resourceGroupName: '$(iaasResourceGroup)'
+        resourceGroupName: '$(terraform.iaas_app_resource_group)'
       continueOnError: true
       condition: succeededOrFailed()
 
@@ -437,7 +462,7 @@ jobs:
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: DeleteRG
-        resourceGroupName: '$(paasResourceGroup)'
+        resourceGroupName: '$(terraform.paas_app_resource_group)'
       continueOnError: true
       condition: succeededOrFailed()
 
@@ -446,18 +471,12 @@ jobs:
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: DeleteRG
-        resourceGroupName: '$(vdcResourceGroup)'
+        resourceGroupName: '$(terraform.vdc_resource_group)'
       continueOnError: true
       condition: succeededOrFailed()
 
-    - task: TerraformInstaller@0
-      displayName: 'Use preferred Terraform version'
-      inputs:
-        terraformVersion: '$(terraformVersion)'
-      condition: always()
-
     # Clear Terraform workspace, just in case
-    # This also destroys any resources that may not have deleted before
+    # As a last resort, this also destroys any resources that may not have deleted before
     - task: AzurePowerShell@4
       displayName: 'Clear Terraform workspace'
       inputs:
