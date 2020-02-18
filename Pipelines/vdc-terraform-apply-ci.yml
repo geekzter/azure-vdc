@@ -36,7 +36,7 @@ variables:
   # https://www.terraform.io/docs/providers/azurerm/index.html
   # https://www.terraform.io/docs/backends/types/azurerm.html
   # These are defined in variable group 'terraform'
-- group: 'terraform'
+#- group: 'terraform'
 
   # The Terraform VDC project requires quite a number of settings, see:
   # https://github.com/geekzter/azure-vdc/blob/master/Terraform/variables.tf
@@ -134,7 +134,7 @@ jobs:
         pwsh: true
 
     # We could do this with tfenv, however there is no task for that
-    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+    - task: TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
       inputs:
         terraformVersion: '$(TerraformTest.Version)'
@@ -155,7 +155,12 @@ jobs:
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
-
+      env:
+        # Use prepared Terraform environment variables
+        ARM_CLIENT_ID: '$(terraformConfig.clientId)'
+        ARM_CLIENT_SECRET: '$(terraformConfig.clientSecret)'
+        ARM_SUBSCRIPTION_ID: '$(terraformConfig.subscriptionId)'
+        ARM_TENANT_ID: '$(terraformConfig.tenantId)'
 
 # Provision again to test for issue's that only come up when resources already exist 
 - job: 'Reprovision'
@@ -188,7 +193,7 @@ jobs:
       inputs:
         secureFile: '$(TF_VAR_vpn_root_cert_file)'
 
-    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+    - task: TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
       inputs:
         terraformVersion: '$(terraformVersion)'
@@ -316,7 +321,7 @@ jobs:
     - Agent.OS -equals $(agentOS)
 
   steps:
-    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+    - task: TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
       inputs:
         terraformVersion: '$(terraformVersion)'
@@ -408,7 +413,7 @@ jobs:
       continueOnError: true
       condition: succeededOrFailed()
 
-    - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+    - task: TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
       inputs:
         terraformVersion: '$(terraformVersion)'
