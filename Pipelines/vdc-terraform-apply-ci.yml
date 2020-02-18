@@ -435,7 +435,7 @@ jobs:
         ScriptType: 'FilePath'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        ScriptArguments: '-output -workspace $(workspace) -trace $(trace)'
+        ScriptArguments: '-init -output -workspace $(workspace) -trace $(trace)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
