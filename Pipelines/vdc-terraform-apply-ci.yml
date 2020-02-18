@@ -61,6 +61,7 @@ variables:
   value: 'false'
 
 
+# Prepare job on hosted agent
 jobs:
 - job: 'Prep'
   displayName: 'Start Self-Hosted Agent'
@@ -77,7 +78,9 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         action: 'Start'
         resourceGroupName: '$(agentResourceGroup)'
-  
+
+
+# Provision on self-hosted agent
 - job: 'Provision'
   dependsOn: 'Prep'
   displayName: 'Provision Infrastructure with Terraform'
@@ -110,7 +113,7 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
         scriptLocation: inlineScript
-        # ARM_* environment variables are required by Terraform azurerm provider (both for resources as Terraform backend):
+        # ARM_* environment variables are required by Terraform azurerm provider and backend
         # https://www.terraform.io/docs/providers/azurerm/index.html
         # https://www.terraform.io/docs/backends/types/azurerm.html
         # Use Pipeline Service Principal and Service Connection to set up these variables
@@ -133,22 +136,22 @@ jobs:
 
     - task: PowerShell@2
       # Name is required so Terraform version number exported by get_tf_version.ps1 can be referenced by subsequent Pipeline steps
-      name: TerraformTest
+      name: terraformTest
       displayName: 'Get preferred Terraform version number'
       inputs:
         filePath: '$(scriptDirectory)/get_tf_version.ps1'
-        arguments: '-version Preferred'
+        arguments: '-version preferred'
         pwsh: true
 
     # We could do this with tfenv, however there is no task for that
     - task: TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
       inputs:
-        terraformVersion: '$(TerraformTest.Version)'
+        terraformVersion: '$(terraformTest.version)'
 
     - task: AzurePowerShell@4
       # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
-      name: Terraform 
+      name: terraform 
       displayName: 'Terraform init & apply'
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -171,6 +174,7 @@ jobs:
         ARM_TENANT_ID: '$(terraformConfig.tenantId)'
         TF_IN_AUTOMATION: 'true'
 
+
 # Provision again to test for issue's that only come up when resources already exist 
 - job: 'Reprovision'
   dependsOn: 'Provision'
@@ -180,14 +184,14 @@ jobs:
 
   variables:
     # Get resource group names from Terraform output
-    iaasResourceGroup: $[ dependencies.Provision.outputs['Terraform.iaas_app_resource_group'] ]
-    vdcResourceGroup: $[ dependencies.Provision.outputs['Terraform.vdc_resource_group'] ]
+    iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
+    vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
     # Use earlier prepared Terraform config
     terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
     terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
     terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-    terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
+    terraformVersion: $[ dependencies.Provision.outputs['terraformTest.version'] ]
 
   pool:
     name: $(agentPool)
@@ -230,7 +234,7 @@ jobs:
     # Test for failures that only occur when resources already exist
     - task: AzurePowerShell@4
       # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
-      name: Terraform
+      name: terraform
       displayName: 'Terraform init and apply (re-entrance test)'
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -250,6 +254,7 @@ jobs:
         ARM_TENANT_ID: '$(terraformTenantId)'
         TF_IN_AUTOMATION: 'true'
 
+
 # Deploy PaaS application 
 - job: 'Deploy'
   dependsOn: 'Reprovision'
@@ -262,8 +267,8 @@ jobs:
     appBuild: 'Release'
     appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
     # Get App Service name & url from Terraform output
-    appServiceName: $[ dependencies.Reprovision.outputs['Terraform.paas_app_service_name'] ]
-    appUrl: $[ dependencies.Reprovision.outputs['Terraform.paas_app_url'] ]
+    appServiceName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_name'] ]
+    appUrl: $[ dependencies.Reprovision.outputs['terraform.paas_app_url'] ]
 
   pool:
     name: $(agentPool)
@@ -334,7 +339,7 @@ jobs:
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
     terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
     terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-    terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
+    terraformVersion: $[ dependencies.Provision.outputs['terraformTest.version'] ]
 
   pool:
     name: $(agentPool)
@@ -394,22 +399,20 @@ jobs:
     - Reprovision
     - Destroy
   displayName: 'Clean Up'
-# condition: failed()
-  condition: not(succeeded()) # Run if failed or canceled
-# condition: eq(1,2) # Disable job
+  condition: not(succeeded()) # Run if failed() or canceled
   timeoutInMinutes: 120
 
   variables:
     # Get resource group names from Terraform output
-    iaasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.iaas_app_resource_group'] ]
-    paasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.paas_app_resource_group'] ]
-    vdcResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.vdc_resource_group'] ]
+    iaasResourceGroup: $[ dependencies.Reprovision.outputs['terraform.iaas_app_resource_group'] ]
+    paasResourceGroup: $[ dependencies.Reprovision.outputs['terraform.paas_app_resource_group'] ]
+    vdcResourceGroup: $[ dependencies.Reprovision.outputs['terraform.vdc_resource_group'] ]
     # Use earlier prepared Terraform config
     terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
     terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
     terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-    terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
+    terraformVersion: $[ dependencies.Provision.outputs['terraformTest.version'] ]
 
   pool:
     name: $(agentPool)
