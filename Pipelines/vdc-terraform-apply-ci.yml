@@ -159,8 +159,10 @@ jobs:
         # Use prepared Terraform environment variables
         ARM_CLIENT_ID: '$(terraformConfig.clientId)'
         ARM_CLIENT_SECRET: '$(terraformConfig.clientSecret)'
+        ARM_PROVIDER_STRICT: 'false'
         ARM_SUBSCRIPTION_ID: '$(terraformConfig.subscriptionId)'
         ARM_TENANT_ID: '$(terraformConfig.tenantId)'
+        TF_IN_AUTOMATION: 'true'
 
 # Provision again to test for issue's that only come up when resources already exist 
 - job: 'Reprovision'
