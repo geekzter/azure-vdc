@@ -120,7 +120,9 @@ jobs:
           $env:ARM_SUBSCRIPTION_ID=$(az account show --query id | tr -d '\"')
           $env:ARM_TENANT_ID=$env:tenantId
           # List environment variables (debug)
-          Get-ChildItem -Path Env:ARM_* | Sort-Object -Property Name
+          if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
+            Get-ChildItem -Path Env:ARM_* | Sort-Object -Property Name
+          }
           Write-Host "##vso[task.setvariable variable=clientId;isOutput=true]$env:ARM_CLIENT_ID"
           Write-Host "##vso[task.setvariable variable=clientSecret;isOutput=true]$env:ARM_CLIENT_SECRET"
           Write-Host "##vso[task.setvariable variable=subscriptionId;isOutput=true]$env:ARM_SUBSCRIPTION_ID"
