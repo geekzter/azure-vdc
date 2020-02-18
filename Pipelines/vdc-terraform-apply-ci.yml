@@ -175,7 +175,11 @@ jobs:
     # Get resource group names from Terraform output
     iaasResourceGroup: $[ dependencies.Provision.outputs['Terraform.iaas_app_resource_group'] ]
     vdcResourceGroup: $[ dependencies.Provision.outputs['Terraform.vdc_resource_group'] ]
-    # Use earlier detected Terraform version
+    # Use earlier prepared Terraform config
+    terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
+    terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
+    terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
+    terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
     terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
 
   pool:
@@ -230,7 +234,14 @@ jobs:
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
-
+      env:
+        # Use prepared Terraform environment variables
+        ARM_CLIENT_ID: '$(terraformClientId)'
+        ARM_CLIENT_SECRET: '$(terraformClientSecret)'
+        ARM_PROVIDER_STRICT: 'false'
+        ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
+        ARM_TENANT_ID: '$(terraformTenantId)'
+        TF_IN_AUTOMATION: 'true'
 
 # Deploy PaaS application 
 - job: 'Deploy'
@@ -314,7 +325,11 @@ jobs:
   timeoutInMinutes: 120
 
   variables:
-    # Use earlier detected Terraform version
+    # Use earlier prepared Terraform config
+    terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
+    terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
+    terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
+    terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
     terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
 
   pool:
@@ -341,6 +356,14 @@ jobs:
         pwsh: true
       condition: succeededOrFailed()
       enabled: true
+      env:
+        # Use prepared Terraform environment variables
+        ARM_CLIENT_ID: '$(terraformClientId)'
+        ARM_CLIENT_SECRET: '$(terraformClientSecret)'
+        ARM_PROVIDER_STRICT: 'false'
+        ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
+        ARM_TENANT_ID: '$(terraformTenantId)'
+        TF_IN_AUTOMATION: 'true'
 
     # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
     - task: PowerShell@2
@@ -376,7 +399,11 @@ jobs:
     iaasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.iaas_app_resource_group'] ]
     paasResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.paas_app_resource_group'] ]
     vdcResourceGroup: $[ dependencies.Reprovision.outputs['Terraform.vdc_resource_group'] ]
-    # Use earlier detected Terraform version
+    # Use earlier prepared Terraform config
+    terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
+    terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
+    terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
+    terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
     terraformVersion: $[ dependencies.Provision.outputs['TerraformTest.Version'] ]
 
   pool:
@@ -433,3 +460,11 @@ jobs:
         azurePowerShellVersion: LatestVersion
         pwsh: true
       condition: always()
+      env:
+        # Use prepared Terraform environment variables
+        ARM_CLIENT_ID: '$(terraformClientId)'
+        ARM_CLIENT_SECRET: '$(terraformClientSecret)'
+        ARM_PROVIDER_STRICT: 'false'
+        ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
+        ARM_TENANT_ID: '$(terraformTenantId)'
+        TF_IN_AUTOMATION: 'true'
