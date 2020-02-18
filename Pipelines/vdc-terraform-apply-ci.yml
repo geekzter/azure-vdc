@@ -20,7 +20,7 @@ pr:
     - '*'
 
 schedules:
-  - cron: "0 5 * * *" # UTC
+  - cron: '0 5 * * *' # UTC
     displayName: Daily early morning build (UTC)
     always: true # Run if there are no changes
     branches:
