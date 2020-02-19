@@ -20,7 +20,7 @@ pr:
     - '*'
 
 schedules:
-#  - cron: "0 5 * * *"
+#  - cron: '0 5 * * *'
   - cron: "* * * * *"
     displayName: 'Daily early morning build (UTC)'
     # Run if there are no changes
