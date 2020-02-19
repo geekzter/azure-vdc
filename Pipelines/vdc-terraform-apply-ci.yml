@@ -116,7 +116,7 @@ jobs:
         secureFile: '$(TF_VAR_vpn_root_cert_file)'
 
     - task: AzureCLI@2
-      displayName: 'Prepare Terraform environment variables'
+      displayName: 'Gather Terraform settings'
       name: terraformConfig
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -145,16 +145,6 @@ jobs:
         addSpnToEnvironment: true
         useGlobalConfig: true
         failOnStandardError: true
-
-    - task: PowerShell@2
-      # Name is required so Terraform version number exported by get_tf_version.ps1 can be referenced by subsequent Pipeline steps
-      name: terraformTest
-      displayName: 'Get preferred Terraform version number'
-      inputs:
-        filePath: '$(scriptDirectory)/get_tf_version.ps1'
-        arguments: '-version preferred'
-        pwsh: true
-      enabled: false
 
     # We could do this with tfenv, however there is no task for that
     - task: TerraformInstaller@0
