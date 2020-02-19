@@ -139,6 +139,9 @@ jobs:
           Write-Host "##vso[task.setvariable variable=clientSecret;isOutput=true]$env:ARM_CLIENT_SECRET"
           Write-Host "##vso[task.setvariable variable=subscriptionId;isOutput=true]$env:ARM_SUBSCRIPTION_ID"
           Write-Host "##vso[task.setvariable variable=tenantId;isOutput=true]$env:ARM_TENANT_ID"
+
+          # This will write version info as output variable
+          $(scriptDirectory)/get_tf_version.ps1 -version preferred
         addSpnToEnvironment: true
         useGlobalConfig: true
         failOnStandardError: true
@@ -151,12 +154,13 @@ jobs:
         filePath: '$(scriptDirectory)/get_tf_version.ps1'
         arguments: '-version preferred'
         pwsh: true
+      enabled: false
 
     # We could do this with tfenv, however there is no task for that
     - task: TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
       inputs:
-        terraformVersion: '$(terraformTest.version)'
+        terraformVersion: '$(terraformConfig.version)'
 
     - task: AzurePowerShell@4
       # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
@@ -200,7 +204,7 @@ jobs:
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
     terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
     terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-    terraformVersion: $[ dependencies.Provision.outputs['terraformTest.version'] ]
+    terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
   pool:
     name: $(agentPool)
@@ -348,7 +352,7 @@ jobs:
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
     terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
     terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-    terraformVersion: $[ dependencies.Provision.outputs['terraformTest.version'] ]
+    terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
   pool:
     name: $(agentPool)
@@ -417,7 +421,7 @@ jobs:
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
     terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
     terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-    terraformVersion: $[ dependencies.Provision.outputs['terraformTest.version'] ]
+    terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
   pool:
     name: $(agentPool)
