@@ -20,14 +20,20 @@ pr:
     - '*'
 
 schedules:
-#  - cron: '0 5 * * *'
-  - cron: '* * * * *'
-    displayName: 'Daily early morning build (UTC)'
-    # Run if there are no changes
-    always: true 
+  - cron: '0 8-18 * * 1-5'
+    displayName: Every hour work week
     branches:
       include:
-      - master
+        - master
+    always: 'true'
+# #  - cron: '0 5 * * *'
+#   - cron: '* * * * *'
+#     displayName: 'Daily early morning build (UTC)'
+#     # Run if there are no changes
+#     always: 'true'
+#     branches:
+#       include:
+#       - master
 
 # Global variables shared by all jobs
 variables:
