@@ -2,7 +2,7 @@
 
 resource_prefix                = "vdc"
 resource_environment           = "dev"
-location                       = "westeurope"
+location                       = "eastus"
 workspace_location             = "westeurope"
 
 deploy_app_service_network_integration = true
