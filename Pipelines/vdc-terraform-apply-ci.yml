@@ -24,7 +24,7 @@ schedules:
     displayName: Every hour work week
     branches:
       include:
-        - master
+        - azure-pipelines2
     always: 'true'
 # #  - cron: '0 5 * * *'
 #   - cron: '* * * * *'
