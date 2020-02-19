@@ -20,28 +20,21 @@ pr:
     - '*'
 
 schedules:
-
-  # - cron: '0 12 * * *'
+  # - cron: '0 16 * * *'
   #   displayName: Every hour work week
   #   branches:
   #     include:
+  #       - master
   #       - azure-pipelines2
   #   always: 'true'
-  - cron: '0 16 * * *'
-    displayName: Every hour work week
+  - cron: '* 5 * * *'
+    displayName: 'Daily early morning build (UTC)'
+    # Run if there are no changes
+    always: 'true'
     branches:
       include:
-        - master
-        - azure-pipelines2
-    always: 'true'
-#   - cron: '* * * * *'
-#     displayName: 'Daily early morning build (UTC)'
-#     # Run if there are no changes
-#     always: 'true'
-#     branches:
-#       include:
-#       - master
-#       - azure-pipelines2
+      - master
+      - azure-pipelines2
 
 # Global variables shared by all jobs
 variables:
