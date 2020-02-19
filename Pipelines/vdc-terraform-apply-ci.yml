@@ -20,6 +20,12 @@ pr:
     - '*'
 
 schedules:
+  # - cron: '0 8-18 * * 1-5'
+  #   displayName: Every hour work week
+  #   branches:
+  #     include:
+  #       - azure-pipelines2
+  #   always: 'true'
   - cron: '0 8-18 * * 1-5'
     displayName: Every hour work week
     branches:
