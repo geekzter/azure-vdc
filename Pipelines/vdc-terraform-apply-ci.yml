@@ -27,7 +27,7 @@ schedules:
   #       - master
   #       - azure-pipelines2
   #   always: 'true'
-  - cron: '* 5 * * *'
+  - cron: '0 5 * * *'
     displayName: 'Daily early morning build (UTC)'
     # Run if there are no changes
     always: 'true'
