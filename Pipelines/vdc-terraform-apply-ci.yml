@@ -27,14 +27,14 @@ schedules:
   #       - master
   #       - azure-pipelines2
   #   always: 'true'
-  - cron: '0 5 * * *'
-    displayName: 'Daily early morning build (UTC)'
-    # Run if there are no changes
-    always: 'true'
-    branches:
-      include:
-      - master
-      - azure-pipelines2
+  # - cron: '0 5 * * *'
+  #   displayName: 'Daily early morning build (UTC)'
+  #   # Run if there are no changes
+  #   always: 'true'
+  #   branches:
+  #     include:
+  #     - master
+  #     - azure-pipelines2
 
 # Global variables shared by all jobs
 variables:
