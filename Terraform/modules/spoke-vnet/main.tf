@@ -214,6 +214,7 @@ resource "azurerm_network_security_group" "spoke_nsg" {
   }
 }
 
+# BUG: Resource is not destroyed
 resource azurerm_network_watcher_flow_log spoke_nsg {
   network_watcher_name         = var.network_watcher_name
   resource_group_name          = var.network_watcher_resource_group_name
@@ -233,6 +234,16 @@ resource azurerm_network_watcher_flow_log spoke_nsg {
     workspace_region           = var.workspace_location
     workspace_resource_id      = var.diagnostics_workspace_resource_id
   }
+
+  # BUG: self.id references invalid resource id
+  #      /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/networkSecurityGroupId/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/prefix/providers/Microsoft.Network/networkSecurityGroups/prefix-iaas-spoke-network-nsg
+  #      instead of:
+  #      /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Microsoft.Networkprefixprefix-iaas-spoke-network-nsg
+  # provisioner local-exec {
+  #   when                       = destroy
+  #   command                    = "Remove-AzResource -ResourceId ${self.id} -Force"
+  #   interpreter                = ["pwsh", "-nop", "-Command"]
+  # }
 
   count                        = var.deploy_network_watcher ? 1 : 0
 }
