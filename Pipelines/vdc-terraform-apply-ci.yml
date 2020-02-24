@@ -30,9 +30,6 @@ schedules:
 
 # Global variables shared by all jobs
 variables:
-  iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
-  vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
-
   # Variable Groups are referenced, but defined elsewhere (Library)
 
   # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
@@ -63,6 +60,12 @@ variables:
   value: '$(Build.SourcesDirectory)/Scripts'
 - name: terraformArmStrict
   value: 'false'
+- name: 'iaasResourceGroup'
+  value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
+- name: 'paasResourceGroup'
+  value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-paasapp-$(TF_VAR_resource_suffix)'
+- name: 'vdcResourceGroup' 
+  value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
 
 
 # Prepare job on hosted agent
