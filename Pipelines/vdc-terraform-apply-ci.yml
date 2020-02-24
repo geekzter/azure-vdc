@@ -184,9 +184,6 @@ jobs:
   timeoutInMinutes: 120
 
   variables:
-    # Get resource group names from Terraform output
-    iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
-    vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
     # Use earlier prepared Terraform config
     terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
