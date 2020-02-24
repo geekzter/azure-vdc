@@ -30,6 +30,9 @@ schedules:
 
 # Global variables shared by all jobs
 variables:
+  iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
+  vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
+
   # Variable Groups are referenced, but defined elsewhere (Library)
 
   # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
