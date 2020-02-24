@@ -60,6 +60,12 @@ variables:
   value: '$(Build.SourcesDirectory)/Scripts'
 - name: terraformArmStrict
   value: 'false'
+- name: 'iaasResourceGroup'
+  value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
+- name: 'paasResourceGroup'
+  value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-paasapp-$(TF_VAR_resource_suffix)'
+- name: 'vdcResourceGroup' 
+  value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
 
 
 # Prepare job on hosted agent
@@ -178,9 +184,6 @@ jobs:
   timeoutInMinutes: 120
 
   variables:
-    # Get resource group names from Terraform output
-    iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
-    vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
     # Use earlier prepared Terraform config
     terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
@@ -419,36 +422,13 @@ jobs:
       inputs:
         terraformVersion: '$(terraformVersion)'
       condition: always()
-      
-    # Get Terraform output variables so we no what to clean up
-    - task: AzurePowerShell@4
-      # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
-      name: terraform
-      displayName: 'Terraform output'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        ScriptType: 'FilePath'
-        # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
-        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        ScriptArguments: '-init -output -workspace $(workspace) -trace $(trace)'
-        FailOnStandardError: true
-        azurePowerShellVersion: 'LatestVersion'
-        pwsh: true
-      env:
-        # Use prepared Terraform environment variables
-        ARM_CLIENT_ID: '$(terraformClientId)'
-        ARM_CLIENT_SECRET: '$(terraformClientSecret)'
-        ARM_PROVIDER_STRICT: '$(terraformArmStrict)'
-        ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
-        ARM_TENANT_ID: '$(terraformTenantId)'
-        TF_IN_AUTOMATION: 'true'
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down IaaS App resource group'
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: DeleteRG
-        resourceGroupName: '$(terraform.iaas_app_resource_group)'
+        resourceGroupName: '$(iaasResourceGroup)'
       continueOnError: true
       condition: succeededOrFailed()
 
@@ -457,7 +437,7 @@ jobs:
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: DeleteRG
-        resourceGroupName: '$(terraform.paas_app_resource_group)'
+        resourceGroupName: '$(paasResourceGroup)'
       continueOnError: true
       condition: succeededOrFailed()
 
@@ -466,7 +446,7 @@ jobs:
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: DeleteRG
-        resourceGroupName: '$(terraform.vdc_resource_group)'
+        resourceGroupName: '$(vdcResourceGroup)'
       continueOnError: true
       condition: succeededOrFailed()
 
