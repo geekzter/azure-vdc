@@ -69,13 +69,13 @@ if ($Destroy) {
     AzLogin
 
     # Remove resources in the NetworkWatcher resource group
-    Write-Host "Removing VDC network watchers from shared resource group 'NetworkWatcherRG'..."
+    Write-Host "Removing VDC network watchers from shared resource group 'NetworkWatcherRG' (sync)..."
     $resources = Get-AzResource -ResourceGroupName "NetworkWatcherRG" -Tag @{workspace=$Workspace}
     $resources | Remove-AzResource -Force
 
     # Remove DNS records using tags expressed as record level metadata
-    # Synchronous operation, as recordds will clash with new deployments
-    Write-Host "Removing VDC records from shared DNS zone..."
+    # Synchronous operation, as records will clash with new deployments
+    Write-Host "Removing VDC records from shared DNS zone (sync)..."
     foreach ($dnsZone in $(Get-AzDnsZone)) {
         Write-Verbose "Processing zone '$($dnsZone.Name)'..."
         $dnsRecords = Get-AzDnsRecordSet -Zone $dnsZone
@@ -84,7 +84,7 @@ if ($Destroy) {
             if ($dnsRecord.Metadata -and `
                 $dnsRecord.Metadata["application"] -eq $application -and `
                 $dnsRecord.Metadata["workspace"] -eq $Workspace) {
-                Write-Verbose "Removing record '$($dnsRecord.Name).$($dnsZone.Name)'..."
+                Write-Information "Removing record '$($dnsRecord.Name).$($dnsZone.Name)'..."
                 Remove-AzDnsRecordSet -RecordSet $dnsRecord
             }
         }
@@ -92,7 +92,11 @@ if ($Destroy) {
 
     # Remove resource groups 
     # Async operation, as they have unique suffixes that won't clash with new deployments
-    Write-Host "Removing VDC resource groups..."
+    Write-Host "Removing VDC resource groups (" -NoNewline
+    if (!$Wait) {
+        Write-Host "a" -NoNewline
+    }
+    Write-Host "sync)..."
     $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
     if ((RemoveResourceGroups $resourceGroups -Force $Force)) {
         $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     

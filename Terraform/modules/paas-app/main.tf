@@ -547,8 +547,6 @@ resource "azurerm_sql_active_directory_administrator" "import_dba" {
   login                        = var.database_import ? "Automation" : var.admin_login
   object_id                    = var.database_import ? data.azurerm_client_config.current.object_id : var.admin_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
-
-  count                        = var.database_import ? 1 : 0
 } 
 
 resource null_resource sql_database_access {
