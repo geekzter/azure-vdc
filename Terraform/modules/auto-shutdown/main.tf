@@ -13,7 +13,6 @@ resource "azurerm_storage_account" "automation_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
-  enable_blob_encryption       = true
   enable_https_traffic_only    = true
 
   provisioner "local-exec" {

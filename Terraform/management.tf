@@ -25,7 +25,7 @@ resource "azurerm_storage_blob" "bastion_prepare_script" {
   storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
   storage_container_name       = azurerm_storage_container.scripts.name
 
-  type                         = "block"
+  type                         = "Block"
   source                       = "../Scripts/prepare_bastion.ps1"
 }
 

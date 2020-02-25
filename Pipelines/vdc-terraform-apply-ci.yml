@@ -59,7 +59,7 @@ variables:
 - name: 'scriptDirectory'
   value: '$(Build.SourcesDirectory)/Scripts'
 - name: terraformArmStrict
-  value: 'false'
+  value: 'true'
 - name: 'iaasResourceGroup'
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
 - name: 'paasResourceGroup'

@@ -55,7 +55,9 @@ output bastion_name {
 }
 
 output bastion_rdp {
-  value = "mstsc.exe /v:${azurerm_public_ip.iag_pip.ip_address}:${local.rdp_port}"
+  value = "mstsc.exe /v:${azurerm_public_ip.iag_pip.fqdn}:${local.rdp_port}"
+  # TODO: Use vanity domain if available
+# value = "mstsc.exe /v:${var.use_vanity_domain_and_ssl ? azurerm_dns_cname_record.iag_pip_cname.0.fqdn : azurerm_public_ip.iag_pip.fqdn}:${local.rdp_port}"
 }
 
 output bastion_rdp_port {

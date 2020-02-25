@@ -14,7 +14,6 @@ BEGIN
 END
 ALTER ROLE db_datareader ADD MEMBER [@msi_name];
 ALTER ROLE db_datawriter ADD MEMBER [@msi_name];
-ALTER ROLE db_ddladmin ADD MEMBER [@msi_name];
 
 SELECT name 
 FROM sys.sysusers 
