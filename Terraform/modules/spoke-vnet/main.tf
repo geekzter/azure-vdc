@@ -253,8 +253,8 @@ resource "azurerm_subnet" "subnet" {
   virtual_network_name         = azurerm_virtual_network.spoke_vnet.name
   resource_group_name          = local.resource_group_name
   address_prefix               = element(values(var.subnets),count.index)
-  network_security_group_id    = azurerm_network_security_group.spoke_nsg.id # Depricated but still needed
-  route_table_id               = azurerm_route_table.spoke_route_table.id # Depricated but still needed
+# network_security_group_id    = azurerm_network_security_group.spoke_nsg.id # Depricated but still needed
+# route_table_id               = azurerm_route_table.spoke_route_table.id # Depricated but still needed
   # TODO: Update at Private Endpoint GA
   enforce_private_link_endpoint_network_policies = true
   count                        = length(var.subnets)
