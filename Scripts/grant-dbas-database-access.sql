@@ -12,10 +12,12 @@ BEGIN
 	EXEC (@sql)
 END
 --ALTER ROLE dbmanager ADD MEMBER [@dba_name];
+ALTER ROLE db_accessadmin ADD MEMBER [@dba_name];
+ALTER ROLE db_datareader ADD MEMBER [@dba_name];
+ALTER ROLE db_datawriter ADD MEMBER [@dba_name];
+ALTER ROLE db_ddladmin ADD MEMBER [@dba_name];
 ALTER ROLE db_owner ADD MEMBER [@dba_name];
-ALTER ROLE db_owner ADD MEMBER [@dba_name];
-ALTER ROLE db_owner ADD MEMBER [@dba_name];
-ALTER ROLE db_owner ADD MEMBER [@dba_name];
+ALTER ROLE db_securityadmin ADD MEMBER [@dba_name];
 
 SELECT name 
 FROM sys.sysusers 

@@ -57,7 +57,6 @@ resource "azurerm_storage_account" "app_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.storage_replication_type
-# enable_blob_encryption       = true
   enable_https_traffic_only    = true
  
   # not using azurerm_storage_account_network_rules
@@ -134,7 +133,6 @@ resource "azurerm_storage_account" "archive_storage" {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.storage_replication_type
-# enable_blob_encryption       = true
   enable_https_traffic_only    = true
 
   provisioner "local-exec" {
@@ -559,17 +557,6 @@ resource null_resource sql_database_access {
   # Terraform change scripts require Terraform to be the AAD DBA
   depends_on                   = [azurerm_sql_active_directory_administrator.import_dba]
 }
-
-# # Set to the real DBA
-# resource "azurerm_sql_active_directory_administrator" "dba" {
-#   server_name                  = azurerm_sql_server.app_sqlserver.name
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   login                        = var.admin_login
-#   object_id                    = var.admin_object_id
-#   tenant_id                    = data.azurerm_client_config.current.tenant_id
-
-#   depends_on                   = [null_resource.sql_database_access,azurerm_sql_active_directory_administrator.import_dba]
-# } 
 
 resource "azurerm_sql_database" "app_sqldb" {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}sqldb"
