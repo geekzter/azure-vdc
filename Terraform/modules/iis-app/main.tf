@@ -92,31 +92,6 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   tags                         = var.tags
 }
 
-resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
-  name                         = "AzureNetworkWatcherExtension"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
-  publisher                    = "Microsoft.Azure.NetworkWatcher"
-  type                         = "NetworkWatcherAgentWindows"
-  type_handler_version         = "1.4"
-  auto_upgrade_minor_version   = true
-  count                        = var.app_web_vm_number
-
-  tags                         = var.tags
-}
-resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
-  name                         = "BGInfo"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
-  publisher                    = "Microsoft.Compute"
-  type                         = "BGInfo"
-  type_handler_version         = "2.1"
-  auto_upgrade_minor_version   = true
-  count                        = var.app_web_vm_number
-
-  tags                         = var.tags
-
-  # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_watcher]
-}
 resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
@@ -124,7 +99,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
   type                         = "TeamServicesAgent"
   type_handler_version         = "1.26"
   auto_upgrade_minor_version   = true
-  count                        = var.app_web_vm_number
   settings                     = <<EOF
     {
       "VSTSAccountName": "${var.app_devops["account"]}",        
@@ -148,8 +122,22 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
     )
   )
 
+  count                        = var.app_web_vm_number
+}
+resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
+  name                         = "BGInfo"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
+  publisher                    = "Microsoft.Compute"
+  type                         = "BGInfo"
+  type_handler_version         = "2.1"
+  auto_upgrade_minor_version   = true
+
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+
+  tags                         = var.tags
+
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_bginfo]
+  depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_pipeline]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
   name                         = "DAExtension"
@@ -158,7 +146,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
   type                         = "DependencyAgentWindows"
   type_handler_version         = "9.5"
   auto_upgrade_minor_version   = true
-  count                        = var.app_web_vm_number
   settings                     = <<EOF
     {
       "workspaceId": "${var.diagnostics_workspace_workspace_id}"
@@ -178,8 +165,10 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
     )
   )
 
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_pipeline]
+  depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_bginfo]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
   name                         = "MicrosoftMonitoringAgent"
@@ -188,7 +177,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
-  count                        = var.app_web_vm_number
   settings                     = <<EOF
     {
       "workspaceId": "${var.diagnostics_workspace_workspace_id}"
@@ -208,10 +196,24 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
     )
   )
 
-  # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_web_vm_dependency_monitor]
-}
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
 
+  # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+  depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_dependency_monitor]
+}
+resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
+  name                         = "AzureNetworkWatcherExtension"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
+  publisher                    = "Microsoft.Azure.NetworkWatcher"
+  type                         = "NetworkWatcherAgentWindows"
+  type_handler_version         = "1.4"
+  auto_upgrade_minor_version   = true
+
+  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+
+  tags                         = var.tags
+  depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_monitor]
+}
 # BUG: Get's recreated every run
 #      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909
 # resource "azurerm_network_connection_monitor" "devops_watcher" {
@@ -230,7 +232,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
 #     address                    = "${var.app_devops["account"]}.visualstudio.com"
 #     port                       = 443
 #   }
-#   count                        = var.deploy_network_watcher ? var.app_web_vm_number : 0
+#   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
 
 #   depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_watcher]
 
@@ -368,31 +370,6 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   depends_on                   = [azurerm_network_interface_backend_address_pool_association.app_db_if_backend_pool]
 }
 
-resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
-  name                         = "AzureNetworkWatcherExtension"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
-  publisher                    = "Microsoft.Azure.NetworkWatcher"
-  type                         = "NetworkWatcherAgentWindows"
-  type_handler_version         = "1.4"
-  auto_upgrade_minor_version   = true
-  count                        = var.app_db_vm_number
-
-  tags                         = var.tags
-}
-resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
-  name                         = "BGInfo"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
-  publisher                    = "Microsoft.Compute"
-  type                         = "BGInfo"
-  type_handler_version         = "2.1"
-  auto_upgrade_minor_version   = true
-  count                        = var.app_db_vm_number
-
-  tags                         = var.tags
-
-  # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_watcher]
-}
 resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
@@ -400,7 +377,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
   type                         = "TeamServicesAgent"
   type_handler_version         = "1.26"
   auto_upgrade_minor_version   = true
-  count                        = var.app_db_vm_number
   settings                     = <<EOF
     {
       "VSTSAccountName": "${var.app_devops["account"]}",        
@@ -424,8 +400,22 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
     )
   )
 
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+}
+resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
+  name                         = "BGInfo"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  publisher                    = "Microsoft.Compute"
+  type                         = "BGInfo"
+  type_handler_version         = "2.1"
+  auto_upgrade_minor_version   = true
+
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+
+  tags                         = var.tags
+
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_bginfo]
+  depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_pipeline]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   name                         = "DAExtension"
@@ -434,7 +424,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   type                         = "DependencyAgentWindows"
   type_handler_version         = "9.5"
   auto_upgrade_minor_version   = true
-  count                        = var.app_db_vm_number
   settings                     = <<EOF
     {
       "workspaceId": "${var.diagnostics_workspace_workspace_id}"
@@ -454,8 +443,10 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
     )
   )
 
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_pipeline]
+  depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_bginfo]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
   name                         = "MicrosoftMonitoringAgent"
@@ -464,7 +455,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
-  count                        = var.app_db_vm_number
   settings                     = <<EOF
     {
       "workspaceId": "${var.diagnostics_workspace_workspace_id}"
@@ -484,8 +474,25 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
     )
   )
 
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                    = [azurerm_virtual_machine_extension.app_db_vm_dependency_monitor]
+  depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_dependency_monitor]
+}
+resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
+  name                         = "AzureNetworkWatcherExtension"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  publisher                    = "Microsoft.Azure.NetworkWatcher"
+  type                         = "NetworkWatcherAgentWindows"
+  type_handler_version         = "1.4"
+  auto_upgrade_minor_version   = true
+
+  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+
+  tags                         = var.tags
+
+  # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+  depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_bginfo]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {

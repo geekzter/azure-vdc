@@ -87,6 +87,7 @@ module iis_app {
   app_subnet_id                = lookup(module.iaas_spoke_vnet.subnet_ids,"app","")
   data_subnet_id               = lookup(module.iaas_spoke_vnet.subnet_ids,"data","")
   deploy_network_watcher       = var.deploy_network_watcher
+  deploy_non_essential_vm_extensions = var.deploy_non_essential_vm_extensions
   vm_agent_dependency          = local.vm_agent_dependency
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id

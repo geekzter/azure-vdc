@@ -134,6 +134,8 @@ resource "azurerm_virtual_machine" "bastion" {
 #   type_handler_version         = "0.3"
 #   auto_upgrade_minor_version   = true
 
+#   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+
 #   tags                         = local.tags
 # } 
 
@@ -144,6 +146,8 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
   type                         = "BGInfo"
   type_handler_version         = "2.1"
   auto_upgrade_minor_version   = true
+
+  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
 
   tags                         = local.tags
 }
@@ -167,6 +171,8 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
     } 
   EOF
 
+  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+
   tags                         = local.tags
 }
 
@@ -189,6 +195,8 @@ resource "azurerm_virtual_machine_extension" "bastion_monitor" {
     } 
   EOF
 
+  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+
   tags                         = local.tags
 }
 
@@ -200,7 +208,7 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_network_watcher ? 1 : 0
+  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? 1 : 0
 
   tags                         = local.tags
 }
