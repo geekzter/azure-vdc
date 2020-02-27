@@ -29,6 +29,9 @@ $application = "Automated VDC"
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
+# Log on to Azure if not already logged on
+AzLogin
+
 try {
     Push-Location $tfdirectory
 

@@ -27,7 +27,7 @@ if (!($All -or $ConnectBastion -or $Network -or $ShowCredentials -or $SqlServer 
 }
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
-AzLogin -AsUser
+AzLogin #-AsUser
 
 try {
     # Terraform config
