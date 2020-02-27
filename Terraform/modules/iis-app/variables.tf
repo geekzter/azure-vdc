@@ -18,7 +18,9 @@ variable tags {
 
 variable deploy_network_watcher {
   description                  = "Whether to deploy connection monitors"
-  default                      = false
+  type                         = bool
+}
+variable deploy_non_essential_vm_extensions {
   type                         = bool
 }
 

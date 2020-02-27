@@ -325,6 +325,12 @@ variable deploy_auto_shutdown {
   type                         = bool
 }
 
+variable deploy_non_essential_vm_extensions {
+  description                  = "Whether to deploy optional VM extensions"
+  default                      = true
+  type                         = bool
+}
+
 variable deploy_managed_bastion {
   description                  = "Whether to deploy the Managed Bastion"
   default                      = true

@@ -8,6 +8,7 @@ workspace_location             = "westeurope"
 deploy_app_service_network_integration = true
 deploy_auto_shutdown           = false
 deploy_network_watcher         = false # Broken, does not get destroyed
+deploy_non_essential_vm_extensions = false
 deploy_managed_bastion         = false
 deploy_private_dns_for_endpoint= true
 deploy_vpn                     = false
