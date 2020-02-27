@@ -397,7 +397,8 @@ jobs:
     - Reprovision
     - Destroy
   displayName: 'Clean Up'
-  condition: not(succeeded()) # Run if failed() or canceled
+  # Run if Terraform destroy failed, or the whole pipeline was canceled
+  condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
   timeoutInMinutes: 120
 
   variables:
