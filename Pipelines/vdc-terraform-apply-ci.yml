@@ -457,7 +457,7 @@ jobs:
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         ScriptPath: '$(scriptDirectory)/tf_clear_state.ps1'
-        ScriptArguments: '-workspace $(workspace) -destroy -force'
+        ScriptArguments: '-workspace $(workspace) -destroy -force -wait'
         FailOnStandardError: true
         azurePowerShellVersion: LatestVersion
         pwsh: true
