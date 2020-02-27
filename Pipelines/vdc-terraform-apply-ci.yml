@@ -418,12 +418,6 @@ jobs:
     clean: all
 
   steps:
-    - task: TerraformInstaller@0
-      displayName: 'Use preferred Terraform version'
-      inputs:
-        terraformVersion: '$(terraformVersion)'
-      condition: always()
-
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down IaaS App resource group'
       inputs:
@@ -450,6 +444,12 @@ jobs:
         resourceGroupName: '$(vdcResourceGroup)'
       continueOnError: true
       condition: succeededOrFailed()
+
+    - task: TerraformInstaller@0
+      displayName: 'Use preferred Terraform version'
+      inputs:
+        terraformVersion: '$(terraformVersion)'
+      condition: always()
 
     # Clear Terraform workspace, just in case
     # As a last resort, this also destroys any resources that may not have deleted before
