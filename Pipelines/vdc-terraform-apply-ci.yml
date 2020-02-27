@@ -457,11 +457,14 @@ jobs:
       displayName: 'Clear Terraform workspace'
       inputs:
         azureSubscription: '$(subscriptionConnection)'
-        ScriptPath: '$(scriptDirectory)/tf_clear_state.ps1'
-        ScriptArguments: '-workspace $(workspace) -destroy -force -wait'
+        ScriptType: 'InlineScript'
+        Inline: |
+          ./tf_deploy.ps1 -init -workspace $(workspace) -trace $(trace)
+          ./tf_clear_state.ps1 -workspace $(workspace) -destroy -force -wait
         FailOnStandardError: true
-        azurePowerShellVersion: LatestVersion
+        azurePowerShellVersion: 'LatestVersion'
         pwsh: true
+        workingDirectory: '$(scriptDirectory)'
       condition: always()
       env:
         # Use prepared Terraform environment variables
