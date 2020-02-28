@@ -184,7 +184,7 @@ jobs:
   dependsOn: 'Provision'
   displayName: 'Provision Infrastructure with Terraform (re-entrance test)'
   condition: succeededOrFailed()
-  timeoutInMinutes: $(jobTimeOutMinutes)
+  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
     # Use earlier prepared Terraform config
@@ -261,7 +261,7 @@ jobs:
   dependsOn: 'Reprovision'
   displayName: 'Deploy & Test PaaS Application'
   condition: succeeded()
-  timeoutInMinutes: $(jobTimeOutMinutes)
+  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
     appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
@@ -332,7 +332,7 @@ jobs:
     - Provision
   displayName: 'Destroy Infrastructure with Terraform'
   condition: succeededOrFailed()
-  timeoutInMinutes: $(jobTimeOutMinutes)
+  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
     # Use earlier prepared Terraform config
@@ -403,7 +403,7 @@ jobs:
   displayName: 'Clean Up'
   # Run if Terraform destroy failed, or the whole pipeline was canceled
   condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
-  timeoutInMinutes: $(jobTimeOutMinutes)
+  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
     # Use earlier prepared Terraform config
