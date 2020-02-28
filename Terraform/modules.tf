@@ -126,6 +126,11 @@ module p2s_vpn {
   location                     = azurerm_resource_group.vdc_rg.location
   tags                         = local.tags
 
+  default_create_timeout       = var.default_create_timeout
+  default_update_timeout       = var.default_update_timeout
+  default_read_timeout         = var.default_read_timeout
+  default_delete_timeout       = var.default_delete_timeout
+  
   virtual_network_id           = azurerm_virtual_network.hub_vnet.id
   subnet_range                 = var.vdc_config["hub_vpn_subnet"]
   vpn_range                    = var.vdc_config["vpn_range"]
