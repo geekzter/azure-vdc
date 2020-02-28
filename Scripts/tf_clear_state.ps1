@@ -71,11 +71,21 @@ try {
 if ($Destroy) {
     AzLogin
 
+    # Remove resource groups 
+    # Async operation, as they have unique suffixes that won't clash with new deployments
+    Write-Host "Removing VDC resource groups (async)..."
+    $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
+    if ((RemoveResourceGroups $resourceGroups -Force $Force)) {
+        $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
+        $stopWatch.Start()
+    } else {
+        Write-Host "No resource group found to delete for workspace $Workspace"
+    }
+
     # Remove resources in the NetworkWatcher resource group
     Write-Host "Removing VDC network watchers from shared resource group 'NetworkWatcherRG' (async)..."
     $resources = Get-AzResource -ResourceGroupName "NetworkWatcherRG" -Tag @{workspace=$Workspace}
     $resources | Remove-AzResource -Force -AsJob
-
 
     # Remove DNS records using tags expressed as record level metadata
     # Synchronous operation, as records will clash with new deployments
@@ -92,17 +102,6 @@ if ($Destroy) {
                 Remove-AzDnsRecordSet -RecordSet $dnsRecord
             }
         }
-    }
-
-    # Remove resource groups 
-    # Async operation, as they have unique suffixes that won't clash with new deployments
-    Write-Host "Removing VDC resource groups (async)..."
-    $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
-    if ((RemoveResourceGroups $resourceGroups -Force $Force)) {
-        $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
-        $stopWatch.Start()
-    } else {
-        Write-Host "Nothing found to delete for workspace $Workspace"
     }
 
     $jobs = Get-Job | Where-Object {$_.Command -match "Remove-Az"}
