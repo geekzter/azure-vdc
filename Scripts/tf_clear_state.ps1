@@ -17,7 +17,7 @@ param (
     [parameter(Mandatory=$false)][switch]$Destroy,
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
-    [parameter(Mandatory=$false)][int]$Timeout=300,
+    [parameter(Mandatory=$false)][int]$TimeoutMinutes=5,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
@@ -106,10 +106,10 @@ if ($Destroy) {
 
     $jobs = Get-Job | Where-Object {$_.Command -match "Remove-Az"}
     $jobs | Format-Table -Property Id, Name, State
-    # Waiting for async operattions to complete
+    # Waiting for async operations to complete
     if ($Wait) {
         Write-Host "Waiting for jobs to complete..."
-        $waitStatus = Wait-Job -Job $jobs -Timeout $Timeout
+        $waitStatus = Wait-Job -Job $jobs -Timeout ($TimeoutMinutes * 60)
         if ($waitStatus) {
             $stopWatch.Stop()
             $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
@@ -117,7 +117,7 @@ if ($Destroy) {
             Write-Host "Jobs completed in $elapsed"
         } else {
             $jobs | Format-Table -Property Id, Name, State
-            Write-Warning "Jobs did not complete before timeout (${Timeout}s) expired"
+            Write-Warning "Jobs did not complete before timeout (${TimeoutMinutes}m) expired"
             exit 1
         }
     }
