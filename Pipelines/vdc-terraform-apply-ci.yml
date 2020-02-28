@@ -174,7 +174,7 @@ jobs:
         ARM_SUBSCRIPTION_ID: '$(terraformConfig.subscriptionId)'
         ARM_TENANT_ID: '$(terraformConfig.tenantId)'
         TF_IN_AUTOMATION: 'true'
-        TF_VAR_default_create_timeout: '$(job.timeoutInMinutes)]m'
+        TF_VAR_default_create_timeout: '$(job.timeoutInMinutes)m'
 
 
 # Provision again to test for issue's that only come up when resources already exist 
@@ -252,7 +252,7 @@ jobs:
         ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
         ARM_TENANT_ID: '$(terraformTenantId)'
         TF_IN_AUTOMATION: 'true'
-        TF_VAR_default_create_timeout: '$(job.timeoutInMinutes)]m'
+        TF_VAR_default_create_timeout: '$(job.timeoutInMinutes)m'
 
 
 # Deploy PaaS application 
@@ -373,7 +373,7 @@ jobs:
         ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
         ARM_TENANT_ID: '$(terraformTenantId)'
         TF_IN_AUTOMATION: 'true'
-        TF_VAR_default_delete_timeout: '$(job.timeoutInMinutes)]m'
+        TF_VAR_default_delete_timeout: '$(job.timeoutInMinutes)m'
 
     # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
     - task: PowerShell@2
@@ -466,7 +466,7 @@ jobs:
         ScriptType: 'InlineScript'
         Inline: |
           ./tf_deploy.ps1 -init -workspace $(workspace) -trace $(trace)
-          ./tf_clear_state.ps1 -workspace $(workspace) -destroy -force -wait -timeoutminutes '$(job.timeoutInMinutes)]m'
+          ./tf_clear_state.ps1 -workspace $(workspace) -destroy -force -wait -timeoutminutes '$(job.timeoutInMinutes)m'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
