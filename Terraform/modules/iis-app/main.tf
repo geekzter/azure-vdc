@@ -89,6 +89,13 @@ resource "azurerm_virtual_machine" "app_web_vm" {
     type                       = "SystemAssigned"
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   tags                         = var.tags
 }
 
@@ -365,6 +372,13 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   }
 
   tags                         = var.tags
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   # Fix for BUG: Error waiting for removal of Backend Address Pool Association for NIC
   depends_on                   = [azurerm_network_interface_backend_address_pool_association.app_db_if_backend_pool]

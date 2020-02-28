@@ -130,8 +130,15 @@ resource "azurerm_subnet" "mgmt_subnet" {
 }
 
 resource "azurerm_subnet_route_table_association" "mgmt_subnet_routes" {
-  subnet_id                   = azurerm_subnet.mgmt_subnet.id
-  route_table_id              = azurerm_route_table.mgmt_route_table.id
+  subnet_id                    = azurerm_subnet.mgmt_subnet.id
+  route_table_id               = azurerm_route_table.mgmt_route_table.id
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   depends_on                   = [azurerm_firewall.iag]
 }
@@ -139,6 +146,13 @@ resource "azurerm_subnet_route_table_association" "mgmt_subnet_routes" {
 resource "azurerm_subnet_network_security_group_association" "mgmt_subnet_nsg" {
   subnet_id                    = azurerm_subnet.mgmt_subnet.id
   network_security_group_id    = azurerm_network_security_group.mgmt_nsg.id
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   depends_on                   = [azurerm_subnet_route_table_association.mgmt_subnet_routes,
                                   azurerm_firewall_application_rule_collection.iag_app_rules,

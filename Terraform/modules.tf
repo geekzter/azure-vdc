@@ -26,6 +26,10 @@ module iaas_spoke_vnet {
 
   address_space                = var.vdc_config["iaas_spoke_range"]
   bastion_subnet_range         = var.vdc_config["iaas_spoke_bastion_subnet"]
+  default_create_timeout       = var.default_create_timeout
+  default_update_timeout       = var.default_update_timeout
+  default_read_timeout         = var.default_read_timeout
+  default_delete_timeout       = var.default_delete_timeout
   deploy_network_watcher       = var.deploy_network_watcher
   deploy_managed_bastion       = var.deploy_managed_bastion
   dns_servers                  = azurerm_virtual_network.hub_vnet.dns_servers
@@ -86,6 +90,10 @@ module iis_app {
   app_db_vm_number             = var.app_db_vm_number
   app_subnet_id                = lookup(module.iaas_spoke_vnet.subnet_ids,"app","")
   data_subnet_id               = lookup(module.iaas_spoke_vnet.subnet_ids,"data","")
+  default_create_timeout       = var.default_create_timeout
+  default_update_timeout       = var.default_update_timeout
+  default_read_timeout         = var.default_read_timeout
+  default_delete_timeout       = var.default_delete_timeout
   deploy_network_watcher       = var.deploy_network_watcher
   deploy_non_essential_vm_extensions = var.deploy_non_essential_vm_extensions
   vm_agent_dependency          = local.vm_agent_dependency
@@ -175,6 +183,10 @@ module paas_spoke_vnet {
 
   address_space                = var.vdc_config["paas_spoke_range"]
   bastion_subnet_range         = var.vdc_config["paas_spoke_bastion_subnet"]
+  default_create_timeout       = var.default_create_timeout
+  default_update_timeout       = var.default_update_timeout
+  default_read_timeout         = var.default_read_timeout
+  default_delete_timeout       = var.default_delete_timeout
   deploy_managed_bastion       = var.deploy_managed_bastion
   deploy_network_watcher       = var.deploy_network_watcher
   dns_servers                  = azurerm_virtual_network.hub_vnet.dns_servers

@@ -278,6 +278,13 @@ resource "azurerm_subnet_route_table_association" "subnet_routes" {
   route_table_id               = azurerm_route_table.spoke_route_table.id
   count                        = length(var.enable_routetable_for_subnets)
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   depends_on                   = [azurerm_virtual_network_peering.spoke_to_hub]
 }
 
@@ -285,6 +292,13 @@ resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
   subnet_id                    = element(azurerm_subnet.subnet.*.id,count.index)
   network_security_group_id    = azurerm_network_security_group.spoke_nsg.id
   count                        = length(var.subnets)
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   depends_on                   = [azurerm_virtual_network_peering.spoke_to_hub]
 }

@@ -37,6 +37,7 @@ variable diagnostics_workspace_key {}
 variable network_watcher_name {}
 variable network_watcher_resource_group_name {}
 
+variable admin_object_id {}
 variable app_web_vms {}
 
 variable app_db_vms {}
@@ -119,7 +120,10 @@ variable app_subnet_id {
 variable data_subnet_id {
   description                  = "The id of the subnet to deploy db tier VM's in"
 }
-variable admin_object_id {}
+variable default_create_timeout {}
+variable default_update_timeout {}
+variable default_read_timeout {}
+variable default_delete_timeout {}
 variable vm_agent_dependency {
   description                  = "A dummy value that is used to force dependency"
 }
