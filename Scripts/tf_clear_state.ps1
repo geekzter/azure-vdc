@@ -75,8 +75,8 @@ if ($Destroy) {
     # Async operation, as they have unique suffixes that won't clash with new deployments
     Write-Host "Removing VDC resource groups (async)..."
     $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
+    $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
     if ((RemoveResourceGroups $resourceGroups -Force $Force)) {
-        $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
         $stopWatch.Start()
     } else {
         Write-Host "No resource group found to delete for workspace $Workspace"
@@ -106,19 +106,8 @@ if ($Destroy) {
 
     $jobs = Get-Job | Where-Object {$_.Command -match "Remove-Az"}
     $jobs | Format-Table -Property Id, Name, State
-    # Waiting for async operations to complete
     if ($Wait) {
-        Write-Host "Waiting for jobs to complete..."
-        $waitStatus = Wait-Job -Job $jobs -Timeout ($TimeoutMinutes * 60)
-        if ($waitStatus) {
-            $stopWatch.Stop()
-            $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
-            $jobs | Format-Table -Property Id, Name, State
-            Write-Host "Jobs completed in $elapsed"
-        } else {
-            $jobs | Format-Table -Property Id, Name, State
-            Write-Warning "Jobs did not complete before timeout (${TimeoutMinutes}m) expired"
-            exit 1
-        }
+        # Waiting for async operations to complete
+        WaitForJobs -Jobs $jobs -TimeoutMinutes $TimeoutMinutes
     }
 }

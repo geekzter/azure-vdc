@@ -253,3 +253,30 @@ function SetPipelineVariablesFromTerraform () {
         }
     }
 }
+
+function WaitForJobs (
+    [parameter(Mandatory=$true)][object[]]$Jobs,
+    [parameter(Mandatory=$false)][int]$TimeoutMinutes=5
+) {
+    $updateIntervalSeconds = 10 # Same as Terraform
+    $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
+    $stopWatch.Start()
+
+    Write-Host "Waiting for jobs to complete..."
+
+    do {
+        $runningJobs = $Jobs | Where-Object {$_.State -like "Running"}
+        Write-Host "$($runningJobs.Count) jobs in running state [$elapsed elapsed]"
+        Wait-Job -Job $Jobs -Timeout $updateIntervalSeconds
+        $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+    } while ($runningJobs -and ($stopWatch.Elapsed.TotalMinutes -lt $TimeoutMinutes)) 
+
+    $jobs | Format-Table -Property Id, Name, State
+    if ($waitStatus) {
+        Write-Warning "Jobs did not complete before timeout (${TimeoutMinutes}m) expired"
+    } else {
+        # Timeout expired before jobs completed
+        $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+        Write-Host "Jobs completed in $elapsed"
+    }
+}
