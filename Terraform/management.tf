@@ -68,7 +68,7 @@ resource "azurerm_windows_virtual_machine" "bastion" {
     content                    = templatefile("../Scripts/FirstLogonCommands.xml", { 
       username                 = var.admin_username, 
       password                 = local.password, 
-      hosts                    = concat(var.app_web_vms,var.app_web_vms),
+      hosts                    = concat(var.app_web_vms,var.app_db_vms),
       scripturl                = azurerm_storage_blob.bastion_prepare_script.url,
       sqlserver                = module.paas_app.sql_server_fqdn
     })

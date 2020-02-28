@@ -106,6 +106,13 @@ resource "azurerm_subnet" "iag_subnet" {
                                 "Microsoft.Sql",
                                 "Microsoft.Storage"
   ]
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 }
 
 resource "azurerm_subnet" "waf_subnet" {
@@ -116,6 +123,13 @@ resource "azurerm_subnet" "waf_subnet" {
   service_endpoints           = [
                                 "Microsoft.Web"
   ]
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 }
 
 resource "azurerm_subnet" "mgmt_subnet" {
@@ -127,6 +141,13 @@ resource "azurerm_subnet" "mgmt_subnet" {
   service_endpoints            = [
                                  "Microsoft.Web"
   ]
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 }
 
 resource "azurerm_subnet_route_table_association" "mgmt_subnet_routes" {

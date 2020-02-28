@@ -267,8 +267,7 @@ function WaitForJobs (
     do {
         $runningJobs = $Jobs | Where-Object {$_.State -like "Running"}
         Write-Host "$($runningJobs.Count) jobs in running state [$elapsed elapsed]"
-        Wait-Job -Job $Jobs -Timeout $updateIntervalSeconds
-        $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+        $null = Wait-Job -Job $Jobs -Timeout $updateIntervalSeconds
     } while ($runningJobs -and ($stopWatch.Elapsed.TotalMinutes -lt $TimeoutMinutes)) 
 
     $jobs | Format-Table -Property Id, Name, State
