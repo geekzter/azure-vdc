@@ -94,7 +94,7 @@ jobs:
   dependsOn: 'Prep'
   displayName: 'Provision Infrastructure with Terraform'
   condition: succeeded()
-  timeoutInMinutes: $(jobTimeOutMinutes)
+  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   pool:
     name: $(agentPool)
