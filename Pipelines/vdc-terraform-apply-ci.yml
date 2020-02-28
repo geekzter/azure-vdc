@@ -463,7 +463,7 @@ jobs:
         ScriptType: 'InlineScript'
         Inline: |
           ./tf_deploy.ps1 -init -workspace $(workspace) -trace $(trace)
-          ./tf_clear_state.ps1 -workspace $(workspace) -destroy -force -wait -timeoutminutes '120m'
+          ./tf_clear_state.ps1 -workspace $(workspace) -destroy -force -wait -timeoutminutes 120
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
