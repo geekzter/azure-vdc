@@ -277,13 +277,19 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.update.microsoft.com",
       "*.windowsupdate.com",
       "checkappexec.microsoft.com",
+      "fe2.update.microsoft.com",
       "management.azure.com",
       "management.core.windows.net",
+      "msedge.api.cdp.microsoft.com",
       "msft.sts.microsoft.com",
       "opinsightsweuomssa.blob.core.windows.net",
       "scadvisor.accesscontrol.windows.net",
       "scadvisorcontent.blob.core.windows.net",
       "scadvisorservice.accesscontrol.windows.net",
+      "settings-win.data.microsoft.com",
+      "smartscreen-prod.microsoft.com",
+      "sls.update.microsoft.com",
+      "v10c.events.data.microsoft.com",
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_log_analytics_workspace.vcd_workspace.portal_url
     ]
@@ -306,11 +312,13 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     target_fqdns               = [
       "*.digicert.com",
     # "adl.windows.com",
+      "chocolatey.org",
       "crl.microsoft.com",
+      "go.microsoft.com",
       "mscrl.microsoft.com",
       "ocsp.msocsp.com",
-    # "dl.delivery.mp.microsoft.com",
-    # "www.microsoft.com"
+      "dl.delivery.mp.microsoft.com", # "Microsoft Edge"
+    # "www.microsoft.com",
       "www.msftconnecttest.com"
     ]
 
