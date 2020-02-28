@@ -426,6 +426,7 @@ jobs:
         resourceGroupName: '$(iaasResourceGroup)'
       continueOnError: true
       condition: succeededOrFailed()
+      enabled: false # rely on tf_clear_state.ps1
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down PaaS App resource group'
@@ -435,6 +436,7 @@ jobs:
         resourceGroupName: '$(paasResourceGroup)'
       continueOnError: true
       condition: succeededOrFailed()
+      enabled: false # rely on tf_clear_state.ps1
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Tear down VDC resource group'
@@ -444,6 +446,7 @@ jobs:
         resourceGroupName: '$(vdcResourceGroup)'
       continueOnError: true
       condition: succeededOrFailed()
+      enabled: false # rely on tf_clear_state.ps1
 
     - task: TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
