@@ -265,6 +265,7 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     ]
 
     target_fqdns               = [
+      "*.api.cdp.microsoft.com",
       "*.azure-automation.net",
       "*.delivery.mp.microsoft.com",
       "*.do.dsp.mp.microsoft.com",
@@ -277,10 +278,8 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.update.microsoft.com",
       "*.windowsupdate.com",
       "checkappexec.microsoft.com",
-      "fe2.update.microsoft.com",
       "management.azure.com",
       "management.core.windows.net",
-      "msedge.api.cdp.microsoft.com",
       "msft.sts.microsoft.com",
       "opinsightsweuomssa.blob.core.windows.net",
       "scadvisor.accesscontrol.windows.net",
@@ -288,8 +287,6 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "scadvisorservice.accesscontrol.windows.net",
       "settings-win.data.microsoft.com",
       "smartscreen-prod.microsoft.com",
-      "sls.update.microsoft.com",
-      "v10c.events.data.microsoft.com",
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_log_analytics_workspace.vcd_workspace.portal_url
     ]
