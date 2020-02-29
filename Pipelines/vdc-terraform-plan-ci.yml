@@ -1,8 +1,5 @@
-# This pipeline performans a full CI test of the VDC:
-#  - Provision infrastructure
-#  - Deploy application
-#  - Test application
-#  - Destroy infrastructure
+# This pipeline performs a limited CI test of the VDC:
+#  - Plan infrastructure i.e. check for Terraform validation errors
 
 trigger:
   branches:
