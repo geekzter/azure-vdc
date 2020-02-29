@@ -41,7 +41,7 @@ variables:
 
 jobs:
 - job: 'Plan'
-  displayName: 'Provision Infrastructure with Terraform'
+  displayName: 'Plan Infrastructure with Terraform'
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   pool:
@@ -101,7 +101,7 @@ jobs:
     - task: AzurePowerShell@4
       # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
       name: terraform 
-      displayName: 'Terraform init & apply'
+      displayName: 'Terraform init & plan'
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         ScriptType: 'FilePath'
