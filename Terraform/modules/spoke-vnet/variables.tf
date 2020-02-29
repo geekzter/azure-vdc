@@ -6,6 +6,10 @@ variable tags {
 
 variable address_space {}
 variable bastion_subnet_range {}
+variable default_create_timeout {}
+variable default_update_timeout {}
+variable default_read_timeout {}
+variable default_delete_timeout {}
 variable deploy_managed_bastion {
   type                         = bool
 }

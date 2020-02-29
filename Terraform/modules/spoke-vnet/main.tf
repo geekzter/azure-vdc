@@ -271,12 +271,26 @@ resource "azurerm_subnet" "subnet" {
 
   # Find list of service endpoints defined for subnet we're iterating over, use empty list if none defined
   service_endpoints            = lookup(var.service_endpoints,element(keys(var.subnets),count.index),null)
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 }
 
 resource "azurerm_subnet_route_table_association" "subnet_routes" {
   subnet_id                    = local.subnet_id_map[element(var.enable_routetable_for_subnets,count.index)]
   route_table_id               = azurerm_route_table.spoke_route_table.id
   count                        = length(var.enable_routetable_for_subnets)
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   depends_on                   = [azurerm_virtual_network_peering.spoke_to_hub]
 }
@@ -285,6 +299,13 @@ resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
   subnet_id                    = element(azurerm_subnet.subnet.*.id,count.index)
   network_security_group_id    = azurerm_network_security_group.spoke_nsg.id
   count                        = length(var.subnets)
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   depends_on                   = [azurerm_virtual_network_peering.spoke_to_hub]
 }
@@ -323,6 +344,13 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
   service_endpoints            = [
                                  "Microsoft.Web"
   ]
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   count                        = var.deploy_managed_bastion ? 1 : 0
 }

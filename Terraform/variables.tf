@@ -313,6 +313,22 @@ variable vpn_root_cert_file {
   description                  = "The relative path to the certificate CER file used for P2S root"
 }
 
+variable default_create_timeout {
+  default                      = "60m"
+}
+
+variable default_update_timeout {
+  default                      = "60m"
+}
+
+variable default_read_timeout {
+  default                      = "30m"
+}
+
+variable default_delete_timeout {
+  default                      = "60m"
+}
+
 variable deploy_app_service_network_integration {
   description                  = "Whether to App Service Regional Virtual network Integration]"
   default                      = true

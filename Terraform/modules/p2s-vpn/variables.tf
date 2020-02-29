@@ -9,6 +9,11 @@ variable tags {
   type        = map
 } 
 
+variable default_create_timeout {}
+variable default_update_timeout {}
+variable default_read_timeout {}
+variable default_delete_timeout {}
+
 variable diagnostics_storage_id {
   description                  = "The id of the diagnostics storage account to use"
 }

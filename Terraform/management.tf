@@ -1,3 +1,7 @@
+locals {
+   mgmt_vm_name                = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"-","")),0,16)}mgmt"
+}
+
 
 resource "azurerm_network_interface" "bas_if" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-bastion-if"
@@ -29,90 +33,48 @@ resource "azurerm_storage_blob" "bastion_prepare_script" {
   source                       = "../Scripts/prepare_bastion.ps1"
 }
 
-data "template_file" "bastion_first_commands" {
-  template = file("../Scripts/FirstLogonCommands.xml")
-
-  vars                         = {
-    host1                      = element(var.app_web_vms, 0)
-    host2                      = element(var.app_web_vms, 1)
-    username                   = var.admin_username
-    password                   = local.password
-    scripturl                  = azurerm_storage_blob.bastion_prepare_script.url
-    sqlserver                  = module.paas_app.sql_server_fqdn
-  }
-}
-
-resource "azurerm_virtual_machine" "bastion" {
-  name                         = "${azurerm_resource_group.vdc_rg.name}-bastion"
+resource "azurerm_windows_virtual_machine" "bastion" {
+  name                         = local.mgmt_vm_name
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   network_interface_ids        = [azurerm_network_interface.bas_if.id]
-  vm_size                      = "Standard_D2s_v3"
+  size                         = "Standard_D2s_v3"
+  admin_username               = var.admin_username
+  admin_password               = local.password
 
-  # Uncomment this line to delete the OS disk automatically when deleting the VM
-  delete_os_disk_on_termination = true
+  os_disk {
+    name                       = "${local.mgmt_vm_name}-osdisk"
+    caching                    = "ReadWrite"
+    storage_account_type       = "Premium_LRS"
+  }
 
-  # Uncomment this line to delete the data disks automatically when deleting the VM
-  delete_data_disks_on_termination = true
-
-  storage_image_reference {
+  source_image_reference {
     publisher                  = "MicrosoftWindowsServer"
     offer                      = "WindowsServer"
     sku                        = "2019-Datacenter"
     version                    = "latest"
   }
 
-  storage_os_disk {
-    name                       = "${azurerm_resource_group.vdc_rg.name}-bastion-osdisk"
-    caching                    = "ReadWrite"
-    create_option              = "FromImage"
-    managed_disk_type          = "Premium_LRS"
+  additional_unattend_content {
+    setting                    = "AutoLogon"
+    content                    = templatefile("../Scripts/AutoLogon.xml", { 
+      count                    = 1, 
+      username                 = var.admin_username, 
+      password                 = local.password
+    })
+  }
+  additional_unattend_content {
+    setting                    = "FirstLogonCommands"
+    content                    = templatefile("../Scripts/FirstLogonCommands.xml", { 
+      username                 = var.admin_username, 
+      password                 = local.password, 
+      hosts                    = concat(var.app_web_vms,var.app_db_vms),
+      scripturl                = azurerm_storage_blob.bastion_prepare_script.url,
+      sqlserver                = module.paas_app.sql_server_fqdn
+    })
   }
 
-  # Optional data disks
-  storage_data_disk {
-    name                       = "${azurerm_resource_group.vdc_rg.name}-bastion-datadisk"
-    managed_disk_type          = "Premium_LRS"
-    create_option              = "Empty"
-    lun                        = 0
-    disk_size_gb               = "255"
-  }
-
-  os_profile {
-    computer_name              = "bastion"
-    admin_username             = var.admin_username
-    admin_password             = local.password
-  }
-
-  os_profile_windows_config {
-    provision_vm_agent         = true
-    enable_automatic_upgrades  = true
-
-    additional_unattend_config {
-      pass                     = "oobeSystem"
-      component                = "Microsoft-Windows-Shell-Setup"
-      setting_name             = "AutoLogon"
-      content                  = templatefile("../Scripts/AutoLogon.xml", { 
-        count                  = 1, 
-        username               = var.admin_username, 
-        password               = local.password
-      })
-    }
-
-    additional_unattend_config {
-      pass                     = "oobeSystem"
-      component                = "Microsoft-Windows-Shell-Setup"
-      setting_name             = "FirstLogonCommands"
-      content                  = templatefile("../Scripts/FirstLogonCommands.xml", { 
-        username               = var.admin_username, 
-        password               = local.password, 
-        host1                  = element(var.app_web_vms, 0), 
-        host2                  = element(var.app_web_vms, 1),
-        scripturl              = azurerm_storage_blob.bastion_prepare_script.url,
-        sqlserver              = module.paas_app.sql_server_fqdn
-      })
-    }
-  }
+  custom_data                  = base64encode("Hello World")
 
   # Required for AAD Login
   identity {
@@ -127,8 +89,8 @@ resource "azurerm_virtual_machine" "bastion" {
 }
 
 # resource "azurerm_virtual_machine_extension" "bastion_aadlogin" {
-#   name                         = "${azurerm_virtual_machine.bastion.name}/AADLoginForWindows"
-#   virtual_machine_id           = "${azurerm_virtual_machine.bastion.id}"
+#   name                         = "${azurerm_windows_virtual_machine.bastion.name}/AADLoginForWindows"
+#   virtual_machine_id           = "azurerm_windows_virtual_machine.bastion.id
 #   publisher                    = "Microsoft.Azure.ActiveDirectory"
 #   type                         = "AADLoginForWindows"
 #   type_handler_version         = "0.3"
@@ -141,7 +103,7 @@ resource "azurerm_virtual_machine" "bastion" {
 
 resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
   name                         = "BGInfo"
-  virtual_machine_id           = azurerm_virtual_machine.bastion.id
+  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
   publisher                    = "Microsoft.Compute"
   type                         = "BGInfo"
   type_handler_version         = "2.1"
@@ -154,7 +116,7 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
 
 resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
   name                         = "DAExtension"
-  virtual_machine_id           = azurerm_virtual_machine.bastion.id
+  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"
   type_handler_version         = "9.5"
@@ -178,7 +140,7 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
 
 resource "azurerm_virtual_machine_extension" "bastion_monitor" {
   name                         = "MicrosoftMonitoringAgent"
-  virtual_machine_id           = azurerm_virtual_machine.bastion.id
+  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
@@ -202,7 +164,7 @@ resource "azurerm_virtual_machine_extension" "bastion_monitor" {
 
 resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   name                         = "AzureNetworkWatcherExtension"
-  virtual_machine_id           = azurerm_virtual_machine.bastion.id
+  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
   publisher                    = "Microsoft.Azure.NetworkWatcher"
   type                         = "NetworkWatcherAgentWindows"
   type_handler_version         = "1.4"
@@ -222,7 +184,7 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 #   network_watcher_name         = local.network_watcher_name
 
 #   source {
-#     virtual_machine_id         = azurerm_virtual_machine.bastion.id
+#     virtual_machine_id         = azurerm_windows_virtual_machine.bastion.id
 #   }
 
 #   destination {
@@ -243,7 +205,7 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 #   network_watcher_name         = local.network_watcher_name
 
 #   source {
-#     virtual_machine_id         = azurerm_virtual_machine.bastion.id
+#     virtual_machine_id         = azurerm_windows_virtual_machine.bastion.id
 #   }
 
 #   destination {
@@ -258,7 +220,7 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 # } 
 
 locals {
-  virtual_machine_ids            = concat(module.iis_app.virtual_machine_ids, [azurerm_virtual_machine.bastion.id])
+  virtual_machine_ids            = concat(module.iis_app.virtual_machine_ids, [azurerm_windows_virtual_machine.bastion.id])
   virtual_machine_ids_string     = join(",",local.virtual_machine_ids)
 }
 

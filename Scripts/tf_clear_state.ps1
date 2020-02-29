@@ -17,7 +17,7 @@ param (
     [parameter(Mandatory=$false)][switch]$Destroy,
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
-    [parameter(Mandatory=$false)][int]$Timeout=300,
+    [parameter(Mandatory=$false)][int]$TimeoutMinutes=5,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
@@ -28,6 +28,9 @@ param (
 $application = "Automated VDC"
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+
+# Log on to Azure if not already logged on
+AzLogin
 
 try {
     Push-Location $tfdirectory
@@ -68,10 +71,21 @@ try {
 if ($Destroy) {
     AzLogin
 
+    # Remove resource groups 
+    # Async operation, as they have unique suffixes that won't clash with new deployments
+    Write-Host "Removing VDC resource groups (async)..."
+    $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
+    $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
+    if ((RemoveResourceGroups $resourceGroups -Force $Force)) {
+        $stopWatch.Start()
+    } else {
+        Write-Host "No resource group found to delete for workspace $Workspace"
+    }
+
     # Remove resources in the NetworkWatcher resource group
-    Write-Host "Removing VDC network watchers from shared resource group 'NetworkWatcherRG' (sync)..."
+    Write-Host "Removing VDC network watchers from shared resource group 'NetworkWatcherRG' (async)..."
     $resources = Get-AzResource -ResourceGroupName "NetworkWatcherRG" -Tag @{workspace=$Workspace}
-    $resources | Remove-AzResource -Force
+    $resources | Remove-AzResource -Force -AsJob
 
     # Remove DNS records using tags expressed as record level metadata
     # Synchronous operation, as records will clash with new deployments
@@ -90,35 +104,10 @@ if ($Destroy) {
         }
     }
 
-    # Remove resource groups 
-    # Async operation, as they have unique suffixes that won't clash with new deployments
-    Write-Host "Removing VDC resource groups (" -NoNewline
-    if (!$Wait) {
-        Write-Host "a" -NoNewline
-    }
-    Write-Host "sync)..."
-    $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
-    if ((RemoveResourceGroups $resourceGroups -Force $Force)) {
-        $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
-        $stopWatch.Start()
-
-        $jobs = Get-Job | Where-Object {$_.Command -like "Remove-AzResourceGroup"}
-        $jobs | Format-Table -Property Id, Name, State
-        if ($Wait) {
-            Write-Host "Waiting for jobs to complete..."
-            $waitStatus = Wait-Job -Job $jobs -Timeout $Timeout
-            if ($waitStatus) {
-                $stopWatch.Stop()
-                $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
-                $jobs | Format-Table -Property Id, Name, State
-                Write-Host "Jobs completed in $elapsed"
-            } else {
-                $jobs | Format-Table -Property Id, Name, State
-                Write-Warning "Jobs did not complete before timeout (${Timeout}s) expired"
-                exit 1
-            }
-        }
-    } else {
-        Write-Host "Nothing found to delete for workspace $Workspace"
+    $jobs = Get-Job | Where-Object {$_.Command -match "Remove-Az"}
+    $jobs | Format-Table -Property Id, Name, State
+    if ($Wait) {
+        # Waiting for async operations to complete
+        WaitForJobs -Jobs $jobs -TimeoutMinutes $TimeoutMinutes
     }
 }

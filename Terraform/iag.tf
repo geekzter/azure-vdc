@@ -265,6 +265,7 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     ]
 
     target_fqdns               = [
+      "*.api.cdp.microsoft.com",
       "*.azure-automation.net",
       "*.delivery.mp.microsoft.com",
       "*.do.dsp.mp.microsoft.com",
@@ -284,6 +285,8 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "scadvisor.accesscontrol.windows.net",
       "scadvisorcontent.blob.core.windows.net",
       "scadvisorservice.accesscontrol.windows.net",
+      "settings-win.data.microsoft.com",
+      "smartscreen-prod.microsoft.com",
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_log_analytics_workspace.vcd_workspace.portal_url
     ]
@@ -306,11 +309,13 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
     target_fqdns               = [
       "*.digicert.com",
     # "adl.windows.com",
+      "chocolatey.org",
       "crl.microsoft.com",
+      "go.microsoft.com",
       "mscrl.microsoft.com",
       "ocsp.msocsp.com",
-    # "dl.delivery.mp.microsoft.com",
-    # "www.microsoft.com"
+      "dl.delivery.mp.microsoft.com", # "Microsoft Edge"
+    # "www.microsoft.com",
       "www.msftconnecttest.com"
     ]
 

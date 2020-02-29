@@ -1,21 +1,23 @@
 function AzLogin (
     [parameter(Mandatory=$false)][switch]$AsUser
 ) {
+    if(!($subscription)) { Throw "You must supply a value for subscription" }
+    if(!($tenantid)) { Throw "You must supply a value for tenantid" }
     if (!(Get-AzContext)) {
         Write-Host "Reconnecting to Azure with SPN..."
-        if(-not($clientid)) { Throw "You must supply a value for clientid" }
-        if(-not($clientsecret)) { Throw "You must supply a value for clientsecret" }
         if ($AsUser) {
             Connect-AzAccount -Tenant $tenantid -Subscription $subscription
         } else {
-            # Use Terraform ARM Backend config to authenticate to Azure
+            if(!($clientid)) { Throw "You must supply a value for clientid" }
+            if(!($clientsecret)) { Throw "You must supply a value for clientsecret" }
+                    # Use Terraform ARM Backend config to authenticate to Azure
             $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
             $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
             $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
         }
     } else {
         if ($AsUser -and ((Get-AzContext).Account.Type -ine "User")) {
-            Connect-AzAccount -Tenant $tenantid -Subscription $subscription
+            Connect-AzAccount -Subscription $subscription -Tenant $tenantid 
         } 
     }
     $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
@@ -249,5 +251,32 @@ function SetPipelineVariablesFromTerraform () {
             # https://github.com/Microsoft/azure-pipelines-agent/blob/master/docs/preview/outputvariable.md
             Write-Host "##vso[task.setvariable variable=$outputVariable;isOutput=true]$value"
         }
+    }
+}
+
+function WaitForJobs (
+    [parameter(Mandatory=$true)][object[]]$Jobs,
+    [parameter(Mandatory=$false)][int]$TimeoutMinutes=5
+) {
+    $updateIntervalSeconds = 10 # Same as Terraform
+    $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
+    $stopWatch.Start()
+
+    Write-Host "Waiting for jobs to complete..."
+
+    do {
+        $runningJobs = $Jobs | Where-Object {$_.State -like "Running"}
+        $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+        Write-Host "$($runningJobs.Count) jobs in running state [$elapsed elapsed]"
+        $null = Wait-Job -Job $Jobs -Timeout $updateIntervalSeconds
+    } while ($runningJobs -and ($stopWatch.Elapsed.TotalMinutes -lt $TimeoutMinutes)) 
+
+    $jobs | Format-Table -Property Id, Name, State
+    if ($waitStatus) {
+        Write-Warning "Jobs did not complete before timeout (${TimeoutMinutes}m) expired"
+    } else {
+        # Timeout expired before jobs completed
+        $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+        Write-Host "Jobs completed in $elapsed"
     }
 }

@@ -51,6 +51,13 @@ resource "azurerm_virtual_network_gateway" "vpn_gw" {
     }
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   count                        = var.deploy_vpn ? 1 : 0
   tags                         = var.tags
 }
