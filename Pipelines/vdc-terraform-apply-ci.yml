@@ -1,4 +1,4 @@
-# This pipeline performans a full CI test of the VDC:
+# This pipeline perfors a full CI test of the VDC:
 #  - Provision infrastructure
 #  - Deploy application
 #  - Test application
@@ -10,9 +10,12 @@ trigger:
     - master
   paths:
     include:
-    - '*' 
+    - 'Scripts/*' 
+    - 'Terraform/*' 
     exclude:
     - 'Apps/*'
+    - 'Kusto/*'
+    - 'Pipelines/*'
 
 pr:
   branches:
@@ -20,7 +23,7 @@ pr:
     - '*'
 
 schedules:
-  - cron: '0 5 * * *'
+  - cron: '0 4 * * *'
     displayName: 'Daily early morning build (UTC)'
     # Run if there are no changes
     always: 'true'
@@ -62,6 +65,8 @@ variables:
   value: '$(Build.SourcesDirectory)/Scripts'
 - name: 'terraformArmStrict'
   value: 'true'
+- name: 'terraformWorkspace'
+  value: 'ci'
 - name: 'iaasResourceGroup'
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
 - name: 'paasResourceGroup'
@@ -70,8 +75,8 @@ variables:
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
 
 
-# Prepare job on hosted agent
 jobs:
+# Prepare job on hosted agent
 - job: 'Prep'
   displayName: 'Start Self-Hosted Agent'
 
@@ -162,9 +167,9 @@ jobs:
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         # To start from scratch, use these arguments:
-        ScriptArguments: '-init -clear -apply -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -clear -apply -force -workspace $(terraformWorkspace) -trace $(trace) -parallelism $(parallelism)'
         # To continue where a previous (broken) build left of, use these arguments:
-      # ScriptArguments: '-init -apply -force -stickysuffix -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+      # ScriptArguments: '-init -apply -force -stickysuffix -workspace $(terraformWorkspace) -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -242,7 +247,7 @@ jobs:
         ScriptType: 'FilePath'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        ScriptArguments: '-init -apply -force -stickysuffix -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -apply -force -stickysuffix -workspace $(terraformWorkspace) -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -360,7 +365,7 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        ScriptArguments: '-init -destroy -force -workspace $(workspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -destroy -force -workspace $(terraformWorkspace) -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: LatestVersion
         pwsh: true
@@ -466,8 +471,8 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         ScriptType: 'InlineScript'
         Inline: |
-          ./tf_deploy.ps1 -init -workspace $(workspace) -trace $(trace)
-          ./tf_clear_state.ps1 -workspace $(workspace) -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
+          ./tf_deploy.ps1 -init -workspace $(terraformWorkspace) -trace $(trace)
+          ./tf_clear_state.ps1 -workspace $(terraformWorkspace) -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true

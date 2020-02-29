@@ -4,12 +4,14 @@
 trigger:
   branches:
     include:
+    # Trigger on every branch, as this pipeline executes around 1 minute
     - '*'
   paths:
     include:
-    - '*' 
+    - 'Terraform/*' 
     exclude:
     - 'Apps/*'
+    - 'Kusto/*'
     - 'Pipelines/*'
 
 # Global variables shared by all jobs
