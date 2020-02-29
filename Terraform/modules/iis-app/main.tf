@@ -356,7 +356,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   }
 
   os_profile {
-    computer_name              = "${local.app_hostname}${count.index+1}"
+    computer_name              = "${local.db_hostname}${count.index+1}"
     admin_username             = var.admin_username
     admin_password             = var.admin_password
   }
