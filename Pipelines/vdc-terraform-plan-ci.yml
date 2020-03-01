@@ -14,6 +14,12 @@ trigger:
     - 'Kusto/*'
     - 'Pipelines/*'
 
+pr:
+  branches:
+    exclude:
+    # Already triggering on every commit on any branch
+    - '*'
+
 # Global variables shared by all jobs
 variables:
   # Variable Groups are referenced, but defined elsewhere (Library)
@@ -39,6 +45,8 @@ variables:
   value: '$(Build.SourcesDirectory)/Scripts'
 - name: 'TF_IN_AUTOMATION'
   value: 'true'
+- name: 'TF_INPUT'
+  value: 0
 - name: 'TF_WORKSPACE'
   value: 'cip'
 
@@ -119,6 +127,5 @@ jobs:
         # Use prepared Terraform environment variables
         ARM_CLIENT_ID: '$(terraformConfig.clientId)'
         ARM_CLIENT_SECRET: '$(terraformConfig.clientSecret)'
-        ARM_PROVIDER_STRICT: '$(terraformArmStrict)'
         ARM_SUBSCRIPTION_ID: '$(terraformConfig.subscriptionId)'
         ARM_TENANT_ID: '$(terraformConfig.tenantId)'

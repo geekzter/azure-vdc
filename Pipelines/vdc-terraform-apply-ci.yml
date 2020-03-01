@@ -50,6 +50,15 @@ variables:
   # 'vdc-vanity-domain' contains certificate, domain information
 - group: 'vdc-vanity-domain'
 
+- name: 'ARM_PROVIDER_STRICT'
+  value: 'true'
+- name: 'TF_IN_AUTOMATION'
+  value: 'true'
+- name: 'TF_INPUT'
+  value: 0
+- name: 'TF_WORKSPACE'
+  value: 'ci'
+
 # Inline variables shared across jobs
 - name: 'agentOS'
   value: 'Linux'
@@ -63,10 +72,6 @@ variables:
   value: 120
 - name: 'scriptDirectory'
   value: '$(Build.SourcesDirectory)/Scripts'
-- name: 'terraformArmStrict'
-  value: 'true'
-- name: 'terraformWorkspace'
-  value: 'ci'
 - name: 'iaasResourceGroup'
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
 - name: 'paasResourceGroup'
@@ -167,9 +172,9 @@ jobs:
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         # To start from scratch, use these arguments:
-        ScriptArguments: '-init -clear -apply -force -workspace $(terraformWorkspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
         # To continue where a previous (broken) build left of, use these arguments:
-      # ScriptArguments: '-init -apply -force -stickysuffix -workspace $(terraformWorkspace) -trace $(trace) -parallelism $(parallelism)'
+      # ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -177,10 +182,8 @@ jobs:
         # Use prepared Terraform environment variables
         ARM_CLIENT_ID: '$(terraformConfig.clientId)'
         ARM_CLIENT_SECRET: '$(terraformConfig.clientSecret)'
-        ARM_PROVIDER_STRICT: '$(terraformArmStrict)'
         ARM_SUBSCRIPTION_ID: '$(terraformConfig.subscriptionId)'
         ARM_TENANT_ID: '$(terraformConfig.tenantId)'
-        TF_IN_AUTOMATION: 'true'
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
 
@@ -247,7 +250,7 @@ jobs:
         ScriptType: 'FilePath'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        ScriptArguments: '-init -apply -force -stickysuffix -workspace $(terraformWorkspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -255,10 +258,8 @@ jobs:
         # Use prepared Terraform environment variables
         ARM_CLIENT_ID: '$(terraformClientId)'
         ARM_CLIENT_SECRET: '$(terraformClientSecret)'
-        ARM_PROVIDER_STRICT: '$(terraformArmStrict)'
         ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
         ARM_TENANT_ID: '$(terraformTenantId)'
-        TF_IN_AUTOMATION: 'true'
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
 # Deploy PaaS application 
@@ -365,7 +366,7 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        ScriptArguments: '-init -destroy -force -workspace $(terraformWorkspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -destroy -force -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: LatestVersion
         pwsh: true
@@ -375,10 +376,8 @@ jobs:
         # Use prepared Terraform environment variables
         ARM_CLIENT_ID: '$(terraformClientId)'
         ARM_CLIENT_SECRET: '$(terraformClientSecret)'
-        ARM_PROVIDER_STRICT: '$(terraformArmStrict)'
         ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
         ARM_TENANT_ID: '$(terraformTenantId)'
-        TF_IN_AUTOMATION: 'true'
         TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
 
     # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
@@ -471,8 +470,8 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         ScriptType: 'InlineScript'
         Inline: |
-          ./tf_deploy.ps1 -init -workspace $(terraformWorkspace) -trace $(trace)
-          ./tf_clear_state.ps1 -workspace $(terraformWorkspace) -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
+          ./tf_deploy.ps1 -init -workspace -trace $(trace)
+          ./tf_clear_state.ps1 -workspace -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -482,7 +481,5 @@ jobs:
         # Use prepared Terraform environment variables
         ARM_CLIENT_ID: '$(terraformClientId)'
         ARM_CLIENT_SECRET: '$(terraformClientSecret)'
-        ARM_PROVIDER_STRICT: '$(terraformArmStrict)'
         ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
         ARM_TENANT_ID: '$(terraformTenantId)'
-        TF_IN_AUTOMATION: 'true'
