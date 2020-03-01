@@ -471,8 +471,8 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         ScriptType: 'InlineScript'
         Inline: |
-          ./tf_deploy.ps1 -init -workspace -trace $(trace)
-          ./tf_clear_state.ps1 -workspace -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
+          ./tf_deploy.ps1 -init -trace $(trace)
+          ./tf_clear_state.ps1 -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
