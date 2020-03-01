@@ -6,6 +6,8 @@ variable tags {
 }
 variable admin_ips {}
 variable admin_ip_ranges {}
+variable admin_login {}
+variable admin_object_id {}
 variable admin_username {}
 #variable aad_auth_client_id {}
 variable management_subnet_ids {
@@ -20,8 +22,10 @@ variable database_template_storage_uri {
   default                      = "https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac"
 }
 variable data_subnet_id {}
-variable admin_login {}
-variable admin_object_id {}
+variable default_create_timeout {}
+variable default_update_timeout {}
+variable default_read_timeout {}
+variable default_delete_timeout {}
 variable deploy_app_service_network_integration {
   type                         = bool
 }
