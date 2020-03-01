@@ -13,7 +13,7 @@
 #> 
 
 param (
-    [parameter(Mandatory=$false)][string]$Workspace,
+    [parameter(Mandatory=$false)][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][switch]$Destroy,
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
@@ -24,6 +24,7 @@ param (
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
     [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
 )
+if (!($Workspace)) { Throw "You must supply a value for Workspace" }
 
 $application = "Automated VDC"
 
@@ -34,13 +35,8 @@ AzLogin
 
 try {
     Push-Location $tfdirectory
-
-    if ($Workspace) {
-        $currentWorkspace = $(terraform workspace show)
-        terraform workspace select $Workspace
-    } else {
-        $Workspace = $(terraform workspace show)
-    }
+    $priorWorkspace = SelectWorkspace -Workspace $Workspace -ShowWorkspaceName
+    $Workspace = $(terraform workspace show) # Ensure this is always populated
 
     Write-Host "Clearing Terraform workspace '$Workspace'..." -ForegroundColor Green
 
@@ -62,9 +58,7 @@ try {
     }
 } finally {
     # Ensure this always runs
-    if ($currentWorkspace) {
-        terraform workspace select $currentWorkspace
-    }
+    $null = SelectWorkspace -Workspace $priorWorkspace
     Pop-Location
 }
 

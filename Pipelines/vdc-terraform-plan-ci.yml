@@ -33,10 +33,13 @@ variables:
   # 'vdc-vanity-domain' contains certificate, domain information
 - group: 'vdc-vanity-domain'
 
+
 # Inline variables shared across jobs
 - name: 'scriptDirectory'
   value: '$(Build.SourcesDirectory)/Scripts'
-- name: 'terraformWorkspace'
+- name: 'TF_IN_AUTOMATION'
+  value: 'true'
+- name: 'TF_WORKSPACE'
   value: 'cip'
 
 jobs:
@@ -108,7 +111,7 @@ jobs:
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
         # To start from scratch, use these arguments:
-        ScriptArguments: '-init -plan -workspace $(terraformWorkspace) -trace $(trace) -parallelism $(parallelism)'
+        ScriptArguments: '-init -plan -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -119,4 +122,3 @@ jobs:
         ARM_PROVIDER_STRICT: '$(terraformArmStrict)'
         ARM_SUBSCRIPTION_ID: '$(terraformConfig.subscriptionId)'
         ARM_TENANT_ID: '$(terraformConfig.tenantId)'
-        TF_IN_AUTOMATION: 'true'

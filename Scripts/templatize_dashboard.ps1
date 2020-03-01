@@ -38,13 +38,7 @@ If (!(Test-Path $OutputFilePath) -and !$Force -and !$DontWrite) {
 # Retrieve Azure resources config using Terraform
 try {
     Push-Location $tfdirectory
-    if ($Workspace) {
-        $currentWorkspace = $(terraform workspace show)
-        terraform workspace select $Workspace
-    } else {
-        $Workspace = $(terraform workspace show)
-    }
-    Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
+    $priorWorkspace = SelectWorkspace -Workspace $Workspace -ShowWorkspaceName
 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
@@ -63,10 +57,7 @@ try {
         exit 
     }
 } finally {
-    # Ensure this always runs
-    if ($currentWorkspace) {
-        terraform workspace select $currentWorkspace
-    }
+    $null = SelectWorkspace -Workspace $priorWorkspace
     Pop-Location
 }
 

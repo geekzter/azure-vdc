@@ -21,42 +21,36 @@ param (
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 
+. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+AzLogin
+
 if (!$VMResourceId) {
   # Retrieve Azure resources config using Terraform
   try {
-      Push-Location $tfdirectory
+    Push-Location $tfdirectory
+    $priorWorkspace = SelectWorkspace -Workspace $Workspace -ShowWorkspaceName
 
-      if ($Workspace) {
-          $currentWorkspace = $(terraform workspace show)
-          terraform workspace select $Workspace
-      } else {
-          $Workspace = $(terraform workspace show)
+    Invoke-Command -ScriptBlock {
+      $Private:ErrorActionPreference = "Continue"
+      $Script:AutomationAccountName  = $(terraform output "automation_account" 2>$null)
+      if ([string]::IsNullOrEmpty($AutomationAccountName)) {
+        throw "Terraform output automation_account is empty"
       }
-      Write-Host "Using Terraform workspace '$Workspace'..."
 
-      Invoke-Command -ScriptBlock {
-          $Private:ErrorActionPreference = "Continue"
-          $Script:AutomationAccountName  = $(terraform output "automation_account" 2>$null)
-          if ([string]::IsNullOrEmpty($AutomationAccountName)) {
-            throw "Terraform output automation_account is empty"
-          }
-
-          $Script:ResourceGroupName      = $(terraform output "automation_account_resource_group" 2>$null)
-          if ([string]::IsNullOrEmpty($ResourceGroupName)) {
-            throw "Terraform output automation_account_resource_group is empty"
-          }
-   
-          $vmResourceIdString              = $(terraform output "virtual_machine_ids_string" 2>$null)
-          if ([string]::IsNullOrEmpty($vmResourceIdString)) {
-            throw "Terraform output virtual_machine_ids_string is empty"
-          }
-          $Script:VMResourceId            = $vmResourceIdString.Split(",")
+      $Script:ResourceGroupName      = $(terraform output "automation_account_resource_group" 2>$null)
+      if ([string]::IsNullOrEmpty($ResourceGroupName)) {
+        throw "Terraform output automation_account_resource_group is empty"
       }
+
+      $vmResourceIdString              = $(terraform output "virtual_machine_ids_string" 2>$null)
+      if ([string]::IsNullOrEmpty($vmResourceIdString)) {
+        throw "Terraform output virtual_machine_ids_string is empty"
+      }
+      $Script:VMResourceId            = $vmResourceIdString.Split(",")
+    }
   } finally {
-      if ($currentWorkspace) {
-        terraform workspace select $currentWorkspace
-      }
-      Pop-Location
+    $null = SelectWorkspace -Workspace $priorWorkspace
+    Pop-Location
   }
 }
 

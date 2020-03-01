@@ -206,6 +206,39 @@ function RemoveResourceGroups (
     }
 }
 
+# This creates a worksoace if it doesn't exist yet (even needed with TF_WORKSPACE)
+function SelectWorkspace (
+    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace,
+    [parameter(Mandatory=$false)][switch]$ShowWorkspaceName
+) {
+    Write-Information "Terraform workspaces:"
+    terraform workspace list | Write-Information
+
+    $priorWorkspace = $(terraform workspace show)
+
+    if ($Workspace -and ($Workspace -ine $priorWorkspace)) {
+        # Create workspace if it does not exist (even needed with TF_WORKSPACE)
+        Invoke-Command -ScriptBlock {
+            $Private:ErrorActionPreference = "Continue"
+            terraform workspace new $Workspace 2>$null
+        }
+        if ($env:TF_WORKSPACE) {
+            if ($Workspace -ine $env:TF_WORKSPACE) {
+                Write-Error "Can't use workspace '$Workspace' if it is different from TF_WORKSPACE ($env:TF_WORKSPACE)"
+            }
+        } else {
+            terraform workspace select $Workspace
+        }
+    }
+    if ($ShowWorkspaceName) {
+        Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
+    }
+
+    if ($priorWorkspace -ine $Workspace) {
+        return $priorWorkspace
+    }
+}
+
 function SetDatabaseImport () {
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"

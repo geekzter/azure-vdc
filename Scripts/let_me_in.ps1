@@ -32,12 +32,7 @@ AzLogin #-AsUser
 try {
     # Terraform config
     Push-Location $tfdirectory
-    if ($Workspace) {
-        terraform workspace select $Workspace.ToLower()
-        Write-Host "Terraform workspaces:" -ForegroundColor White
-        terraform workspace list
-    }
-    Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
+    $priorWorkspace = SelectWorkspace -Workspace $Workspace -ShowWorkspaceName
 
     $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
     $paasAppResourceGroup = $(terraform output "paas_app_resource_group" 2>$null)
@@ -187,5 +182,6 @@ try {
         }
     }
 } finally {
+    $null = SelectWorkspace -Workspace $priorWorkspace
     Pop-Location
 }

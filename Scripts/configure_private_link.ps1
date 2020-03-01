@@ -30,33 +30,24 @@ AzLogin
 if (!$privateEndpointId) {
   # Retrieve Azure resources config using Terraform
   try {
-      Push-Location $tfdirectory
+    Push-Location $tfdirectory
+    $priorWorkspace = SelectWorkspace -Workspace $Workspace -ShowWorkspaceName
 
-      if ($Workspace) {
-          $currentWorkspace = $(terraform workspace show)
-          terraform workspace select $Workspace
-      } else {
-          $Workspace = $(terraform workspace show)
+    Invoke-Command -ScriptBlock {
+      $Private:ErrorActionPreference = "Continue"
+      $Script:PrivateEndpointId      = $(terraform output "paas_app_sql_server_endpoint_id" 2>$null)
+      if ([string]::IsNullOrEmpty($PrivateEndpointId)) {
+        throw "Terraform output paas_app_sql_server_endpoint_id is empty"
       }
-      Write-Host "Using Terraform workspace '$Workspace'..."
 
-      Invoke-Command -ScriptBlock {
-          $Private:ErrorActionPreference = "Continue"
-          $Script:PrivateEndpointId      = $(terraform output "paas_app_sql_server_endpoint_id" 2>$null)
-          if ([string]::IsNullOrEmpty($PrivateEndpointId)) {
-            throw "Terraform output paas_app_sql_server_endpoint_id is empty"
-          }
-
-          $Script:VDCResourceGroupName   = $(terraform output "vdc_resource_group"              2>$null)
-          if ([string]::IsNullOrEmpty($VDCResourceGroupName)) {
-            throw "Terraform output vdc_resource_group is empty"
-          }
+      $Script:VDCResourceGroupName   = $(terraform output "vdc_resource_group"              2>$null)
+      if ([string]::IsNullOrEmpty($VDCResourceGroupName)) {
+        throw "Terraform output vdc_resource_group is empty"
       }
+    }
   } finally {
-      if ($currentWorkspace) {
-        terraform workspace select $currentWorkspace
-      }
-      Pop-Location
+    $null = SelectWorkspace -Workspace $priorWorkspace
+    Pop-Location
   }
 }
 
