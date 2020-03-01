@@ -35,7 +35,7 @@ AzLogin
 
 try {
     Push-Location $tfdirectory
-    $priorWorkspace = SelectWorkspace -Workspace $Workspace -ShowWorkspaceName
+    $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
     $Workspace = $(terraform workspace show) # Ensure this is always populated
 
     Write-Host "Clearing Terraform workspace '$Workspace'..." -ForegroundColor Green
@@ -58,7 +58,7 @@ try {
     }
 } finally {
     # Ensure this always runs
-    $null = SelectWorkspace -Workspace $priorWorkspace
+    $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
 }
 

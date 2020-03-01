@@ -8,7 +8,7 @@
 #> 
 param  
 (    
-    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace,
+    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
@@ -28,7 +28,7 @@ AzLogin
 try 
 {
     Push-Location $tfdirectory
-    $priorWorkspace = SelectWorkspace -Workspace $Workspace
+    $priorWorkspace = (SetWorkspace -Workspace $Workspace).PriorWorkspaceName
     
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
@@ -63,6 +63,6 @@ try
 }
 finally
 {
-    $null = SelectWorkspace -Workspace $priorWorkspace
+    $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
 }

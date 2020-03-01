@@ -5,6 +5,7 @@
 #  - Destroy infrastructure
 
 trigger:
+  batch: true
   branches:
     include:
     - master

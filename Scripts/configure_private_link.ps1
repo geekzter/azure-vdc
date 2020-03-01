@@ -10,7 +10,7 @@
 param (    
     [parameter(Mandatory=$false)][string]$PrivateEndpointId,
     [parameter(Mandatory=$false)][string]$VDCResourceGroupName,
-    [parameter(Mandatory=$false)][string]$Workspace,
+    [parameter(Mandatory=$false)][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
@@ -31,7 +31,7 @@ if (!$privateEndpointId) {
   # Retrieve Azure resources config using Terraform
   try {
     Push-Location $tfdirectory
-    $priorWorkspace = SelectWorkspace -Workspace $Workspace -ShowWorkspaceName
+    $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
     Invoke-Command -ScriptBlock {
       $Private:ErrorActionPreference = "Continue"
@@ -46,7 +46,7 @@ if (!$privateEndpointId) {
       }
     }
   } finally {
-    $null = SelectWorkspace -Workspace $priorWorkspace
+    $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
   }
 }

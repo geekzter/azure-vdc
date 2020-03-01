@@ -129,7 +129,7 @@ try {
     }
 
     # Workspace can only be selected after init 
-    $priorWorkspace = SelectWorkspace -Workspace $Workspace -ShowWorkspaceName
+    $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
     if ($Validate) {
         Invoke "`nterraform validate" 
@@ -209,6 +209,6 @@ try {
     # Rethrow exception
     throw
 } finally {
-    $null = SelectWorkspace -Workspace $priorWorkspace
+    $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
 }

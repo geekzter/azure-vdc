@@ -2,23 +2,19 @@
 #  - Plan infrastructure i.e. check for Terraform validation errors
 
 trigger:
+  batch: true
   branches:
     include:
     # Trigger on every branch, as this pipeline executes around 1 minute
     - '*'
   paths:
     include:
+    - 'Pipelines/vdc-terraform-plan-ci.yml'
+    - 'Scripts/*' 
     - 'Terraform/*' 
-    exclude:
-    - 'Apps/*'
-    - 'Kusto/*'
-    - 'Pipelines/*'
 
-pr:
-  branches:
-    exclude:
-    # Already triggering on every commit on any branch
-    - '*'
+# Already triggering on every commit on any branch
+pr: none
 
 # Global variables shared by all jobs
 variables:

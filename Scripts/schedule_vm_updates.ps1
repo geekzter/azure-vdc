@@ -13,7 +13,7 @@ param (
     [parameter(Mandatory=$false)][string]$AutomationAccountName,
     [parameter(Mandatory=$false)][string]$ResourceGroupName,
     [parameter(Mandatory=$false)][string[]]$UpdateClassification=@("Critical", "Security", "UpdateRollup"),
-    [parameter(Mandatory=$false)][string]$Workspace,
+    [parameter(Mandatory=$false)][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
@@ -28,7 +28,7 @@ if (!$VMResourceId) {
   # Retrieve Azure resources config using Terraform
   try {
     Push-Location $tfdirectory
-    $priorWorkspace = SelectWorkspace -Workspace $Workspace -ShowWorkspaceName
+    $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
     Invoke-Command -ScriptBlock {
       $Private:ErrorActionPreference = "Continue"
@@ -49,7 +49,7 @@ if (!$VMResourceId) {
       $Script:VMResourceId            = $vmResourceIdString.Split(",")
     }
   } finally {
-    $null = SelectWorkspace -Workspace $priorWorkspace
+    $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
   }
 }

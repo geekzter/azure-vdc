@@ -8,7 +8,7 @@
 param ( 
     [parameter(Mandatory=$false)][string]$InputFile,
     [parameter(Mandatory=$false)][string]$OutputFile="dashboard.tpl",
-    [parameter(Mandatory=$false)][string]$Workspace,
+    [parameter(Mandatory=$false)][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$ShowTemplate=$false,
     [parameter(Mandatory=$false)][switch]$DontWrite=$false,
@@ -38,7 +38,7 @@ If (!(Test-Path $OutputFilePath) -and !$Force -and !$DontWrite) {
 # Retrieve Azure resources config using Terraform
 try {
     Push-Location $tfdirectory
-    $priorWorkspace = SelectWorkspace -Workspace $Workspace -ShowWorkspaceName
+    $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
@@ -57,7 +57,7 @@ try {
         exit 
     }
 } finally {
-    $null = SelectWorkspace -Workspace $priorWorkspace
+    $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
 }
 

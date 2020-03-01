@@ -6,7 +6,7 @@
 #> 
 param (    
     [parameter(Mandatory=$false,HelpMessage="The environment tag to filter use")][string] $Environment,
-    [parameter(Mandatory=$false,HelpMessage="The workspace tag to filter use")][string] $Workspace,
+    [parameter(Mandatory=$false,HelpMessage="The workspace tag to filter use")][string]$Workspace,
     [parameter(Mandatory=$false)][switch]$All=$false,
     [parameter(Mandatory=$false)][switch]$Resources=$false,
     [parameter(Mandatory=$false)][switch]$Summary=$false,

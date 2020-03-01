@@ -207,7 +207,7 @@ function RemoveResourceGroups (
 }
 
 # This creates a worksoace if it doesn't exist yet (even needed with TF_WORKSPACE)
-function SelectWorkspace (
+function SetWorkspace (
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace,
     [parameter(Mandatory=$false)][switch]$ShowWorkspaceName
 ) {
@@ -234,9 +234,12 @@ function SelectWorkspace (
         Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
     }
 
-    if ($priorWorkspace -ine $Workspace) {
-        return $priorWorkspace
+    $returnObject = New-Object PSObject -Property @{
+        WorkspaceName      = $(terraform workspace show)
+        PriorWorkspaceName = $priorWorkspace
     }
+
+    return $returnObject
 }
 
 function SetDatabaseImport () {
