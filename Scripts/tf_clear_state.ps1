@@ -100,7 +100,7 @@ if ($Destroy) {
 
     $jobs = Get-Job | Where-Object {$_.Command -match "Remove-Az"}
     $jobs | Format-Table -Property Id, Name, State
-    if ($Wait) {
+    if ($Wait -and $jobs) {
         # Waiting for async operations to complete
         WaitForJobs -Jobs $jobs -TimeoutMinutes $TimeoutMinutes
     }
