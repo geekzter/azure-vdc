@@ -162,6 +162,10 @@ module paas_app {
   database_import              = var.paas_app_database_import
   database_template_storage_key= var.app_database_template_storage_key
   data_subnet_id               = lookup(module.paas_spoke_vnet.subnet_ids,"data","")
+  default_create_timeout       = var.default_create_timeout
+  default_update_timeout       = var.default_update_timeout
+  default_read_timeout         = var.default_read_timeout
+  default_delete_timeout       = var.default_delete_timeout
   deploy_app_service_network_integration = var.deploy_app_service_network_integration
   deploy_private_dns_for_endpoint = var.deploy_private_dns_for_endpoint
   iag_subnet_id                = azurerm_subnet.iag_subnet.id

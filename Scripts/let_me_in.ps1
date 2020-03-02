@@ -6,7 +6,7 @@
 #> 
 ### Arguments
 param ( 
-    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace,
+    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][switch]$All=$false,
     [parameter(Mandatory=$false)][switch]$Network=$false,
     [parameter(Mandatory=$false)][switch]$ShowCredentials=$false,
@@ -32,12 +32,7 @@ AzLogin #-AsUser
 try {
     # Terraform config
     Push-Location $tfdirectory
-    if ($Workspace) {
-        terraform workspace select $Workspace.ToLower()
-        Write-Host "Terraform workspaces:" -ForegroundColor White
-        terraform workspace list
-    }
-    Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
+    $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
     $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
     $paasAppResourceGroup = $(terraform output "paas_app_resource_group" 2>$null)
@@ -187,5 +182,6 @@ try {
         }
     }
 } finally {
+    $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
 }

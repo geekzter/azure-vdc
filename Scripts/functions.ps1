@@ -206,6 +206,42 @@ function RemoveResourceGroups (
     }
 }
 
+# This creates a worksoace if it doesn't exist yet (even needed with TF_WORKSPACE)
+function SetWorkspace (
+    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace,
+    [parameter(Mandatory=$false)][switch]$ShowWorkspaceName
+) {
+    Write-Information "Terraform workspaces:"
+    terraform workspace list | Write-Information
+
+    $priorWorkspace = $(terraform workspace show)
+
+    if ($Workspace -and ($Workspace -ine $priorWorkspace)) {
+        # Create workspace if it does not exist (even needed with TF_WORKSPACE)
+        Invoke-Command -ScriptBlock {
+            $Private:ErrorActionPreference = "Continue"
+            terraform workspace new $Workspace 2>$null
+        }
+        if ($env:TF_WORKSPACE) {
+            if ($Workspace -ine $env:TF_WORKSPACE) {
+                Write-Error "Can't use workspace '$Workspace' if it is different from TF_WORKSPACE ($env:TF_WORKSPACE)"
+            }
+        } else {
+            terraform workspace select $Workspace
+        }
+    }
+    if ($ShowWorkspaceName) {
+        Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
+    }
+
+    $returnObject = New-Object PSObject -Property @{
+        WorkspaceName      = $(terraform workspace show)
+        PriorWorkspaceName = $priorWorkspace
+    }
+
+    return $returnObject
+}
+
 function SetDatabaseImport () {
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
@@ -258,25 +294,27 @@ function WaitForJobs (
     [parameter(Mandatory=$true)][object[]]$Jobs,
     [parameter(Mandatory=$false)][int]$TimeoutMinutes=5
 ) {
-    $updateIntervalSeconds = 10 # Same as Terraform
-    $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
-    $stopWatch.Start()
-
-    Write-Host "Waiting for jobs to complete..."
-
-    do {
-        $runningJobs = $Jobs | Where-Object {$_.State -like "Running"}
-        $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
-        Write-Host "$($runningJobs.Count) jobs in running state [$elapsed elapsed]"
-        $null = Wait-Job -Job $Jobs -Timeout $updateIntervalSeconds
-    } while ($runningJobs -and ($stopWatch.Elapsed.TotalMinutes -lt $TimeoutMinutes)) 
-
-    $jobs | Format-Table -Property Id, Name, State
-    if ($waitStatus) {
-        Write-Warning "Jobs did not complete before timeout (${TimeoutMinutes}m) expired"
-    } else {
-        # Timeout expired before jobs completed
-        $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
-        Write-Host "Jobs completed in $elapsed"
+    if ($Jobs) {
+        $updateIntervalSeconds = 10 # Same as Terraform
+        $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
+        $stopWatch.Start()
+    
+        Write-Host "Waiting for jobs to complete..."
+    
+        do {
+            $runningJobs = $Jobs | Where-Object {$_.State -like "Running"}
+            $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+            Write-Host "$($runningJobs.Count) jobs in running state [$elapsed elapsed]"
+            $null = Wait-Job -Job $Jobs -Timeout $updateIntervalSeconds
+        } while ($runningJobs -and ($stopWatch.Elapsed.TotalMinutes -lt $TimeoutMinutes)) 
+    
+        $jobs | Format-Table -Property Id, Name, State
+        if ($waitStatus) {
+            Write-Warning "Jobs did not complete before timeout (${TimeoutMinutes}m) expired"
+        } else {
+            # Timeout expired before jobs completed
+            $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
+            Write-Host "Jobs completed in $elapsed"
+        }
     }
 }

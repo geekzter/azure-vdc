@@ -10,7 +10,7 @@
 param (    
     [parameter(Mandatory=$false)][string]$PrivateEndpointId,
     [parameter(Mandatory=$false)][string]$VDCResourceGroupName,
-    [parameter(Mandatory=$false)][string]$Workspace,
+    [parameter(Mandatory=$false)][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
     [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
@@ -30,33 +30,24 @@ AzLogin
 if (!$privateEndpointId) {
   # Retrieve Azure resources config using Terraform
   try {
-      Push-Location $tfdirectory
+    Push-Location $tfdirectory
+    $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
-      if ($Workspace) {
-          $currentWorkspace = $(terraform workspace show)
-          terraform workspace select $Workspace
-      } else {
-          $Workspace = $(terraform workspace show)
+    Invoke-Command -ScriptBlock {
+      $Private:ErrorActionPreference = "Continue"
+      $Script:PrivateEndpointId      = $(terraform output "paas_app_sql_server_endpoint_id" 2>$null)
+      if ([string]::IsNullOrEmpty($PrivateEndpointId)) {
+        throw "Terraform output paas_app_sql_server_endpoint_id is empty"
       }
-      Write-Host "Using Terraform workspace '$Workspace'..."
 
-      Invoke-Command -ScriptBlock {
-          $Private:ErrorActionPreference = "Continue"
-          $Script:PrivateEndpointId      = $(terraform output "paas_app_sql_server_endpoint_id" 2>$null)
-          if ([string]::IsNullOrEmpty($PrivateEndpointId)) {
-            throw "Terraform output paas_app_sql_server_endpoint_id is empty"
-          }
-
-          $Script:VDCResourceGroupName   = $(terraform output "vdc_resource_group"              2>$null)
-          if ([string]::IsNullOrEmpty($VDCResourceGroupName)) {
-            throw "Terraform output vdc_resource_group is empty"
-          }
+      $Script:VDCResourceGroupName   = $(terraform output "vdc_resource_group"              2>$null)
+      if ([string]::IsNullOrEmpty($VDCResourceGroupName)) {
+        throw "Terraform output vdc_resource_group is empty"
       }
+    }
   } finally {
-      if ($currentWorkspace) {
-        terraform workspace select $currentWorkspace
-      }
-      Pop-Location
+    $null = SetWorkspace -Workspace $priorWorkspace
+    Pop-Location
   }
 }
 

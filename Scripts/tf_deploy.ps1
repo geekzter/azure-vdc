@@ -23,7 +23,7 @@ param (
     [parameter(Mandatory=$false,HelpMessage="Don't show prompts")][switch]$Force=$false,
     [parameter(Mandatory=$false,HelpMessage="Initialize Terraform backend, upgrade modules & provider")][switch]$Upgrade=$false,
     [parameter(Mandatory=$false,HelpMessage="Clears Terraform worksoace before starting")][switch]$Clear=$false,
-    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string] $Workspace = "default",
+    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false,HelpMessage="Don't use Terraform resource_suffix variable if output exists")][switch]$StickySuffix=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][int]$Parallelism=10, # Lower this to 10 if you run into rate limits
@@ -39,7 +39,6 @@ param (
 
 ### Validation
 if (!($Workspace)) { Throw "You must supply a value for Workspace" }
-#if (!(Get-Module Az)) { Throw "Az modules not loaded"}
 
 Write-Host $MyInvocation.line -ForegroundColor Green
 PrintCurrentBranch
@@ -94,7 +93,7 @@ if ($pipeline -or $Force) {
     $env:TF_IN_AUTOMATION="true"
     $env:TF_INPUT=0
 }
-$WorkspaceLowercase = $Workspace.ToLower()
+
 $PlanFile           = "$Workspace.tfplan".ToLower()
 $varsFile           = "$Workspace.tfvars".ToLower()
 
@@ -130,14 +129,7 @@ try {
     }
 
     # Workspace can only be selected after init 
-    Invoke-Command -ScriptBlock {
-        $Private:ErrorActionPreference = "Continue"
-        terraform workspace new $WorkspaceLowercase 2>$null
-    }
-    terraform workspace select $WorkspaceLowercase
-    Write-Host "Terraform workspaces:" -ForegroundColor White
-    terraform workspace list
-    Write-Host "Using Terraform workspace '$(terraform workspace show)'" 
+    $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
     if ($Validate) {
         Invoke "`nterraform validate" 
@@ -217,5 +209,6 @@ try {
     # Rethrow exception
     throw
 } finally {
+    $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
 }
