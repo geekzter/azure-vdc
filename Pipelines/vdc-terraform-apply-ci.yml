@@ -61,8 +61,6 @@ variables:
   value: 'ci'
 
 # Inline variables shared across jobs
-- name: 'agentOS'
-  value: 'Linux'
   # This references this pipeline:
   # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
 - name: 'appPipeline'
