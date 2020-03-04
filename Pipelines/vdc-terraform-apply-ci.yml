@@ -150,10 +150,11 @@ jobs:
           Write-Host "##vso[task.setvariable variable=tenantId;isOutput=true]$env:ARM_TENANT_ID"
 
           # This will write version info as output variable
-          $(scriptDirectory)/get_tf_version.ps1 -version preferred
+          ./get_tf_version.ps1 -version preferred
         addSpnToEnvironment: true
         useGlobalConfig: true
         failOnStandardError: true
+        workingDirectory: '$(scriptDirectory)'
 
     # We could do this with tfenv, however there is no task for that
     - task: TerraformInstaller@0
@@ -169,7 +170,7 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         ScriptType: 'FilePath'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
-        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+        ScriptPath: './tf_deploy.ps1'
         # To start from scratch, use these arguments:
         ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
         # To continue where a previous (broken) build left of, use these arguments:
@@ -177,6 +178,7 @@ jobs:
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
+        workingDirectory: '$(scriptDirectory)'
       env:
         # Use prepared Terraform environment variables
         ARM_CLIENT_ID: '$(terraformConfig.clientId)'
@@ -248,11 +250,12 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         ScriptType: 'FilePath'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
-        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+        ScriptPath: './tf_deploy.ps1'
         ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
+        workingDirectory: '$(scriptDirectory)'
       env:
         # Use prepared Terraform environment variables
         ARM_CLIENT_ID: '$(terraformClientId)'
@@ -364,11 +367,12 @@ jobs:
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
-        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+        ScriptPath: './tf_deploy.ps1'
         ScriptArguments: '-init -destroy -force -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: LatestVersion
         pwsh: true
+        workingDirectory: '$(scriptDirectory)'
       condition: succeededOrFailed()
       enabled: true
       env:
@@ -384,9 +388,10 @@ jobs:
       displayName: 'Save used Terraform version number with tfenv'
       inputs:
         targetType: filePath
-        filePath: '$(scriptDirectory)/get_tf_version.ps1'
+        filePath: './get_tf_version.ps1'
         arguments: ' -version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
         pwsh: true
+        workingDirectory: '$(scriptDirectory)'
 
     # Publish Initialized Terraform workspace
     # This workspace can be downloaded as artifacts in a release pipeline. 
