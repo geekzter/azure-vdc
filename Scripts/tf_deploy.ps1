@@ -204,10 +204,10 @@ try {
     }
 } catch {
     # Useful info to debug potential network exceptions
-    $ipAddress=$(Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip)
-    Write-Host "Connected from IP address: $ipAddress"
+    Write-Error "Error occured with item $($_.Exception.ItemName)"
+    Write-Error $_.Exception.Message
     # Rethrow exception
-    throw
+    throw $_.Exception
 } finally {
     $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
