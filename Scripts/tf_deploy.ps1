@@ -56,15 +56,12 @@ switch ($Trace) {
         $Script:warningPreference = "SilentlyContinue"
         $Script:verbosePreference = "SilentlyContinue"
         $Script:debugPreference   = "SilentlyContinue"    
-        #Remove-Item Env:TF_LOG -ErrorAction SilentlyContinue
     }
     1 {
         $Script:warningPreference = "Continue"
         $Script:informationPreference = "Continue"
         $Script:verbosePreference = "Continue"
         $Script:debugPreference   = "SilentlyContinue"
-        $env:TF_LOG="TRACE"
-        $env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
         Get-InstalledModule Az
@@ -74,17 +71,10 @@ switch ($Trace) {
         $Script:informationPreference = "Continue"
         $Script:verbosePreference = "Continue"
         $Script:debugPreference   = "Continue"      
-        $env:TF_LOG="TRACE"
-        $env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
         Get-InstalledModule Az
     }
-}
-if ($env:TF_LOG_PATH -and (Test-Path $env:TF_LOG_PATH))
-{
-   # Clear log file
-   Remove-Item $env:TF_LOG_PATH
 }
 $Script:ErrorActionPreference = "Stop"
 
