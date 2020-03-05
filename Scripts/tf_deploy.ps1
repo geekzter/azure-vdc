@@ -56,15 +56,12 @@ switch ($Trace) {
         $Script:warningPreference = "SilentlyContinue"
         $Script:verbosePreference = "SilentlyContinue"
         $Script:debugPreference   = "SilentlyContinue"    
-        #Remove-Item Env:TF_LOG -ErrorAction SilentlyContinue
     }
     1 {
         $Script:warningPreference = "Continue"
         $Script:informationPreference = "Continue"
         $Script:verbosePreference = "Continue"
         $Script:debugPreference   = "SilentlyContinue"
-        $env:TF_LOG="TRACE"
-        $env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
         Get-InstalledModule Az
@@ -74,17 +71,10 @@ switch ($Trace) {
         $Script:informationPreference = "Continue"
         $Script:verbosePreference = "Continue"
         $Script:debugPreference   = "Continue"      
-        $env:TF_LOG="TRACE"
-        $env:TF_LOG_PATH="terraform.log"
 
         Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
         Get-InstalledModule Az
     }
-}
-if ($env:TF_LOG_PATH -and (Test-Path $env:TF_LOG_PATH))
-{
-   # Clear log file
-   Remove-Item $env:TF_LOG_PATH
 }
 $Script:ErrorActionPreference = "Stop"
 
@@ -204,10 +194,10 @@ try {
     }
 } catch {
     # Useful info to debug potential network exceptions
-    $ipAddress=$(Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip)
-    Write-Host "Connected from IP address: $ipAddress"
+    Write-Error "Error occured with item $($_.Exception.ItemName)"
+    Write-Error $_.Exception.Message
     # Rethrow exception
-    throw
+    throw $_.Exception
 } finally {
     $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
