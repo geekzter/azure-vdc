@@ -11,6 +11,7 @@ param (
     [parameter(Mandatory=$false)][switch]$Network=$false,
     [parameter(Mandatory=$false)][switch]$ShowCredentials=$false,
     [parameter(Mandatory=$false)][switch]$SqlServer=$false,
+    [parameter(Mandatory=$false,HelpMessage="Grants App Service MSI access to database (reset should no longer be needed)")][switch]$GrantMSIAccess=$false,
     [parameter(Mandatory=$false)][switch]$StartBastion=$false,
     [parameter(Mandatory=$false)][switch]$ConnectBastion=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
@@ -27,7 +28,7 @@ if (!($All -or $ConnectBastion -or $Network -or $ShowCredentials -or $SqlServer 
 }
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
-AzLogin #-AsUser
+AzLogin
 
 try {
     # Terraform config
@@ -96,61 +97,69 @@ try {
         $null = Set-AzFirewall -AzureFirewall $azFW
     }
 
-    if ($All -or $SqlServer) {
-        if ($IsWindows) {
+    if ($All -or $SqlServer -or $GrantMSIAccess) {
+        $tries = 0
+        $maxTries = 2
+        do {
+            $tries++
             $loggedInAccount = (Get-AzContext).Account
             if ($loggedInAccount.Type -eq "User") {
                 $sqlAADUser = $loggedInAccount.Id
             } else {
-                Write-Host "Current user $($loggedInAccount.Id) is a $($loggedInAccount.Type), Set-AzSqlServerActiveDirectoryAdministrator may fail..." -ForegroundColor Yellow
-                do {
-                    Write-Host "Type email address of user to sign into Azure SQL Server (empty to skip):" -ForegroundColor Cyan
-                    $sqlAADUser = Read-Host
-                } until (($sqlAADUser -match "^[a-zA-Z0-9.!£#$%&'^_`{}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$") -or [string]::IsNullOrEmpty($sqlAADUser))
+                Write-Host "Current user $($loggedInAccount.Id) is a $($loggedInAccount.Type), Set-AzSqlServerActiveDirectoryAdministrator will likely fail (unless Service Principal has sufficient Graph access)." 
+                Write-Host "Prompting for Azure credentials to be able to switch AAD Admin..."
+                AzLogin -AsUser
             }
-            if ([string]::IsNullOrEmpty($sqlAADUser)) {
-                Write-Host "No valid account found or provided to access Azure SQL Server, skipping configuration" -ForegroundColor Yellow
-            } else {
-                $msiClientId   = $(terraform output paas_app_service_msi_client_id 2>$null)
-                $msiName       = $(terraform output paas_app_service_msi_name      2>$null)
-                $sqlDB         = $(terraform output paas_app_sql_database          2>$null)
-                $sqlServerName = $(terraform output paas_app_sql_server            2>$null)
-                $sqlServerFQDN = $(terraform output paas_app_sql_server_fqdn       2>$null)
-    
-                Write-Host "Determening current Azure Active Directory DBA for SQL Server $sqlServerName..."
-                $dba = Get-AzSqlServerActiveDirectoryAdministrator -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
-                Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is current Azure Active Directory DBA for SQL Server $sqlServerName"
-                if ($dba.DisplayName -ne $sqlAADUser) {
-                    $previousDBAName = $dba.DisplayName
-                    $previousDBAObjectId = $dba.ObjectId
-                    $previousDBA = $dba
-                    Write-Host "Replacing $($dba.DisplayName) with $sqlAADUser as Azure Active Directory DBA for SQL Server $sqlServerName..."
-                    # BUG: Forbidden when logged in with Service Principal
-                    $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $sqlAADUser -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
-                    Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is now Azure Active Directory DBA for SQL Server $sqlServerName"
-                }
-    
-                Write-Host "Adding Managed Identity $msiName to $sqlServerName/$sqlDB..."
-                $queryFile = (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) grant-msi-database-access.sql)
-                $msiSID = ConvertTo-Sid $msiClientId
-                $query = (Get-Content $queryFile) -replace "@msi_name",$msiName -replace "@msi_sid",$msiSID -replace "\-\-.*$",""
-                sqlcmd -S $sqlServerFQDN -d $sqlDB -Q "$query" -G -U $sqlAADUser
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Host "Sign-in dialog aborted/cancelled" -ForegroundColor Yellow
-                    if ($previousDBAName) {
-                        # Revert DBA change back to where we started
-                        Write-Host "Replacing $($dba.DisplayName) ($($dba.ObjectId)) back to $previousDBAName ($previousDBAObjectId) as Azure Active Directory DBA for SQL Server $sqlServerName..."              
-                        # BUG: Set-AzSqlServerActiveDirectoryAdministrator : Cannot find the Azure Active Directory object 'GeekzterAutomator'. Please make sure that the user or group you are authorizing is you are authorizing is registered in the current subscription's Azure Active directory
-                        $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $previousDBAName -ObjectId $previousDBAObjectId -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
-                        Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is now Azure Active Directory DBA for SQL Server $sqlServerName"
-                    }
-                }
-            }
+        } while ([string]::IsNullOrEmpty($sqlAADUser) -and ($tries -lt $maxTries))
+
+        if ([string]::IsNullOrEmpty($sqlAADUser)) {
+            Write-Host "No valid account found or provided to access AAD and Azure SQL Server, skipping configuration" -ForegroundColor Yellow
         } else {
-            Write-Host "Unfortunately sqlcmd (currently) only supports AAD MFA login on Windows, skipping SQL Server access configuration" -ForegroundColor Yellow
+            $msiClientId   = $(terraform output paas_app_service_msi_client_id 2>$null)
+            $msiName       = $(terraform output paas_app_service_msi_name      2>$null)
+            $sqlDB         = $(terraform output paas_app_sql_database          2>$null)
+            $sqlServerName = $(terraform output paas_app_sql_server            2>$null)
+            $sqlServerFQDN = $(terraform output paas_app_sql_server_fqdn       2>$null)
+
+            Write-Information "Determening current Azure Active Directory DBA for SQL Server $sqlServerName..."
+            $dba = Get-AzSqlServerActiveDirectoryAdministrator -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+            if ($dba.DisplayName -ine $sqlAADUser) {
+                Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is current Azure Active Directory DBA for SQL Server $sqlServerName"
+                $previousDBAName = $dba.DisplayName
+                $previousDBAObjectId = $dba.ObjectId
+                $previousDBA = $dba
+                Write-Host "Replacing $($dba.DisplayName) with $sqlAADUser as Azure Active Directory DBA for SQL Server $sqlServerName..."
+                # BUG: Forbidden when logged in with Service Principal
+                $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $sqlAADUser -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is now Azure Active Directory DBA for SQL Server $sqlServerName"
+            } else {
+                Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is already current Azure Active Directory DBA for SQL Server $sqlServerName"
+            }
+
+            if ($GrantMSIAccess) {
+                if ($IsWindows) {
+                    Write-Information "Adding Managed Identity $msiName to $sqlServerName/$sqlDB..."
+                    $queryFile = (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) grant-msi-database-access.sql)
+                    $msiSID = ConvertTo-Sid $msiClientId
+                    $query = (Get-Content $queryFile) -replace "@msi_name",$msiName -replace "@msi_sid",$msiSID -replace "\-\-.*$",""
+                    sqlcmd -S $sqlServerFQDN -d $sqlDB -Q "$query" -G -U $sqlAADUser
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Host "Sign-in dialog aborted/cancelled" -ForegroundColor Yellow
+                        if ($previousDBAName) {
+                            # Revert DBA change back to where we started
+                            Write-Host "Replacing $($dba.DisplayName) ($($dba.ObjectId)) back to $previousDBAName ($previousDBAObjectId) as Azure Active Directory DBA for SQL Server $sqlServerName..."                                      # BUG: Set-AzSqlServerActiveDirectoryAdministrator : Cannot find the Azure Active Directory object 'GeekzterAutomator'. Please make sure that the user or group you are authorizing is you are authorizing is registered in the current subscription's Azure Active directory
+                            $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $previousDBAName -ObjectId $previousDBAObjectId -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
+                            Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is now Azure Active Directory DBA for SQL Server $sqlServerName"
+                        }
+                    } else {
+                        Write-Host "Added Managed Identity $msiName to $sqlServerName/$sqlDB"
+                    }
+                } else {
+                    Write-Host "Unfortunately sqlcmd (currently) only supports AAD MFA login on Windows, skipping SQL Server access configuration" -ForegroundColor Yellow
+                }
+            }
         }
     }
-
 
     if ($All -or $ShowCredentials -or $ConnectBastion) {
         $Script:adminUser = $(terraform output admin_user 2>$null)

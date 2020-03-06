@@ -192,12 +192,6 @@ try {
         # Now let Terraform do it's work
         Invoke "terraform destroy $ForceArgs -parallelism=$Parallelism"
     }
-} catch {
-    # Useful info to debug potential network exceptions
-    Write-Error "Error occured with item $($_.Exception.ItemName)"
-    Write-Error $_.Exception.Message
-    # Rethrow exception
-    throw $_.Exception
 } finally {
     $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location

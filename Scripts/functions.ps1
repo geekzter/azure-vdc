@@ -17,7 +17,7 @@ function AzLogin (
         }
     } else {
         if ($AsUser -and ((Get-AzContext).Account.Type -ine "User")) {
-            Connect-AzAccount -Subscription $subscription -Tenant $tenantid 
+            $null = Connect-AzAccount -Subscription $subscription -Tenant $tenantid -Confirm
         } 
     }
     $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
