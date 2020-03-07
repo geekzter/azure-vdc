@@ -83,6 +83,7 @@ jobs:
 # Prepare job on hosted agent
 - job: 'Prep'
   displayName: 'Start Self-Hosted Agent'
+  timeoutInMinutes: 5
 
   pool:
     vmImage: 'ubuntu-latest'
@@ -90,10 +91,16 @@ jobs:
   steps:
     # Start the VM that is hosting the agent that will run the rest of the pipeline
     # This VM is prepped by: https://github.com/geekzter/azure-pipeline-agents
-    - task: AzureResourceGroupDeployment@2
+    # - task: AzureResourceGroupDeployment@2
+    #   displayName: 'Start Self-Hosted Agent(s)'
+    #   inputs:
+    #     azureSubscription: '$(subscriptionConnection)'
+    #     action: 'Start'
+    #     resourceGroupName: '$(agentResourceGroup)'
+    - task: AzureResourceGroupDeployment@1
       displayName: 'Start Self-Hosted Agent(s)'
       inputs:
-        azureSubscription: '$(subscriptionConnection)'
+        ConnectedServiceName: '$(subscriptionConnection)'
         action: 'Start'
         resourceGroupName: '$(agentResourceGroup)'
 
