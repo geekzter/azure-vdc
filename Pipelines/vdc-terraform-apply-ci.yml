@@ -268,7 +268,8 @@ jobs:
 
 # Deploy PaaS application 
 - job: 'Deploy'
-  dependsOn: 'Reprovision'
+# dependsOn: 'Reprovision'
+  dependsOn: 'Provision'
   displayName: 'Deploy & Test PaaS Application'
   condition: succeeded()
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
@@ -278,8 +279,10 @@ jobs:
     appBuild: 'Release'
     appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
     # Get App Service name & url from Terraform output
-    appServiceName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_name'] ]
-    appUrl: $[ dependencies.Reprovision.outputs['terraform.paas_app_url'] ]
+    #appServiceName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_name'] ]
+    #appUrl: $[ dependencies.Reprovision.outputs['terraform.paas_app_url'] ]
+    appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
+    appUrl: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
 
   pool:
     name: $(agentPool)
@@ -408,7 +411,7 @@ jobs:
 - job: 'CleanUp'
   dependsOn:
     - Provision
-    - Reprovision
+  # - Reprovision
     - Destroy
   displayName: 'Clean Up'
   # Run if Terraform destroy failed, or the whole pipeline was canceled
