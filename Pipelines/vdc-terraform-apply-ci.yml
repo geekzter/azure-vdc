@@ -83,6 +83,7 @@ jobs:
 # Prepare job on hosted agent
 - job: 'Prep'
   displayName: 'Start Self-Hosted Agent'
+  timeoutInMinutes: 5
 
   pool:
     vmImage: 'ubuntu-latest'
