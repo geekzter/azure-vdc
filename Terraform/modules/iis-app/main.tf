@@ -177,37 +177,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
   depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_bginfo]
 }
-resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
-  name                         = "MicrosoftMonitoringAgent"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
-  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
-  type                         = "MicrosoftMonitoringAgent"
-  type_handler_version         = "1.0"
-  auto_upgrade_minor_version   = true
-  settings                     = <<EOF
-    {
-      "workspaceId": "${var.diagnostics_workspace_workspace_id}"
-    }
-  EOF
-
-  protected_settings = <<EOF
-    { 
-      "workspaceKey": "${var.diagnostics_workspace_key}"
-    } 
-  EOF
-
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.vm_agent_dependency
-    )
-  )
-
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
-
-  # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_dependency_monitor]
-}
 resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   name                         = "AzureNetworkWatcherExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
@@ -219,8 +188,40 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
 
   tags                         = var.tags
-  depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_monitor]
+  depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_dependency_monitor]
 }
+# Installed by default now
+# resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
+#   name                         = "MicrosoftMonitoringAgent"
+#   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
+#   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
+#   type                         = "MicrosoftMonitoringAgent"
+#   type_handler_version         = "1.0"
+#   auto_upgrade_minor_version   = true
+#   settings                     = <<EOF
+#     {
+#       "workspaceId": "${var.diagnostics_workspace_workspace_id}"
+#     }
+#   EOF
+
+#   protected_settings = <<EOF
+#     { 
+#       "workspaceKey": "${var.diagnostics_workspace_key}"
+#     } 
+#   EOF
+
+#   tags                         = merge(
+#     var.tags,
+#     map(
+#       "dummy-dependency",        var.vm_agent_dependency
+#     )
+#   )
+
+#   count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+
+#   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+#   depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_watcher]
+# }
 # BUG: Get's recreated every run
 #      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909
 # resource "azurerm_network_connection_monitor" "devops_watcher" {
@@ -241,7 +242,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
 #   }
 #   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
 
-#   depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_watcher]
+#   depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_monitor]
 
 #   tags                         = var.tags
 # }
@@ -462,37 +463,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
   depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_bginfo]
 }
-resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
-  name                         = "MicrosoftMonitoringAgent"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
-  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
-  type                         = "MicrosoftMonitoringAgent"
-  type_handler_version         = "1.0"
-  auto_upgrade_minor_version   = true
-  settings                     = <<EOF
-    {
-      "workspaceId": "${var.diagnostics_workspace_workspace_id}"
-    }
-  EOF
-
-  protected_settings = <<EOF
-    { 
-      "workspaceKey": "${var.diagnostics_workspace_key}"
-    } 
-  EOF
-
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.vm_agent_dependency
-    )
-  )
-
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
-
-  # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_dependency_monitor]
-}
 resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
   name                         = "AzureNetworkWatcherExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
@@ -506,9 +476,40 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
   tags                         = var.tags
 
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_bginfo]
+  depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_dependency_monitor]
 }
+# Installed by default now
+# resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
+#   name                         = "MicrosoftMonitoringAgent"
+#   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+#   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
+#   type                         = "MicrosoftMonitoringAgent"
+#   type_handler_version         = "1.0"
+#   auto_upgrade_minor_version   = true
+#   settings                     = <<EOF
+#     {
+#       "workspaceId": "${var.diagnostics_workspace_workspace_id}"
+#     }
+#   EOF
 
+#   protected_settings = <<EOF
+#     { 
+#       "workspaceKey": "${var.diagnostics_workspace_key}"
+#     } 
+#   EOF
+
+#   tags                         = merge(
+#     var.tags,
+#     map(
+#       "dummy-dependency",        var.vm_agent_dependency
+#     )
+#   )
+
+#   count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+
+#   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
+#   depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_watcher]
+# }
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {
   name                         = "${azurerm_lb.app_db_lb.name}-logs"
   target_resource_id           = azurerm_lb.app_db_lb.id
