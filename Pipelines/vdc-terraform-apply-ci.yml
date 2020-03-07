@@ -81,47 +81,45 @@ variables:
 
 jobs:
 # Prepare job on hosted agent
-- job: 'Prep'
-  displayName: 'Start Self-Hosted Agent'
-  timeoutInMinutes: 5
+# - job: 'Prep'
+#   displayName: 'Start Self-Hosted Agent'
+#   timeoutInMinutes: 5
 
-  pool:
-    vmImage: 'ubuntu-latest'
+#   pool:
+#     vmImage: 'ubuntu-latest'
 
-  steps:
-    - task: AzurePowerShell@4
-      displayName: 'Check Self-Hosted Agents'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        ScriptType: 'InlineScript'
-        Inline: |
-          Write-Host "Self-Hosted Agents in resource group '$(agentResourceGroup)':"
-          Get-AzVm -ResourceGroupName $(agentResourceGroup) -Status | Format-Table -Property Name, ProvisioningState, PowerState
-        FailOnStandardError: false
-        azurePowerShellVersion: 'LatestVersion'
-        pwsh: true
+#   steps:
+#     - task: AzurePowerShell@4
+#       displayName: 'Check Self-Hosted Agents'
+#       inputs:
+#         azureSubscription: '$(subscriptionConnection)'
+#         ScriptType: 'InlineScript'
+#         Inline: |
+#           Write-Host "Self-Hosted Agents in resource group '$(agentResourceGroup)':"
+#           Get-AzVm -ResourceGroupName $(agentResourceGroup) -Status | Format-Table -Property Name, ProvisioningState, PowerState
+#         FailOnStandardError: false
+#         azurePowerShellVersion: 'LatestVersion'
+#         pwsh: true
         
-    # Start the VM that is hosting the agent that will run the rest of the pipeline
-    # This VM is prepped by: https://github.com/geekzter/azure-pipeline-agents
-    - task: AzureResourceGroupDeployment@2
-      displayName: 'Start Self-Hosted Agent(s)'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        action: 'Start'
-        resourceGroupName: '$(agentResourceGroup)'
+#     # Start the VM that is hosting the agent that will run the rest of the pipeline
+#     # This VM is prepped by: https://github.com/geekzter/azure-pipeline-agents
+#     - task: AzureResourceGroupDeployment@2
+#       displayName: 'Start Self-Hosted Agent(s)'
+#       inputs:
+#         azureSubscription: '$(subscriptionConnection)'
+#         action: 'Start'
+#         resourceGroupName: '$(agentResourceGroup)'
 
 
 # Provision on self-hosted agent
 - job: 'Provision'
-  dependsOn: 'Prep'
+# dependsOn: 'Prep'
   displayName: 'Provision Infrastructure with Terraform'
   condition: succeeded()
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   pool:
-    name: $(agentPool)
-    demands:
-    - Agent.OS -equals $(agentOS)
+    vmImage: 'ubuntu-latest'
 
   workspace:
     clean: all
@@ -219,9 +217,8 @@ jobs:
     terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
   pool:
-    name: $(agentPool)
-    demands:
-    - Agent.OS -equals $(agentOS)
+    vmImage: 'ubuntu-latest'
+
 
   steps:
     # Assume workspace is empty and re-download secure files
@@ -298,9 +295,8 @@ jobs:
     appUrl: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
 
   pool:
-    name: $(agentPool)
-    demands:
-    - Agent.OS -equals $(agentOS)
+    vmImage: 'ubuntu-latest'
+
 
   steps:
     # Download PaaS Application Pipeline artifacts
@@ -369,9 +365,8 @@ jobs:
     terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
   pool:
-    name: $(agentPool)
-    demands:
-    - Agent.OS -equals $(agentOS)
+    vmImage: 'ubuntu-latest'
+
 
   steps:
     - task: TerraformInstaller@0
@@ -440,9 +435,8 @@ jobs:
     terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
   pool:
-    name: $(agentPool)
-    demands:
-    - Agent.OS -equals $(agentOS)
+    vmImage: 'ubuntu-latest'
+
 
   workspace:
     clean: all
