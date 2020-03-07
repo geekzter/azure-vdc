@@ -89,6 +89,18 @@ jobs:
     vmImage: 'ubuntu-latest'
 
   steps:
+    - task: AzurePowerShell@4
+      displayName: 'Check Self-Hosted Agents'
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        ScriptType: 'InlineScript'
+        Inline: |
+          Write-Host "Self-Hosted Agents in resource group '$(agentResourceGroup)':"
+          Get-AzVm -ResourceGroupName $(agentResourceGroup) -Status | Format-Table -Property Name, ProvisioningState, PowerState
+        FailOnStandardError: false
+        azurePowerShellVersion: 'LatestVersion'
+        pwsh: true
+        
     # Start the VM that is hosting the agent that will run the rest of the pipeline
     # This VM is prepped by: https://github.com/geekzter/azure-pipeline-agents
     - task: AzureResourceGroupDeployment@2
