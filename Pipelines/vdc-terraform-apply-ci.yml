@@ -80,37 +80,6 @@ variables:
 
 
 jobs:
-# Prepare job on hosted agent
-# - job: 'Prep'
-#   displayName: 'Start Self-Hosted Agent'
-#   timeoutInMinutes: 5
-
-#   pool:
-#     vmImage: 'ubuntu-latest'
-
-#   steps:
-#     - task: AzurePowerShell@4
-#       displayName: 'Check Self-Hosted Agents'
-#       inputs:
-#         azureSubscription: '$(subscriptionConnection)'
-#         ScriptType: 'InlineScript'
-#         Inline: |
-#           Write-Host "Self-Hosted Agents in resource group '$(agentResourceGroup)':"
-#           Get-AzVm -ResourceGroupName $(agentResourceGroup) -Status | Format-Table -Property Name, ProvisioningState, PowerState
-#         FailOnStandardError: false
-#         azurePowerShellVersion: 'LatestVersion'
-#         pwsh: true
-        
-#     # Start the VM that is hosting the agent that will run the rest of the pipeline
-#     # This VM is prepped by: https://github.com/geekzter/azure-pipeline-agents
-#     - task: AzureResourceGroupDeployment@2
-#       displayName: 'Start Self-Hosted Agent(s)'
-#       inputs:
-#         azureSubscription: '$(subscriptionConnection)'
-#         action: 'Start'
-#         resourceGroupName: '$(agentResourceGroup)'
-
-
 # Provision on self-hosted agent
 - job: 'Provision'
 # dependsOn: 'Prep'
@@ -203,8 +172,8 @@ jobs:
 - job: 'Reprovision'
   dependsOn: 'Provision'
   displayName: 'Provision Infrastructure with Terraform (re-entrance test)'
-  # Disable until ARM_PROVIDER_STRICT=false works again
-  condition: false
+  # Don't retry unless ARM_PROVIDER_STRICT=false works again
+  condition: succeeded()
   #condition: succeededOrFailed()
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
@@ -218,7 +187,6 @@ jobs:
 
   pool:
     vmImage: 'ubuntu-latest'
-
 
   steps:
     # Assume workspace is empty and re-download secure files
@@ -276,10 +244,10 @@ jobs:
         ARM_TENANT_ID: '$(terraformTenantId)'
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
+        
 # Deploy PaaS application 
 - job: 'Deploy'
-# dependsOn: 'Reprovision'
-  dependsOn: 'Provision'
+  dependsOn: 'Reprovision'
   displayName: 'Deploy & Test PaaS Application'
   condition: succeeded()
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
@@ -296,7 +264,6 @@ jobs:
 
   pool:
     vmImage: 'ubuntu-latest'
-
 
   steps:
     # Download PaaS Application Pipeline artifacts
@@ -367,7 +334,6 @@ jobs:
   pool:
     vmImage: 'ubuntu-latest'
 
-
   steps:
     - task: TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
@@ -419,7 +385,7 @@ jobs:
 - job: 'CleanUp'
   dependsOn:
     - Provision
-  # - Reprovision
+    - Reprovision
     - Destroy
   displayName: 'Clean Up'
   # Run if Terraform destroy failed, or the whole pipeline was canceled
@@ -436,7 +402,6 @@ jobs:
 
   pool:
     vmImage: 'ubuntu-latest'
-
 
   workspace:
     clean: all
