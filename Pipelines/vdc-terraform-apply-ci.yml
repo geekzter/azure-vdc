@@ -172,9 +172,7 @@ jobs:
 - job: 'Reprovision'
   dependsOn: 'Provision'
   displayName: 'Provision Infrastructure with Terraform (re-entrance test)'
-  # Don't retry unless ARM_PROVIDER_STRICT=false works again
   condition: succeeded()
-  #condition: succeededOrFailed()
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
