@@ -65,8 +65,6 @@ variables:
   # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
 - name: 'appPipeline'
   value: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
-- name: 'agentResourceGroup' 
-  value: 'PipelineAgents'
 - name: 'jobTimeOutMinutes'
   value: 120
 - name: 'scriptDirectory'
@@ -80,35 +78,14 @@ variables:
 
 
 jobs:
-# Prepare job on hosted agent
-- job: 'Prep'
-  displayName: 'Start Self-Hosted Agent'
-
-  pool:
-    vmImage: 'ubuntu-latest'
-
-  steps:
-    # Start the VM that is hosting the agent that will run the rest of the pipeline
-    # This VM is prepped by: https://github.com/geekzter/azure-pipeline-agents
-    - task: AzureResourceGroupDeployment@2
-      displayName: 'Start Self-Hosted Agent(s)'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        action: 'Start'
-        resourceGroupName: '$(agentResourceGroup)'
-
-
 # Provision on self-hosted agent
 - job: 'Provision'
-  dependsOn: 'Prep'
   displayName: 'Provision Infrastructure with Terraform'
   condition: succeeded()
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   pool:
-    name: $(agentPool)
-    demands:
-    - Agent.OS -equals $(agentOS)
+    vmImage: 'ubuntu-latest'
 
   workspace:
     clean: all
@@ -192,7 +169,7 @@ jobs:
 - job: 'Reprovision'
   dependsOn: 'Provision'
   displayName: 'Provision Infrastructure with Terraform (re-entrance test)'
-  condition: succeededOrFailed()
+  condition: succeeded()
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
@@ -204,9 +181,7 @@ jobs:
     terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
   pool:
-    name: $(agentPool)
-    demands:
-    - Agent.OS -equals $(agentOS)
+    vmImage: 'ubuntu-latest'
 
   steps:
     # Assume workspace is empty and re-download secure files
@@ -264,9 +239,11 @@ jobs:
         ARM_TENANT_ID: '$(terraformTenantId)'
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
+        
 # Deploy PaaS application 
 - job: 'Deploy'
-  dependsOn: 'Reprovision'
+  dependsOn:
+    - Reprovision
   displayName: 'Deploy & Test PaaS Application'
   condition: succeeded()
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
@@ -280,9 +257,7 @@ jobs:
     appUrl: $[ dependencies.Reprovision.outputs['terraform.paas_app_url'] ]
 
   pool:
-    name: $(agentPool)
-    demands:
-    - Agent.OS -equals $(agentOS)
+    vmImage: 'ubuntu-latest'
 
   steps:
     # Download PaaS Application Pipeline artifacts
@@ -351,9 +326,7 @@ jobs:
     terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
   pool:
-    name: $(agentPool)
-    demands:
-    - Agent.OS -equals $(agentOS)
+    vmImage: 'ubuntu-latest'
 
   steps:
     - task: TerraformInstaller@0
@@ -422,9 +395,7 @@ jobs:
     terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
   pool:
-    name: $(agentPool)
-    demands:
-    - Agent.OS -equals $(agentOS)
+    vmImage: 'ubuntu-latest'
 
   workspace:
     clean: all

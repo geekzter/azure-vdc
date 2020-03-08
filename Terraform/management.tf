@@ -138,29 +138,30 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
   tags                         = local.tags
 }
 
-resource "azurerm_virtual_machine_extension" "bastion_monitor" {
-  name                         = "MicrosoftMonitoringAgent"
-  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
-  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
-  type                         = "MicrosoftMonitoringAgent"
-  type_handler_version         = "1.0"
-  auto_upgrade_minor_version   = true
-  settings                     = <<EOF
-    {
-      "workspaceId": "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}"
-    }
-  EOF
+# Installed by default now
+# resource "azurerm_virtual_machine_extension" "bastion_monitor" {
+#   name                         = "MicrosoftMonitoringAgent"
+#   virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
+#   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
+#   type                         = "MicrosoftMonitoringAgent"
+#   type_handler_version         = "1.0"
+#   auto_upgrade_minor_version   = true
+#   settings                     = <<EOF
+#     {
+#       "workspaceId": "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}"
+#     }
+#   EOF
 
-  protected_settings = <<EOF
-    { 
-      "workspaceKey": "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
-    } 
-  EOF
+#   protected_settings = <<EOF
+#     { 
+#       "workspaceKey": "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
+#     } 
+#   EOF
 
-  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+#   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
 
-  tags                         = local.tags
-}
+#   tags                         = local.tags
+# }
 
 resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   name                         = "AzureNetworkWatcherExtension"
@@ -234,8 +235,8 @@ resource null_resource windows_updates {
   depends_on                     =[
                                     azurerm_log_analytics_linked_service.automation,
                                     azurerm_log_analytics_solution.oms_solutions,
-                                    azurerm_virtual_machine_extension.bastion_monitor,
-                                    module.iis_app.monitoring_agent_ids,
+#                                   azurerm_virtual_machine_extension.bastion_monitor,
+#                                   module.iis_app.monitoring_agent_ids,
                                     module.iis_app
                                   ]
 }

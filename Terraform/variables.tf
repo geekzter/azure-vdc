@@ -113,7 +113,7 @@ variable vdc_oms_solutions {
   # "ASRAnalytics",
     "AzureActivity",
     "AzureAppGatewayAnalytics",
-    "AzureAutomation",
+  # "AzureAutomation",
   # "AzureCdnCoreAnalytics",
   # "AzureDataFactoryAnalytics",
     "AzureNetworking", # Depricated
@@ -154,7 +154,7 @@ variable vdc_oms_solutions {
     "SecurityInsights",
     "ServiceDesk",
   # "ServiceFabric",
-    "ServiceMap",
+  # "ServiceMap",
   # "SiteRecovery",
     "SQLAdvancedThreatProtection",
     "SQLAssessment",
