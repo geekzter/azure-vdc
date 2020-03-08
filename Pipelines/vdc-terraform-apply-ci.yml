@@ -65,8 +65,6 @@ variables:
   # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
 - name: 'appPipeline'
   value: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
-- name: 'agentResourceGroup' 
-  value: 'PipelineAgents'
 - name: 'jobTimeOutMinutes'
   value: 120
 - name: 'scriptDirectory'
