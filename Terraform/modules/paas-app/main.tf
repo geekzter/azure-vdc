@@ -210,6 +210,8 @@ resource "azurerm_app_service" "paas_web_app" {
   # WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
     WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
+    # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#regional-vnet-integration
+    WEBSITE_VNET_ROUTE_ALL     = "1"
   }
 
   # BUG: The page cannot be displayed because an internal server error has occurred (when accessed via AppGW using vanity domain name) 
