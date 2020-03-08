@@ -82,6 +82,7 @@ try {
             $ruleCollection = $null
         }
         if ($ruleCollection) {
+            Write-Host "NAT Rule collection $azFWNATRulesName found, adding bastion rule..."
             $existingBastionRule = $ruleCollection.Rules | Where-Object {$_.Name -ieq $bastionRule.Name}
             if ($existingBastionRule) {
                 $ruleCollection.RemoveRuleByName($bastionRule.Name)

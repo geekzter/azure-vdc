@@ -80,7 +80,6 @@ variables:
 jobs:
 # Provision on self-hosted agent
 - job: 'Provision'
-# dependsOn: 'Prep'
   displayName: 'Provision Infrastructure with Terraform'
   condition: succeeded()
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
