@@ -190,6 +190,16 @@ resource "azurerm_private_dns_zone" "zone" {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
 }
 
+# DNS Records for PaaS services created connected in spoke VNet's
+resource azurerm_private_dns_a_record sql_server_dns_record {
+  name                         = module.paas_app.sql_server
+  zone_name                    = azurerm_private_dns_zone.zone["sqldb"].name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  ttl                          = 300
+  records                      = [module.paas_app.sql_server_private_ip_address]
+  count                        = var.deploy_private_dns_for_endpoint ? 1 : 0
+}
+
 resource "azurerm_private_dns_zone_virtual_network_link" "link" {
   for_each                     = azurerm_private_dns_zone.zone
   name                         = "${azurerm_virtual_network.hub_vnet.name}-dns-${each.key}"

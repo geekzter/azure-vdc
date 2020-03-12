@@ -470,6 +470,12 @@ resource "azurerm_sql_server" "app_sqlserver" {
   administrator_login          = var.admin_username
   administrator_login_password = local.password
   
+  # Doesn't support workspace (yet)
+  # extended_auditing_policy {
+  #   storage_account_access_key =
+  #   storage_endpoint           = 
+  # }
+
   tags                         = var.tags
 }
 
@@ -541,16 +547,6 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
     subresource_names          = ["sqlServer"]
   }
 
-}
-
-resource null_resource sql_db_private_dns {
-  # This resource has no output attribute (yet) for private ip address, we need script to create the private DNS record
-  provisioner "local-exec" {
-    command                    = "../Scripts/configure_private_link.ps1 -PrivateEndpointId ${azurerm_private_endpoint.sqlserver_endpoint.id} -VDCResourceGroupName ${local.vdc_resource_group_name}"
-    interpreter                = ["pwsh", "-Command"]
-  }
-
-  count                        = var.deploy_private_dns_for_endpoint ? 1 : 0
 }
 
 # This is for Terraform acting as the AAD DBA (e.g. to execute change scripts)
