@@ -107,7 +107,11 @@ try {
         Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_CFG_*,TF_VAR_* | Sort-Object -Property Name
     }
 
+    # Print version info
+    $azModule = Get-Module Az -ListAvailable | Select-Object -First 1     
+    Write-Host "PowerShell $($azModule.Name) v$($azModule.Version)"
     terraform -version
+
     if ($Init -or $Upgrade) {
         if([string]::IsNullOrEmpty($env:TF_CFG_backend_storage_account))   { Throw "You must set environment variable TF_CFG_backend_storage_account" }
         $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_CFG_backend_storage_account}`""
