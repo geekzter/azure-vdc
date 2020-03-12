@@ -80,9 +80,9 @@ output sql_server_fqdn {
 output sql_server_id {
     value = azurerm_sql_server.app_sqlserver.id
 }
-# output sql_server_private_ip_address {
-#     value = azurerm_private_link_endpoint.sqlserver_endpoint.private_ip_address
-# }
+output sql_server_private_ip_address {
+    value = azurerm_private_endpoint.sqlserver_endpoint.private_service_connection[0].private_ip_address
+}
 output storage_account_name {
     value = azurerm_storage_account.app_storage.name
 }

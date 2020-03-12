@@ -5,9 +5,10 @@
 # ARM_SUBSCRIPTION_ID, ARM_CLIENT_ID, ARM_CLIENT_SECRET and ARM_TENANT_ID
 #
 provider "azurerm" {
-    version = "~> 2.0" 
+    version = "~> 2.1.0" 
     features {
         virtual_machine {
+            # Don't do this in production
             delete_os_disk_on_deletion = true
         }
     }
