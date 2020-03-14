@@ -67,7 +67,7 @@ locals {
 #                                module.p2s_vpn.gateway_id
   ])
   # HACK: This value is dependent on all elements of the list being created
-  vm_agent_dependency     = join("|",[for dep in local.vm_agent_dependencies : substr(dep,0,1)])
+  vm_agent_dependency          = join("|",[for dep in local.vm_agent_dependencies : substr(dep,0,1)])
 }
 
 module iis_app {
@@ -89,6 +89,7 @@ module iis_app {
   app_db_vms                   = var.app_db_vms
   app_db_vm_number             = var.app_db_vm_number
   app_subnet_id                = lookup(module.iaas_spoke_vnet.subnet_ids,"app","")
+  automation_storage_name      = azurerm_storage_account.vdc_automation_storage.name
   data_subnet_id               = lookup(module.iaas_spoke_vnet.subnet_ids,"data","")
   default_create_timeout       = var.default_create_timeout
   default_update_timeout       = var.default_update_timeout

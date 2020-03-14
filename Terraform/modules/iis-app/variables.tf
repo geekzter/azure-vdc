@@ -16,6 +16,8 @@ variable tags {
   type        = map
 } 
 
+variable automation_storage_name {}
+
 variable deploy_network_watcher {
   description                  = "Whether to deploy connection monitors"
   type                         = bool

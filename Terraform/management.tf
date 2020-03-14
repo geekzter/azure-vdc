@@ -30,7 +30,7 @@ resource "azurerm_storage_blob" "bastion_prepare_script" {
   storage_container_name       = azurerm_storage_container.scripts.name
 
   type                         = "Block"
-  source                       = "../Scripts/prepare_bastion.ps1"
+  source                       = "../Scripts/host/prepare_bastion.ps1"
 }
 
 resource "azurerm_windows_virtual_machine" "bastion" {
@@ -57,7 +57,7 @@ resource "azurerm_windows_virtual_machine" "bastion" {
 
   additional_unattend_content {
     setting                    = "AutoLogon"
-    content                    = templatefile("../Scripts/AutoLogon.xml", { 
+    content                    = templatefile("../Scripts/host/AutoLogon.xml", { 
       count                    = 1, 
       username                 = var.admin_username, 
       password                 = local.password
@@ -65,7 +65,7 @@ resource "azurerm_windows_virtual_machine" "bastion" {
   }
   additional_unattend_content {
     setting                    = "FirstLogonCommands"
-    content                    = templatefile("../Scripts/FirstLogonCommands.xml", { 
+    content                    = templatefile("../Scripts/host/BastionFirstLogonCommands.xml", { 
       username                 = var.admin_username, 
       password                 = local.password, 
       hosts                    = concat(var.app_web_vms,var.app_db_vms),
