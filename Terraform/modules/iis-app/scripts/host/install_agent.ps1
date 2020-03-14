@@ -4,7 +4,7 @@
     Installs and Configures Azure Pipeline Agent on Target
 #> 
 param ( 
-    [parameter(Mandatory=$true)][string]$AgentName=$env:COMPUTERNAME,
+    [parameter(Mandatory=$false)][string]$AgentName=$env:COMPUTERNAME,
     [parameter(Mandatory=$true)][string]$Environment,
     [parameter(Mandatory=$true)][string]$Organization,
     [parameter(Mandatory=$true)][string]$Project,
