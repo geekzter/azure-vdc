@@ -100,7 +100,7 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   tags                         = var.tags
 }
 
-resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deploytment_group" {
+resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
@@ -416,7 +416,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   depends_on                   = [azurerm_network_interface_backend_address_pool_association.app_db_if_backend_pool]
 }
 
-resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
+resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
