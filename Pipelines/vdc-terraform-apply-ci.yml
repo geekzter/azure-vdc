@@ -329,6 +329,17 @@ jobs:
     vmImage: 'ubuntu-latest'
 
   steps:
+    # Assume workspace is empty and re-download secure files
+    - task: DownloadSecureFile@1
+      displayName: 'Download SSL certificate'
+      inputs:
+        secureFile: '$(TF_VAR_vanity_certificate_path)'
+
+    - task: DownloadSecureFile@1
+      displayName: 'Download VPN root certificate'
+      inputs:
+        secureFile: '$(TF_VAR_vpn_root_cert_file)'
+        
     - task: TerraformInstaller@0
       displayName: 'Use preferred Terraform version'
       inputs:
