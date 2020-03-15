@@ -78,36 +78,9 @@ resource "azurerm_virtual_machine" "app_web_vm" {
     computer_name              = "${local.app_hostname}${count.index+1}"
     admin_username             = var.admin_username
     admin_password             = var.admin_password
-
-    # This is deserialized on the host by prepare_appserver.ps1
-    custom_data                = base64encode(jsonencode(map(
-      "agentscripturl"         , azurerm_storage_blob.install_agent.url,
-      "environment"            , "vdc-${var.tags["environment"]}-app",
-      "organization"           , var.app_devops["account"],
-      "project"                , var.app_devops["team_project"],
-      "pat"                    , var.app_devops["pat"]
-    )))
   }
 
   os_profile_windows_config {
-    additional_unattend_config {
-      pass                     = "oobeSystem"
-      component                = "Microsoft-Windows-Shell-Setup"
-      setting_name             = "AutoLogon"
-      content                  = templatefile("${path.module}/scripts/host/AutoLogon.xml", { 
-        count                  = 1, 
-        username               = var.admin_username, 
-        password               = var.admin_password
-      })
-    }
-    additional_unattend_config {
-      pass                     = "oobeSystem"
-      component                = "Microsoft-Windows-Shell-Setup"
-      setting_name             = "FirstLogonCommands"
-      content                  = templatefile("${path.module}/scripts/host/AppFirstLogonCommands.xml", { 
-        scripturl              = azurerm_storage_blob.prepare_appserver.url
-      })
-    }
     provision_vm_agent         = true
     enable_automatic_upgrades  = true
   }
@@ -124,46 +97,71 @@ resource "azurerm_virtual_machine" "app_web_vm" {
     delete                     = var.default_delete_timeout
   }  
 
+  tags                         = var.tags
+}
+
+resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deploytment_group" {
+  name                         = "TeamServicesAgentExtension"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
+  publisher                    = "Microsoft.VisualStudio.Services"
+  type                         = "TeamServicesAgent"
+  type_handler_version         = "1.26"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "VSTSAccountName": "${var.app_devops["account"]}",        
+      "TeamProject": "${var.app_devops["team_project"]}",
+      "DeploymentGroup": "${var.app_devops["web_deployment_group"]}",
+      "AgentName": "${local.app_hostname}${count.index+1}",
+      "Tags": "${var.resource_environment}"
+    }
+  EOF
+
+  protected_settings = <<EOF
+    { 
+      "PATToken": "${var.app_devops["pat"]}" 
+    } 
+  EOF
+
   tags                         = merge(
     var.tags,
     map(
       "dummy-dependency",        var.vm_agent_dependency
     )
   )
+
+  count                        = var.use_pipeline_environment ? 0 : var.app_web_vm_number
 }
+resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
+  name                         = "PipelineAgentCustomScript"
+  virtual_machine_id           = azurerm_virtual_machine.app_web_vm[count.index].id
+  publisher                    = "Microsoft.Compute"
+  type                         = "CustomScriptExtension"
+  type_handler_version         = "1.10"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "fileUris": [
+                                 "${azurerm_storage_blob.install_agent.url}"
+      ]
+    }
+  EOF
 
-# resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
-#   name                         = "TeamServicesAgentExtension"
-#   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
-#   publisher                    = "Microsoft.VisualStudio.Services"
-#   type                         = "TeamServicesAgent"
-#   type_handler_version         = "1.26"
-#   auto_upgrade_minor_version   = true
-#   settings                     = <<EOF
-#     {
-#       "VSTSAccountName": "${var.app_devops["account"]}",        
-#       "TeamProject": "${var.app_devops["team_project"]}",
-#       "DeploymentGroup": "${var.app_devops["web_deployment_group"]}",
-#       "AgentName": "${local.app_hostname}${count.index+1}",
-#       "Tags": "${var.resource_environment}"
-#     }
-#   EOF
+  protected_settings           = <<EOF
+    { 
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.tags["environment"]}-app -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]}\""
+    } 
+  EOF
 
-#   protected_settings = <<EOF
-#     { 
-#       "PATToken": "${var.app_devops["pat"]}" 
-#     } 
-#   EOF
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_agent_dependency
+    )
+  )
 
-#   tags                         = merge(
-#     var.tags,
-#     map(
-#       "dummy-dependency",        var.vm_agent_dependency
-#     )
-#   )
-
-#   count                        = var.app_web_vm_number
-# }
+  count                        = var.use_pipeline_environment ? var.app_web_vm_number : 0
+}
 resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   name                         = "BGInfo"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
@@ -418,38 +416,68 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   depends_on                   = [azurerm_network_interface_backend_address_pool_association.app_db_if_backend_pool]
 }
 
-# resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
-#   name                         = "TeamServicesAgentExtension"
-#   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
-#   publisher                    = "Microsoft.VisualStudio.Services"
-#   type                         = "TeamServicesAgent"
-#   type_handler_version         = "1.26"
-#   auto_upgrade_minor_version   = true
-#   settings                     = <<EOF
-#     {
-#       "VSTSAccountName": "${var.app_devops["account"]}",        
-#       "TeamProject": "${var.app_devops["team_project"]}",
-#       "DeploymentGroup": "${var.app_devops["db_deployment_group"]}",
-#       "AgentName": "${local.db_hostname}${count.index+1}",
-#       "Tags": "${var.resource_environment}"
-#     }
-#   EOF
+resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
+  name                         = "TeamServicesAgentExtension"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  publisher                    = "Microsoft.VisualStudio.Services"
+  type                         = "TeamServicesAgent"
+  type_handler_version         = "1.26"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "VSTSAccountName": "${var.app_devops["account"]}",        
+      "TeamProject": "${var.app_devops["team_project"]}",
+      "DeploymentGroup": "${var.app_devops["db_deployment_group"]}",
+      "AgentName": "${local.db_hostname}${count.index+1}",
+      "Tags": "${var.resource_environment}"
+    }
+  EOF
 
-#   protected_settings = <<EOF
-#     { 
-#       "PATToken": "${var.app_devops["pat"]}" 
-#     } 
-#   EOF
+  protected_settings = <<EOF
+    { 
+      "PATToken": "${var.app_devops["pat"]}" 
+    } 
+  EOF
 
-#   tags                         = merge(
-#     var.tags,
-#     map(
-#       "dummy-dependency",        var.vm_agent_dependency
-#     )
-#   )
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_agent_dependency
+    )
+  )
 
-#   count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
-# }
+  count                        = var.deploy_non_essential_vm_extensions && var.use_pipeline_environment ? 0 : var.app_db_vm_number
+}
+resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
+  name                         = "PipelineAgentCustomScript"
+  virtual_machine_id           = azurerm_virtual_machine.app_db_vm[count.index].id
+  publisher                    = "Microsoft.Compute"
+  type                         = "CustomScriptExtension"
+  type_handler_version         = "1.10"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "fileUris": [
+                                 "${azurerm_storage_blob.install_agent.url}"
+      ]
+    }
+  EOF
+
+  protected_settings           = <<EOF
+    { 
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.tags["environment"]}-app -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]}\""
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_agent_dependency
+    )
+  )
+
+  count                        = var.deploy_non_essential_vm_extensions && var.use_pipeline_environment ? var.app_db_vm_number : 0
+}
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   name                         = "BGInfo"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
@@ -548,14 +576,6 @@ resource azurerm_storage_container scripts {
   name                         = "paasappscripts"
   storage_account_name         = var.automation_storage_name
   container_access_type        = "container"
-}
-resource azurerm_storage_blob prepare_appserver {
-  name                         = "prepare_appserver.ps1"
-  storage_account_name         = var.automation_storage_name
-  storage_container_name       = azurerm_storage_container.scripts.name
-
-  type                         = "Block"
-  source                       = "${path.module}/scripts/host/prepare_appserver.ps1"
 }
 
 resource azurerm_storage_blob install_agent {

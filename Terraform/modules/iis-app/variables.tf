@@ -18,11 +18,15 @@ variable tags {
 
 variable automation_storage_name {}
 
+# Toggles
 variable deploy_network_watcher {
   description                  = "Whether to deploy connection monitors"
   type                         = bool
 }
 variable deploy_non_essential_vm_extensions {
+  type                         = bool
+}
+variable use_pipeline_environment {
   type                         = bool
 }
 

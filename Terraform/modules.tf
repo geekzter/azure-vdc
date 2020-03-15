@@ -104,6 +104,7 @@ module iis_app {
   diagnostics_workspace_key    = azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key
   network_watcher_name         = local.network_watcher_name
   network_watcher_resource_group_name = local.network_watcher_resource_group
+  use_pipeline_environment     = var.use_pipeline_environment
 }
 
 module managed_bastion_hub {

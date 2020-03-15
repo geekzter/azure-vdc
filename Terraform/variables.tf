@@ -371,6 +371,12 @@ variable deploy_vpn {
   type                         = bool
 }
 
+variable use_pipeline_environment {
+  description                  = "Use environment rather than deployment group for Pipeline Agent"
+  default                      = false
+  type                         = bool
+}
+
 variable use_vanity_domain_and_ssl {
   description                  = "Whether to use SSL (HTTPS) for demo application"
   default                      = false
