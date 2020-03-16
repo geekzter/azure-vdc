@@ -40,7 +40,7 @@ output bastion_address {
 }
 
 # output bastion_firstlogoncommand {
-#   value                  = templatefile("../Scripts/FirstLogonCommands.xml", { 
+#   value                  = templatefile("../Scripts/host/BastionFirstLogonCommands.xml", { 
 #     username               = var.admin_username, 
 #     password               = local.password, 
 #     hosts                  = concat(var.app_web_vms,var.app_web_vms),

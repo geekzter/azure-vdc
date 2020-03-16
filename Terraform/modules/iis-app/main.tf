@@ -3,6 +3,7 @@ locals {
   app_dns_name                 = "${lower(var.resource_environment)}app_web_vm"
   db_hostname                  = "${lower(var.resource_environment)}dbhost"
   db_dns_name                  = "${lower(var.resource_environment)}db_web_vm"
+  resource_group_name_short    = substr(lower(replace(var.resource_group,"-","")),0,20)
   vdc_resource_group_name      = element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)
 }
 
@@ -99,7 +100,7 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   tags                         = var.tags
 }
 
-resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
+resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
@@ -129,7 +130,37 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline" {
     )
   )
 
-  count                        = var.app_web_vm_number
+  count                        = var.use_pipeline_environment ? 0 : var.app_web_vm_number
+}
+resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
+  name                         = "PipelineAgentCustomScript"
+  virtual_machine_id           = azurerm_virtual_machine.app_web_vm[count.index].id
+  publisher                    = "Microsoft.Compute"
+  type                         = "CustomScriptExtension"
+  type_handler_version         = "1.10"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "fileUris": [
+                                 "${azurerm_storage_blob.install_agent.url}"
+      ]
+    }
+  EOF
+
+  protected_settings           = <<EOF
+    { 
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.tags["environment"]}-app -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]}\""
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_agent_dependency
+    )
+  )
+
+  count                        = var.use_pipeline_environment ? var.app_web_vm_number : 0
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   name                         = "BGInfo"
@@ -144,7 +175,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   tags                         = var.tags
 
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_pipeline]
+  #depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_pipeline]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
   name                         = "DAExtension"
@@ -385,7 +416,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   depends_on                   = [azurerm_network_interface_backend_address_pool_association.app_db_if_backend_pool]
 }
 
-resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
+resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
@@ -415,7 +446,37 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline" {
     )
   )
 
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  count                        = var.deploy_non_essential_vm_extensions && var.use_pipeline_environment ? 0 : var.app_db_vm_number
+}
+resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
+  name                         = "PipelineAgentCustomScript"
+  virtual_machine_id           = azurerm_virtual_machine.app_db_vm[count.index].id
+  publisher                    = "Microsoft.Compute"
+  type                         = "CustomScriptExtension"
+  type_handler_version         = "1.10"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "fileUris": [
+                                 "${azurerm_storage_blob.install_agent.url}"
+      ]
+    }
+  EOF
+
+  protected_settings           = <<EOF
+    { 
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.tags["environment"]}-app -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]}\""
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_agent_dependency
+    )
+  )
+
+  count                        = var.deploy_non_essential_vm_extensions && var.use_pipeline_environment ? var.app_db_vm_number : 0
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   name                         = "BGInfo"
@@ -430,7 +491,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   tags                         = var.tags
 
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_pipeline]
+  #depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_pipeline]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   name                         = "DAExtension"
@@ -510,6 +571,22 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
 #   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
 #   depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_watcher]
 # }
+
+resource azurerm_storage_container scripts {
+  name                         = "paasappscripts"
+  storage_account_name         = var.automation_storage_name
+  container_access_type        = "container"
+}
+
+resource azurerm_storage_blob install_agent {
+  name                         = "install_agent.ps1"
+  storage_account_name         = var.automation_storage_name
+  storage_container_name       = azurerm_storage_container.scripts.name
+
+  type                         = "Block"
+  source                       = "${path.module}/scripts/host/install_agent.ps1"
+}
+
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {
   name                         = "${azurerm_lb.app_db_lb.name}-logs"
   target_resource_id           = azurerm_lb.app_db_lb.id
