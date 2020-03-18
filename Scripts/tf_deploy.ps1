@@ -145,13 +145,8 @@ try {
     }
 
     if ($Plan -or $Apply -or $Destroy) {
-        # # For Terraform apply, plan & destroy stages we need access to resources, and for destroy as well sometimes
-        # Write-Host "`nStart VM's, some operations (e.g. adding VM extensions) may fail if they're not started" -ForegroundColor Green 
-        # & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "start_vms.ps1") 
-
-        Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform plan stage may fail" -ForegroundColor Green 
+        Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform may fail" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1")
-
     }
 
     if ($Plan -or $Apply) {

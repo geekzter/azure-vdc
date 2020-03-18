@@ -16,16 +16,22 @@ data "http" "localpublicip" {
 }
 
 data "azurerm_client_config" "current" {}
-data "azurerm_subscription" "primary" {}
-
 data "azurerm_container_registry" "vdc_images" {
   name                         = var.shared_container_registry_name
   resource_group_name          = var.shared_resources_group
 }
+# data azurerm_sql_database app_sqldb {
+#   name                         = "${lower(replace(var.resource_group_name,"-",""))}sqldb"
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   server_name                  = azurerm_sql_server.app_sqlserver.name
+# }
+data "azurerm_subscription" "primary" {}
 
 locals {
   admin_ips                    = "${tolist(var.admin_ips)}"
   # Last element of resource id is resource name
+  database_import              = var.database_import
+# database_import              = data.azurerm_sql_database.app_sqldb != null ? false : true
   integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
   linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/vdc-aspnet-core-sqldb:latest" 
@@ -34,7 +40,6 @@ locals {
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
   vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
-
 }
 
 resource "azurerm_resource_group" "app_rg" {
@@ -508,7 +513,7 @@ resource "azurerm_sql_firewall_rule" "azureall" {
   end_ip_address               = "0.0.0.0"
 
 # Only needed during import
-  count                        = var.database_import ? 1 : 0
+  count                        = local.database_import ? 1 : 0
 } 
 
 resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
@@ -546,7 +551,6 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
     private_connection_resource_id = azurerm_sql_server.app_sqlserver.id
     subresource_names          = ["sqlServer"]
   }
-
 }
 
 # This is for Terraform acting as the AAD DBA (e.g. to execute change scripts)
@@ -554,8 +558,8 @@ resource "azurerm_sql_active_directory_administrator" "import_dba" {
   # Configure as Terraform identity at import (creation) time, otherwise as DBA
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = var.database_import ? "Automation" : var.admin_login
-  object_id                    = var.database_import ? data.azurerm_client_config.current.object_id : var.admin_object_id
+  login                        = local.database_import ? "Automation" : var.admin_login
+  object_id                    = local.database_import ? data.azurerm_client_config.current.object_id : var.admin_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 } 
 
@@ -579,7 +583,7 @@ resource "azurerm_sql_database" "app_sqldb" {
 
   # Import is not re-entrant
   dynamic "import" {
-    for_each = range(var.database_import ? 1 : 0)
+    for_each = range(local.database_import ? 1 : 0)
     content {
       storage_uri              = var.database_template_storage_uri
       storage_key              = var.database_template_storage_key

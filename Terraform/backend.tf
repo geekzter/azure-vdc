@@ -11,13 +11,19 @@ terraform {
 }
 
 /* Not used
+locals {
+  state_key              = terraform.workspace == "default" ? "terraform.tfstate" : "terraform.tfstateenv:${terraform.workspace}"
+}
+
 data "terraform_remote_state" "shared" {
   backend = "azurerm"
 
   config {
     resource_group_name  = "automation"
-    container_name       = "shared"
-    key                  = "terraform.tfstateenv:${terraform.workspace}"
+    # Use partial configuration, as we do not want to expose these details
+    #storage_account_name = "tfbackend"
+    container_name       = "vdc"
+    key                  = local.state_key
   }
 }
 */
