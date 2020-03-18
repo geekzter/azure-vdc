@@ -100,6 +100,21 @@ resource "azurerm_virtual_machine" "app_web_vm" {
   tags                         = var.tags
 }
 
+resource null_resource start_web_vm {
+  # Always run this
+  triggers                     = {
+    always_run                 = timestamp()
+  }
+
+  provisioner local-exec {
+    # Start VM, so we can execute script through SSH
+    command                    = "Start-AzVm -Id ${azurerm_virtual_machine.app_web_vm[count.index].id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  count                        = var.app_web_vm_number
+}
+
 resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
@@ -130,7 +145,15 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_gro
     )
   )
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
+
   count                        = var.use_pipeline_environment ? 0 : var.app_web_vm_number
+  depends_on                   = [null_resource.start_web_vm]
 }
 resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
   name                         = "PipelineAgentCustomScript"
@@ -160,7 +183,15 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
     )
   )
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
+
   count                        = var.use_pipeline_environment ? var.app_web_vm_number : 0
+  depends_on                   = [null_resource.start_web_vm]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   name                         = "BGInfo"
@@ -170,12 +201,19 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   type_handler_version         = "2.1"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
 
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   tags                         = var.tags
 
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
   #depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_pipeline]
+  depends_on                   = [null_resource.start_web_vm]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
   name                         = "DAExtension"
@@ -203,6 +241,13 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
     )
   )
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
+
   count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
 
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
@@ -216,10 +261,16 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
 
+  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   tags                         = var.tags
-  depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_dependency_monitor]
+  depends_on                   = [null_resource.start_web_vm, azurerm_virtual_machine_extension.app_web_vm_dependency_monitor]
 }
 # Installed by default now
 # resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
@@ -251,7 +302,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
 #   count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
 
 #   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-#   depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_watcher]
+#   depends_on                   = [null_resource.start_db_vm, azurerm_virtual_machine_extension.app_web_vm_watcher]
 # }
 # BUG: Get's recreated every run
 #      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909
@@ -273,7 +324,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
 #   }
 #   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
 
-#   depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_monitor]
+#   depends_on                   = [null_resource.start_db_vm, azurerm_virtual_machine_extension.app_web_vm_monitor]
 
 #   tags                         = var.tags
 # }
@@ -416,6 +467,21 @@ resource "azurerm_virtual_machine" "app_db_vm" {
   depends_on                   = [azurerm_network_interface_backend_address_pool_association.app_db_if_backend_pool]
 }
 
+resource null_resource start_db_vm {
+  # Always run this
+  triggers                     = {
+    always_run                 = timestamp()
+  }
+
+  provisioner local-exec {
+    # Start VM, so we can execute script through SSH
+    command                    = "Start-AzVm -Id ${azurerm_virtual_machine.app_db_vm[count.index].id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  count                        = var.app_web_vm_number
+}
+
 resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
@@ -439,6 +505,13 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
     } 
   EOF
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
+
   tags                         = merge(
     var.tags,
     map(
@@ -447,6 +520,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
   )
 
   count                        = var.deploy_non_essential_vm_extensions && var.use_pipeline_environment ? 0 : var.app_db_vm_number
+  depends_on                   = [null_resource.start_db_vm]
 }
 resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
   name                         = "PipelineAgentCustomScript"
@@ -469,6 +543,13 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
     } 
   EOF
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
+
   tags                         = merge(
     var.tags,
     map(
@@ -477,6 +558,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
   )
 
   count                        = var.deploy_non_essential_vm_extensions && var.use_pipeline_environment ? var.app_db_vm_number : 0
+  depends_on                   = [null_resource.start_db_vm]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   name                         = "BGInfo"
@@ -486,12 +568,19 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   type_handler_version         = "2.1"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
 
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
   tags                         = var.tags
 
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
   #depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_pipeline]
+  depends_on                   = [null_resource.start_db_vm]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   name                         = "DAExtension"
@@ -512,6 +601,13 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
     } 
   EOF
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
+
   tags                         = merge(
     var.tags,
     map(
@@ -522,7 +618,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
 
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_bginfo]
+  depends_on                   = [null_resource.start_db_vm, azurerm_virtual_machine_extension.app_db_vm_bginfo]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
   name                         = "AzureNetworkWatcherExtension"
@@ -532,12 +628,18 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
 
+  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
   tags                         = var.tags
 
   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-  depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_dependency_monitor]
+  depends_on                   = [null_resource.start_db_vm, azurerm_virtual_machine_extension.app_db_vm_dependency_monitor]
 }
 # Installed by default now
 # resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
@@ -569,7 +671,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
 #   count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
 
 #   # FIX? for "Multiple VMExtensions per handler not supported for OS type 'Windows'""
-#   depends_on                   = [azurerm_virtual_machine_extension.app_db_vm_watcher]
+#   depends_on                   = [null_resource.start_db_vm, azurerm_virtual_machine_extension.app_db_vm_watcher]
 # }
 
 resource azurerm_storage_container scripts {

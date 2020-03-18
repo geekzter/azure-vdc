@@ -151,7 +151,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
       name                     = "${module.iis_app.app_resource_group}-http-rule"
       rule_type                = "Basic"
       http_listener_name       = local.iaas_app_http_listener 
-      backend_address_pool_name  = iaas_app_backend_pool 
+      backend_address_pool_name  = local.iaas_app_backend_pool 
       backend_http_settings_name = local.iaas_app_backend_setting
     }
   }

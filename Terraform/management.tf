@@ -88,6 +88,19 @@ resource "azurerm_windows_virtual_machine" "bastion" {
   tags                         = local.tags
 }
 
+resource null_resource start_bastion {
+  # Always run this
+  triggers                     = {
+    always_run                 = timestamp()
+  }
+
+  provisioner local-exec {
+    # Start VM, so we can execute script through SSH
+    command                    = "Start-AzVM -Id ${azurerm_windows_virtual_machine.bastion.id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+}
+
 # resource "azurerm_virtual_machine_extension" "bastion_aadlogin" {
 #   name                         = "${azurerm_windows_virtual_machine.bastion.name}/AADLoginForWindows"
 #   virtual_machine_id           = "azurerm_windows_virtual_machine.bastion.id
@@ -97,7 +110,6 @@ resource "azurerm_windows_virtual_machine" "bastion" {
 #   auto_upgrade_minor_version   = true
 
 #   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
-
 #   tags                         = local.tags
 # } 
 
@@ -109,9 +121,16 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
   type_handler_version         = "2.1"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
 
+  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
+  depends_on                   = [null_resource.start_bastion]
 }
 
 resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
@@ -133,9 +152,16 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
     } 
   EOF
 
-  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
 
+  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
+  depends_on                   = [null_resource.start_bastion]
 }
 
 # Installed by default now
@@ -159,8 +185,8 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
 #   EOF
 
 #   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
-
 #   tags                         = local.tags
+#   depends_on                   = [null_resource.start_bastion]
 # }
 
 resource "azurerm_virtual_machine_extension" "bastion_watcher" {
@@ -171,9 +197,16 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? 1 : 0
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+    when                       = destroy
+  }
 
+  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
+  depends_on                   = [null_resource.start_bastion]
 }
 
 # BUG: Get's recreated every run
