@@ -67,10 +67,6 @@ output bastion_rdp_vpn {
   value = "mstsc.exe /v:${var.vdc_config["hub_bastion_address"]}"
 }
 
-output database_import {
-    value = module.paas_app.database_import
-}
-
 output devops_org_url {
   value = "https://dev.azure.com/${var.app_devops["account"]}"
 }
@@ -176,6 +172,10 @@ output paas_app_service_name {
 
 output paas_app_sql_database {
   value       = module.paas_app.sql_database
+}
+
+output paas_app_sql_database_import {
+  value       = module.paas_app.database_import
 }
 
 output paas_app_sql_server {

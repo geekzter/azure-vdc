@@ -114,9 +114,6 @@ function Execute-Sql (
         Write-Debug "Executing query:`n$query"
         $result = $command.ExecuteNonQuery()
         $result
-    } catch [System.Data.SqlException] {
-        Write-Error $_ # Make sure this gets written to error stream
-        throw
     } finally {
         $conn.Close()
     }
@@ -240,23 +237,6 @@ function SetWorkspace (
     }
 
     return $returnObject
-}
-
-function SetDatabaseImport () {
-    Invoke-Command -ScriptBlock {
-        $Private:ErrorActionPreference = "Continue"
-        $script:sqlDatabase = $(terraform output "paas_app_sql_database" 2>$null)
-    }
-
-    if ([string]::IsNullOrEmpty($sqlDatabase)) {
-        # Database does not exist, import on create
-        $env:TF_VAR_paas_app_database_import="true"
-        Write-Host "Database paas_app_sql_database does not exist. TF_VAR_paas_app_database_import=$env:TF_VAR_paas_app_database_import"
-    } else {
-        # Database already exists, don't import anything
-        $env:TF_VAR_paas_app_database_import="false"
-        Write-Host "Database $sqlDatabase already exists. TF_VAR_paas_app_database_import=$env:TF_VAR_paas_app_database_import"
-    }
 }
 
 function SetSuffix () {

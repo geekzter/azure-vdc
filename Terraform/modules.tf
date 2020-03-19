@@ -161,7 +161,7 @@ module paas_app {
                                  [
                                  azurerm_subnet.mgmt_subnet.id
   ])
-  database_import              = var.paas_app_database_import
+  database_import              = local.paas_app_database_import
   database_template_storage_key= var.app_database_template_storage_key
   data_subnet_id               = lookup(module.paas_spoke_vnet.subnet_ids,"data","")
   default_create_timeout       = var.default_create_timeout

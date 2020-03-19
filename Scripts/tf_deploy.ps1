@@ -99,12 +99,12 @@ try {
     $env:TF_VAR_branch=GetCurrentBranch
 
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
-    foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_CFG_*,TF_VAR_*)) {
+    foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
         $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
         Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
     } 
     if (($Trace -gt 0) -or (${env:system.debug} -eq "true")) {
-        Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_CFG_*,TF_VAR_* | Sort-Object -Property Name
+        Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_VAR_* | Sort-Object -Property Name
     }
 
     # Print version info
@@ -113,8 +113,8 @@ try {
     terraform -version
 
     if ($Init -or $Upgrade) {
-        if([string]::IsNullOrEmpty($env:TF_CFG_backend_storage_account))   { Throw "You must set environment variable TF_CFG_backend_storage_account" }
-        $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_CFG_backend_storage_account}`""
+        if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_account))   { Throw "You must set environment variable TF_VAR_backend_storage_account" }
+        $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
         $InitCmd = "terraform init $tfbackendArgs"
         if ($Upgrade) {
             $InitCmd += " -upgrade"
@@ -134,7 +134,7 @@ try {
         $ForceArgs = "-auto-approve"
     }
 
-    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_branch, TF_VAR_paas_app_database_import) -and (Test-Path $varsFile)) {
+    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_branch, TF_VAR_backend_storage_account) -and (Test-Path $varsFile)) {
         # Load variables from file, if it exists and environment variables have not been set
         $varArgs = "-var-file='$varsFile'"
     }
@@ -150,7 +150,6 @@ try {
     }
 
     if ($Plan -or $Apply) {
-        SetDatabaseImport
         if ($StickySuffix) {
             SetSuffix
         }

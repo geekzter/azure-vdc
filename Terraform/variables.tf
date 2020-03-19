@@ -27,6 +27,10 @@ variable tags {
   }
 } 
 
+variable backend_storage_account {
+  description = "The storage account name used for the Terraform azurerm backend. This is used for data source terraform_remote_state"
+}
+
 variable build_id {
   description = "The ID of the Build Pipeline that deployed this resource, or created the artefacts"
   default     = "" 
@@ -271,10 +275,6 @@ variable app_db_image_version {
   default                      = "latest"
 }
 variable app_database_template_storage_key {}
-variable paas_app_database_import {
-  type                         = bool
-  default                      = false
-}
 variable paas_app_storage_import {
   type                         = bool
   default                      = true

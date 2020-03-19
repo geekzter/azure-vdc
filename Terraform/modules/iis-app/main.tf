@@ -519,7 +519,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
     )
   )
 
-  count                        = var.deploy_non_essential_vm_extensions && var.use_pipeline_environment ? 0 : var.app_db_vm_number
+  count                        = var.deploy_non_essential_vm_extensions && !var.use_pipeline_environment ? var.app_db_vm_number : 0
   depends_on                   = [null_resource.start_db_vm]
 }
 resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {

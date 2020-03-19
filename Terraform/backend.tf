@@ -3,27 +3,24 @@
 terraform {
   backend "azurerm" {
     resource_group_name  = "automation"
-    # Use partial configuration, as we do not want to expose these details
+    # Use partial configuration, as we do not want to expose these details in source control
     #storage_account_name = "tfbackend"
     container_name       = "vdc" 
     key                  = "terraform.tfstate"
   }
 }
 
-/* Not used
 locals {
   state_key              = terraform.workspace == "default" ? "terraform.tfstate" : "terraform.tfstateenv:${terraform.workspace}"
 }
 
-data "terraform_remote_state" "shared" {
+data "terraform_remote_state" "vdc" {
   backend = "azurerm"
 
-  config {
+  config                 = {
     resource_group_name  = "automation"
-    # Use partial configuration, as we do not want to expose these details
-    #storage_account_name = "tfbackend"
+    storage_account_name = var.backend_storage_account
     container_name       = "vdc"
     key                  = local.state_key
   }
 }
-*/
