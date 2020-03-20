@@ -116,7 +116,7 @@ variable vdc_oms_solutions {
   # "ApplicationInsights", # Depricated
   # "ASRAnalytics",
     "AzureActivity",
-    "AzureAppGatewayAnalytics",
+  # "AzureAppGatewayAnalytics",
   # "AzureAutomation",
   # "AzureCdnCoreAnalytics",
   # "AzureDataFactoryAnalytics",
@@ -155,7 +155,7 @@ variable vdc_oms_solutions {
   # "Security",
     "SecurityCenterFree",
     "SecurityCenterNetworkTraffic",
-    "SecurityInsights",
+  # "SecurityInsights",
     "ServiceDesk",
   # "ServiceFabric",
   # "ServiceMap",
@@ -177,7 +177,7 @@ variable vdc_oms_solutions {
   # "WindowsDefenderATPStable",
     "WindowsEventForwarding",
   # "WindowsFirewall",
-    "WinLog",
+  # "WinLog",
   # "WireData",
   # "WireData2"
   ]
@@ -337,13 +337,13 @@ variable deploy_app_service_network_integration {
 
 variable deploy_auto_shutdown {
   description                  = "Whether to deploy the Auto shutdown function"
-  default                      = true
+  default                      = false
   type                         = bool
 }
 
 variable deploy_non_essential_vm_extensions {
   description                  = "Whether to deploy optional VM extensions"
-  default                      = true
+  default                      = false
   type                         = bool
 }
 
@@ -361,7 +361,7 @@ variable deploy_network_watcher {
 
 variable deploy_private_dns_for_endpoint {
   description                  = "Whether to create DNS records for Private Endpoint(s)"
-  default                      = false
+  default                      = true
   type                         = bool
 }
 

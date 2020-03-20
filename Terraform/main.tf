@@ -29,7 +29,7 @@ locals {
   automation_location          = var.automation_location != "" ? var.automation_location : local.workspace_location
   password                     = ".Az9${random_string.password.result}"
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result
-  environment                  = var.resource_environment != "" ? lower(var.resource_environment) : terraform.workspace
+  environment                  = var.resource_environment != "" ? lower(var.resource_environment) : substr(lower(replace(terraform.workspace,"/a|e|i|o|u|y/","")),0,4)
   vdc_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-${lower(local.suffix)}"
   iaas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-iaasapp-${lower(local.suffix)}"
   paas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-paasapp-${lower(local.suffix)}"

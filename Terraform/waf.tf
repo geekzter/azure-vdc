@@ -52,7 +52,7 @@ locals {
   ssl_range                    = range(var.use_vanity_domain_and_ssl ? 1 : 0) # Contains one item only if var.use_vanity_domain_and_ssl = true
   ssl_range_inverted           = range(var.use_vanity_domain_and_ssl ? 0 : 1) # Contains one item only if var.use_vanity_domain_and_ssl = false
   iaas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_iaas_app_cname[0].name}.${azurerm_dns_cname_record.waf_iaas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
-  iaas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.iaas_app_fqdn}/"
+  iaas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.iaas_app_fqdn}${var.use_vanity_domain_and_ssl ? "" : ":81"}/"
   iaas_app_backend_pool        = "${module.iis_app.app_resource_group}-webservers"
   iaas_app_backend_setting     = "${module.iis_app.app_resource_group}-config"
   iaas_app_http_listener       = "${module.iis_app.app_resource_group}-http-listener"
@@ -93,6 +93,10 @@ resource "azurerm_application_gateway" "waf" {
     port                       = 80
   }
   frontend_port {
+    name                       = "http81"
+    port                       = 81
+  }
+  frontend_port {
     name                       = "https"
     port                       = 443
   }
@@ -128,7 +132,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
   http_listener {
     name                       = local.iaas_app_http_listener 
     frontend_ip_configuration_name = local.waf_frontend_ip_config
-    frontend_port_name         = "http"
+    frontend_port_name         = "http81"
     host_name                  = local.iaas_app_fqdn
     protocol                   = "Http"
   }
