@@ -55,13 +55,13 @@ locals {
   tags                         = merge(
     var.tags,
     map(
-      "branch",                var.branch,
-      "environment",           local.environment,
-      "suffix",                local.suffix,
-      "workspace",             terraform.workspace,
-      "release-id",            var.release_id,
-      "release-url",           var.release_web_url,
-      "release-user",          var.release_user_email
+      "branch",                  var.branch,
+      "environment",             local.environment,
+      "suffix",                  local.suffix,
+      "workspace",               terraform.workspace,
+      "release-id",              var.release_id,
+      "release-url",             var.release_web_url,
+      "release-user",            var.release_user_email
     )
   )
 
@@ -82,6 +82,8 @@ resource "azurerm_role_assignment" "demo_admin" {
   scope                        = azurerm_resource_group.vdc_rg.id
   role_definition_name         = "Contributor"
   principal_id                 = var.admin_object_id
+
+  count                        = var.admin_object_id != null ? 1 : 0
 }
 
 data "http" "localpublicip" {

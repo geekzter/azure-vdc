@@ -18,6 +18,8 @@ resource "azurerm_role_assignment" "demo_admin" {
   scope                        = azurerm_resource_group.app_rg.id
   role_definition_name         = "Contributor"
   principal_id                 = var.admin_object_id
+
+  count                        = var.admin_object_id != null ? 1 : 0
 }
 
 resource "azurerm_network_interface" "app_web_if" {
@@ -152,7 +154,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_gro
     when                       = destroy
   }
 
-  count                        = var.use_pipeline_environment ? 0 : var.app_web_vm_number
+  count                        = (var.use_pipeline_environment || var.app_devops["account"] == null) ? 0 : var.app_web_vm_number
   depends_on                   = [null_resource.start_web_vm]
 }
 resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
@@ -190,7 +192,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
     when                       = destroy
   }
 
-  count                        = var.use_pipeline_environment ? var.app_web_vm_number : 0
+  count                        = (var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_web_vm_number : 0
   depends_on                   = [null_resource.start_web_vm]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
@@ -519,7 +521,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
     )
   )
 
-  count                        = var.deploy_non_essential_vm_extensions && !var.use_pipeline_environment ? var.app_db_vm_number : 0
+  count                        = (var.deploy_non_essential_vm_extensions && !var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
   depends_on                   = [null_resource.start_db_vm]
 }
 resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
@@ -557,7 +559,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
     )
   )
 
-  count                        = var.deploy_non_essential_vm_extensions && var.use_pipeline_environment ? var.app_db_vm_number : 0
+  count                        = (var.deploy_non_essential_vm_extensions && var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
   depends_on                   = [null_resource.start_db_vm]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {

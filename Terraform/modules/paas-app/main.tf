@@ -16,18 +16,16 @@ data "http" "localpublicip" {
 }
 
 data "azurerm_client_config" "current" {}
-data "azurerm_container_registry" "vdc_images" {
-  name                         = var.shared_container_registry_name
-  resource_group_name          = var.shared_resources_group
-}
 data "azurerm_subscription" "primary" {}
 
 locals {
   admin_ips                    = "${tolist(var.admin_ips)}"
+  admin_login_ps               = var.admin_login != null ? var.admin_login : "$null"
+  admin_object_id_ps           = var.admin_object_id != null ? var.admin_object_id : "$null"
   # Last element of resource id is resource name
   integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
-  linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/vdc-aspnet-core-sqldb:latest" 
+# linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/vdc-aspnet-core-sqldb:latest" 
 # linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/vdc/aspnet-core-sqldb:latest" 
 # linux_fx_version             = "DOCKER|appsvcsample/python-helloworld:latest"
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
@@ -46,6 +44,8 @@ resource "azurerm_role_assignment" "demo_admin" {
   scope                        = azurerm_resource_group.app_rg.id
   role_definition_name         = "Contributor"
   principal_id                 = var.admin_object_id
+
+  count                        = var.admin_object_id != null ? 1 : 0
 }
 
 resource "azurerm_storage_account" "app_storage" {
@@ -547,24 +547,24 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
 }
 
 # This is for Terraform acting as the AAD DBA (e.g. to execute change scripts)
-resource "azurerm_sql_active_directory_administrator" "import_dba" {
+resource "azurerm_sql_active_directory_administrator" "dba" {
   # Configure as Terraform identity at import (creation) time, otherwise as DBA
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = var.database_import ? "Automation" : var.admin_login
-  object_id                    = var.database_import ? data.azurerm_client_config.current.object_id : var.admin_object_id
+  login                        = (var.database_import || var.admin_login == null) ? "Automation" : var.admin_login
+  object_id                    = (var.database_import || var.admin_object_id == null) ? data.azurerm_client_config.current.object_id : var.admin_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 } 
 
 resource null_resource sql_database_access {
   # Add App Service MSI and DBA to Database
   provisioner "local-exec" {
-    command                    = "../Scripts/grant_database_access.ps1 -DBAName ${var.admin_login} -DBAObjectId ${var.admin_object_id} -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${azurerm_sql_database.app_sqldb.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
+    command                    = "../Scripts/grant_database_access.ps1 -DBAName ${local.admin_login_ps} -DBAObjectId ${local.admin_object_id_ps} -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${azurerm_sql_database.app_sqldb.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
   # Terraform change scripts require Terraform to be the AAD DBA
-  depends_on                   = [azurerm_sql_active_directory_administrator.import_dba]
+  depends_on                   = [azurerm_sql_active_directory_administrator.dba]
 }
 
 resource "azurerm_sql_database" "app_sqldb" {
@@ -580,7 +580,7 @@ resource "azurerm_sql_database" "app_sqldb" {
     content {
       storage_uri              = var.database_template_storage_uri
       storage_key              = var.database_template_storage_key
-      storage_key_type         = "StorageAccessKey"
+      storage_key_type         = "SharedAccessKey"
       administrator_login      = azurerm_sql_server.app_sqlserver.administrator_login
       administrator_login_password = azurerm_sql_server.app_sqlserver.administrator_login_password
       authentication_type      = "SQL"

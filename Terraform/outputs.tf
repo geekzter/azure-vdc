@@ -68,7 +68,7 @@ output bastion_rdp_vpn {
 }
 
 output devops_org_url {
-  value = "https://dev.azure.com/${var.app_devops["account"]}"
+  value = try("https://dev.azure.com/${var.app_devops["account"]}",null)
 }
 
 output devops_project {
@@ -145,29 +145,25 @@ output paas_app_eventhub_name {
 }
 
 output paas_app_service_fqdn {
-    value = module.paas_app.app_service_fqdn
-}
-
-output paas_app_service_linux_fx_version {
-    value     = module.paas_app.linux_fx_version
+  value       = module.paas_app.app_service_fqdn
 }
 
 output paas_app_service_outbound_ip_addresses {
-    value = module.paas_app.app_service_outbound_ip_addresses
+  value       = module.paas_app.app_service_outbound_ip_addresses
 }
 
 output paas_app_service_msi_client_id {
-    value = module.paas_app.app_service_msi_client_id
+  value       = module.paas_app.app_service_msi_client_id
 }
 output paas_app_service_msi_name {
-    value = module.paas_app.app_service_msi_name
+  value       = module.paas_app.app_service_msi_name
 }
 output paas_app_service_msi_object_id {
-    value = module.paas_app.app_service_msi_object_id
+  value       = module.paas_app.app_service_msi_object_id
 }
 
 output paas_app_service_name {
-    value = module.paas_app.app_service_name
+  value       = module.paas_app.app_service_name
 }
 
 output paas_app_sql_database {
@@ -244,9 +240,6 @@ output resource_suffix {
   value       = local.suffix
 }
 
-output shared_container_registry_name {
-  value       = var.shared_container_registry_name
-}
 output shared_resources_group {
   value       = var.shared_resources_group
 }

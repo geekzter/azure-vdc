@@ -600,7 +600,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${shared_rg}/providers/Microsoft.ContainerRegistry/registries/${container_registry_name}"
+                "value": "${subscription}/resourceGroups/${shared_rg}/providers/Microsoft.ContainerRegistry/registries/ewdev"
               }
             ],
             "type": "Extension/Microsoft_Azure_ContainerRegistries/PartType/ResourcePart"

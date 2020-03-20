@@ -29,6 +29,7 @@ variable tags {
 
 variable backend_storage_account {
   description = "The storage account name used for the Terraform azurerm backend. This is used for data source terraform_remote_state"
+  default     = null
 }
 
 variable build_id {
@@ -189,8 +190,12 @@ variable admin_ip_ranges {
 variable admin_ips {
   default                      = []
 }
-variable admin_login {}
-variable admin_object_id {}
+variable admin_login {
+  default                      = null
+}
+variable admin_object_id {
+  default                      = null
+}
 
 variable rdp_port {
 # default                      = 3389 # Default for protocol
@@ -207,11 +212,11 @@ variable app_devops {
   type                         = map
 
   default = {
-    account                    = "myaccount"
+    account                    = null
     team_project               = "VDC"
     web_deployment_group       = "AppServers"
     db_deployment_group        = "DBServers"
-    pat                        = ""
+    pat                        = null
   }
 }
 
@@ -274,13 +279,12 @@ variable app_db_image_version {
   description                  = "version of the DB image to apply (az vm image list)"
   default                      = "latest"
 }
-variable app_database_template_storage_key {}
+variable app_database_template_storage_key {
+  default                      = "?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D"
+}
 variable paas_app_storage_import {
   type                         = bool
   default                      = true
-}
-variable shared_container_registry_name {
-  description                  = "Name of the Container Registry to pull images from"
 }
 variable shared_resources_group {
   description                  = "Resource group of shared (data) resources e.g. Container Registry, DNS"
@@ -292,17 +296,21 @@ variable update_management_time {
 }
 variable vanity_domainname {
   description                  = "The domain part of the vanity url"
+  default                      = null
 }
 variable vanity_certificate_name {
   description                  = "The name of the SSL certificate used for vanity url"
+  default                      = null
 }
 
 variable vanity_certificate_path {
   description                  = "The relative path to the SSL certificate PFX file used for vanity url"
+  default                      = null
 }
 
 variable vanity_certificate_password {
   description                  = "The full path to the SSL certificate PFX file used for vanity url"
+  default                      = null
 }
 
 variable vpn_root_cert_name {
@@ -311,6 +319,7 @@ variable vpn_root_cert_name {
 
 variable vpn_root_cert_file {
   description                  = "The relative path to the certificate CER file used for P2S root"
+  default                      = null
 }
 
 variable default_create_timeout {
@@ -349,7 +358,7 @@ variable deploy_non_essential_vm_extensions {
 
 variable deploy_managed_bastion {
   description                  = "Whether to deploy the Managed Bastion"
-  default                      = true
+  default                      = false
   type                         = bool
 }
 
