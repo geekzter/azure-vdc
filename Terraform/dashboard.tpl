@@ -210,7 +210,7 @@
                 "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Storage/storageAccounts/${paas_app_resource_group_short}stor"
               }
             ],
-            "type": "Extension/Microsoft_Azure_Storage/PartType/StorageAccountPart"
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
           },
           "position": {
             "colSpan": 2,
@@ -594,27 +594,6 @@
         "22": {
           "metadata": {
             "asset": {
-              "idInputName": "id",
-              "type": "RegistryResource"
-            },
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${shared_rg}/providers/Microsoft.ContainerRegistry/registries/ewdev"
-              }
-            ],
-            "type": "Extension/Microsoft_Azure_ContainerRegistries/PartType/ResourcePart"
-          },
-          "position": {
-            "colSpan": 2,
-            "rowSpan": 1,
-            "x": 10,
-            "y": 11
-          }
-        },
-        "23": {
-          "metadata": {
-            "asset": {
               "idInputName": "ComponentId",
               "type": "ApplicationInsights"
             },
@@ -693,7 +672,7 @@
             "y": 12
           }
         },
-        "24": {
+        "23": {
           "metadata": {
             "inputs": [
               {
@@ -710,7 +689,7 @@
             "y": 12
           }
         },
-        "25": {
+        "24": {
           "metadata": {
             "inputs": [
               {
@@ -745,7 +724,7 @@
             "y": 13
           }
         },
-        "26": {
+        "25": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -806,7 +785,7 @@
             "y": 13
           }
         },
-        "27": {
+        "26": {
           "metadata": {
             "inputs": [
               {
@@ -841,7 +820,7 @@
             "y": 15
           }
         },
-        "28": {
+        "27": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -917,7 +896,7 @@
             "y": 16
           }
         },
-        "29": {
+        "28": {
           "metadata": {
             "inputs": [
               {
@@ -952,29 +931,7 @@
             "y": 17
           }
         },
-        "3": {
-          "metadata": {
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "resourceGroup"
-              },
-              {
-                "isOptional": true,
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
-              }
-            ],
-            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
-          },
-          "position": {
-            "colSpan": 5,
-            "rowSpan": 4,
-            "x": 12,
-            "y": 0
-          }
-        },
-        "30": {
+        "29": {
           "metadata": {
             "inputs": [
               {
@@ -1009,7 +966,29 @@
             "y": 19
           }
         },
-        "31": {
+        "3": {
+          "metadata": {
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "resourceGroup"
+              },
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+          },
+          "position": {
+            "colSpan": 5,
+            "rowSpan": 4,
+            "x": 12,
+            "y": 0
+          }
+        },
+        "30": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -1354,12 +1333,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-68ef16e4-393a-4841-9d92-3d8f3686901f",
-              "StartboardPart-AnalyticsPart-68ef16e4-393a-4841-9d92-3d8f36869025",
-              "StartboardPart-MonitorChartPart-68ef16e4-393a-4841-9d92-3d8f3686902b",
-              "StartboardPart-AnalyticsPart-68ef16e4-393a-4841-9d92-3d8f36869035",
-              "StartboardPart-AnalyticsPart-68ef16e4-393a-4841-9d92-3d8f3686903d",
-              "StartboardPart-AnalyticsPart-68ef16e4-393a-4841-9d92-3d8f36869043"
+              "StartboardPart-ApplicationMapPart-14b77a63-3614-449b-88aa-ea20c9ee2047",
+              "StartboardPart-AnalyticsPart-14b77a63-3614-449b-88aa-ea20c9ee204d",
+              "StartboardPart-MonitorChartPart-14b77a63-3614-449b-88aa-ea20c9ee2053",
+              "StartboardPart-AnalyticsPart-14b77a63-3614-449b-88aa-ea20c9ee205d",
+              "StartboardPart-AnalyticsPart-14b77a63-3614-449b-88aa-ea20c9ee2067",
+              "StartboardPart-AnalyticsPart-14b77a63-3614-449b-88aa-ea20c9ee206d"
             ],
             "model": {
               "format": "utc",
