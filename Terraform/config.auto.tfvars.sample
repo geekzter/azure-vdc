@@ -34,6 +34,5 @@ app_devops                     = {
 admin_login                    = "user@tenant.onmicrosoft.com"
 admin_object_id                = "00000000-0000-0000-0000-000000000000"
 app_database_template_storage_key = "aaaaaaaaaaaaaaaaaaaaa/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
-shared_container_registry_name = "myregistry"
 shared_resources_group         = "Shared"
 vso_url                        = "https://online.visualstudio.com/environment/00000000-0000-0000-0000-000000000000"

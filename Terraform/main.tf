@@ -29,7 +29,7 @@ locals {
   automation_location          = var.automation_location != "" ? var.automation_location : local.workspace_location
   password                     = ".Az9${random_string.password.result}"
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result
-  environment                  = var.resource_environment != "" ? lower(var.resource_environment) : terraform.workspace
+  environment                  = var.resource_environment != "" ? lower(var.resource_environment) : substr(lower(replace(terraform.workspace,"/a|e|i|o|u|y/","")),0,4)
   vdc_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-${lower(local.suffix)}"
   iaas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-iaasapp-${lower(local.suffix)}"
   paas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-paasapp-${lower(local.suffix)}"
@@ -50,17 +50,18 @@ locals {
   admin_ips                    = setunion(local.admin_ip,var.admin_ips)
   admin_ip_ranges              = setunion([for ip in local.admin_ips : format("%s/30", ip)],var.admin_ip_ranges) # /32 not allowed in network_rules
   admin_cidr_ranges            = [for range in local.admin_ip_ranges : cidrsubnet(range,0,0)] # Make sure ranges have correct base address
+  paas_app_database_import     = try(data.terraform_remote_state.vdc.outputs.paas_app_sql_database,null) != null ? false : true
 
   tags                         = merge(
     var.tags,
     map(
-      "branch",                var.branch,
-      "environment",           local.environment,
-      "suffix",                local.suffix,
-      "workspace",             terraform.workspace,
-      "release-id",            var.release_id,
-      "release-url",           var.release_web_url,
-      "release-user",          var.release_user_email
+      "branch",                  var.branch,
+      "environment",             local.environment,
+      "suffix",                  local.suffix,
+      "workspace",               terraform.workspace,
+      "release-id",              var.release_id,
+      "release-url",             var.release_web_url,
+      "release-user",            var.release_user_email
     )
   )
 
@@ -81,6 +82,8 @@ resource "azurerm_role_assignment" "demo_admin" {
   scope                        = azurerm_resource_group.vdc_rg.id
   role_definition_name         = "Contributor"
   principal_id                 = var.admin_object_id
+
+  count                        = var.admin_object_id != null ? 1 : 0
 }
 
 data "http" "localpublicip" {

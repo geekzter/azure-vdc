@@ -104,7 +104,6 @@ $template = $template -Replace "http[s?]://[\w\.]*webapp[\w\.]*/", "`$`{paas_app
 $template = $template -Replace "https://dev.azure.com[^`']*_build[^`']*`'", "`$`{build_web_url`}`'"
 $template = $template -Replace "https://dev.azure.com[^`']*_release[^`']*`'", "`$`{release_web_url`}`'"
 $template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"
-$template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"
 $template = $template -Replace "[\w]*\.portal.azure.com", "portal.azure.com"
 $template = $template -Replace "@microsoft.onmicrosoft.com", "@"
 $template = $template -Replace "/resourceGroups/${sharedRG}", "/resourceGroups/`$`{shared_rg`}"

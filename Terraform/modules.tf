@@ -161,7 +161,7 @@ module paas_app {
                                  [
                                  azurerm_subnet.mgmt_subnet.id
   ])
-  database_import              = var.paas_app_database_import
+  database_import              = local.paas_app_database_import
   database_template_storage_key= var.app_database_template_storage_key
   data_subnet_id               = lookup(module.paas_spoke_vnet.subnet_ids,"data","")
   default_create_timeout       = var.default_create_timeout
@@ -174,7 +174,6 @@ module paas_app {
   integrated_subnet_id         = lookup(module.paas_spoke_vnet.subnet_ids,"appservice","")
   integrated_subnet_range      = var.vdc_config["paas_spoke_appsvc_subnet"]
   integrated_vnet_id           = module.paas_spoke_vnet.spoke_virtual_network_id
-  shared_container_registry_name = var.shared_container_registry_name
   shared_resources_group       = var.shared_resources_group
   storage_import               = var.paas_app_storage_import
   storage_replication_type     = var.app_storage_replication_type

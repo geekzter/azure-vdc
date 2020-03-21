@@ -37,6 +37,14 @@ try {
     $null = SetWorkspace -Workspace $priorWorkspace
     Pop-Location
 }
+if (!$devOpsOrgUrl) {
+    Write-Warning "DevOps Organization is not set, quiting"
+    exit
+}
+if (!$devOpsProject) {
+    Write-Warning "DevOps Project is not set, quiting"
+    exit
+}
 # Variables taken from from pipeline yaml
 $buildDefinitionName = "asp.net-core-sql-ci" 
 $artifactName = "aspnetcoresql"
@@ -52,6 +60,10 @@ az account set --subscription $subscription
 az devops configure --defaults organization=$devOpsOrgUrl project=$devOpsProject
 
 $runid = $(az pipelines runs list --result succeeded --top 1 --query "[?definition.name == '$buildDefinitionName'].id | [0]")
+if (!$runid) {
+    Write-Error "No successful run found for build '$buildDefinitionName''"
+    exit
+}
 Write-Information "Last successful run of $buildDefinitionName is $runid"
 
 # Determine & create download directory
