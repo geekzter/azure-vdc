@@ -51,18 +51,20 @@ resource "azurerm_dns_cname_record" "waf_paas_app_cname" {
 locals {
   ssl_range                    = range(var.use_vanity_domain_and_ssl ? 1 : 0) # Contains one item only if var.use_vanity_domain_and_ssl = true
   ssl_range_inverted           = range(var.use_vanity_domain_and_ssl ? 0 : 1) # Contains one item only if var.use_vanity_domain_and_ssl = false
+  http80_listener              = "${module.paas_app.app_resource_group}-http-listener"
+  http81_listener              = "${module.iis_app.app_resource_group}-http-listener"
   iaas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_iaas_app_cname[0].name}.${azurerm_dns_cname_record.waf_iaas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
   iaas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.iaas_app_fqdn}${var.use_vanity_domain_and_ssl ? "" : ":81"}/"
   iaas_app_backend_pool        = "${module.iis_app.app_resource_group}-webservers"
   iaas_app_backend_setting     = "${module.iis_app.app_resource_group}-config"
-  iaas_app_http_listener       = "${module.iis_app.app_resource_group}-http-listener"
   iaas_app_https_listener      = "${module.iis_app.app_resource_group}-https-listener"
+  iaas_app_redirect_config     = "${module.iis_app.app_resource_group}-http-to-https"
   paas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_paas_app_cname[0].name}.${azurerm_dns_cname_record.waf_paas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
   paas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.paas_app_fqdn}/"
   paas_app_backend_pool        = "${module.paas_app.app_resource_group}-appsvc"
   paas_app_backend_setting     = "${module.paas_app.app_resource_group}-config"
-  paas_app_http_listener       = "${module.paas_app.app_resource_group}-http-listener"
   paas_app_https_listener      = "${module.paas_app.app_resource_group}-https-listener"
+  paas_app_redirect_config     = "${module.paas_app.app_resource_group}-http-to-https"
   waf_frontend_ip_config       = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
 }
 
@@ -130,7 +132,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     request_timeout            = 1
   }
   http_listener {
-    name                       = local.iaas_app_http_listener 
+    name                       = local.http81_listener 
     frontend_ip_configuration_name = local.waf_frontend_ip_config
     frontend_port_name         = "http81"
     host_name                  = local.iaas_app_fqdn
@@ -154,20 +156,20 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.iis_app.app_resource_group}-http-rule"
       rule_type                = "Basic"
-      http_listener_name       = local.iaas_app_http_listener 
+      http_listener_name       = local.http81_listener 
       backend_address_pool_name  = local.iaas_app_backend_pool 
       backend_http_settings_name = local.iaas_app_backend_setting
     }
   }
   dynamic "request_routing_rule" {
     # Applied when var.use_vanity_domain_and_ssl = true
-    # Redirect HTTP to HTTPS
+    # Redirect HTTP (port 81) to HTTPS
     for_each = local.ssl_range
     content {
-      name                     = "${module.iis_app.app_resource_group}-http-to-https-rule"
+      name                     = "${module.iis_app.app_resource_group}-http81-to-https-rule"
       rule_type                = "Basic"
-      http_listener_name       = local.iaas_app_http_listener 
-      redirect_configuration_name = "${module.iis_app.app_resource_group}-http-to-https"
+      http_listener_name       = local.http81_listener 
+      redirect_configuration_name = local.iaas_app_redirect_config
     }
   }
   # This is a way to make HTTPS and SSL optional 
@@ -184,7 +186,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
   dynamic "redirect_configuration" {
     for_each = local.ssl_range
     content {
-      name                     = "${module.iis_app.app_resource_group}-http-to-https"
+      name                     = local.iaas_app_redirect_config
       redirect_type            = "Temporary" # HTTP 302
       target_listener_name     = local.iaas_app_https_listener
     }
@@ -213,7 +215,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     pick_host_name_from_backend_address = true
   }
   http_listener {
-    name                       = local.paas_app_http_listener
+    name                       = local.http80_listener
     frontend_ip_configuration_name = local.waf_frontend_ip_config
     frontend_port_name         = "http"
     host_name                  = local.paas_app_fqdn
@@ -237,7 +239,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.paas_app.app_resource_group}-http-rule"
       rule_type                = "Basic"
-      http_listener_name       = local.paas_app_http_listener
+      http_listener_name       = local.http80_listener
       backend_address_pool_name  = local.paas_app_backend_pool
       backend_http_settings_name = local.paas_app_backend_setting
     }
@@ -249,8 +251,8 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
     content {
       name                     = "${module.paas_app.app_resource_group}-http-to-https-rule"
       rule_type                = "Basic"
-      http_listener_name       = local.paas_app_http_listener
-      redirect_configuration_name = "${module.paas_app.app_resource_group}-http-to-https"
+      http_listener_name       = local.http80_listener
+      redirect_configuration_name = local.paas_app_redirect_config
     }
   }
   # This is a way to make HTTPS and SSL optional 
@@ -268,7 +270,7 @@ Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource 
   dynamic "redirect_configuration" {
     for_each = local.ssl_range
     content {
-      name                     = "${module.paas_app.app_resource_group}-http-to-https"
+      name                     = local.paas_app_redirect_config
       redirect_type            = "Temporary" # HTTP 302
       target_listener_name     = local.paas_app_https_listener
     }
