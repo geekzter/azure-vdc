@@ -77,11 +77,12 @@ function DeleteArmResources () {
 
 function Execute-Sql (
     [parameter(Mandatory=$true)][string]$QueryFile,
-    [parameter(Mandatory=$true)][hashtable]$Parameters,
+    [parameter(Mandatory=$false)][hashtable]$Parameters,
     [parameter(Mandatory=$false)][string]$SqlDatabaseName,
     [parameter(Mandatory=$true)][string]$SqlServerFQDN
 ) {
-    
+    $result = $null
+
     # Prepare SQL Connection
     $token = GetAccessToken
     $conn = New-Object System.Data.SqlClient.SqlConnection
@@ -101,22 +102,24 @@ function Execute-Sql (
 
         # Prepare SQL Command
         $query = Get-Content $QueryFile
-        foreach ($parameterName in $Parameters.Keys) {
-            $query = $query -replace "@$parameterName",$Parameters[$parameterName]
-            # TODO: Use parameterized query to protect against SQL injection
-            #$sqlParameter = $command.Parameters.AddWithValue($parameterName,$Parameters[$parameterName])
-            #Write-Debug $sqlParameter
+        if ($Parameters){
+            foreach ($parameterName in $Parameters.Keys) {
+                $query = $query -replace "@$parameterName",$Parameters[$parameterName]
+                # TODO: Use parameterized query to protect against SQL injection
+                #$sqlParameter = $command.Parameters.AddWithValue($parameterName,$Parameters[$parameterName])
+                #Write-Debug $sqlParameter
+            }
         }
         $query = $query -replace "$","`n" # Preserve line feeds
         $command = New-Object -TypeName System.Data.SqlClient.SqlCommand($query, $conn)
  
         # Execute SQL Command
         Write-Debug "Executing query:`n$query"
-        $result = $command.ExecuteNonQuery()
-        $result
+        $result = $command.ExecuteScalar()
     } finally {
         $conn.Close()
     }
+    return $result
 }
 
 function GetAccessToken (

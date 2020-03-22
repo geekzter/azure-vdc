@@ -122,7 +122,7 @@ variable vdc_oms_solutions {
   # "AzureCdnCoreAnalytics",
   # "AzureDataFactoryAnalytics",
     "AzureNetworking", # Depricated
-    "AzureNSGAnalytics", # Depricated
+  # "AzureNSGAnalytics", # Depricated
   # "AzureSecurityOfThings",
     "AzureSQLAnalytics",
   # "AzureWebAppsAnalytics", # Depricated

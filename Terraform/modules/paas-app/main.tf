@@ -551,8 +551,10 @@ resource "azurerm_sql_active_directory_administrator" "dba" {
   # Configure as Terraform identity at import (creation) time, otherwise as DBA
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = (var.database_import || var.admin_login == null) ? "Automation" : var.admin_login
-  object_id                    = (var.database_import || var.admin_object_id == null) ? data.azurerm_client_config.current.object_id : var.admin_object_id
+# login                        = (var.database_import || var.admin_login == null) ? "Automation" : var.admin_login
+  login                        = "Automation"
+# object_id                    = (var.database_import || var.admin_object_id == null) ? data.azurerm_client_config.current.object_id : var.admin_object_id
+  object_id                    = data.azurerm_client_config.current.object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 } 
 

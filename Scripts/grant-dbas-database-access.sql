@@ -12,6 +12,8 @@ BEGIN
 	EXEC (@sql)
 END
 --ALTER ROLE dbmanager ADD MEMBER [@dba_name];
+--ALTER ROLE loginmanager ADD MEMBER [@dba_name];
+
 ALTER ROLE db_accessadmin ADD MEMBER [@dba_name];
 ALTER ROLE db_datareader ADD MEMBER [@dba_name];
 ALTER ROLE db_datawriter ADD MEMBER [@dba_name];
