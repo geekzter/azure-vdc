@@ -79,12 +79,14 @@ function Execute-Sql (
     [parameter(Mandatory=$true)][string]$QueryFile,
     [parameter(Mandatory=$false)][hashtable]$Parameters,
     [parameter(Mandatory=$false)][string]$SqlDatabaseName,
-    [parameter(Mandatory=$true)][string]$SqlServerFQDN
+    [parameter(Mandatory=$false)][string]$SqlServer=$SqlServerFQDN.Split(".")[0],
+    [parameter(Mandatory=$true)][string]$SqlServerFQDN,
+    [parameter(Mandatory=$false)][string]$UserName,
+    [parameter(Mandatory=$false)][SecureString]$SecurePassword
 ) {
     $result = $null
 
     # Prepare SQL Connection
-    $token = GetAccessToken
     $conn = New-Object System.Data.SqlClient.SqlConnection
     if ($SqlDatabaseName -and ($SqlDatabaseName -ine "master")) {
         $conn.ConnectionString = "Data Source=tcp:$($SqlServerFQDN),1433;Initial Catalog=$($SqlDatabaseName);Encrypt=True;Connection Timeout=30;" 
@@ -93,12 +95,18 @@ function Execute-Sql (
         $conn.ConnectionString = "Data Source=tcp:$($SqlServerFQDN),1433;Encrypt=True;Connection Timeout=30;" 
     }
 
-    $conn.AccessToken = $token
+    if ($UserName -and $SecurePassword) {
+        Write-Verbose "Using credentials for use '${$UserName}'"
+        # Use https://docs.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlcredential if credential is passed, below (AAD) if not
+        $credentials = New-Object System.Data.SqlClient.SqlCredential($UserName,$SecurePassword)
+        $conn.Credential = $credentials
+    } else {
+        # Use AAD auth
+        $conn.AccessToken = GetAccessToken
+    }
 
     try {
         # Connect to SQL Server
-        Write-Host "Connecting to database $SqlServerFQDN/$SqlDatabaseName..."
-        $conn.Open()
 
         # Prepare SQL Command
         $query = Get-Content $QueryFile
@@ -114,7 +122,9 @@ function Execute-Sql (
         $command = New-Object -TypeName System.Data.SqlClient.SqlCommand($query, $conn)
  
         # Execute SQL Command
+        Write-Host "Connecting to database $SqlServerFQDN/$SqlDatabaseName to execute"
         Write-Debug "Executing query:`n$query"
+        $conn.Open()
         $result = $command.ExecuteScalar()
     } finally {
         $conn.Close()

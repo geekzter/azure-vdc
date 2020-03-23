@@ -14,46 +14,6 @@ param (
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 
-function ImportDatabase () {
-    $sqlQueryFile = "check-database-contents.sql"
-    $sqlFWRuleName = "AllowAllWindowsAzureIPs"
-    # This is no secret
-    $storageSAS = "?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D"
-    $storageUrl = "https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac"
-    $userName = "vdcadmin"
-
-    # Check whether we need to import
-    $schemaExists = Execute-Sql -QueryFile $sqlQueryFile -SqlDatabaseName $sqlDatabase -SqlServerFQDN $sqlServerFQDN
-
-    if ($schemaExists -eq 0) {
-        Write-Host "Database ${sqlServer}/${sqlDatabase} is empty"
-        # Create SQL Firewall rule for import
-        $sqlFWRule = $(az sql server firewall-rule show -g $appResourceGroup -s $sqlServer -n $sqlFWRuleName 2>$null)
-        if (!$sqlFWRule) {
-            Write-Information "Creating SQL Server ${sqlServer} Firewall rule '${sqlFWRuleName}' ..."
-            $sqlFWRule = $(az sql server firewall-rule create -g $appResourceGroup -s $sqlServer -n $sqlFWRuleName --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0)
-        } else {
-            Write-Verbose "SQL Server ${sqlServer} Firewall rule $sqlFWRuleName already exists"
-        }
-
-        # Reset admin password
-        Write-Information "Database ${sqlServer}/${sqlDatabase}: reseting admin password"
-        $dbaPassword = New-Guid | Select-Object -ExpandProperty Guid
-        $null = az sql server update --admin-password $dbaPassword --resource-group $appResourceGroup --name $sqlServer
-
-        # # Perform import
-        # Write-Host "Database ${sqlServer}/${sqlDatabase}: importing from ${storageUrl} ..."
-        az sql db import -s $sqlServer -n $sqlDatabase -g $appResourceGroup -p $dbaPassword -u $userName --storage-key $storageSAS `
-        --storage-key-type SharedAccessKey `
-        --storage-uri $storageUrl
-
-        # Remove SQL Firewall rule
-        Write-Verbose "Removing SQL Server ${sqlServer} Firewall rule $sqlFWRuleName ..."
-        az sql server firewall-rule delete -g $appResourceGroup -s $sqlServer -n $sqlFWRuleName
-    } else {
-        Write-Host "Database ${sqlServer}/${sqlDatabase} is not empty, skipping import"
-    }
-}
 function DeployWebApp () {
     if (!$devOpsOrgUrl) {
         Write-Warning "DevOps Organization is not set, quiting"
@@ -107,14 +67,84 @@ function DeployWebApp () {
 
     Write-Host "Web app $appAppServiceName published at $appUrl"
 }
-function TestApp () {
+function ImportDatabase (
+    [parameter(Mandatory=$true)][string]$SqlDatabaseName,
+    [parameter(Mandatory=$false)][string]$SqlServer=$SqlServerFQDN.Split(".")[0],
+    [parameter(Mandatory=$true)][string]$SqlServerFQDN,
+    [parameter(Mandatory=$true)][string]$ResourceGroup,
+    [parameter(Mandatory=$true)][string]$MSIName,
+    [parameter(Mandatory=$true)][string]$MSIClientId,
+    [parameter(Mandatory=$true)][string]$UserName,
+    [parameter(Mandatory=$true)][SecureString]$SecurePassword
+) {
+    $sqlQueryFile = "check-database-contents.sql"
+    $sqlFWRuleName = "AllowAllWindowsAzureIPs"
+    # This is no secret
+    $storageSAS = "?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D"
+    $storageUrl = "https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac"
+    $userName = "vdcadmin"
+
+    # Check whether we need to import
+    $schemaExists = Execute-Sql -QueryFile $sqlQueryFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword
+
+    # Create SQL Firewall rule for import
+    $sqlFWRule = $(az sql server firewall-rule show -g $ResourceGroup -s $SqlServer -n $sqlFWRuleName 2>$null)
+    if (!$sqlFWRule) {
+        Write-Information "Creating SQL Server ${SqlServer} Firewall rule '${sqlFWRuleName}' ..."
+        $sqlFWRule = $(az sql server firewall-rule create -g $ResourceGroup -s $SqlServer -n $sqlFWRuleName --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0)
+    } else {
+        Write-Verbose "SQL Server ${SqlServer} Firewall rule $sqlFWRuleName already exists"
+    }
+
+    if ($schemaExists -eq 0) {
+        Write-Host "Database ${SqlServer}/${SqlDatabaseName} is empty"
+  
+        # Perform import
+        Write-Information "Database ${SqlServer}/${SqlDatabaseName}: importing from ${storageUrl} ..."
+        $password = ConvertFrom-SecureString $SecurePassword -AsPlainText
+        az sql db import -s $SqlServer -n $SqlDatabaseName -g $ResourceGroup -p $password -u $UserName --storage-key $storageSAS `
+        --storage-key-type SharedAccessKey `
+        --storage-uri $storageUrl
+
+    } else {
+        Write-Host "Database ${SqlServer}/${SqlDatabaseName} is not empty, skipping import"
+    }
+
+    # Fix permissions on database, so App Service MSI has access
+    Write-Verbose "./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword"
+    ./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword
+
+    if (!$sqlFWRule) {
+        # Remove SQL Firewall rule
+        Write-Verbose "Removing SQL Server ${SqlServer} Firewall rule $sqlFWRuleName ..."
+        az sql server firewall-rule delete -g $appResourceGroup -s $SqlServer -n $sqlFWRuleName
+    }
+}
+function ResetDatabasePassword (
+    [parameter(Mandatory=$false)][string]$SqlServer=$SqlServerFQDN.Split(".")[0],
+    [parameter(Mandatory=$true)][string]$SqlServerFQDN,
+    [parameter(Mandatory=$true)][string]$SqlDatabaseName,
+    [parameter(Mandatory=$true)][string]$ResourceGroup
+) {
+    # Reset admin password
+    Write-Information "Database ${SqlServer}/${SqlDatabaseName}: resetting admin password"
+    $dbaPassword = New-Guid | Select-Object -ExpandProperty Guid
+    $null = az sql server update --admin-password $dbaPassword --resource-group $ResourceGroup --name $SqlServer 
+    
+    $securePassword = ConvertTo-SecureString $dbaPassword -AsPlainText -Force
+    $securePassword.MakeReadOnly()
+    return $securePassword
+}
+function TestApp (
+    [parameter(Mandatory=$true)][string]$AppUrl
+) {
     $test = 0
-    Write-Host "Testing $appUrl (max $MaxTests times)" -NoNewLine
+    Write-Host "Testing $AppUrl (max $MaxTests times)" -NoNewLine
     while (!$responseOK -and ($test -lt $MaxTests)) {
         try {
             $test++
             Write-Host "." -NoNewLine
-            $homePageResponse = Invoke-WebRequest -UseBasicParsing -Uri $appUrl
+            $homePageResponse = Invoke-WebRequest -UseBasicParsing -Uri $AppUrl
             if ($homePageResponse.StatusCode -lt 400) {
                 $responseOK = $true
             } else {
@@ -131,7 +161,7 @@ function TestApp () {
         }
     }
     Write-Host "✓" # Force NewLine
-    Write-Host "Request to $appUrl completed with HTTP Status Code $($homePageResponse.StatusCode)"
+    Write-Host "Request to $AppUrl completed with HTTP Status Code $($homePageResponse.StatusCode)"
 }
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
@@ -166,13 +196,19 @@ try {
     Pop-Location
 }
 
-# Import Database
-ImportDatabase
+# We don't rely on AAD here as that would require a pre-existing AAD Security Group, 
+#  with both Automation Service Principal and user, to be assigbned as SQL Server AAD Admin
+# Create temporary Database admin password
+$adminPassword = ResetDatabasePassword -SqlDatabaseName $sqlDatabase -SqlServerFQDN $sqlServerFQDN -ResourceGroup $appResourceGroup
+$adminUser = "vdcadmin"
 
-#./grant_database_access.ps1 -MSIName $appAppServiceIdentity -MSIClientId $appAppServiceClientID -SqlDatabaseName $sqlDatabase -SqlServerFQDN $sqlServerFQDN
+# Import Database
+ImportDatabase -SqlDatabaseName $sqlDatabase -SqlServer $sqlServer -SqlServerFQDN $sqlServerFQDN `
+               -UserName $adminUser -SecurePassword $adminPassword -ResourceGroup $appResourceGroup `
+               -MSIName $appAppServiceIdentity -MSIClientId $appAppServiceClientID
 
 # Deploy Web App
 DeployWebApp
 
 # Test & Warm up 
-TestApp
+TestApp -AppUrl $appUrl 

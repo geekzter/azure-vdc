@@ -576,18 +576,18 @@ resource "azurerm_sql_database" "app_sqldb" {
   server_name                  = azurerm_sql_server.app_sqlserver.name
   edition                      = "Premium"
 
-  # Import is not re-entrant
-  dynamic "import" {
-    for_each = range(var.database_import ? 1 : 0)
-    content {
-      storage_uri              = var.database_template_storage_uri
-      storage_key              = var.database_template_storage_key
-      storage_key_type         = "SharedAccessKey"
-      administrator_login      = azurerm_sql_server.app_sqlserver.administrator_login
-      administrator_login_password = azurerm_sql_server.app_sqlserver.administrator_login_password
-      authentication_type      = "SQL"
-    }
-  }
+  # # Import is not re-entrant
+  # dynamic "import" {
+  #   for_each = range(var.database_import ? 1 : 0)
+  #   content {
+  #     storage_uri              = var.database_template_storage_uri
+  #     storage_key              = var.database_template_storage_key
+  #     storage_key_type         = "SharedAccessKey"
+  #     administrator_login      = azurerm_sql_server.app_sqlserver.administrator_login
+  #     administrator_login_password = azurerm_sql_server.app_sqlserver.administrator_login_password
+  #     authentication_type      = "SQL"
+  #   }
+  # }
 
   # Can be enabled through Azure policy instead
   threat_detection_policy {

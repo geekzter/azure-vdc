@@ -252,14 +252,100 @@ jobs:
     appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
     appBuild: 'Release'
     appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
-    # Get App Service name & url from Terraform output
+    # Get application configuration from Terraform output
     appServiceName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_name'] ]
     appUrl: $[ dependencies.Reprovision.outputs['terraform.paas_app_url'] ]
+    appMSIName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_msi_name'] ]
+    appMSIClientID: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_msi_client_id'] ]
+    appSQLAdmin: 'vdcadmin'
+    appSQLDatabase: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_database'] ]
+    appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
+    appSQLServer: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_server'] ]
+    appSQLServerFQDN: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_server_fqdn'] ]
+    storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
+    storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
 
   pool:
     vmImage: 'ubuntu-latest'
 
   steps:
+    - task: AzureCLI@2
+      displayName: 'Open SQL Firewall for import'
+      enabled: true
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Create SQL Firewall rule for import
+          $sqlFWRule = $(az sql server firewall-rule show -g $(paasResourceGroup) -s $(appSQLServer) -n $(appSQLFirewallImportRule) 2>$null)
+          if (!$sqlFWRule) {
+              Write-Host "Creating SQL Server $(appSQLServer) Firewall rule '$(appSQLFirewallImportRule)' ..."
+              $sqlFWRule = $(az sql server firewall-rule create -g $(paasResourceGroup) -s $(appSQLServer) -n $(appSQLFirewallImportRule) --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0)
+          } else {
+              Write-Host "SQL Server $(appSQLServer) Firewall rule $(appSQLFirewallImportRule) already exists"
+          }
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
+
+    - task: AzureCLI@2
+      displayName: 'Import database'
+      enabled: true
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Reset admin password
+          Write-Host "Database $(appSQLServer): resetting admin password"
+          $password = New-Guid | Select-Object -ExpandProperty Guid
+          az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)
+
+          # Perform import          
+          Write-Host "Database $(appSQLServer)/$(appSQLDatabase): importing from $(storageUrl)..."
+          az sql db import -s $(appSQLServer) -n $(appSQLDatabase) -g $(paasResourceGroup) `
+                           -p $password -u $(appSQLAdmin) `
+                           --storage-key $(storageSAS) --storage-key-type SharedAccessKey --storage-uri $(storageUrl)
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
+
+    - task: AzureCLI@2
+      displayName: 'Grant App Service MSI access to database'
+      enabled: true
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Grant access to App Service MSI
+          # This uses the Terraform/Pipeline Service Principal identity
+          ./grant_database_access.ps1 -MSIName $(appMSIName) -MSIClientId $(appMSIClientID) `
+                                      -SqlDatabaseName $(appSQLDatabase) -SqlServerFQDN $(appSQLServerFQDN)
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
+
+    - task: AzureCLI@2
+      displayName: 'Remove SQL Firewall import rule'
+      enabled: true
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Remove SQL Firewall rule
+          Write-Host "Removing SQL Server $(appSQLServer) Firewall rule $sqlFWRuleName ..."
+          az sql server firewall-rule delete -g $(paasResourceGroup) -s $(appSQLServer) -n $(appSQLFirewallImportRule)
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
+
     # Download PaaS Application Pipeline artifacts
     # This consumes artifacts published by this pipeline:
     # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
