@@ -288,7 +288,7 @@ jobs:
           }
         useGlobalConfig: true
         workingDirectory: '$(scriptDirectory)'
-        failOnStandardError: true
+        failOnStandardError: false
 
     - task: AzureCLI@2
       displayName: 'Import database'
