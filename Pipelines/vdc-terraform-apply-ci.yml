@@ -311,8 +311,7 @@ jobs:
         serverName: $(appSQLServer)
         databaseName: $(appSQLDatabase)
         deploymentAction: Import
-        bacpacFile: '$(storageUrl)$(storageSAS)'
-        #bacpacFile: '$(System.DefaultWorkingDirectory)/database.bacpac'
+        bacpacFile: '$(System.DefaultWorkingDirectory)/database.bacpac'
         ipDetectionMethod: 'AutoDetect'
         deleteFirewallRule: true
 
