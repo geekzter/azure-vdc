@@ -312,7 +312,7 @@ jobs:
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         authenticationType: aadAuthenticationIntegrated
-        serverName: $(appSQLServer)
+        serverName: $(appSQLServerFQDN)
         databaseName: $(appSQLDatabase)
         deploymentAction: Import
         bacpacFile: '$(System.DefaultWorkingDirectory)/database.bacpac'
