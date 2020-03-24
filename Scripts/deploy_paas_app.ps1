@@ -112,7 +112,9 @@ function ImportDatabase (
 
     # Fix permissions on database, so App Service MSI has access
     Write-Verbose "./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword"
-    ./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword
+    ./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId `
+                                -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN `
+                                -UserName $UserName -SecurePassword $SecurePassword
 
     if (!$sqlFWRule) {
         # Remove SQL Firewall rule

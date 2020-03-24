@@ -332,6 +332,7 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: |
           # Grant access to App Service MSI
+          $env:ARM_TENANT_ID=$env:tenantId
           # This uses the Terraform/Pipeline Service Principal identity
           ./grant_database_access.ps1 -MSIName $(appMSIName) -MSIClientId $(appMSIClientID) `
                                       -DBAName Automation -DBAObjectId $env:servicePrincipalId `
