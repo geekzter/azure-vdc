@@ -343,6 +343,7 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Remove SQL Firewall import rule'
+      condition: succeededOrFailed()
       enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
