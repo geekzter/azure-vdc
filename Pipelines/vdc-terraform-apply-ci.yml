@@ -204,7 +204,8 @@ jobs:
     # Stopped VM's do not allow extensions to be installed
     - task: AzureResourceGroupDeployment@2
       displayName: 'Deallocate VM''s in App resource group'
-      enabled: true
+      # TODO
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: StopWithDeallocate
@@ -212,7 +213,8 @@ jobs:
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Stop VM''s in VDC resource group'
-      enabled: true
+      # TODO
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: Stop
