@@ -307,10 +307,10 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: |
           # Create temporary admin password
-          Write-Host "Database $(appSQLServer): resetting admin password"
+          Write-Host "Database $(appSQLServer): creating temporary admin password"
           $password = New-Guid | Select-Object -ExpandProperty Guid
-          Write-Host "az sql server update --admin-password $password --admin-password $dbaPassword --resource-group $(paasResourceGroup) --name $(appSQLServer)"
-          az sql server update --admin-password $password --admin-password $dbaPassword --resource-group $(paasResourceGroup) --name $(appSQLServer)
+          Write-Host "az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)"
+          az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)
 
           # Perform import          
           Write-Host "Database $(appSQLServer)/$(appSQLDatabase): importing from $(storageUrl)..."
