@@ -300,7 +300,7 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Import database'
-      enabled: true
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
