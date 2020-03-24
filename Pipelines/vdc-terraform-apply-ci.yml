@@ -284,7 +284,6 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: |
           # Create SQL Firewall rule for import
-          Write-Host "az sql server firewall-rule show -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule)"
           Invoke-Command -ScriptBlock {
             $Private:ErrorActionPreference = "Continue"
             $Script:sqlFWRule = $(az sql server firewall-rule show -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule) 2>$null)
@@ -314,6 +313,7 @@ jobs:
 
           # Perform import          
           Write-Host "Database $(appSQLServer)/$(appSQLDatabase): importing from $(storageUrl)..."
+          Write-Host "az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) --auth-type ADPassword -u $env:servicePrincipalId -p $env:servicePrincipalKey --storage-key $(storageSAS) --storage-key-type SharedAccessKey --storage-uri $(storageUrl)"
           az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) `
                            --auth-type ADPassword -u $env:servicePrincipalId -p $env:servicePrincipalKey `
                            --storage-key $(storageSAS) --storage-key-type SharedAccessKey --storage-uri $(storageUrl)
