@@ -296,6 +296,26 @@ jobs:
         workingDirectory: '$(scriptDirectory)'
         failOnStandardError: false
 
+    - pwsh: |
+        Invoke-Webrequest -Uri "$(storageUrl)$(storageSAS)" -OutFile $(System.DefaultWorkingDirectory)/database.bacpac
+      displayName: 'Download BACPAC'
+      enabled: true
+
+    - task: SqlAzureDacpacDeployment@1 
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/deploy/sql-azure-dacpac-deployment
+      displayName: 'Import database'
+      enabled: true
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        authenticationType: aadAuthenticationIntegrated
+        serverName: $(appSQLServer)
+        databaseName: $(appSQLDatabase)
+        deploymentAction: Import
+        bacpacFile: '$(storageUrl)$(storageSAS)'
+        #bacpacFile: '$(System.DefaultWorkingDirectory)/database.bacpac'
+        ipDetectionMethod: 'AutoDetect'
+        deleteFirewallRule: true
+
     - task: AzureCLI@2
       displayName: 'Import database with Azure CLI'
       # TODO
