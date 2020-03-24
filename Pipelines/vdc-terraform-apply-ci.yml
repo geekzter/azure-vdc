@@ -309,11 +309,12 @@ jobs:
           # Create temporary admin password
           Write-Host "Database $(appSQLServer): resetting admin password"
           $password = New-Guid | Select-Object -ExpandProperty Guid
-          az sql server update --admin-password $password -s $(appSQLServer) -g $(paasResourceGroup)
+          Write-Host "az sql server update --admin-password $password --admin-password $dbaPassword --resource-group $(paasResourceGroup) --name $(appSQLServer)"
+          az sql server update --admin-password $password --admin-password $dbaPassword --resource-group $(paasResourceGroup) --name $(appSQLServer)
 
           # Perform import          
           Write-Host "Database $(appSQLServer)/$(appSQLDatabase): importing from $(storageUrl)..."
-          Write-Host "az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) --auth-type SQL -u $(appSQLAdmin) -p $password --storage-key $(storageSAS) --storage-key-type SharedAccessKey --storage-uri $(storageUrl)"
+          Write-Host "az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) --auth-type SQL -u $(appSQLAdmin) -p $password --storage-key '$(storageSAS)' --storage-key-type SharedAccessKey --storage-uri $(storageUrl)"
           az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) `
                            --auth-type SQL -u $(appSQLAdmin) -p $password `
                            --storage-key "$(storageSAS)" --storage-key-type SharedAccessKey --storage-uri "$(storageUrl)"
