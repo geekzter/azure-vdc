@@ -284,6 +284,7 @@ jobs:
         inlineScript: |
           # Create SQL Firewall rule for import
           Write-Host "az sql server firewall-rule show -g $(paasResourceGroup) -s $(appSQLServer) -n $(appSQLFirewallImportRule)"
+          $ErrorAction = "Continue"
           $sqlFWRule = $(az sql server firewall-rule show -g $(paasResourceGroup) -s $(appSQLServer) -n $(appSQLFirewallImportRule) 2>$null)
           if (!$sqlFWRule) {
               Write-Host "Creating SQL Server $(appSQLServer) Firewall rule '$(appSQLFirewallImportRule)' ..."
