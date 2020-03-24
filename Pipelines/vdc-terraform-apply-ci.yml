@@ -274,7 +274,8 @@ jobs:
   steps:
     - task: AzureCLI@2
       displayName: 'Open SQL Firewall for import'
-      enabled: true
+      # TODO
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -296,8 +297,9 @@ jobs:
         failOnStandardError: false
 
     - task: AzureCLI@2
-      displayName: 'Import database'
-      enabled: true
+      displayName: 'Import database with Azure CLI'
+      # TODO
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -322,7 +324,8 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Grant App Service MSI access to database'
-      enabled: true
+      # TODO
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -344,7 +347,8 @@ jobs:
     - task: AzureCLI@2
       displayName: 'Remove SQL Firewall import rule'
       condition: succeededOrFailed()
-      enabled: true
+      # TODO
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -362,6 +366,8 @@ jobs:
     # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
     - task: DownloadPipelineArtifact@2
       displayName: 'Download ASP.NET Core App Artifacts'
+      # TODO
+      enabled: false
       inputs:
         buildType: 'specific'
         project: '$(appPipeline)'
@@ -384,6 +390,8 @@ jobs:
     # Deploy PaaS Application
     - task: AzureWebApp@1
       displayName: 'Deploy ASP.NET Core App'
+      # TODO
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         appType: webApp
