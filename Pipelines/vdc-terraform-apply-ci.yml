@@ -307,15 +307,15 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: |
           # Create temporary admin password
-          #Write-Host "Database $(appSQLServer): resetting admin password"
-          #$password = New-Guid | Select-Object -ExpandProperty Guid
-          #az sql server update --admin-password $password -s $(appSQLServer) -g $(paasResourceGroup)
+          Write-Host "Database $(appSQLServer): resetting admin password"
+          $password = New-Guid | Select-Object -ExpandProperty Guid
+          az sql server update --admin-password $password -s $(appSQLServer) -g $(paasResourceGroup)
 
           # Perform import          
           Write-Host "Database $(appSQLServer)/$(appSQLDatabase): importing from $(storageUrl)..."
-          Write-Host "az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) --auth-type ADPassword -u $env:servicePrincipalId -p $env:servicePrincipalKey --storage-key $(storageSAS) --storage-key-type SharedAccessKey --storage-uri $(storageUrl)"
+          Write-Host "az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) --auth-type SQL -u $(appSQLAdmin) -p $password --storage-key $(storageSAS) --storage-key-type SharedAccessKey --storage-uri $(storageUrl)"
           az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) `
-                           --auth-type ADPassword -u $env:servicePrincipalId -p $env:servicePrincipalKey `
+                           --auth-type SQL -u $(appSQLAdmin) -p $password `
                            --storage-key "$(storageSAS)" --storage-key-type SharedAccessKey --storage-uri "$(storageUrl)"
         addSpnToEnvironment: true
         useGlobalConfig: true
