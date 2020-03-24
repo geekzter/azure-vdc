@@ -204,6 +204,8 @@ jobs:
     # Stopped VM's do not allow extensions to be installed
     - task: AzureResourceGroupDeployment@2
       displayName: 'Deallocate VM''s in App resource group'
+      # TODO
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: StopWithDeallocate
@@ -211,6 +213,8 @@ jobs:
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Stop VM''s in VDC resource group'
+      # TODO
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: Stop
@@ -400,7 +404,9 @@ jobs:
     - Deploy
     - Provision
   displayName: 'Destroy Infrastructure with Terraform'
-  condition: succeededOrFailed()
+  # TODO
+  #condition: succeededOrFailed()
+  condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
@@ -480,7 +486,9 @@ jobs:
     - Destroy
   displayName: 'Clean Up'
   # Run if Terraform destroy failed, or the whole pipeline was canceled
-  condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
+  # TODO
+  #condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
+  condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
