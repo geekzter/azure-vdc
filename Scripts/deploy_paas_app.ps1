@@ -195,36 +195,45 @@ if (!($All -or $Database -or $Website)) {
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
-# Gather data from Terraform
-try {
-    Push-Location $tfdirectory
-    $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
-    
-    Invoke-Command -ScriptBlock {
-        $Private:ErrorActionPreference = "Continue"
 
-        # Set only if not null
-        $script:AppResourceGroup       ??= $(terraform output "paas_app_resource_group"        2>$null)
-        $script:AppAppServiceName      ??= $(terraform output "paas_app_service_name"          2>$null)
+if (($All -or $Database) -and (!$SqlDatabase -or !$SqlServerFQDN -or !$AppResourceGroup -or !$SqlDatabase -or !$AppAppServiceIdentity -or !$AppAppServiceClientID)) {
+    $useTerraform = $true
+}
+if (($All -or $Website) -and (!$AppUrl -or !$DevOpsOrgUrl -or !$DevOpsProject -or !$AppAppServiceName -or !$AppResourceGroup)) {
+    $useTerraform = $true
+}
+if ($useTerraform) {
+    # Gather data from Terraform
+    try {
+        Push-Location $tfdirectory
+        $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
+        
+        Invoke-Command -ScriptBlock {
+            $Private:ErrorActionPreference = "Continue"
 
-        $script:AppAppServiceIdentity  ??= $(terraform output "paas_app_service_msi_name"      2>$null)
-        $script:AppAppServiceClientID  ??= $(terraform output "paas_app_service_msi_client_id" 2>$null)
+            # Set only if not null
+            $script:AppResourceGroup       ??= $(terraform output "paas_app_resource_group"        2>$null)
+            $script:AppAppServiceName      ??= $(terraform output "paas_app_service_name"          2>$null)
 
-        $script:AppUrl                 ??= $(terraform output "paas_app_url"                   2>$null)
-        $script:DevOpsOrgUrl           ??= $(terraform output "devops_org_url"                 2>$null)
-        $script:DevOpsProject          ??= $(terraform output "devops_project"                 2>$null)
-        $script:SqlServer              ??= $(terraform output "paas_app_sql_server"            2>$null)
-        $script:SqlServerFQDN          ??= $(terraform output "paas_app_sql_server_fqdn"       2>$null)
-        $script:SqlDatabase            ??= $(terraform output "paas_app_sql_database"          2>$null)
+            $script:AppAppServiceIdentity  ??= $(terraform output "paas_app_service_msi_name"      2>$null)
+            $script:AppAppServiceClientID  ??= $(terraform output "paas_app_service_msi_client_id" 2>$null)
+
+            $script:AppUrl                 ??= $(terraform output "paas_app_url"                   2>$null)
+            $script:DevOpsOrgUrl           ??= $(terraform output "devops_org_url"                 2>$null)
+            $script:DevOpsProject          ??= $(terraform output "devops_project"                 2>$null)
+            $script:SqlServer              ??= $(terraform output "paas_app_sql_server"            2>$null)
+            $script:SqlServerFQDN          ??= $(terraform output "paas_app_sql_server_fqdn"       2>$null)
+            $script:SqlDatabase            ??= $(terraform output "paas_app_sql_database"          2>$null)
+        }
+
+        if ([string]::IsNullOrEmpty($AppAppServiceName)) {
+            Write-Host "App Service has not been created, nothing to do deploy to" -ForeGroundColor Yellow
+            exit 
+        }
+    } finally {
+        $null = SetWorkspace -Workspace $priorWorkspace
+        Pop-Location
     }
-
-    if ([string]::IsNullOrEmpty($AppAppServiceName)) {
-        Write-Host "App Service has not been created, nothing to do deploy to" -ForeGroundColor Yellow
-        exit 
-    }
-} finally {
-    $null = SetWorkspace -Workspace $priorWorkspace
-    Pop-Location
 }
 
 if ($All -or $Database) {
