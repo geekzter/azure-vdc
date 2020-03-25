@@ -148,10 +148,10 @@ jobs:
         ScriptType: 'FilePath'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        # TODO: To start from scratch, use these arguments:
-        # ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
+        # To start from scratch, use these arguments:
+        ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
         # To continue where a previous (broken) build left of, use these arguments:
-        ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
+        # ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -204,17 +204,17 @@ jobs:
     # Stopped VM's do not allow extensions to be installed
     - task: AzureResourceGroupDeployment@2
       displayName: 'Deallocate VM''s in App resource group'
-      # TODO
-      enabled: false
+      enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
-        action: StopWithDeallocate
+        # TODO
+        #action: StopWithDeallocate
+        action: Stop
         resourceGroupName: '$(iaasResourceGroup)'
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Stop VM''s in VDC resource group'
-      # TODO
-      enabled: false
+      enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: Stop
@@ -278,7 +278,6 @@ jobs:
   steps:
     - task: AzureCLI@2
       displayName: 'Open SQL Firewall for import'
-      # TODO
       enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -437,9 +436,8 @@ jobs:
     - Deploy
     - Provision
   displayName: 'Destroy Infrastructure with Terraform'
-  # TODO
-  #condition: succeededOrFailed()
-  condition: eq(1,2)
+  condition: succeededOrFailed()
+  #condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
@@ -519,9 +517,8 @@ jobs:
     - Destroy
   displayName: 'Clean Up'
   # Run if Terraform destroy failed, or the whole pipeline was canceled
-  # TODO
-  #condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
-  condition: eq(1,2)
+  condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
+  #condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
