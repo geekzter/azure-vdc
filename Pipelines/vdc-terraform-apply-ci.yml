@@ -173,6 +173,7 @@ jobs:
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
+    iaasResourceGroup: $[ dependencies.Reprovision.outputs['terraform.iaas_app_resource_group'] ]
     # Use earlier prepared Terraform config
     terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
