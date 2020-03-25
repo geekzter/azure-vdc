@@ -273,8 +273,7 @@ jobs:
 
   pool:
     # SqlAzureDacpacDeployment@1 only runs on Windows
-    vmImage: 'windows-latest'
-    #vmImage: 'ubuntu-latest'
+    vmImage: 'ubuntu-latest'
 
   steps:
     - task: AzureCLI@2
@@ -304,12 +303,12 @@ jobs:
     - pwsh: |
         Invoke-Webrequest -Uri "$(storageUrl)$(storageSAS)" -OutFile $(System.DefaultWorkingDirectory)/database.bacpac
       displayName: 'Download BACPAC'
-      enabled: true
+      enabled: false
 
     - task: SqlAzureDacpacDeployment@1 
     # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/deploy/sql-azure-dacpac-deployment
       displayName: 'Import database'
-      enabled: true
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         authenticationType: aadAuthenticationIntegrated
@@ -322,8 +321,7 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Import database with Azure CLI'
-      # TODO
-      enabled: false
+      enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -348,8 +346,7 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Grant App Service MSI access to database'
-      # TODO
-      enabled: false
+      enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -371,8 +368,7 @@ jobs:
     - task: AzureCLI@2
       displayName: 'Remove SQL Firewall import rule'
       condition: succeededOrFailed()
-      # TODO
-      enabled: false
+      enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
@@ -390,8 +386,7 @@ jobs:
     # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
     - task: DownloadPipelineArtifact@2
       displayName: 'Download ASP.NET Core App Artifacts'
-      # TODO
-      enabled: false
+      enabled: true
       inputs:
         buildType: 'specific'
         project: '$(appPipeline)'
@@ -414,8 +409,7 @@ jobs:
     # Deploy PaaS Application
     - task: AzureWebApp@1
       displayName: 'Deploy ASP.NET Core App'
-      # TODO
-      enabled: false
+      enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         appType: webApp
