@@ -251,8 +251,8 @@ jobs:
     - Reprovision
   displayName: 'Deploy & Test PaaS Application'
   # TODO
-  #condition: succeeded()
-  condition: eq(1,2)
+  condition: succeeded()
+  #condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
@@ -425,16 +425,6 @@ jobs:
         buildVersionToDownload: 'latest'
         artifactName: 'aspnetcoresql'
         targetPath: '$(appArtifactDirectory)'
-
-    - task: PowerShell@2
-      displayName: 'List ASP.NET Core App Artifacts'
-      enabled: false # Used for debug only, e.g. if the publish.zip package got moved
-      inputs:
-        targetType: 'inline'
-        script: 'Get-ChildItem . -Recurse | Select-Object FullName'
-        errorActionPreference: 'continue'
-        pwsh: true
-        workingDirectory: '$(appArtifactDirectory)'
 
     # Deploy PaaS Application
     - task: AzureWebApp@1
