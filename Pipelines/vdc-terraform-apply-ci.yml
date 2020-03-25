@@ -249,7 +249,9 @@ jobs:
   dependsOn:
     - Reprovision
   displayName: 'Deploy & Test PaaS Application'
-  condition: succeeded()
+  # TODO
+  #condition: succeeded()
+  condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
@@ -437,8 +439,9 @@ jobs:
     - Deploy
     - Provision
   displayName: 'Destroy Infrastructure with Terraform'
-  condition: succeededOrFailed()
-  #condition: eq(1,2)
+  # TODO
+  #condition: succeededOrFailed()
+  condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
@@ -518,8 +521,9 @@ jobs:
     - Destroy
   displayName: 'Clean Up'
   # Run if Terraform destroy failed, or the whole pipeline was canceled
-  condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
-  #condition: eq(1,2)
+  # TODO
+  #condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
+  condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:

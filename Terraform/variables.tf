@@ -157,7 +157,7 @@ variable vdc_oms_solutions {
     "SecurityCenterFree",
     "SecurityCenterNetworkTraffic",
   # "SecurityInsights",
-    "ServiceDesk",
+  # "ServiceDesk",
   # "ServiceFabric",
   # "ServiceMap",
   # "SiteRecovery",
@@ -176,7 +176,7 @@ variable vdc_oms_solutions {
   # "WEFInternalUat",
   # "WindowsDefenderATP",
   # "WindowsDefenderATPStable",
-    "WindowsEventForwarding",
+  # "WindowsEventForwarding",
   # "WindowsFirewall",
   # "WinLog",
   # "WireData",
@@ -285,6 +285,10 @@ variable app_database_template_storage_key {
 variable paas_app_storage_import {
   type                         = bool
   default                      = true
+}
+variable management_vm_size {
+  description                  = "Specifies the size of the Management virtual machine"
+  default                      = "Standard_D2s_v3"
 }
 variable shared_resources_group {
   description                  = "Resource group of shared (data) resources e.g. Container Registry, DNS"
