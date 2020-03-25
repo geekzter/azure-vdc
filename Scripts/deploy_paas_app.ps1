@@ -8,6 +8,22 @@
     It eliminates the need for a release pipeline just to test the Web App.
 #> 
 param (    
+    [parameter(Mandatory=$false)][switch]$Database,
+    [parameter(Mandatory=$false)][switch]$Website,
+    [parameter(Mandatory=$false)][switch]$All,
+
+    # These parameters are either provided or their values retrieved from Terraform
+    [parameter(Mandatory=$false)][object]$AppResourceGroup,
+    [parameter(Mandatory=$false)][object]$AppAppServiceName=$null,
+    [parameter(Mandatory=$false)][object]$AppAppServiceIdentity,
+    [parameter(Mandatory=$false)][object]$AppAppServiceClientID,
+    [parameter(Mandatory=$false)][object]$AppUrl,
+    [parameter(Mandatory=$false)][object]$DevOpsOrgUrl,
+    [parameter(Mandatory=$false)][object]$DevOpsProject,
+    [parameter(Mandatory=$false)][object]$SqlServer,
+    [parameter(Mandatory=$false)][object]$SqlServerFQDN,
+    [parameter(Mandatory=$false)][object]$SqlDatabase,
+
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][int]$MaxTests=60,
     [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
@@ -77,15 +93,16 @@ function ImportDatabase (
     [parameter(Mandatory=$true)][string]$UserName,
     [parameter(Mandatory=$true)][SecureString]$SecurePassword
 ) {
+    if ([string]::IsNullOrEmpty($SqlServerFQDN)) {
+        Write-Error "No SQL Server specified" -ForeGroundColor Red
+        return 
+    }
     $sqlQueryFile = "check-database-contents.sql"
     $sqlFWRuleName = "AllowAllWindowsAzureIPs"
     # This is no secret
     $storageSAS = "?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D"
     $storageUrl = "https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac"
     $userName = "vdcadmin"
-
-    # Check whether we need to import
-    $schemaExists = Execute-Sql -QueryFile $sqlQueryFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword
 
     # Create SQL Firewall rule for import
     $sqlFWRule = $(az sql server firewall-rule show -g $ResourceGroup -s $SqlServer -n $sqlFWRuleName 2>$null)
@@ -95,6 +112,9 @@ function ImportDatabase (
     } else {
         Write-Verbose "SQL Server ${SqlServer} Firewall rule $sqlFWRuleName already exists"
     }
+
+    # Check whether we need to import
+    $schemaExists = Execute-Sql -QueryFile $sqlQueryFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword
 
     if ($schemaExists -eq 0) {
         Write-Host "Database ${SqlServer}/${SqlDatabaseName} is empty"
@@ -166,6 +186,13 @@ function TestApp (
     Write-Host "Request to $AppUrl completed with HTTP Status Code $($homePageResponse.StatusCode)"
 }
 
+# Provide at least one argument
+if (!($All -or $Database -or $Website)) {
+    Write-Host "Please indicate what to do by using a command-line switch"
+    Get-Help $MyInvocation.MyCommand.Definition
+    exit
+}
+
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
 # Gather data from Terraform
@@ -175,21 +202,23 @@ try {
     
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
-        $Script:appResourceGroup       = $(terraform output "paas_app_resource_group"        2>$null)
-        $Script:appAppServiceName      = $(terraform output "paas_app_service_name"          2>$null)
 
-        $Script:appAppServiceIdentity  = $(terraform output "paas_app_service_msi_name"      2>$null)
-        $Script:appAppServiceClientID  = $(terraform output "paas_app_service_msi_client_id" 2>$null)
+        # Set only if not null
+        $script:AppResourceGroup       ??= $(terraform output "paas_app_resource_group"        2>$null)
+        $script:AppAppServiceName      ??= $(terraform output "paas_app_service_name"          2>$null)
 
-        $Script:appUrl                 = $(terraform output "paas_app_url"                   2>$null)
-        $Script:devOpsOrgUrl           = $(terraform output "devops_org_url"                 2>$null)
-        $Script:devOpsProject          = $(terraform output "devops_project"                 2>$null)
-        $Script:sqlServer              = $(terraform output "paas_app_sql_server"            2>$null)
-        $Script:sqlServerFQDN          = $(terraform output "paas_app_sql_server_fqdn"       2>$null)
-        $Script:sqlDatabase            = $(terraform output "paas_app_sql_database"          2>$null)
+        $script:AppAppServiceIdentity  ??= $(terraform output "paas_app_service_msi_name"      2>$null)
+        $script:AppAppServiceClientID  ??= $(terraform output "paas_app_service_msi_client_id" 2>$null)
+
+        $script:AppUrl                 ??= $(terraform output "paas_app_url"                   2>$null)
+        $script:DevOpsOrgUrl           ??= $(terraform output "devops_org_url"                 2>$null)
+        $script:DevOpsProject          ??= $(terraform output "devops_project"                 2>$null)
+        $script:SqlServer              ??= $(terraform output "paas_app_sql_server"            2>$null)
+        $script:SqlServerFQDN          ??= $(terraform output "paas_app_sql_server_fqdn"       2>$null)
+        $script:SqlDatabase            ??= $(terraform output "paas_app_sql_database"          2>$null)
     }
 
-    if ([string]::IsNullOrEmpty($appAppServiceName)) {
+    if ([string]::IsNullOrEmpty($AppAppServiceName)) {
         Write-Host "App Service has not been created, nothing to do deploy to" -ForeGroundColor Yellow
         exit 
     }
@@ -198,19 +227,27 @@ try {
     Pop-Location
 }
 
-# We don't rely on AAD here as that would require a pre-existing AAD Security Group, 
-#  with both Automation Service Principal and user, to be assigbned as SQL Server AAD Admin
-# Create temporary Database admin password
-$adminPassword = ResetDatabasePassword -SqlDatabaseName $sqlDatabase -SqlServerFQDN $sqlServerFQDN -ResourceGroup $appResourceGroup
-$adminUser = "vdcadmin"
+if ($All -or $Database) {
+    # We don't rely on AAD here as that would require a pre-existing AAD Security Group, 
+    #  with both Automation Service Principal and user, to be assigbned as SQL Server AAD Admin
+    # Create temporary Database admin password
+    $adminPassword = ResetDatabasePassword -SqlDatabaseName $SqlDatabase -SqlServerFQDN $SqlServerFQDN -ResourceGroup $AppResourceGroup
+    if ([string]::IsNullOrEmpty($adminPassword)) {
+        Write-Error "Unable to create temporary password" -ForeGroundColor Red
+        exit 
+    }
+    $adminUser = "vdcadmin"
 
-# Import Database
-ImportDatabase -SqlDatabaseName $sqlDatabase -SqlServer $sqlServer -SqlServerFQDN $sqlServerFQDN `
-               -UserName $adminUser -SecurePassword $adminPassword -ResourceGroup $appResourceGroup `
-               -MSIName $appAppServiceIdentity -MSIClientId $appAppServiceClientID
+    # Import Database
+    ImportDatabase -SqlDatabaseName $SqlDatabase -SqlServer $SqlServer -SqlServerFQDN $SqlServerFQDN `
+                   -UserName $adminUser -SecurePassword $adminPassword -ResourceGroup $AppResourceGroup `
+                   -MSIName $AppAppServiceIdentity -MSIClientId $AppAppServiceClientID
+}
 
-# Deploy Web App
-DeployWebApp
+if ($All -or $Website) {
+    # Deploy Web App
+    DeployWebApp
 
-# Test & Warm up 
-TestApp -AppUrl $appUrl 
+    # Test & Warm up 
+    TestApp -AppUrl $AppUrl 
+}

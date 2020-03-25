@@ -84,6 +84,10 @@ function Execute-Sql (
     [parameter(Mandatory=$false)][string]$UserName,
     [parameter(Mandatory=$false)][SecureString]$SecurePassword
 ) {
+    if ([string]::IsNullOrEmpty($SqlServerFQDN)) {
+        Write-Error "No SQL Server specified" -ForeGroundColor Red
+        return 
+    }
     $result = $null
 
     # Prepare SQL Connection
@@ -96,7 +100,7 @@ function Execute-Sql (
     }
 
     if ($UserName -and $SecurePassword) {
-        Write-Verbose "Using credentials for use '${$UserName}'"
+        Write-Verbose "Using credentials for user '${UserName}'"
         # Use https://docs.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlcredential if credential is passed, below (AAD) if not
         $credentials = New-Object System.Data.SqlClient.SqlCredential($UserName,$SecurePassword)
         $conn.Credential = $credentials
@@ -122,7 +126,7 @@ function Execute-Sql (
         $command = New-Object -TypeName System.Data.SqlClient.SqlCommand($query, $conn)
  
         # Execute SQL Command
-        Write-Host "Connecting to database $SqlServerFQDN/$SqlDatabaseName to execute"
+        Write-Host "Connecting to database ${SqlServerFQDN}/${SqlDatabaseName}..."
         Write-Debug "Executing query:`n$query"
         $conn.Open()
         $result = $command.ExecuteScalar()
