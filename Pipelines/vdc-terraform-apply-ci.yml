@@ -279,7 +279,7 @@ jobs:
     - task: AzureCLI@2
       displayName: 'Open SQL Firewall for import'
       # TODO
-      enabled: false
+      enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
