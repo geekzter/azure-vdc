@@ -494,20 +494,6 @@ resource "azurerm_sql_firewall_rule" "adminclient" {
   count                        = length(local.admin_ips)
 }
 
-# Azure SQL Database Import Export Service runs on VMs in Azure
-# https://docs.microsoft.com/en-us/azure/sql-database/sql-database-networkaccess-overview
-# This rule will be disabled after provisioning of the SQL Database (using local-exec and PowerShell)
-resource "azurerm_sql_firewall_rule" "azureall" {
-  name                         = "AllowAllWindowsAzureIPs" # Same name as Azure generated one
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  server_name                  = azurerm_sql_server.app_sqlserver.name
-# 0.0.0.0 represents Azure addresses, see https://docs.microsoft.com/en-us/rest/api/sql/firewallrules/createorupdate
-  start_ip_address             = "0.0.0.0"
-  end_ip_address               = "0.0.0.0"
-
-# Only needed during import
-  count                        = var.database_import ? 1 : 0
-} 
 
 resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
   name                         = "AllowAzureFirewallSubnet"
@@ -548,11 +534,11 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
 
 # This is for Terraform acting as the AAD DBA (e.g. to execute change scripts)
 resource "azurerm_sql_active_directory_administrator" "dba" {
-  # Configure as Terraform identity at import (creation) time, otherwise as DBA
+  # Configure as Terraform identity as DBA
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = (var.database_import || var.admin_login == null) ? "Automation" : var.admin_login
-  object_id                    = (var.database_import || var.admin_object_id == null) ? data.azurerm_client_config.current.object_id : var.admin_object_id
+  login                        = "Automation"
+  object_id                    = data.azurerm_client_config.current.object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 } 
 
@@ -573,19 +559,6 @@ resource "azurerm_sql_database" "app_sqldb" {
   location                     = azurerm_resource_group.app_rg.location
   server_name                  = azurerm_sql_server.app_sqlserver.name
   edition                      = "Premium"
-
-  # Import is not re-entrant
-  dynamic "import" {
-    for_each = range(var.database_import ? 1 : 0)
-    content {
-      storage_uri              = var.database_template_storage_uri
-      storage_key              = var.database_template_storage_key
-      storage_key_type         = "SharedAccessKey"
-      administrator_login      = azurerm_sql_server.app_sqlserver.administrator_login
-      administrator_login_password = azurerm_sql_server.app_sqlserver.administrator_login_password
-      authentication_type      = "SQL"
-    }
-  }
 
   # Can be enabled through Azure policy instead
   threat_detection_policy {
@@ -611,16 +584,6 @@ resource "azurerm_sql_database" "app_sqldb" {
 
   tags                         = var.tags
 } 
-
-resource null_resource no_all_azure_rules {
-  # Remove AllowAllWindowsAzureIPs Firewall rule, as it is no longer needed after import
-  provisioner "local-exec" {
-    command                    = "Set-AzContext -Subscription ${data.azurerm_subscription.primary.subscription_id} -TenantId ${data.azurerm_client_config.current.tenant_id};Get-AzSqlServerFirewallRule -ServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name} | Where-Object -Property FirewallRuleName -eq AllowAllWindowsAzureIPs | Remove-AzSqlServerFirewallRule -Force"
-    interpreter                = ["pwsh", "-nop", "-Command"]
-  }
-
-  depends_on                   = [null_resource.app_service_rules, azurerm_sql_database.app_sqldb]
-}
 
 resource "azurerm_monitor_diagnostic_setting" "sql_database_logs" {
   name                         = "SqlDatabase_Logs"

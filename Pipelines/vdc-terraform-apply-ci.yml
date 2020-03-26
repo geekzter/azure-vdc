@@ -151,7 +151,7 @@ jobs:
         # To start from scratch, use these arguments:
         ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
         # To continue where a previous (broken) build left of, use these arguments:
-      # ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
+        # ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -173,6 +173,8 @@ jobs:
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
+    iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
+    vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
     # Use earlier prepared Terraform config
     terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
@@ -204,13 +206,17 @@ jobs:
     # Stopped VM's do not allow extensions to be installed
     - task: AzureResourceGroupDeployment@2
       displayName: 'Deallocate VM''s in App resource group'
+      enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
-        action: StopWithDeallocate
+        # TODO
+        #action: StopWithDeallocate
+        action: Stop
         resourceGroupName: '$(iaasResourceGroup)'
 
     - task: AzureResourceGroupDeployment@2
       displayName: 'Stop VM''s in VDC resource group'
+      enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         action: Stop
@@ -243,6 +249,7 @@ jobs:
 # Deploy PaaS application 
 - job: 'Deploy'
   dependsOn:
+    - Provision
     - Reprovision
   displayName: 'Deploy & Test PaaS Application'
   condition: succeeded()
@@ -252,19 +259,162 @@ jobs:
     appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
     appBuild: 'Release'
     appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
-    # Get App Service name & url from Terraform output
+    # Get application configuration from Terraform output
     appServiceName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_name'] ]
     appUrl: $[ dependencies.Reprovision.outputs['terraform.paas_app_url'] ]
+    appMSIName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_msi_name'] ]
+    appMSIClientID: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_msi_client_id'] ]
+    appSQLAdmin: 'vdcadmin'
+    appSQLDatabase: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_database'] ]
+    appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
+    appSQLServer: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_server'] ]
+    appSQLServerFQDN: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_server_fqdn'] ]
+    paasResourceGroup: $[ dependencies.Reprovision.outputs['terraform.paas_app_resource_group'] ]
+    storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
+    storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
+    # Use earlier prepared Terraform config
+    terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
+    terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
+    terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
+    terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
 
   pool:
+    # SqlAzureDacpacDeployment@1 only runs on Windows
     vmImage: 'ubuntu-latest'
 
   steps:
+    - task: AzureCLI@2
+      displayName: 'Open SQL Firewall for import'
+      enabled: false
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Create SQL Firewall rule for import
+          Invoke-Command -ScriptBlock {
+            $Private:ErrorActionPreference = "Continue"
+            $Script:sqlFWRule = $(az sql server firewall-rule show -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule) 2>$null)
+          }
+          if (!$sqlFWRule) {
+              Write-Host "Creating SQL Server $(appSQLServer) Firewall rule '$(appSQLFirewallImportRule)' ..."
+              $sqlFWRule = $(az sql server firewall-rule create -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule) --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0)
+          } else {
+              Write-Host "SQL Server $(appSQLServer) Firewall rule $(appSQLFirewallImportRule) already exists"
+          }
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: false
+
+    - pwsh: |
+        Invoke-Webrequest -Uri "$(storageUrl)$(storageSAS)" -OutFile $(System.DefaultWorkingDirectory)/database.bacpac
+      displayName: 'Download BACPAC'
+      enabled: false
+
+    - task: SqlAzureDacpacDeployment@1 
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/deploy/sql-azure-dacpac-deployment
+      displayName: 'Import database'
+      enabled: false
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        authenticationType: aadAuthenticationIntegrated
+        serverName: $(appSQLServerFQDN)
+        databaseName: $(appSQLDatabase)
+        deploymentAction: Import
+        bacpacFile: '$(System.DefaultWorkingDirectory)/database.bacpac'
+        ipDetectionMethod: 'AutoDetect'
+        deleteFirewallRule: true
+
+    - task: AzureCLI@2
+      displayName: 'Import database with Azure CLI'
+      enabled: false
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Create temporary admin password
+          Write-Host "Database $(appSQLServer): creating temporary admin password"
+          $password = New-Guid | Select-Object -ExpandProperty Guid
+          Write-Host "az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)"
+          az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)
+
+          # Perform import          
+          Write-Host "Database $(appSQLServer)/$(appSQLDatabase): importing from $(storageUrl)..."
+          Write-Host "az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) --auth-type SQL -u $(appSQLAdmin) -p $password --storage-key '$(storageSAS)' --storage-key-type SharedAccessKey --storage-uri $(storageUrl)"
+          az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) `
+                           --auth-type SQL -u $(appSQLAdmin) -p $password `
+                           --storage-key "$(storageSAS)" --storage-key-type SharedAccessKey --storage-uri "$(storageUrl)"
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
+
+    - task: AzureCLI@2
+      displayName: 'Import database and set permissions (with script)'
+      enabled: true
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          ./deploy_paas_app.ps1 -Database `
+                                -AppResourceGroup $(paasResourceGroup) `
+                                -AppAppServiceIdentity $(appMSIName) `
+                                -AppAppServiceClientID $(appMSIClientID) `
+                                -SqlServer $(appSQLServer) `
+                                -SqlServerFQDN $(appSQLServerFQDN) `
+                                -SqlDatabase $(appSQLDatabase)
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
+      env:
+        # Use prepared Terraform environment variables
+        ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
+
+    - task: AzureCLI@2
+      displayName: 'Grant App Service MSI access to database'
+      enabled: false
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # This uses the Terraform/Pipeline Service Principal identity
+          $env:ARM_CLIENT_ID=$env:servicePrincipalId
+          $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
+          $env:ARM_TENANT_ID=$env:tenantId
+          # Grant access to App Service MSI
+          ./grant_database_access.ps1 -MSIName $(appMSIName) -MSIClientId $(appMSIClientID) `
+                                      -DBAName Automation -DBAObjectId $env:servicePrincipalId `
+                                      -SqlDatabaseName $(appSQLDatabase) -SqlServerFQDN $(appSQLServerFQDN)
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
+
+    - task: AzureCLI@2
+      displayName: 'Remove SQL Firewall import rule'
+      condition: succeededOrFailed()
+      enabled: false
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Remove SQL Firewall rule
+          Write-Host "Removing SQL Server $(appSQLServer) Firewall rule $sqlFWRuleName ..."
+          az sql server firewall-rule delete -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule)
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
+
     # Download PaaS Application Pipeline artifacts
     # This consumes artifacts published by this pipeline:
     # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
     - task: DownloadPipelineArtifact@2
       displayName: 'Download ASP.NET Core App Artifacts'
+      enabled: true
       inputs:
         buildType: 'specific'
         project: '$(appPipeline)'
@@ -274,19 +424,10 @@ jobs:
         artifactName: 'aspnetcoresql'
         targetPath: '$(appArtifactDirectory)'
 
-    - task: PowerShell@2
-      displayName: 'List ASP.NET Core App Artifacts'
-      enabled: false # Used for debug only, e.g. if the publish.zip package got moved
-      inputs:
-        targetType: 'inline'
-        script: 'Get-ChildItem . -Recurse | Select-Object FullName'
-        errorActionPreference: 'continue'
-        pwsh: true
-        workingDirectory: '$(appArtifactDirectory)'
-
     # Deploy PaaS Application
     - task: AzureWebApp@1
       displayName: 'Deploy ASP.NET Core App'
+      enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         appType: webApp

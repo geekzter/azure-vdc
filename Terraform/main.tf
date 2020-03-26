@@ -50,7 +50,6 @@ locals {
   admin_ips                    = setunion(local.admin_ip,var.admin_ips)
   admin_ip_ranges              = setunion([for ip in local.admin_ips : format("%s/30", ip)],var.admin_ip_ranges) # /32 not allowed in network_rules
   admin_cidr_ranges            = [for range in local.admin_ip_ranges : cidrsubnet(range,0,0)] # Make sure ranges have correct base address
-  paas_app_database_import     = try(data.terraform_remote_state.vdc.outputs.paas_app_sql_database,null) != null ? false : true
 
   tags                         = merge(
     var.tags,
