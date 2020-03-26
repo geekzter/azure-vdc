@@ -103,9 +103,7 @@ function ImportDatabase (
     $storageSAS = "?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D"
     $storageUrl = "https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac"
     $userName = "vdcadmin"
-
  
-
     # Create SQL Firewall rule for import
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
@@ -128,7 +126,7 @@ function ImportDatabase (
         # Perform import
         Write-Information "Database ${SqlServer}/${SqlDatabaseName}: importing from ${storageUrl} ..."
         $password = ConvertFrom-SecureString $SecurePassword -AsPlainText
-        az sql db import -s $SqlServer -n $SqlDatabaseName -g $ResourceGroup -p $password -u $UserName --storage-key $storageSAS `
+        az sql db import -s $SqlServer -n $SqlDatabaseName -g $ResourceGroup -p $password -u $UserName --storage-key "${storageSAS}" `
         --storage-key-type SharedAccessKey `
         --storage-uri $storageUrl
 
