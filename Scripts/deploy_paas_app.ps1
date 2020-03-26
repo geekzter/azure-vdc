@@ -109,7 +109,6 @@ function ImportDatabase (
         $Private:ErrorActionPreference = "Continue"
         $Script:sqlFWRule = $(az sql server firewall-rule show -g $ResourceGroup -s $SqlServer -n $sqlFWRuleName 2>$null)
     }
-    #$sqlFWRule = $(az sql server firewall-rule show -g $ResourceGroup -s $SqlServer -n $sqlFWRuleName 2>$null)
     if (!$sqlFWRule) {
         Write-Information "Creating SQL Server ${SqlServer} Firewall rule '${sqlFWRuleName}' ..."
         $sqlFWRule = $(az sql server firewall-rule create -g $ResourceGroup -s $SqlServer -n $sqlFWRuleName --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0)
@@ -126,10 +125,8 @@ function ImportDatabase (
         # Perform import
         Write-Information "Database ${SqlServer}/${SqlDatabaseName}: importing from ${storageUrl} ..."
         $password = ConvertFrom-SecureString $SecurePassword -AsPlainText
-        az sql db import -s $SqlServer -n $SqlDatabaseName -g $ResourceGroup -p $password -u $UserName --storage-key "${storageSAS}" `
-        --storage-key-type SharedAccessKey `
-        --storage-uri $storageUrl
-
+        #az sql db import -s $SqlServer -n $SqlDatabaseName -g $ResourceGroup -p $password -u $UserName --storage-key-type SharedAccessKey --storage-uri $storageUrl --storage-key "${storageSAS}"
+        az sql db import -s $SqlServer -n $SqlDatabaseName -g $ResourceGroup -p $password -u $UserName --storage-key-type SharedAccessKey --storage-uri $storageUrl --storage-key --% "?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D"
     } else {
         Write-Host "Database ${SqlServer}/${SqlDatabaseName} is not empty, skipping import"
     }
