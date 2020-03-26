@@ -22,9 +22,6 @@ output app_service_outbound_ip_addresses {
     value = azurerm_app_service.paas_web_app.outbound_ip_addresses
 }
 
-output database_import {
-    value = var.database_import
-}
 output eventhub_name {
     value = azurerm_eventhub.app_eventhub.name
 }

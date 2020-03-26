@@ -148,10 +148,10 @@ jobs:
         ScriptType: 'FilePath'
         # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
         ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        # TODO:To start from scratch, use these arguments:
-        # ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
+        # To start from scratch, use these arguments:
+        ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
         # To continue where a previous (broken) build left of, use these arguments:
-        ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
+        # ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
@@ -252,9 +252,7 @@ jobs:
     - Provision
     - Reprovision
   displayName: 'Deploy & Test PaaS Application'
-  # TODO
   condition: succeeded()
-  #condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
@@ -274,8 +272,6 @@ jobs:
     paasResourceGroup: $[ dependencies.Reprovision.outputs['terraform.paas_app_resource_group'] ]
     storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
     storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
-    # TODO
-    system.debug: true
     # Use earlier prepared Terraform config
     terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
     terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
@@ -459,9 +455,7 @@ jobs:
     - Deploy
     - Provision
   displayName: 'Destroy Infrastructure with Terraform'
-  # TODO
   condition: succeededOrFailed()
-  #condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:
@@ -541,9 +535,7 @@ jobs:
     - Destroy
   displayName: 'Clean Up'
   # Run if Terraform destroy failed, or the whole pipeline was canceled
-  # TODO
   condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
-  #condition: eq(1,2)
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:

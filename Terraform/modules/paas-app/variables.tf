@@ -13,9 +13,6 @@ variable admin_username {}
 variable management_subnet_ids {
   type                         = list
 }
-variable database_import {
-  type                         = bool
-}
 variable database_template_storage_key {
 }
 variable database_template_storage_uri {

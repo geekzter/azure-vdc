@@ -189,16 +189,6 @@ function Invoke (
     }
 }
 
-function LoadPrivateDnsModule () {
-    if (!(Get-Command 'New-AzPrivateDnsRecordConfig' -ErrorAction SilentlyContinue)) {
-        #Get-InstalledModule Az.PrivateDns -AllVersions -ErrorAction SilentlyContinue
-        #Install-Module -Name Az.PrivateDns -Scope CurrentUser -Force -AllowClobber
-        Import-Module Az.PrivateDns
-        #Get-Module Az.PrivateDns
-        #Get-Command 'New-AzPrivateDnsRecordConfig'
-    }
-}
-
 function RemoveResourceGroups (
     [parameter(Mandatory=$false)][object[]]$resourceGroups,
     [parameter(Mandatory=$false)][bool]$Force=$false
