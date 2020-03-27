@@ -103,10 +103,8 @@ variables:
 
 
 jobs:
-- ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
-  # Provision on self-hosted agent
-  - job: 'Provision'
-    displayName: 'Provision Infrastructure with Terraform'
+  - job: 'Prepare'
+    displayName: 'Prepare'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
@@ -117,16 +115,6 @@ jobs:
       clean: all
 
     steps:
-      - task: DownloadSecureFile@1
-        displayName: 'Download SSL certificate'
-        inputs:
-          secureFile: '$(TF_VAR_vanity_certificate_path)'
-
-      - task: DownloadSecureFile@1
-        displayName: 'Download VPN root certificate'
-        inputs:
-          secureFile: '$(TF_VAR_vpn_root_cert_file)'
-
       - task: AzureCLI@2
         displayName: 'Gather Terraform settings'
         name: terraformConfig
@@ -159,6 +147,38 @@ jobs:
           failOnStandardError: true
           workingDirectory: '$(scriptDirectory)'
 
+- ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
+  # Provision on self-hosted agent
+  - job: 'Provision'
+    dependsOn: Prepare
+    displayName: 'Provision Infrastructure with Terraform'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+    variables:
+      # Use earlier prepared Terraform config
+      terraformClientId: $[ dependencies.Prepare.outputs['terraformConfig.clientId'] ]
+      terraformClientSecret: $[ dependencies.Prepare.outputs['terraformConfig.clientSecret'] ]
+      terraformSubscriptionId: $[ dependencies.Prepare.outputs['terraformConfig.subscriptionId'] ]
+      terraformTenantId: $[ dependencies.Prepare.outputs['terraformConfig.tenantId'] ]
+
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    workspace:
+      clean: all
+
+    steps:
+      - task: DownloadSecureFile@1
+        displayName: 'Download SSL certificate'
+        inputs:
+          secureFile: '$(TF_VAR_vanity_certificate_path)'
+
+      - task: DownloadSecureFile@1
+        displayName: 'Download VPN root certificate'
+        inputs:
+          secureFile: '$(TF_VAR_vpn_root_cert_file)'
+
       # We could do this with tfenv, however there is no task for that
       - task: TerraformInstaller@0
         displayName: 'Use preferred Terraform version'
@@ -184,17 +204,19 @@ jobs:
           workingDirectory: '$(scriptDirectory)'
         env:
           # Use prepared Terraform environment variables
-          ARM_CLIENT_ID: '$(terraformConfig.clientId)'
-          ARM_CLIENT_SECRET: '$(terraformConfig.clientSecret)'
-          ARM_SUBSCRIPTION_ID: '$(terraformConfig.subscriptionId)'
-          ARM_TENANT_ID: '$(terraformConfig.tenantId)'
+          ARM_CLIENT_ID: '$(terraformClientId)'
+          ARM_CLIENT_SECRET: '$(terraformClientSecret)'
+          ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
+          ARM_TENANT_ID: '$(terraformTenantId)'
           TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
 
 - ${{ if eq(parameters.provision, true) }}:
   # Provision again to test for issue's that only come up when resources already exist 
   - job: 'Reprovision'
-    dependsOn: 'Provision'
+    dependsOn:
+    - Prepare
+    - Provision
     displayName: 'Provision Infrastructure with Terraform (re-entrance test)'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
@@ -203,11 +225,11 @@ jobs:
       iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
       vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
       # Use earlier prepared Terraform config
-      terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
-      terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
-      terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
-      terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-      terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
+      terraformClientId: $[ dependencies.Prepare.outputs['terraformConfig.clientId'] ]
+      terraformClientSecret: $[ dependencies.Prepare.outputs['terraformConfig.clientSecret'] ]
+      terraformSubscriptionId: $[ dependencies.Prepare.outputs['terraformConfig.subscriptionId'] ]
+      terraformTenantId: $[ dependencies.Prepare.outputs['terraformConfig.tenantId'] ]
+      terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
     pool:
       vmImage: 'ubuntu-latest'
@@ -277,7 +299,9 @@ jobs:
   # Deploy PaaS application 
   - job: 'Deploy'
     dependsOn:
+      - Prepare
       - Provision
+      - Reprovision
     displayName: 'Deploy & Test PaaS Application'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
@@ -300,10 +324,10 @@ jobs:
       storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
       storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
       # Use earlier prepared Terraform config
-      terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
-      terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
-      terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
-      terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
+      terraformClientId: $[ dependencies.Prepare.outputs['terraformConfig.clientId'] ]
+      terraformClientSecret: $[ dependencies.Prepare.outputs['terraformConfig.clientSecret'] ]
+      terraformSubscriptionId: $[ dependencies.Prepare.outputs['terraformConfig.subscriptionId'] ]
+      terraformTenantId: $[ dependencies.Prepare.outputs['terraformConfig.tenantId'] ]
 
     pool:
       # SqlAzureDacpacDeployment@1 only runs on Windows
@@ -479,6 +503,7 @@ jobs:
   # Destroy infrastructure
   - job: 'Destroy'
     dependsOn:
+      - Prepare
       - Deploy
       - Provision
     displayName: 'Destroy Infrastructure with Terraform'
@@ -487,11 +512,11 @@ jobs:
 
     variables:
       # Use earlier prepared Terraform config
-      terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
-      terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
-      terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
-      terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-      terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
+      terraformClientId: $[ dependencies.Prepare.outputs['terraformConfig.clientId'] ]
+      terraformClientSecret: $[ dependencies.Prepare.outputs['terraformConfig.clientSecret'] ]
+      terraformSubscriptionId: $[ dependencies.Prepare.outputs['terraformConfig.subscriptionId'] ]
+      terraformTenantId: $[ dependencies.Prepare.outputs['terraformConfig.tenantId'] ]
+      terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
     pool:
       vmImage: 'ubuntu-latest'
@@ -557,8 +582,7 @@ jobs:
   # Clean up resources, in the event 'terraform destroy' fails   
   - job: 'CleanUp'
     dependsOn:
-      - Provision
-      - Reprovision
+      - Prepare
       - Destroy
     displayName: 'Clean Up'
     # Run if Terraform destroy failed, or the whole pipeline was canceled
@@ -567,11 +591,11 @@ jobs:
 
     variables:
       # Use earlier prepared Terraform config
-      terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
-      terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
-      terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
-      terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-      terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
+      terraformClientId: $[ dependencies.Prepare.outputs['terraformConfig.clientId'] ]
+      terraformClientSecret: $[ dependencies.Prepare.outputs['terraformConfig.clientSecret'] ]
+      terraformSubscriptionId: $[ dependencies.Prepare.outputs['terraformConfig.subscriptionId'] ]
+      terraformTenantId: $[ dependencies.Prepare.outputs['terraformConfig.tenantId'] ]
+      terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
     pool:
       vmImage: 'ubuntu-latest'
