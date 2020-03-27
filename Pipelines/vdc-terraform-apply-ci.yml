@@ -16,15 +16,15 @@ parameters:
 - name: provision
   displayName: Provision infrastructure
   type: boolean
-  default: false
+  default: true
 - name: deploy
   displayName: Deploy PaaS application
   type: boolean
-  default: false
+  default: true
 - name: destroy
   displayName: Destroy infrastructure
   type: boolean
-  default: false
+  default: true
 
 
 trigger:
