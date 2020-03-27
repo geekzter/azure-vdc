@@ -26,7 +26,6 @@ parameters:
   type: boolean
   default: true
 
-
 trigger:
   batch: true
   branches:
@@ -161,6 +160,7 @@ jobs:
       terraformClientSecret: $[ dependencies.Prepare.outputs['terraformConfig.clientSecret'] ]
       terraformSubscriptionId: $[ dependencies.Prepare.outputs['terraformConfig.subscriptionId'] ]
       terraformTenantId: $[ dependencies.Prepare.outputs['terraformConfig.tenantId'] ]
+      terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
     pool:
       vmImage: 'ubuntu-latest'
@@ -183,7 +183,7 @@ jobs:
       - task: TerraformInstaller@0
         displayName: 'Use preferred Terraform version'
         inputs:
-          terraformVersion: '$(terraformConfig.version)'
+          terraformVersion: '$(terraformVersion)'
 
       - task: AzurePowerShell@4
         # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
