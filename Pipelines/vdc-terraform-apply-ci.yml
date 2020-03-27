@@ -195,10 +195,6 @@ jobs:
           # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
           ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
           ScriptArguments: '-init -clear:$${{ not(parameters.inherit) }} -stickysuffix:$${{ parameters.inherit }} -apply -force -trace $(trace) -parallelism $(parallelism)'
-          # To start from scratch, use these arguments:
-          # ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
-          # To continue where a previous (broken) build left of, use these arguments:
-          # ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
           FailOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
           pwsh: true
@@ -336,29 +332,6 @@ jobs:
       vmImage: 'ubuntu-latest'
 
     steps:
-      - task: AzureCLI@2
-        displayName: 'Open SQL Firewall for import'
-        enabled: false
-        inputs:
-          azureSubscription: '$(subscriptionConnection)'
-          scriptType: pscore
-          scriptLocation: inlineScript
-          inlineScript: |
-            # Create SQL Firewall rule for import
-            Invoke-Command -ScriptBlock {
-              $Private:ErrorActionPreference = "Continue"
-              $Script:sqlFWRule = $(az sql server firewall-rule show -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule) 2>$null)
-            }
-            if (!$sqlFWRule) {
-                Write-Host "Creating SQL Server $(appSQLServer) Firewall rule '$(appSQLFirewallImportRule)' ..."
-                $sqlFWRule = $(az sql server firewall-rule create -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule) --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0)
-            } else {
-                Write-Host "SQL Server $(appSQLServer) Firewall rule $(appSQLFirewallImportRule) already exists"
-            }
-          useGlobalConfig: true
-          workingDirectory: '$(scriptDirectory)'
-          failOnStandardError: false
-
       - pwsh: |
           Invoke-Webrequest -Uri "$(storageUrl)$(storageSAS)" -OutFile $(System.DefaultWorkingDirectory)/database.bacpac
         displayName: 'Download BACPAC'
@@ -377,31 +350,6 @@ jobs:
           bacpacFile: '$(System.DefaultWorkingDirectory)/database.bacpac'
           ipDetectionMethod: 'AutoDetect'
           deleteFirewallRule: true
-
-      - task: AzureCLI@2
-        displayName: 'Import database with Azure CLI'
-        enabled: false
-        inputs:
-          azureSubscription: '$(subscriptionConnection)'
-          scriptType: pscore
-          scriptLocation: inlineScript
-          inlineScript: |
-            # Create temporary admin password
-            Write-Host "Database $(appSQLServer): creating temporary admin password"
-            $password = New-Guid | Select-Object -ExpandProperty Guid
-            Write-Host "az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)"
-            az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)
-
-            # Perform import          
-            Write-Host "Database $(appSQLServer)/$(appSQLDatabase): importing from $(storageUrl)..."
-            Write-Host "az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) --auth-type SQL -u $(appSQLAdmin) -p $password --storage-key '$(storageSAS)' --storage-key-type SharedAccessKey --storage-uri $(storageUrl)"
-            az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) `
-                            --auth-type SQL -u $(appSQLAdmin) -p $password `
-                            --storage-key "$(storageSAS)" --storage-key-type SharedAccessKey --storage-uri "$(storageUrl)"
-          addSpnToEnvironment: true
-          useGlobalConfig: true
-          workingDirectory: '$(scriptDirectory)'
-          failOnStandardError: true
 
       - task: AzureCLI@2
         displayName: 'Import database and set permissions (with script)'
@@ -424,43 +372,6 @@ jobs:
         env:
           # Use prepared Terraform environment variables
           ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
-
-      - task: AzureCLI@2
-        displayName: 'Grant App Service MSI access to database'
-        enabled: false
-        inputs:
-          azureSubscription: '$(subscriptionConnection)'
-          scriptType: pscore
-          scriptLocation: inlineScript
-          inlineScript: |
-            # This uses the Terraform/Pipeline Service Principal identity
-            $env:ARM_CLIENT_ID=$env:servicePrincipalId
-            $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
-            $env:ARM_TENANT_ID=$env:tenantId
-            # Grant access to App Service MSI
-            ./grant_database_access.ps1 -MSIName $(appMSIName) -MSIClientId $(appMSIClientID) `
-                                        -DBAName Automation -DBAObjectId $env:servicePrincipalId `
-                                        -SqlDatabaseName $(appSQLDatabase) -SqlServerFQDN $(appSQLServerFQDN)
-          addSpnToEnvironment: true
-          useGlobalConfig: true
-          workingDirectory: '$(scriptDirectory)'
-          failOnStandardError: true
-
-      - task: AzureCLI@2
-        displayName: 'Remove SQL Firewall import rule'
-        condition: succeededOrFailed()
-        enabled: false
-        inputs:
-          azureSubscription: '$(subscriptionConnection)'
-          scriptType: pscore
-          scriptLocation: inlineScript
-          inlineScript: |
-            # Remove SQL Firewall rule
-            Write-Host "Removing SQL Server $(appSQLServer) Firewall rule $sqlFWRuleName ..."
-            az sql server firewall-rule delete -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule)
-          useGlobalConfig: true
-          workingDirectory: '$(scriptDirectory)'
-          failOnStandardError: true
 
       # Download PaaS Application Pipeline artifacts
       # This consumes artifacts published by this pipeline:
