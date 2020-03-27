@@ -504,8 +504,10 @@ jobs:
   - job: 'Destroy'
     dependsOn:
       - Prepare
-      - Deploy
-      - Provision
+      - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
+        - Provision
+      - ${{ if eq(parameters.deploy, true) }}:
+        - Deploy
     displayName: 'Destroy Infrastructure with Terraform'
     condition: succeededOrFailed()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
