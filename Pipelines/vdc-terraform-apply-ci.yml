@@ -134,7 +134,7 @@ variables:
 - name: TF_VAR_deploy_vpn
   value: ${{ parameters.provisionVPN }}
 - name: TF_VAR_use_vanity_domain_and_ssl
-  value: ${{ parameters.useSSL }}
+  value: ${{ parameters.provisionSSL }}
 
 jobs:
 - job: 'Prepare'
