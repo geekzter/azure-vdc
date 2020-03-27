@@ -194,8 +194,9 @@ jobs:
           ScriptType: 'FilePath'
           # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
           ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+          ScriptArguments: '-init -clear:$${{ not(parameters.inherit) }} -stickysuffix:$${{ parameters.inherit }} -apply -force -trace $(trace) -parallelism $(parallelism)'
           # To start from scratch, use these arguments:
-          ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
+          # ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
           # To continue where a previous (broken) build left of, use these arguments:
           # ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
           FailOnStandardError: true
