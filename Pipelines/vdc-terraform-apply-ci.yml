@@ -120,15 +120,15 @@ variables:
 - name: 'vdcResourceGroup' 
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
 - name: TF_VAR_deploy_auto_shutdown
-  value: ${{ parameters.provisionAutoShutdown }}
+  value: '${{ parameters.provisionAutoShutdown }}'
 - name: TF_VAR_deploy_managed_bastion
-  value: ${{ parameters.provisionManagedBastion }}
+  value: '${{ parameters.provisionManagedBastion }}'
 - name: TF_VAR_deploy_network_watcher
-  value: ${{ parameters.provisionNetworkWatcher }}
+  value: '${{ parameters.provisionNetworkWatcher }}'
 - name: TF_VAR_deploy_non_essential_vm_extensions
-  value: ${{ parameters.provisionNonEssentialVMextensions }}
+  value: '${{ parameters.provisionNonEssentialVMextensions }}'
 - name: TF_VAR_deploy_vpn
-  value: ${{ parameters.provisionVPN }}
+  value: '${{ parameters.provisionVPN }}'
 
 
 jobs:
