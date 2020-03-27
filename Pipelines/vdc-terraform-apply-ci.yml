@@ -17,6 +17,26 @@ parameters:
   displayName: Provision infrastructure
   type: boolean
   default: true
+- name: provisionAutoShutdown
+  displayName: Provision Auto Shutdown
+  type: boolean
+  default: false
+- name: provisionManagedBastion
+  displayName: Provision Managed Bastion
+  type: boolean
+  default: true
+- name: provisionNetworkWatcher
+  displayName: Provision Network Watcher
+  type: boolean
+  default: true
+- name: provisionNonEssentialVMextensions
+  displayName: Provision Non Essential VMW Extensions
+  type: boolean
+  default: false
+- name: provisionVPN
+  displayName: Provision VPN
+  type: boolean
+  default: true
 - name: deploy
   displayName: Deploy PaaS application
   type: boolean
@@ -99,6 +119,16 @@ variables:
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-paasapp-$(TF_VAR_resource_suffix)'
 - name: 'vdcResourceGroup' 
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
+- name: TF_VAR_deploy_auto_shutdown
+  value: ${{ parameters.provisionAutoShutdown }}
+- name: TF_VAR_deploy_managed_bastion
+  value: ${{ parameters.provisionManagedBastion }}
+- name: TF_VAR_deploy_network_watcher
+  value: ${{ parameters.provisionNetworkWatcher }}
+- name: TF_VAR_deploy_non_essential_vm_extensions
+  value: ${{ parameters.provisionNonEssentialVMextensions }}
+- name: TF_VAR_deploy_vpn
+  value: ${{ parameters.provisionVPN }}
 
 
 jobs:
