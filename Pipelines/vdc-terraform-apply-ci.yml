@@ -191,7 +191,7 @@ jobs:
           TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
 
-- ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
+- ${{ if eq(parameters.provision, true) }}:
   # Provision again to test for issue's that only come up when resources already exist 
   - job: 'Reprovision'
     dependsOn: 'Provision'
@@ -278,7 +278,6 @@ jobs:
   - job: 'Deploy'
     dependsOn:
       - Provision
-      - Reprovision
     displayName: 'Deploy & Test PaaS Application'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
@@ -288,16 +287,16 @@ jobs:
       appBuild: 'Release'
       appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
       # Get application configuration from Terraform output
-      appServiceName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_name'] ]
-      appUrl: $[ dependencies.Reprovision.outputs['terraform.paas_app_url'] ]
-      appMSIName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_msi_name'] ]
-      appMSIClientID: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_msi_client_id'] ]
+      appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
+      appUrl: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+      appMSIName: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_name'] ]
+      appMSIClientID: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_client_id'] ]
       appSQLAdmin: 'vdcadmin'
-      appSQLDatabase: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_database'] ]
+      appSQLDatabase: $[ dependencies.Provision.outputs['terraform.paas_app_sql_database'] ]
       appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
-      appSQLServer: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_server'] ]
-      appSQLServerFQDN: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_server_fqdn'] ]
-      paasResourceGroup: $[ dependencies.Reprovision.outputs['terraform.paas_app_resource_group'] ]
+      appSQLServer: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server'] ]
+      appSQLServerFQDN: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server_fqdn'] ]
+      paasResourceGroup: $[ dependencies.Provision.outputs['terraform.paas_app_resource_group'] ]
       storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
       storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
       # Use earlier prepared Terraform config
