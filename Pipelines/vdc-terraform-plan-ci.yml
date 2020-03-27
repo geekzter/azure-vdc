@@ -1,6 +1,12 @@
 # This pipeline performs a limited CI test of the VDC:
 #  - Plan infrastructure i.e. check for Terraform validation errors
 
+parameters:
+- name: debug
+  displayName: Debug
+  type: boolean
+  default: false
+
 trigger:
   batch: true
   branches:
@@ -39,6 +45,8 @@ variables:
 # Inline variables shared across jobs
 - name: 'scriptDirectory'
   value: '$(Build.SourcesDirectory)/Scripts'
+- name: 'system.debug'
+  value: ${{ parameters.debug }}
 - name: 'TF_IN_AUTOMATION'
   value: 'true'
 - name: 'TF_INPUT'

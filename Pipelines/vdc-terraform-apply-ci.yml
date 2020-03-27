@@ -4,6 +4,29 @@
 #  - Test application
 #  - Destroy infrastructure
 
+parameters:
+- name: debug
+  displayName: Debug
+  type: boolean
+  default: false
+- name: inherit
+  displayName: Inherit state
+  type: boolean
+  default: false
+- name: provision
+  displayName: Provision infrastructure
+  type: boolean
+  default: false
+- name: deploy
+  displayName: Deploy PaaS application
+  type: boolean
+  default: false
+- name: destroy
+  displayName: Destroy infrastructure
+  type: boolean
+  default: false
+
+
 trigger:
   batch: true
   branches:
@@ -69,6 +92,8 @@ variables:
   value: 120
 - name: 'scriptDirectory'
   value: '$(Build.SourcesDirectory)/Scripts'
+- name: 'system.debug'
+  value: ${{ parameters.debug }}
 - name: 'iaasResourceGroup'
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
 - name: 'paasResourceGroup'
@@ -78,535 +103,538 @@ variables:
 
 
 jobs:
-# Provision on self-hosted agent
-- job: 'Provision'
-  displayName: 'Provision Infrastructure with Terraform'
-  condition: succeeded()
-  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+- ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
+  # Provision on self-hosted agent
+  - job: 'Provision'
+    displayName: 'Provision Infrastructure with Terraform'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
-  pool:
-    vmImage: 'ubuntu-latest'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-  workspace:
-    clean: all
+    workspace:
+      clean: all
 
-  steps:
-    - task: DownloadSecureFile@1
-      displayName: 'Download SSL certificate'
-      inputs:
-        secureFile: '$(TF_VAR_vanity_certificate_path)'
+    steps:
+      - task: DownloadSecureFile@1
+        displayName: 'Download SSL certificate'
+        inputs:
+          secureFile: '$(TF_VAR_vanity_certificate_path)'
 
-    - task: DownloadSecureFile@1
-      displayName: 'Download VPN root certificate'
-      inputs:
-        secureFile: '$(TF_VAR_vpn_root_cert_file)'
+      - task: DownloadSecureFile@1
+        displayName: 'Download VPN root certificate'
+        inputs:
+          secureFile: '$(TF_VAR_vpn_root_cert_file)'
 
-    - task: AzureCLI@2
-      displayName: 'Gather Terraform settings'
-      name: terraformConfig
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
-        scriptLocation: inlineScript
-        # ARM_* environment variables are required by Terraform azurerm provider and backend
-        # https://www.terraform.io/docs/providers/azurerm/index.html
-        # https://www.terraform.io/docs/backends/types/azurerm.html
-        # Use Pipeline Service Principal and Service Connection to set up these variables
-        inlineScript: |
-          $env:ARM_CLIENT_ID=$env:servicePrincipalId
-          $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
-          $env:ARM_SUBSCRIPTION_ID=$(az account show --query id) -replace '"',''
-          $env:ARM_TENANT_ID=$env:tenantId
-          # List environment variables (debug)
-          if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
-            Get-ChildItem -Path Env:ARM_* | Sort-Object -Property Name
-          }
-          Write-Host "##vso[task.setvariable variable=clientId;isOutput=true]$env:ARM_CLIENT_ID"
-          Write-Host "##vso[task.setvariable variable=clientSecret;isOutput=true]$env:ARM_CLIENT_SECRET"
-          Write-Host "##vso[task.setvariable variable=subscriptionId;isOutput=true]$env:ARM_SUBSCRIPTION_ID"
-          Write-Host "##vso[task.setvariable variable=tenantId;isOutput=true]$env:ARM_TENANT_ID"
+      - task: AzureCLI@2
+        displayName: 'Gather Terraform settings'
+        name: terraformConfig
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          # ARM_* environment variables are required by Terraform azurerm provider and backend
+          # https://www.terraform.io/docs/providers/azurerm/index.html
+          # https://www.terraform.io/docs/backends/types/azurerm.html
+          # Use Pipeline Service Principal and Service Connection to set up these variables
+          inlineScript: |
+            $env:ARM_CLIENT_ID=$env:servicePrincipalId
+            $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
+            $env:ARM_SUBSCRIPTION_ID=$(az account show --query id) -replace '"',''
+            $env:ARM_TENANT_ID=$env:tenantId
+            # List environment variables (debug)
+            if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
+              Get-ChildItem -Path Env:ARM_* | Sort-Object -Property Name
+            }
+            Write-Host "##vso[task.setvariable variable=clientId;isOutput=true]$env:ARM_CLIENT_ID"
+            Write-Host "##vso[task.setvariable variable=clientSecret;isOutput=true]$env:ARM_CLIENT_SECRET"
+            Write-Host "##vso[task.setvariable variable=subscriptionId;isOutput=true]$env:ARM_SUBSCRIPTION_ID"
+            Write-Host "##vso[task.setvariable variable=tenantId;isOutput=true]$env:ARM_TENANT_ID"
 
-          # This will write version info as output variable
-          $(scriptDirectory)/get_tf_version.ps1 -version preferred
-        addSpnToEnvironment: true
-        useGlobalConfig: true
-        failOnStandardError: true
-        workingDirectory: '$(scriptDirectory)'
+            # This will write version info as output variable
+            $(scriptDirectory)/get_tf_version.ps1 -version preferred
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          failOnStandardError: true
+          workingDirectory: '$(scriptDirectory)'
 
-    # We could do this with tfenv, however there is no task for that
-    - task: TerraformInstaller@0
-      displayName: 'Use preferred Terraform version'
-      inputs:
-        terraformVersion: '$(terraformConfig.version)'
+      # We could do this with tfenv, however there is no task for that
+      - task: TerraformInstaller@0
+        displayName: 'Use preferred Terraform version'
+        inputs:
+          terraformVersion: '$(terraformConfig.version)'
 
-    - task: AzurePowerShell@4
-      # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
-      name: terraform
-      displayName: 'Terraform init & apply'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        ScriptType: 'FilePath'
-        # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
-        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        # To start from scratch, use these arguments:
-        ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
-        # To continue where a previous (broken) build left of, use these arguments:
-        # ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
-        FailOnStandardError: true
-        azurePowerShellVersion: 'LatestVersion'
-        pwsh: true
-        workingDirectory: '$(scriptDirectory)'
-      env:
-        # Use prepared Terraform environment variables
-        ARM_CLIENT_ID: '$(terraformConfig.clientId)'
-        ARM_CLIENT_SECRET: '$(terraformConfig.clientSecret)'
-        ARM_SUBSCRIPTION_ID: '$(terraformConfig.subscriptionId)'
-        ARM_TENANT_ID: '$(terraformConfig.tenantId)'
-        TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+      - task: AzurePowerShell@4
+        # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
+        name: terraform
+        displayName: 'Terraform init & apply'
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          ScriptType: 'FilePath'
+          # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
+          ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+          # To start from scratch, use these arguments:
+          ScriptArguments: '-init -clear -apply -force -trace $(trace) -parallelism $(parallelism)'
+          # To continue where a previous (broken) build left of, use these arguments:
+          # ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
+          FailOnStandardError: true
+          azurePowerShellVersion: 'LatestVersion'
+          pwsh: true
+          workingDirectory: '$(scriptDirectory)'
+        env:
+          # Use prepared Terraform environment variables
+          ARM_CLIENT_ID: '$(terraformConfig.clientId)'
+          ARM_CLIENT_SECRET: '$(terraformConfig.clientSecret)'
+          ARM_SUBSCRIPTION_ID: '$(terraformConfig.subscriptionId)'
+          ARM_TENANT_ID: '$(terraformConfig.tenantId)'
+          TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
 
-# Provision again to test for issue's that only come up when resources already exist 
-- job: 'Reprovision'
-  dependsOn: 'Provision'
-  displayName: 'Provision Infrastructure with Terraform (re-entrance test)'
-  condition: succeeded()
-  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+- ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
+  # Provision again to test for issue's that only come up when resources already exist 
+  - job: 'Reprovision'
+    dependsOn: 'Provision'
+    displayName: 'Provision Infrastructure with Terraform (re-entrance test)'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
-  variables:
-    iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
-    vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
-    # Use earlier prepared Terraform config
-    terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
-    terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
-    terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
-    terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-    terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
+    variables:
+      iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
+      vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
+      # Use earlier prepared Terraform config
+      terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
+      terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
+      terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
+      terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
+      terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
-  pool:
-    vmImage: 'ubuntu-latest'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-  steps:
-    # Assume workspace is empty and re-download secure files
-    - task: DownloadSecureFile@1
-      displayName: 'Download SSL certificate'
-      inputs:
-        secureFile: '$(TF_VAR_vanity_certificate_path)'
+    steps:
+      # Assume workspace is empty and re-download secure files
+      - task: DownloadSecureFile@1
+        displayName: 'Download SSL certificate'
+        inputs:
+          secureFile: '$(TF_VAR_vanity_certificate_path)'
 
-    - task: DownloadSecureFile@1
-      displayName: 'Download VPN root certificate'
-      inputs:
-        secureFile: '$(TF_VAR_vpn_root_cert_file)'
+      - task: DownloadSecureFile@1
+        displayName: 'Download VPN root certificate'
+        inputs:
+          secureFile: '$(TF_VAR_vpn_root_cert_file)'
 
-    - task: TerraformInstaller@0
-      displayName: 'Use preferred Terraform version'
-      inputs:
-        terraformVersion: '$(terraformVersion)'
+      - task: TerraformInstaller@0
+        displayName: 'Use preferred Terraform version'
+        inputs:
+          terraformVersion: '$(terraformVersion)'
 
-    # Deallocate/Stop MV's to force tf_deploy.ps1 to test for stopped VM's
-    # Stopped VM's do not allow extensions to be installed
-    - task: AzureResourceGroupDeployment@2
-      displayName: 'Deallocate VM''s in App resource group'
-      enabled: true
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        # TODO
-        #action: StopWithDeallocate
-        action: Stop
-        resourceGroupName: '$(iaasResourceGroup)'
+      # Deallocate/Stop MV's to force tf_deploy.ps1 to test for stopped VM's
+      # Stopped VM's do not allow extensions to be installed
+      - task: AzureResourceGroupDeployment@2
+        displayName: 'Deallocate VM''s in App resource group'
+        enabled: true
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          # TODO
+          #action: StopWithDeallocate
+          action: Stop
+          resourceGroupName: '$(iaasResourceGroup)'
 
-    - task: AzureResourceGroupDeployment@2
-      displayName: 'Stop VM''s in VDC resource group'
-      enabled: true
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        action: Stop
-        resourceGroupName: '$(vdcResourceGroup)'
+      - task: AzureResourceGroupDeployment@2
+        displayName: 'Stop VM''s in VDC resource group'
+        enabled: true
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          action: Stop
+          resourceGroupName: '$(vdcResourceGroup)'
 
-    # Test for failures that only occur when resources already exist
-    - task: AzurePowerShell@4
-      # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
-      name: terraform
-      displayName: 'Terraform init and apply (re-entrance test)'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        ScriptType: 'FilePath'
-        # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
-        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
-        FailOnStandardError: true
-        azurePowerShellVersion: 'LatestVersion'
-        pwsh: true
-        workingDirectory: '$(scriptDirectory)'
-      env:
-        # Use prepared Terraform environment variables
-        ARM_CLIENT_ID: '$(terraformClientId)'
-        ARM_CLIENT_SECRET: '$(terraformClientSecret)'
-        ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
-        ARM_TENANT_ID: '$(terraformTenantId)'
-        TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+      # Test for failures that only occur when resources already exist
+      - task: AzurePowerShell@4
+        # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
+        name: terraform
+        displayName: 'Terraform init and apply (re-entrance test)'
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          ScriptType: 'FilePath'
+          # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
+          ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+          ScriptArguments: '-init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)'
+          FailOnStandardError: true
+          azurePowerShellVersion: 'LatestVersion'
+          pwsh: true
+          workingDirectory: '$(scriptDirectory)'
+        env:
+          # Use prepared Terraform environment variables
+          ARM_CLIENT_ID: '$(terraformClientId)'
+          ARM_CLIENT_SECRET: '$(terraformClientSecret)'
+          ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
+          ARM_TENANT_ID: '$(terraformTenantId)'
+          TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
-        
-# Deploy PaaS application 
-- job: 'Deploy'
-  dependsOn:
-    - Provision
-    - Reprovision
-  displayName: 'Deploy & Test PaaS Application'
-  condition: succeeded()
-  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
-  variables:
-    appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
-    appBuild: 'Release'
-    appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
-    # Get application configuration from Terraform output
-    appServiceName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_name'] ]
-    appUrl: $[ dependencies.Reprovision.outputs['terraform.paas_app_url'] ]
-    appMSIName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_msi_name'] ]
-    appMSIClientID: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_msi_client_id'] ]
-    appSQLAdmin: 'vdcadmin'
-    appSQLDatabase: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_database'] ]
-    appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
-    appSQLServer: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_server'] ]
-    appSQLServerFQDN: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_server_fqdn'] ]
-    paasResourceGroup: $[ dependencies.Reprovision.outputs['terraform.paas_app_resource_group'] ]
-    storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
-    storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
-    # Use earlier prepared Terraform config
-    terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
-    terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
-    terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
-    terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
+- ${{ if eq(parameters.deploy, true) }}:
+  # Deploy PaaS application 
+  - job: 'Deploy'
+    dependsOn:
+      - Provision
+      - Reprovision
+    displayName: 'Deploy & Test PaaS Application'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
-  pool:
-    # SqlAzureDacpacDeployment@1 only runs on Windows
-    vmImage: 'ubuntu-latest'
+    variables:
+      appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
+      appBuild: 'Release'
+      appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
+      # Get application configuration from Terraform output
+      appServiceName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_name'] ]
+      appUrl: $[ dependencies.Reprovision.outputs['terraform.paas_app_url'] ]
+      appMSIName: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_msi_name'] ]
+      appMSIClientID: $[ dependencies.Reprovision.outputs['terraform.paas_app_service_msi_client_id'] ]
+      appSQLAdmin: 'vdcadmin'
+      appSQLDatabase: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_database'] ]
+      appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
+      appSQLServer: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_server'] ]
+      appSQLServerFQDN: $[ dependencies.Reprovision.outputs['terraform.paas_app_sql_server_fqdn'] ]
+      paasResourceGroup: $[ dependencies.Reprovision.outputs['terraform.paas_app_resource_group'] ]
+      storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
+      storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
+      # Use earlier prepared Terraform config
+      terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
+      terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
+      terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
+      terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
 
-  steps:
-    - task: AzureCLI@2
-      displayName: 'Open SQL Firewall for import'
-      enabled: false
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
-        scriptLocation: inlineScript
-        inlineScript: |
-          # Create SQL Firewall rule for import
-          Invoke-Command -ScriptBlock {
-            $Private:ErrorActionPreference = "Continue"
-            $Script:sqlFWRule = $(az sql server firewall-rule show -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule) 2>$null)
-          }
-          if (!$sqlFWRule) {
-              Write-Host "Creating SQL Server $(appSQLServer) Firewall rule '$(appSQLFirewallImportRule)' ..."
-              $sqlFWRule = $(az sql server firewall-rule create -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule) --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0)
-          } else {
-              Write-Host "SQL Server $(appSQLServer) Firewall rule $(appSQLFirewallImportRule) already exists"
-          }
-        useGlobalConfig: true
-        workingDirectory: '$(scriptDirectory)'
-        failOnStandardError: false
+    pool:
+      # SqlAzureDacpacDeployment@1 only runs on Windows
+      vmImage: 'ubuntu-latest'
 
-    - pwsh: |
-        Invoke-Webrequest -Uri "$(storageUrl)$(storageSAS)" -OutFile $(System.DefaultWorkingDirectory)/database.bacpac
-      displayName: 'Download BACPAC'
-      enabled: false
+    steps:
+      - task: AzureCLI@2
+        displayName: 'Open SQL Firewall for import'
+        enabled: false
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            # Create SQL Firewall rule for import
+            Invoke-Command -ScriptBlock {
+              $Private:ErrorActionPreference = "Continue"
+              $Script:sqlFWRule = $(az sql server firewall-rule show -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule) 2>$null)
+            }
+            if (!$sqlFWRule) {
+                Write-Host "Creating SQL Server $(appSQLServer) Firewall rule '$(appSQLFirewallImportRule)' ..."
+                $sqlFWRule = $(az sql server firewall-rule create -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule) --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0)
+            } else {
+                Write-Host "SQL Server $(appSQLServer) Firewall rule $(appSQLFirewallImportRule) already exists"
+            }
+          useGlobalConfig: true
+          workingDirectory: '$(scriptDirectory)'
+          failOnStandardError: false
 
-    - task: SqlAzureDacpacDeployment@1 
-    # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/deploy/sql-azure-dacpac-deployment
-      displayName: 'Import database'
-      enabled: false
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        authenticationType: aadAuthenticationIntegrated
-        serverName: $(appSQLServerFQDN)
-        databaseName: $(appSQLDatabase)
-        deploymentAction: Import
-        bacpacFile: '$(System.DefaultWorkingDirectory)/database.bacpac'
-        ipDetectionMethod: 'AutoDetect'
-        deleteFirewallRule: true
+      - pwsh: |
+          Invoke-Webrequest -Uri "$(storageUrl)$(storageSAS)" -OutFile $(System.DefaultWorkingDirectory)/database.bacpac
+        displayName: 'Download BACPAC'
+        enabled: false
 
-    - task: AzureCLI@2
-      displayName: 'Import database with Azure CLI'
-      enabled: false
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
-        scriptLocation: inlineScript
-        inlineScript: |
-          # Create temporary admin password
-          Write-Host "Database $(appSQLServer): creating temporary admin password"
-          $password = New-Guid | Select-Object -ExpandProperty Guid
-          Write-Host "az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)"
-          az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)
+      - task: SqlAzureDacpacDeployment@1 
+      # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/deploy/sql-azure-dacpac-deployment
+        displayName: 'Import database'
+        enabled: false
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          authenticationType: aadAuthenticationIntegrated
+          serverName: $(appSQLServerFQDN)
+          databaseName: $(appSQLDatabase)
+          deploymentAction: Import
+          bacpacFile: '$(System.DefaultWorkingDirectory)/database.bacpac'
+          ipDetectionMethod: 'AutoDetect'
+          deleteFirewallRule: true
 
-          # Perform import          
-          Write-Host "Database $(appSQLServer)/$(appSQLDatabase): importing from $(storageUrl)..."
-          Write-Host "az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) --auth-type SQL -u $(appSQLAdmin) -p $password --storage-key '$(storageSAS)' --storage-key-type SharedAccessKey --storage-uri $(storageUrl)"
-          az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) `
-                           --auth-type SQL -u $(appSQLAdmin) -p $password `
-                           --storage-key "$(storageSAS)" --storage-key-type SharedAccessKey --storage-uri "$(storageUrl)"
-        addSpnToEnvironment: true
-        useGlobalConfig: true
-        workingDirectory: '$(scriptDirectory)'
-        failOnStandardError: true
+      - task: AzureCLI@2
+        displayName: 'Import database with Azure CLI'
+        enabled: false
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            # Create temporary admin password
+            Write-Host "Database $(appSQLServer): creating temporary admin password"
+            $password = New-Guid | Select-Object -ExpandProperty Guid
+            Write-Host "az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)"
+            az sql server update --admin-password $password --resource-group $(paasResourceGroup) --name $(appSQLServer)
 
-    - task: AzureCLI@2
-      displayName: 'Import database and set permissions (with script)'
-      enabled: true
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
-        scriptLocation: inlineScript
-        inlineScript: |
-          ./deploy_paas_app.ps1 -Database `
-                                -AppResourceGroup $(paasResourceGroup) `
-                                -AppAppServiceIdentity $(appMSIName) `
-                                -AppAppServiceClientID $(appMSIClientID) `
-                                -SqlServer $(appSQLServer) `
-                                -SqlServerFQDN $(appSQLServerFQDN) `
-                                -SqlDatabase $(appSQLDatabase)
-        useGlobalConfig: true
-        workingDirectory: '$(scriptDirectory)'
-        failOnStandardError: true
-      env:
-        # Use prepared Terraform environment variables
-        ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
+            # Perform import          
+            Write-Host "Database $(appSQLServer)/$(appSQLDatabase): importing from $(storageUrl)..."
+            Write-Host "az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) --auth-type SQL -u $(appSQLAdmin) -p $password --storage-key '$(storageSAS)' --storage-key-type SharedAccessKey --storage-uri $(storageUrl)"
+            az sql db import -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLDatabase) `
+                            --auth-type SQL -u $(appSQLAdmin) -p $password `
+                            --storage-key "$(storageSAS)" --storage-key-type SharedAccessKey --storage-uri "$(storageUrl)"
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          workingDirectory: '$(scriptDirectory)'
+          failOnStandardError: true
 
-    - task: AzureCLI@2
-      displayName: 'Grant App Service MSI access to database'
-      enabled: false
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
-        scriptLocation: inlineScript
-        inlineScript: |
-          # This uses the Terraform/Pipeline Service Principal identity
-          $env:ARM_CLIENT_ID=$env:servicePrincipalId
-          $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
-          $env:ARM_TENANT_ID=$env:tenantId
-          # Grant access to App Service MSI
-          ./grant_database_access.ps1 -MSIName $(appMSIName) -MSIClientId $(appMSIClientID) `
-                                      -DBAName Automation -DBAObjectId $env:servicePrincipalId `
-                                      -SqlDatabaseName $(appSQLDatabase) -SqlServerFQDN $(appSQLServerFQDN)
-        addSpnToEnvironment: true
-        useGlobalConfig: true
-        workingDirectory: '$(scriptDirectory)'
-        failOnStandardError: true
+      - task: AzureCLI@2
+        displayName: 'Import database and set permissions (with script)'
+        enabled: true
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            ./deploy_paas_app.ps1 -Database `
+                                  -AppResourceGroup $(paasResourceGroup) `
+                                  -AppAppServiceIdentity $(appMSIName) `
+                                  -AppAppServiceClientID $(appMSIClientID) `
+                                  -SqlServer $(appSQLServer) `
+                                  -SqlServerFQDN $(appSQLServerFQDN) `
+                                  -SqlDatabase $(appSQLDatabase)
+          useGlobalConfig: true
+          workingDirectory: '$(scriptDirectory)'
+          failOnStandardError: true
+        env:
+          # Use prepared Terraform environment variables
+          ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
 
-    - task: AzureCLI@2
-      displayName: 'Remove SQL Firewall import rule'
-      condition: succeededOrFailed()
-      enabled: false
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
-        scriptLocation: inlineScript
-        inlineScript: |
-          # Remove SQL Firewall rule
-          Write-Host "Removing SQL Server $(appSQLServer) Firewall rule $sqlFWRuleName ..."
-          az sql server firewall-rule delete -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule)
-        useGlobalConfig: true
-        workingDirectory: '$(scriptDirectory)'
-        failOnStandardError: true
+      - task: AzureCLI@2
+        displayName: 'Grant App Service MSI access to database'
+        enabled: false
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            # This uses the Terraform/Pipeline Service Principal identity
+            $env:ARM_CLIENT_ID=$env:servicePrincipalId
+            $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
+            $env:ARM_TENANT_ID=$env:tenantId
+            # Grant access to App Service MSI
+            ./grant_database_access.ps1 -MSIName $(appMSIName) -MSIClientId $(appMSIClientID) `
+                                        -DBAName Automation -DBAObjectId $env:servicePrincipalId `
+                                        -SqlDatabaseName $(appSQLDatabase) -SqlServerFQDN $(appSQLServerFQDN)
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          workingDirectory: '$(scriptDirectory)'
+          failOnStandardError: true
 
-    # Download PaaS Application Pipeline artifacts
-    # This consumes artifacts published by this pipeline:
-    # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
-    - task: DownloadPipelineArtifact@2
-      displayName: 'Download ASP.NET Core App Artifacts'
-      enabled: true
-      inputs:
-        buildType: 'specific'
-        project: '$(appPipeline)'
-        definition: '63'
-        specificBuildWithTriggering: true
-        buildVersionToDownload: 'latest'
-        artifactName: 'aspnetcoresql'
-        targetPath: '$(appArtifactDirectory)'
+      - task: AzureCLI@2
+        displayName: 'Remove SQL Firewall import rule'
+        condition: succeededOrFailed()
+        enabled: false
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            # Remove SQL Firewall rule
+            Write-Host "Removing SQL Server $(appSQLServer) Firewall rule $sqlFWRuleName ..."
+            az sql server firewall-rule delete -s $(appSQLServer) -g $(paasResourceGroup) -n $(appSQLFirewallImportRule)
+          useGlobalConfig: true
+          workingDirectory: '$(scriptDirectory)'
+          failOnStandardError: true
 
-    # Deploy PaaS Application
-    - task: AzureWebApp@1
-      displayName: 'Deploy ASP.NET Core App'
-      enabled: true
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        appType: webApp
-        appName: '$(appServiceName)'
-        package: '$(appPackage)'
+      # Download PaaS Application Pipeline artifacts
+      # This consumes artifacts published by this pipeline:
+      # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download ASP.NET Core App Artifacts'
+        enabled: true
+        inputs:
+          buildType: 'specific'
+          project: '$(appPipeline)'
+          definition: '63'
+          specificBuildWithTriggering: true
+          buildVersionToDownload: 'latest'
+          artifactName: 'aspnetcoresql'
+          targetPath: '$(appArtifactDirectory)'
 
-    # Test PaaS Application
-    - task: PowerShell@2
-      displayName: 'Test ASP.NET Core App'
-      inputs:
-        targetType: 'inline'
-        script: |
-          # Wait for the WAF to get ready
-          Start-Sleep -Seconds 30
+      # Deploy PaaS Application
+      - task: AzureWebApp@1
+        displayName: 'Deploy ASP.NET Core App'
+        enabled: true
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          appType: webApp
+          appName: '$(appServiceName)'
+          package: '$(appPackage)'
+
+      # Test PaaS Application
+      - task: PowerShell@2
+        displayName: 'Test ASP.NET Core App'
+        inputs:
+          targetType: 'inline'
+          script: |
+            # Wait for the WAF to get ready
+            Start-Sleep -Seconds 30
+            
+            # Request page
+            Invoke-WebRequest $(appUrl)
+          failOnStderr: true
+          pwsh: true
+
+- ${{ if eq(parameters.destroy, true) }}:
+  # Destroy infrastructure
+  - job: 'Destroy'
+    dependsOn:
+      - Deploy
+      - Provision
+    displayName: 'Destroy Infrastructure with Terraform'
+    condition: succeededOrFailed()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+    variables:
+      # Use earlier prepared Terraform config
+      terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
+      terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
+      terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
+      terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
+      terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
+
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+      # Assume workspace is empty and re-download secure files
+      - task: DownloadSecureFile@1
+        displayName: 'Download SSL certificate'
+        inputs:
+          secureFile: '$(TF_VAR_vanity_certificate_path)'
+
+      - task: DownloadSecureFile@1
+        displayName: 'Download VPN root certificate'
+        inputs:
+          secureFile: '$(TF_VAR_vpn_root_cert_file)'
           
-          # Request page
-          Invoke-WebRequest $(appUrl)
-        failOnStderr: true
-        pwsh: true
+      - task: TerraformInstaller@0
+        displayName: 'Use preferred Terraform version'
+        inputs:
+          terraformVersion: '$(terraformVersion)'
 
+      # Terraform will destroy all resources it created, using its backend state
+      - task: AzurePowerShell@4
+        displayName: 'Terraform destroy'
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
+          ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
+          ScriptArguments: '-init -destroy -force -trace $(trace) -parallelism $(parallelism)'
+          FailOnStandardError: true
+          azurePowerShellVersion: LatestVersion
+          pwsh: true
+          workingDirectory: '$(scriptDirectory)'
+        condition: succeededOrFailed()
+        enabled: true
+        env:
+          # Use prepared Terraform environment variables
+          ARM_CLIENT_ID: '$(terraformClientId)'
+          ARM_CLIENT_SECRET: '$(terraformClientSecret)'
+          ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
+          ARM_TENANT_ID: '$(terraformTenantId)'
+          TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
 
-# Destroy infrastructure
-- job: 'Destroy'
-  dependsOn:
-    - Deploy
-    - Provision
-  displayName: 'Destroy Infrastructure with Terraform'
-  condition: succeededOrFailed()
-  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+      # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
+      - task: PowerShell@2
+        displayName: 'Save used Terraform version number with tfenv'
+        inputs:
+          targetType: filePath
+          filePath: '$(scriptDirectory)/get_tf_version.ps1'
+          arguments: ' -version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
+          pwsh: true
+          workingDirectory: '$(scriptDirectory)'
 
-  variables:
-    # Use earlier prepared Terraform config
-    terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
-    terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
-    terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
-    terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-    terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
+      # Publish Initialized Terraform workspace
+      # This workspace can be downloaded as artifacts in a release pipeline. 
+      # That release pipeline will than run with tested versions of Terraform and Terraform providers, without the need for 'terraform init'
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Initialized Terraform workspace'
+        inputs:
+          artifact: drop
 
-  pool:
-    vmImage: 'ubuntu-latest'
+- ${{ if eq(parameters.destroy, true) }}:
+  # Clean up resources, in the event 'terraform destroy' fails   
+  - job: 'CleanUp'
+    dependsOn:
+      - Provision
+      - Reprovision
+      - Destroy
+    displayName: 'Clean Up'
+    # Run if Terraform destroy failed, or the whole pipeline was canceled
+    condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
-  steps:
-    # Assume workspace is empty and re-download secure files
-    - task: DownloadSecureFile@1
-      displayName: 'Download SSL certificate'
-      inputs:
-        secureFile: '$(TF_VAR_vanity_certificate_path)'
+    variables:
+      # Use earlier prepared Terraform config
+      terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
+      terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
+      terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
+      terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
+      terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
 
-    - task: DownloadSecureFile@1
-      displayName: 'Download VPN root certificate'
-      inputs:
-        secureFile: '$(TF_VAR_vpn_root_cert_file)'
-        
-    - task: TerraformInstaller@0
-      displayName: 'Use preferred Terraform version'
-      inputs:
-        terraformVersion: '$(terraformVersion)'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-    # Terraform will destroy all resources it created, using its backend state
-    - task: AzurePowerShell@4
-      displayName: 'Terraform destroy'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        # tf_deploy.ps1 is a wrapper around, and invokes, Terraform
-        ScriptPath: '$(scriptDirectory)/tf_deploy.ps1'
-        ScriptArguments: '-init -destroy -force -trace $(trace) -parallelism $(parallelism)'
-        FailOnStandardError: true
-        azurePowerShellVersion: LatestVersion
-        pwsh: true
-        workingDirectory: '$(scriptDirectory)'
-      condition: succeededOrFailed()
-      enabled: true
-      env:
-        # Use prepared Terraform environment variables
-        ARM_CLIENT_ID: '$(terraformClientId)'
-        ARM_CLIENT_SECRET: '$(terraformClientSecret)'
-        ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
-        ARM_TENANT_ID: '$(terraformTenantId)'
-        TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
+    workspace:
+      clean: all
 
-    # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
-    - task: PowerShell@2
-      displayName: 'Save used Terraform version number with tfenv'
-      inputs:
-        targetType: filePath
-        filePath: '$(scriptDirectory)/get_tf_version.ps1'
-        arguments: ' -version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
-        pwsh: true
-        workingDirectory: '$(scriptDirectory)'
+    steps:
+      - task: AzureResourceGroupDeployment@2
+        displayName: 'Tear down IaaS App resource group'
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          action: DeleteRG
+          resourceGroupName: '$(iaasResourceGroup)'
+        continueOnError: true
+        condition: succeededOrFailed()
+        enabled: false # rely on tf_clear_state.ps1
 
-    # Publish Initialized Terraform workspace
-    # This workspace can be downloaded as artifacts in a release pipeline. 
-    # That release pipeline will than run with tested versions of Terraform and Terraform providers, without the need for 'terraform init'
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish Initialized Terraform workspace'
-      inputs:
-        artifact: drop
+      - task: AzureResourceGroupDeployment@2
+        displayName: 'Tear down PaaS App resource group'
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          action: DeleteRG
+          resourceGroupName: '$(paasResourceGroup)'
+        continueOnError: true
+        condition: succeededOrFailed()
+        enabled: false # rely on tf_clear_state.ps1
 
+      - task: AzureResourceGroupDeployment@2
+        displayName: 'Tear down VDC resource group'
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          action: DeleteRG
+          resourceGroupName: '$(vdcResourceGroup)'
+        continueOnError: true
+        condition: succeededOrFailed()
+        enabled: false # rely on tf_clear_state.ps1
 
-# Clean up resources, in the event 'terraform destroy' fails   
-- job: 'CleanUp'
-  dependsOn:
-    - Provision
-    - Reprovision
-    - Destroy
-  displayName: 'Clean Up'
-  # Run if Terraform destroy failed, or the whole pipeline was canceled
-  condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
-  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+      - task: TerraformInstaller@0
+        displayName: 'Use preferred Terraform version'
+        inputs:
+          terraformVersion: '$(terraformVersion)'
+        condition: always()
 
-  variables:
-    # Use earlier prepared Terraform config
-    terraformClientId: $[ dependencies.Provision.outputs['terraformConfig.clientId'] ]
-    terraformClientSecret: $[ dependencies.Provision.outputs['terraformConfig.clientSecret'] ]
-    terraformSubscriptionId: $[ dependencies.Provision.outputs['terraformConfig.subscriptionId'] ]
-    terraformTenantId: $[ dependencies.Provision.outputs['terraformConfig.tenantId'] ]
-    terraformVersion: $[ dependencies.Provision.outputs['terraformConfig.version'] ]
-
-  pool:
-    vmImage: 'ubuntu-latest'
-
-  workspace:
-    clean: all
-
-  steps:
-    - task: AzureResourceGroupDeployment@2
-      displayName: 'Tear down IaaS App resource group'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        action: DeleteRG
-        resourceGroupName: '$(iaasResourceGroup)'
-      continueOnError: true
-      condition: succeededOrFailed()
-      enabled: false # rely on tf_clear_state.ps1
-
-    - task: AzureResourceGroupDeployment@2
-      displayName: 'Tear down PaaS App resource group'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        action: DeleteRG
-        resourceGroupName: '$(paasResourceGroup)'
-      continueOnError: true
-      condition: succeededOrFailed()
-      enabled: false # rely on tf_clear_state.ps1
-
-    - task: AzureResourceGroupDeployment@2
-      displayName: 'Tear down VDC resource group'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        action: DeleteRG
-        resourceGroupName: '$(vdcResourceGroup)'
-      continueOnError: true
-      condition: succeededOrFailed()
-      enabled: false # rely on tf_clear_state.ps1
-
-    - task: TerraformInstaller@0
-      displayName: 'Use preferred Terraform version'
-      inputs:
-        terraformVersion: '$(terraformVersion)'
-      condition: always()
-
-    # Clear Terraform workspace, just in case
-    # As a last resort, this also destroys any resources that may not have deleted before
-    - task: AzurePowerShell@4
-      displayName: 'Clear Terraform workspace'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        ScriptType: 'InlineScript'
-        Inline: |
-          $(scriptDirectory)/tf_deploy.ps1 -init -trace $(trace)
-          $(scriptDirectory)/tf_clear_state.ps1 -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
-        FailOnStandardError: true
-        azurePowerShellVersion: 'LatestVersion'
-        pwsh: true
-        workingDirectory: '$(scriptDirectory)'
-      condition: always()
-      env:
-        # Use prepared Terraform environment variables
-        ARM_CLIENT_ID: '$(terraformClientId)'
-        ARM_CLIENT_SECRET: '$(terraformClientSecret)'
-        ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
-        ARM_TENANT_ID: '$(terraformTenantId)'
+      # Clear Terraform workspace, just in case
+      # As a last resort, this also destroys any resources that may not have deleted before
+      - task: AzurePowerShell@4
+        displayName: 'Clear Terraform workspace'
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          ScriptType: 'InlineScript'
+          Inline: |
+            $(scriptDirectory)/tf_deploy.ps1 -init -trace $(trace)
+            $(scriptDirectory)/tf_clear_state.ps1 -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
+          FailOnStandardError: true
+          azurePowerShellVersion: 'LatestVersion'
+          pwsh: true
+          workingDirectory: '$(scriptDirectory)'
+        condition: always()
+        env:
+          # Use prepared Terraform environment variables
+          ARM_CLIENT_ID: '$(terraformClientId)'
+          ARM_CLIENT_SECRET: '$(terraformClientSecret)'
+          ARM_SUBSCRIPTION_ID: '$(terraformSubscriptionId)'
+          ARM_TENANT_ID: '$(terraformTenantId)'
