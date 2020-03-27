@@ -302,7 +302,6 @@ jobs:
     dependsOn:
       - Prepare
       - Provision
-      - Reprovision
     displayName: 'Deploy & Test PaaS Application'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
