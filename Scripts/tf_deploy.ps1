@@ -9,7 +9,7 @@
     E.g. terraform might need resources to be started before executing, and resources may not be accessible from the current locastion (IP address).
 
 .EXAMPLE
-    ./tf_deploy.ps1 -apply
+    ./tf_deploy.ps1 -apply -Workspace default
 #> 
 
 ### Arguments
