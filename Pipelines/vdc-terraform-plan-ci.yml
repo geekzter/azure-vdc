@@ -154,5 +154,3 @@ jobs:
         useGlobalConfig: true
         failOnStandardError: true
         workingDirectory: '$(scriptDirectory)'
-      env:
-        TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
