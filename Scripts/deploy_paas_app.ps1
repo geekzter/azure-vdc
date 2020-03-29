@@ -140,7 +140,7 @@ function ImportDatabase (
     if (!$sqlFWRule) {
         # Remove SQL Firewall rule
         Write-Verbose "Removing SQL Server ${SqlServer} Firewall rule $sqlFWRuleName ..."
-        az sql server firewall-rule delete -g $appResourceGroup -s $SqlServer -n $sqlFWRuleName
+        az sql server firewall-rule delete -g $appResourceGroup -s $SqlServer -n $sqlFWRuleName -o none
     }
 }
 function ResetDatabasePassword (
@@ -152,7 +152,7 @@ function ResetDatabasePassword (
     # Reset admin password
     Write-Information "Database ${SqlServer}/${SqlDatabaseName}: resetting admin password"
     $dbaPassword = New-Guid | Select-Object -ExpandProperty Guid
-    $null = az sql server update --admin-password $dbaPassword --resource-group $ResourceGroup --name $SqlServer 
+    az sql server update --admin-password $dbaPassword --resource-group $ResourceGroup --name $SqlServer -o none
     
     $securePassword = ConvertTo-SecureString $dbaPassword -AsPlainText -Force
     $securePassword.MakeReadOnly()
