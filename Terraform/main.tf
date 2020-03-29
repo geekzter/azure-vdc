@@ -95,11 +95,3 @@ data "http" "localpublicprefix" {
 # Get public IP prefix of the machine running this terraform template
   url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${chomp(data.http.localpublicip.body)}"
 }
-
-# Automation account, used for runbooks
-resource "azurerm_automation_account" "automation" {
-  name                         = "${azurerm_resource_group.vdc_rg.name}-automation"
-  location                     = local.automation_location
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  sku_name                     = "Basic"
-}

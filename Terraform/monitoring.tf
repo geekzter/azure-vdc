@@ -180,7 +180,8 @@ resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
 }
 
 locals {
-  network_watcher_name         = "NetworkWatcher_${var.location}"
+  #network_watcher_name         = "NetworkWatcher_${var.location}"
+  network_watcher_name         = "${var.location}-watcher"
   network_watcher_resource_group = "NetworkWatcherRG"
 }
 

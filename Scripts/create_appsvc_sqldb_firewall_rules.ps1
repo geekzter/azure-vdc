@@ -17,12 +17,15 @@ $ruleNamePrefix = "AllowAppService"
 
 # Remove existing rules
 Write-Host "Removing existing Firewall rules for $SqlServerName matching '$ruleNamePrefix'..."
-Get-AzSqlServerFirewallRule -ServerName $SqlServerName -ResourceGroupName $ResourceGroupName | Where-Object -Property FirewallRuleName -match $ruleNamePrefix | Remove-AzSqlServerFirewallRule -Force | Select-Object -ExpandProperty StartIpAddress
+az sql server firewall-rule list -g $ResourceGroupName -s $SqlServerName --query "[?starts_with(name,'$ruleNamePrefix')].id" -o tsv | Tee-Object -Variable sqlFWRuleIDs
+if ($sqlFWRuleIDs) {
+    az sql server firewall-rule delete --ids $sqlFWRuleIDs -o none
+}
 
 $index = 1
 foreach ($ipAddress in $OutboundIPAddresses) {
-    $ruleName = "${ruleNamePrefix}$index"
-    Write-Host "Creating Firewall rule $ruleName for $SqlServerName to allow $ipAddress..."
-    $rule = New-AzSqlServerFirewallRule -FirewallRuleName $ruleName -StartIpAddress $ipAddress -EndIpAddress $ipAddress -ServerName $SqlServerName -ResourceGroupName $ResourceGroupName
+    $sqlFWRuleName = "${ruleNamePrefix}$index"
+    Write-Host "Creating Firewall rule $sqlFWRuleName for $SqlServerName to allow... " -NoNewLine
+    az sql server firewall-rule create -g $ResourceGroupName -s $SqlServerName -n $sqlFWRuleName --start-ip-address $ipAddress --end-ip-address $ipAddress --query "startIpAddress" -o tsv
     $index++
 }

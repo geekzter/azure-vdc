@@ -9,7 +9,7 @@ location                       = "westeurope"
 workspace_location             = "westeurope"
 
 deploy_app_service_network_integration = true
-deploy_auto_shutdown           = false
+deploy_auto_shutdown           = true
 deploy_network_watcher         = false
 deploy_non_essential_vm_extensions = false
 deploy_managed_bastion         = false
