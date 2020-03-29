@@ -52,17 +52,17 @@ Write-Host "Public IP prefix is $ipPrefix"
 # Punch hole in PaaS Firewalls
 if ($appStorageAccount) {
     Write-Host "Adding rule for storage account $appStorageAccount to allow address $ipAddress..."
-    az storage account network-rule add -g $appResourceGroup --account-name $appStorageAccount --ip-address $ipAddress -o tsv
+    az storage account network-rule add -g $appResourceGroup --account-name $appStorageAccount --ip-address $ipAddress -o none
     Write-Host "Adding rule for storage account $appStorageAccount to allow prefix $ipPrefix..."
-    az storage account network-rule add -g $appResourceGroup --account-name $appStorageAccount --ip-address $ipPrefix -o tsv
+    az storage account network-rule add -g $appResourceGroup --account-name $appStorageAccount --ip-address $ipPrefix -o none
 }
 if ($appEventHubNamespace) {
     Write-Host "Adding rule for event hub $appEventHubNamespace to allow address $ipAddress..."
-    az eventhubs namespace network-rule add -g $appResourceGroup --namespace-name $appEventHubNamespace --ip-address $ipAddress --action Allow -o tsv
+    az eventhubs namespace network-rule add -g $appResourceGroup --namespace-name $appEventHubNamespace --ip-address $ipAddress --action Allow -o none
     Write-Host "Adding rule for event hub $appEventHubNamespace to allow prefix $ipPrefix..."
-    az eventhubs namespace network-rule add -g $appResourceGroup --namespace-name $appEventHubNamespace --ip-address $ipPrefix --action Allow -o tsv
+    az eventhubs namespace network-rule add -g $appResourceGroup --namespace-name $appEventHubNamespace --ip-address $ipPrefix --action Allow -o none
 }
 if ($appSQLServer) {
     Write-Host "Adding rule for SQL Server $appSQLServer to allow address $ipAddress... "
-    az sql server firewall-rule create -g $appResourceGroup -s $appSQLServer -n "LetMeInRule $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress -o tsv
+    az sql server firewall-rule create -g $appResourceGroup -s $appSQLServer -n "LetMeInRule $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress -o none
 }

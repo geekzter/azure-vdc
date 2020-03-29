@@ -1,26 +1,41 @@
 function AzLogin (
     [parameter(Mandatory=$false)][switch]$AsUser
 ) {
-    if(!($subscription)) { Throw "You must supply a value for subscription" }
-    if(!($tenantid)) { Throw "You must supply a value for tenantid" }
-    if (!(Get-AzContext)) {
-        Write-Host "Reconnecting to Azure with SPN..."
-        if ($AsUser) {
-            Connect-AzAccount -Tenant $tenantid -Subscription $subscription
+    # Azure CLI
+    if ($(az ad signed-in-user show -o none 2>&1)) {
+        if ($env:ARM_TENANT_ID) {
+            az login -t $env:ARM_TENANT_ID -o tsv
         } else {
-            if(!($clientid)) { Throw "You must supply a value for clientid" }
-            if(!($clientsecret)) { Throw "You must supply a value for clientsecret" }
-                    # Use Terraform ARM Backend config to authenticate to Azure
-            $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-            $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-            $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
+            az login -o tsv
         }
-    } else {
-        if ($AsUser -and ((Get-AzContext).Account.Type -ine "User")) {
-            $null = Connect-AzAccount -Subscription $subscription -Tenant $tenantid -Confirm
-        } 
     }
-    $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
+    if ($env:ARM_SUBSCRIPTION_ID) {
+        az account set -s $env:ARM_SUBSCRIPTION_ID -o tsv
+    }
+
+    # PowerShell Az
+    # if (Get-Command Connect-AzAccount -ErrorAction SilentlyContinue) {
+    #     if(!($subscription)) { Throw "You must supply a value for subscription" }
+    #     if(!($tenantid)) { Throw "You must supply a value for tenantid" }
+    #     if (!(Get-AzContext)) {
+    #         Write-Host "Reconnecting PowerShell Az with SPN..."
+    #         if ($AsUser) {
+    #             Connect-AzAccount -Tenant $tenantid -Subscription $subscription
+    #         } else {
+    #             if(!($clientid)) { Throw "You must supply a value for clientid" }
+    #             if(!($clientsecret)) { Throw "You must supply a value for clientsecret" }
+    #                     # Use Terraform ARM Backend config to authenticate to Azure
+    #             $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
+    #             $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
+    #             $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
+    #         }
+    #     } else {
+    #         if ($AsUser -and ((Get-AzContext).Account.Type -ine "User")) {
+    #             $null = Connect-AzAccount -Subscription $subscription -Tenant $tenantid -Confirm
+    #         } 
+    #     }
+    #     $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
+    # }
 }
 
 # From: https://blog.bredvid.no/handling-azure-managed-identity-access-to-azure-sql-in-an-azure-devops-pipeline-1e74e1beb10b

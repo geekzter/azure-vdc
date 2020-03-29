@@ -43,6 +43,8 @@ if (!($Workspace)) { Throw "You must supply a value for Workspace" }
 Write-Host $MyInvocation.line -ForegroundColor Green
 PrintCurrentBranch
 
+AzLogin
+
 ### Main routine
 # Configure instrumentation
 Set-PSDebug -trace $Trace
