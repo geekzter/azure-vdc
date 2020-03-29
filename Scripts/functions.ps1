@@ -2,15 +2,27 @@ function AzLogin (
     [parameter(Mandatory=$false)][switch]$AsUser
 ) {
     # Azure CLI
-    if ($(az ad signed-in-user show -o none 2>&1)) {
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        # Test whether we are logged in
+        $Script:loginError = $(az account show -o none 2>&1)
+        if (!$loginError) {
+            $userType = $(az account show --query "user.type" -o tsv)
+            if ($userType -ieq "user") {
+                # Test whether credentials have expired
+                $Script:userError = $(az ad signed-in-user show -o none 2>&1)
+            }
+        }
+    }
+    if ($loginError -or $userError) {
         if ($env:ARM_TENANT_ID) {
-            az login -t $env:ARM_TENANT_ID -o tsv
+            az login -t $env:ARM_TENANT_ID -o none
         } else {
-            az login -o tsv
+            az login -o none
         }
     }
     if ($env:ARM_SUBSCRIPTION_ID) {
-        az account set -s $env:ARM_SUBSCRIPTION_ID -o tsv
+        az account set -s $env:ARM_SUBSCRIPTION_ID -o none
     }
 
     # PowerShell Az
