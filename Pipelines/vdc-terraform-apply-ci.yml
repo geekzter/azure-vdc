@@ -186,7 +186,7 @@ jobs:
 
       - task: AzurePowerShell@4
         # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
-        name: terraform
+        name: terraformPS
         displayName: 'Terraform init & apply (PowerShell)'
         enabled: false
         inputs:
@@ -208,7 +208,7 @@ jobs:
           TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
       - task: AzureCLI@2
-        name: terraformConfig
+        name: terraform
         displayName: 'Terraform init & apply (Azure CLI)'
         enabled: true
         inputs:
@@ -292,7 +292,7 @@ jobs:
       # Test for failures that only occur when resources already exist
       - task: AzurePowerShell@4
         # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
-        name: terraform
+        name: terraformPS
         displayName: 'Terraform init and apply (re-entrance test) (PowerShell)'
         enabled: false
         inputs:
@@ -314,7 +314,7 @@ jobs:
           TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
       - task: AzureCLI@2
-        name: terraformConfig
+        name: terraform
         displayName: 'Terraform init and apply (re-entrance test) (Azure CLI)'
         enabled: true
         inputs:
