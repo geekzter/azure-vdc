@@ -284,7 +284,7 @@ variable app_database_template_storage_key {
 }
 variable paas_app_storage_import {
   type                         = bool
-  default                      = true
+  default                      = false
 }
 variable management_vm_size {
   description                  = "Specifies the size of the Management virtual machine"
