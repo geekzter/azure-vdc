@@ -86,6 +86,7 @@ rcf/
 *.tfstate.*
 *.tfplan
 *.auto.tfvars
+backend.tf
 terraform.log
 
 # Certificates

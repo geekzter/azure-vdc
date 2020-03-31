@@ -131,8 +131,6 @@ try {
             $sqlServerFQDN = $(terraform output paas_app_sql_server_fqdn       2>$null)
 
             Write-Information "Determening current Azure Active Directory DBA for SQL Server $sqlServerName..."
-            az sql server ad-admin list -g $paasAppResourceGroup -s $sqlServerName
-            
             $dba = az sql server ad-admin list -g $paasAppResourceGroup -s $sqlServerName --query "[?login=='${sqlAADUser}']" -o json | ConvertFrom-Json
             if ($dba) {
                 Write-Host "$($dba.login) is already current Azure Active Directory DBA for SQL Server $sqlServerName"
