@@ -1,26 +1,53 @@
 function AzLogin (
     [parameter(Mandatory=$false)][switch]$AsUser
 ) {
-    if(!($subscription)) { Throw "You must supply a value for subscription" }
-    if(!($tenantid)) { Throw "You must supply a value for tenantid" }
-    if (!(Get-AzContext)) {
-        Write-Host "Reconnecting to Azure with SPN..."
-        if ($AsUser) {
-            Connect-AzAccount -Tenant $tenantid -Subscription $subscription
-        } else {
-            if(!($clientid)) { Throw "You must supply a value for clientid" }
-            if(!($clientsecret)) { Throw "You must supply a value for clientsecret" }
-                    # Use Terraform ARM Backend config to authenticate to Azure
-            $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-            $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-            $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
+    # Azure CLI
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        # Test whether we are logged in
+        $Script:loginError = $(az account show -o none 2>&1)
+        if (!$loginError) {
+            $userType = $(az account show --query "user.type" -o tsv)
+            if ($userType -ieq "user") {
+                # Test whether credentials have expired
+                $Script:userError = $(az ad signed-in-user show -o none 2>&1)
+            }
         }
-    } else {
-        if ($AsUser -and ((Get-AzContext).Account.Type -ine "User")) {
-            $null = Connect-AzAccount -Subscription $subscription -Tenant $tenantid -Confirm
-        } 
     }
-    $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
+    if ($loginError -or $userError) {
+        if ($env:ARM_TENANT_ID) {
+            az login -t $env:ARM_TENANT_ID -o none
+        } else {
+            az login -o none
+        }
+    }
+    if ($env:ARM_SUBSCRIPTION_ID) {
+        az account set -s $env:ARM_SUBSCRIPTION_ID -o none
+    }
+
+    # PowerShell Az
+    # if (Get-Command Connect-AzAccount -ErrorAction SilentlyContinue) {
+    #     if(!($subscription)) { Throw "You must supply a value for subscription" }
+    #     if(!($tenantid)) { Throw "You must supply a value for tenantid" }
+    #     if (!(Get-AzContext)) {
+    #         Write-Host "Reconnecting PowerShell Az with SPN..."
+    #         if ($AsUser) {
+    #             Connect-AzAccount -Tenant $tenantid -Subscription $subscription
+    #         } else {
+    #             if(!($clientid)) { Throw "You must supply a value for clientid" }
+    #             if(!($clientsecret)) { Throw "You must supply a value for clientsecret" }
+    #                     # Use Terraform ARM Backend config to authenticate to Azure
+    #             $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
+    #             $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
+    #             $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
+    #         }
+    #     } else {
+    #         if ($AsUser -and ((Get-AzContext).Account.Type -ine "User")) {
+    #             $null = Connect-AzAccount -Subscription $subscription -Tenant $tenantid -Confirm
+    #         } 
+    #     }
+    #     $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
+    # }
 }
 
 # From: https://blog.bredvid.no/handling-azure-managed-identity-access-to-azure-sql-in-an-azure-devops-pipeline-1e74e1beb10b
@@ -186,27 +213,6 @@ function Invoke (
     Invoke-Expression $cmd
     if ($LASTEXITCODE -ne 0) {
         exit
-    }
-}
-
-function RemoveResourceGroups (
-    [parameter(Mandatory=$false)][object[]]$resourceGroups,
-    [parameter(Mandatory=$false)][bool]$Force=$false
-) {
-    if ($resourceGroups) {
-        $resourceGroupNames = $resourceGroups | Select-Object -ExpandProperty ResourceGroupName
-        if (!$Force) {
-            Write-Host "If you wish to proceed removing these resource groups:`n$resourceGroupNames `nplease reply 'yes' - null or N aborts" -ForegroundColor Cyan
-            $proceedanswer = Read-Host
-            if ($proceedanswer -ne "yes") {
-                Write-Host "`nSkipping $resourceGroupNames" -ForegroundColor Yellow
-                return $false
-            }
-        }
-        $resourceGroups | Remove-AzResourceGroup -AsJob -Force
-        return $true
-    } else {
-        return $false
     }
 }
 

@@ -110,8 +110,7 @@ resource null_resource start_web_vm {
 
   provisioner local-exec {
     # Start VM, so we can execute script through SSH
-    command                    = "Start-AzVm -Id ${azurerm_virtual_machine.app_web_vm[count.index].id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${azurerm_virtual_machine.app_web_vm[count.index].id}"
   }
 
   count                        = var.app_web_vm_number
@@ -149,8 +148,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_gro
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -187,8 +185,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -205,8 +202,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -245,8 +241,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -265,8 +260,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -477,8 +471,7 @@ resource null_resource start_db_vm {
 
   provisioner local-exec {
     # Start VM, so we can execute script through SSH
-    command                    = "Start-AzVm -Id ${azurerm_virtual_machine.app_db_vm[count.index].id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${azurerm_virtual_machine.app_db_vm[count.index].id}"
   }
 
   count                        = var.app_web_vm_number
@@ -509,8 +502,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -547,8 +539,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -572,8 +563,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -605,8 +595,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -632,8 +621,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 

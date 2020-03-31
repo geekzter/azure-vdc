@@ -568,20 +568,6 @@ resource "azurerm_sql_database" "app_sqldb" {
 
   zone_redundant               = true
 
-  # Configure server auditing
-  provisioner "local-exec" {
-    command                    = "Set-AzContext -Subscription ${data.azurerm_subscription.primary.subscription_id} -TenantId ${data.azurerm_client_config.current.tenant_id};Set-AzSqlServerAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
-  }
-
-  # Configure database auditing
-  provisioner "local-exec" {
-    command                    = "Set-AzContext -Subscription ${data.azurerm_subscription.primary.subscription_id} -TenantId ${data.azurerm_client_config.current.tenant_id};Set-AzSqlDatabaseAudit -ServerName ${self.server_name} -ResourceGroupName ${self.resource_group_name} -DatabaseName ${self.name} -LogAnalyticsTargetState Enabled -WorkspaceResourceId ${var.diagnostics_workspace_resource_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
-  }
-
-  # TODO: Zone Redundant
-
   tags                         = var.tags
 } 
 

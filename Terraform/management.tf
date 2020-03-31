@@ -2,7 +2,6 @@ locals {
    mgmt_vm_name                = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"-","")),0,16)}mgmt"
 }
 
-
 resource "azurerm_network_interface" "bas_if" {
   name                         = "${azurerm_resource_group.vdc_rg.name}-bastion-if"
   location                     = azurerm_resource_group.vdc_rg.location
@@ -96,8 +95,7 @@ resource null_resource start_bastion {
 
   provisioner local-exec {
     # Start VM, so we can execute script through SSH
-    command                    = "Start-AzVM -Id ${azurerm_windows_virtual_machine.bastion.id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${azurerm_windows_virtual_machine.bastion.id}"
   }
 }
 
@@ -123,9 +121,8 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
-    when                       = destroy
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+     when                       = destroy
   }
 
   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
@@ -154,8 +151,7 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -199,8 +195,7 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
-    command                    = "Start-AzVM -Id ${self.virtual_machine_id}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
     when                       = destroy
   }
 
@@ -254,22 +249,69 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 # } 
 
 locals {
-  virtual_machine_ids            = concat(module.iis_app.virtual_machine_ids, [azurerm_windows_virtual_machine.bastion.id])
-  virtual_machine_ids_string     = join(",",local.virtual_machine_ids)
+  virtual_machine_ids          = concat(module.iis_app.virtual_machine_ids, [azurerm_windows_virtual_machine.bastion.id])
+  virtual_machine_ids_string   = join(",",local.virtual_machine_ids)
 }
 
-resource null_resource windows_updates {
-  # Create Windows Update Schedule
-  provisioner "local-exec" {
-    command                      = "../Scripts/schedule_vm_updates.ps1 -AutomationAccountName ${azurerm_automation_account.automation.name} -ResourceGroupName ${azurerm_automation_account.automation.resource_group_name} -VMResourceId ${local.virtual_machine_ids_string} -Frequency Daily -StartTime ${var.update_management_time}"
-    interpreter                  = ["pwsh", "-nop", "-Command"]
-  }
-
-  depends_on                     =[
-                                    azurerm_log_analytics_linked_service.automation,
-                                    azurerm_log_analytics_solution.oms_solutions,
-#                                   azurerm_virtual_machine_extension.bastion_monitor,
-#                                   module.iis_app.monitoring_agent_ids,
-                                    module.iis_app
-                                  ]
+# Automation account, used for runbooks
+resource "azurerm_automation_account" "automation" {
+  name                         = "${azurerm_resource_group.vdc_rg.name}-automation"
+  location                     = local.automation_location
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  sku_name                     = "Basic"
 }
+
+resource "azurerm_automation_schedule" "daily" {
+  name                         = "${azurerm_automation_account.automation.name}-daily"
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  automation_account_name      = azurerm_automation_account.automation.name
+  frequency                    = "Day"
+  interval                     = 1
+  # https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms912391(v=winembedded.11)?redirectedfrom=MSDN
+  timezone                     = "Europe/Amsterdam"
+  start_time                   = timeadd(timestamp(), "1h30m")
+  description                  = "Daily schedule"
+}
+
+# Disable until there is an Azure CLI equivalent to New-AzAutomationSoftwareUpdateConfiguration
+# https://github.com/Azure/azure-cli/issues/5403
+# https://github.com/Azure/azure-cli/issues/12761
+# resource null_resource windows_updates {
+#   # Create Windows Update Schedule
+#   provisioner "local-exec" {
+#     command                      = "../Scripts/schedule_vm_updates.ps1 -AutomationAccountName ${azurerm_automation_account.automation.name} -ResourceGroupName ${azurerm_automation_account.automation.resource_group_name} -VMResourceId ${local.virtual_machine_ids_string} -Frequency Daily -StartTime ${var.update_management_time}"
+#     interpreter                  = ["pwsh", "-nop", "-Command"]
+#   }
+
+#   depends_on                     =[
+#                                     azurerm_log_analytics_linked_service.automation,
+#                                     azurerm_log_analytics_solution.oms_solutions,
+# #                                   azurerm_virtual_machine_extension.bastion_monitor,
+# #                                   module.iis_app.monitoring_agent_ids,
+#                                     module.iis_app
+#                                   ]
+# }
+
+# Configure function resources with ARM template as Terraform doesn't (yet) support this
+# https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
+# resource "azurerm_template_deployment" "update_management" {
+#   name                         = "${azurerm_automation_account.automation.name}-updates"
+#   resource_group_name          = azurerm_resource_group.vdc_rg.name
+#   deployment_mode              = "Incremental"
+
+#   template_body                = file("${path.module}/tmpew.json")
+#   # template_body                = file("${path.module}/updatemanagement.json")
+#   # parameters                   = {
+#   #   automationName             = azurerm_automation_account.automation.name
+#   #   startTime                  = timeadd(timestamp(), "1h30m")
+#   #   virtualMachineIdsString    = join(",", local.virtual_machine_ids)
+#   # }
+
+#   depends_on                   = [
+#                                  azurerm_log_analytics_linked_service.automation,
+#                                  azurerm_log_analytics_solution.oms_solutions,
+# #                                azurerm_virtual_machine_extension.bastion_monitor,
+# #                                module.iis_app.monitoring_agent_ids,
+#                                  module.iis_app
+#                                  ]
+# }

@@ -18,20 +18,13 @@ param (
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
     [parameter(Mandatory=$false)][int]$TimeoutMinutes=5,
-    [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
-    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
-    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
-    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
-    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
+    [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 )
 if (!($Workspace)) { Throw "You must supply a value for Workspace" }
 
 $application = "Automated VDC"
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
-
-# Log on to Azure if not already logged on
-AzLogin
 
 try {
     Push-Location $tfdirectory
@@ -63,42 +56,43 @@ try {
 }
 
 if ($Destroy) {
-    AzLogin
-
+    if (!$Force) {
+        Write-Host "If you wish to proceed removing resources? `nplease reply 'yes' - null or N aborts" -ForegroundColor Cyan
+        $proceedanswer = Read-Host
+        if ($proceedanswer -ne "yes") {
+            exit
+        }
+    }
+    $jobs = @()
     # Remove resource groups 
     # Async operation, as they have unique suffixes that won't clash with new deployments
     Write-Host "Removing VDC resource groups (async)..."
-    $resourceGroups = Get-AzResourceGroup -Tag @{workspace=$Workspace}
-    $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
-    if ((RemoveResourceGroups $resourceGroups -Force $Force)) {
-        $stopWatch.Start()
-    } else {
-        Write-Host "No resource group found to delete for workspace $Workspace"
+    $resourceGroupIDs = $(az group list --query "[?tags.workspace == '${Workspace}' && tags.application == '${application}'].id" -o tsv)
+    if ($resourceGroupIDs) {
+        $jobs += Start-Job -Name "Remove ResourceGroups" -ScriptBlock {az resource delete --ids $args} -ArgumentList $resourceGroupIDs
     }
 
     # Remove resources in the NetworkWatcher resource group
     Write-Host "Removing VDC network watchers from shared resource group 'NetworkWatcherRG' (async)..."
-    $resources = Get-AzResource -ResourceGroupName "NetworkWatcherRG" -Tag @{workspace=$Workspace}
-    $resources | Remove-AzResource -Force -AsJob
+    $resourceIDs = $(az resource list -g NetworkWatcherRG --query "[?tags.workspace == '${Workspace}' && tags.application == '${application}'].id" -o tsv)
+    if ($resourceIDs) {
+        $jobs += Start-Job -Name "Remove Resources from NetworkWatcherRG" -ScriptBlock {az resource delete --ids $args} -ArgumentList $resourceIDs
+    }
 
     # Remove DNS records using tags expressed as record level metadata
     # Synchronous operation, as records will clash with new deployments
     Write-Host "Removing VDC records from shared DNS zone (sync)..."
-    foreach ($dnsZone in $(Get-AzDnsZone)) {
-        Write-Verbose "Processing zone '$($dnsZone.Name)'..."
-        $dnsRecords = Get-AzDnsRecordSet -Zone $dnsZone
-        foreach ($dnsRecord in $dnsRecords) {
-            Write-Verbose "Processing record '$($dnsRecord.Name).$($dnsZone.Name)'..."
-            if ($dnsRecord.Metadata -and `
-                $dnsRecord.Metadata["application"] -eq $application -and `
-                $dnsRecord.Metadata["workspace"] -eq $Workspace) {
-                Write-Information "Removing record '$($dnsRecord.Name).$($dnsZone.Name)'..."
-                Remove-AzDnsRecordSet -RecordSet $dnsRecord
-            }
+    $dnsZones = $(az network dns zone list | ConvertFrom-Json)
+    foreach ($dnsZone in $dnsZones) {
+        Write-Verbose "Processing zone '$($dnsZone.name)'..."
+        $dnsResourceIDs = $(az network dns record-set list -g $dnsZone.resourceGroup -z $dnsZone.name --query "[?metadata.workspace == '${Workspace}' && metadata.application == '${application}'].id" -o tsv)
+        if ($dnsResourceIDs) {
+            az resource delete --ids $dnsResourceIDs -o none
+            #$jobs += Start-Job -Name "Remove Resources from DNS Zone $($dnsZone.name)" -ScriptBlock {az resource delete --ids $args} -ArgumentList $dnsResourceIDs
         }
     }
 
-    $jobs = Get-Job | Where-Object {$_.Command -match "Remove-Az"}
+    #$jobs = Get-Job | Where-Object {$_.Command -match "Remove"}
     $jobs | Format-Table -Property Id, Name, State
     if ($Wait -and $jobs) {
         # Waiting for async operations to complete
