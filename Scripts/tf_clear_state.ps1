@@ -88,11 +88,9 @@ if ($Destroy) {
         $dnsResourceIDs = $(az network dns record-set list -g $dnsZone.resourceGroup -z $dnsZone.name --query "[?metadata.workspace == '${Workspace}' && metadata.application == '${application}'].id" -o tsv)
         if ($dnsResourceIDs) {
             az resource delete --ids $dnsResourceIDs -o none
-            #$jobs += Start-Job -Name "Remove Resources from DNS Zone $($dnsZone.name)" -ScriptBlock {az resource delete --ids $args} -ArgumentList $dnsResourceIDs
         }
     }
 
-    #$jobs = Get-Job | Where-Object {$_.Command -match "Remove"}
     $jobs | Format-Table -Property Id, Name, State
     if ($Wait -and $jobs) {
         # Waiting for async operations to complete

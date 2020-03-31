@@ -43,18 +43,19 @@ try {
         # Start bastion
         if ($bastionName) {
             Write-Host "`nStarting bastion" -ForegroundColor Green 
-            Get-AzVM -Name $bastionName -ResourceGroupName $vdcResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM -AsJob
+            $null = Start-Job -Name "Start Bastion" -ScriptBlock {az vm start --ids $(az vm list -g $args --query "[?powerState!='VM running'].id" -o tsv)} -ArgumentList $vdcResourceGroup
         }
     }
 
     if ($All -or $Network) {
         # Punch hole in PaaS Firewalls
         Write-Host "`nPunch hole in PaaS Firewalls" -ForegroundColor Green 
-        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
+        # TODO
+        #& (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
 
         # Get public IP address
         Write-Host "`nPunch hole in Azure Firewall (for bastion)" -ForegroundColor Green 
-        $ipAddress=$(Invoke-RestMethod https://ipinfo.io/ip) # Ipv4
+        $ipAddress=$(Invoke-RestMethod https://ipinfo.io/ip) -replace "\n","" # Ipv4
         Write-Host "Public IP address is $ipAddress"
 
         # Get block(s) the public IP address belongs to
@@ -72,30 +73,37 @@ try {
         $azFWNATRulesName = "$azFWName-letmein-rules"
         $bastionAddress = $(terraform output "bastion_address" 2>$null)
         $rdpPort = $(terraform output "bastion_rdp_port" 2>$null)
+        $bastionRuleName = "AllowInboundRDP from $ipPrefix"
 
-        $azFW = Get-AzFirewall -Name $azFWName -ResourceGroupName $vdcResourceGroup
-        $bastionRule = New-AzFirewallNatRule -Name "AllowInboundRDP from $ipPrefix" -Protocol "TCP" -SourceAddress $ipPrefix -DestinationAddress $azFWPublicIPAddress -DestinationPort $rdpPort -TranslatedAddress $bastionAddress -TranslatedPort "3389"
-
-        try {
-            $ruleCollection = $azFW.GetNatRuleCollectionByName($azFWNATRulesName) 2>$null
-        } catch {
-            $ruleCollection = $null
-        }
+        $ruleCollection = az network firewall nat-rule collection list -f $azFWName -g $vdcResourceGroup --query "[?name=='$azFWNATRulesName']" -o tsv
         if ($ruleCollection) {
-            Write-Host "NAT Rule collection $azFWNATRulesName found, adding bastion rule..."
-            $existingBastionRule = $ruleCollection.Rules | Where-Object {$_.Name -ieq $bastionRule.Name}
-            if ($existingBastionRule) {
-                $ruleCollection.RemoveRuleByName($bastionRule.Name)
-            }
-            $ruleCollection.AddRule($bastionRule)
-        } else {
-            Write-Host "NAT Rule collection $azFWNATRulesName not found, creating with bastion rule..."
-            $ruleCollection = New-AzFirewallNatRuleCollection -Name $azFWNATRulesName -Priority 109 -Rule $bastionRule
-            $azFw.AddNatRuleCollection($ruleCollection)
-        }
+            $bastionRule = az network firewall nat-rule list -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup --query "rules[?name=='$bastionRuleName']" 
 
-        Write-Host "Updating Azure Firewall $azFWName..."
-        $null = Set-AzFirewall -AzureFirewall $azFW
+            if ($bastionRule) {
+                Write-Host "NAT Rule collection $azFWNATRulesName found, rule '$bastionRuleName' already exists"
+
+            } else {
+                Write-Host "NAT Rule collection $azFWNATRulesName found, adding bastion rule '$bastionRuleName'..."
+                az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $bastionRuleName `
+                                    --protocols TCP `
+                                    --source-addresses $ipPrefix `
+                                    --destination-addresses $azFWPublicIPAddress `
+                                    --destination-ports $rdpPort `
+                                    --translated-port 3389 `
+                                    --translated-address $bastionAddress
+            }
+        } else {
+            Write-Host "NAT Rule collection $azFWNATRulesName not found, creating with bastion rule '$bastionRuleName '..."
+            az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $bastionRuleName `
+                                --protocols TCP `
+                                --source-addresses $ipPrefix `
+                                --destination-addresses $azFWPublicIPAddress `
+                                --destination-ports $rdpPort `
+                                --translated-port 3389 `
+                                --translated-address $bastionAddress `
+                                --priority 109 `
+                                --action Dnat
+        }
     }
 
     if ($All -or $SqlServer -or $GrantMSIAccess) {
@@ -103,13 +111,13 @@ try {
         $maxTries = 2
         do {
             $tries++
-            $loggedInAccount = (Get-AzContext).Account
-            if ($loggedInAccount.Type -eq "User") {
-                $sqlAADUser = $loggedInAccount.Id
+            $user = az account show --query "user" | ConvertFrom-Json
+            if ($user.type -ieq "user") {
+                $sqlAADUser = $user.name
             } else {
-                Write-Host "Current user $($loggedInAccount.Id) is a $($loggedInAccount.Type), Set-AzSqlServerActiveDirectoryAdministrator will likely fail (unless Service Principal has sufficient Graph access)." 
+                Write-Host "Current user $($user.name) is a $($user.type), setting SQL Server Active Directory Administrator will likely fail (unless identity has sufficient Graph access)." 
                 Write-Host "Prompting for Azure credentials to be able to switch AAD Admin..."
-                AzLogin -AsUser
+                AzLogin
             }
         } while ([string]::IsNullOrEmpty($sqlAADUser) -and ($tries -lt $maxTries))
 
@@ -123,18 +131,14 @@ try {
             $sqlServerFQDN = $(terraform output paas_app_sql_server_fqdn       2>$null)
 
             Write-Information "Determening current Azure Active Directory DBA for SQL Server $sqlServerName..."
-            $dba = Get-AzSqlServerActiveDirectoryAdministrator -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
-            if ($dba.DisplayName -ine $sqlAADUser) {
-                Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is current Azure Active Directory DBA for SQL Server $sqlServerName"
-                $previousDBAName = $dba.DisplayName
-                $previousDBAObjectId = $dba.ObjectId
-                $previousDBA = $dba
-                Write-Host "Replacing $($dba.DisplayName) with $sqlAADUser as Azure Active Directory DBA for SQL Server $sqlServerName..."
-                # BUG: Forbidden when logged in with Service Principal
-                $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $sqlAADUser -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
-                Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is now Azure Active Directory DBA for SQL Server $sqlServerName"
+            az sql server ad-admin list -g $paasAppResourceGroup -s $sqlServerName
+            
+            $dba = az sql server ad-admin list -g $paasAppResourceGroup -s $sqlServerName --query "[?login=='${sqlAADUser}']" -o json | ConvertFrom-Json
+            if ($dba) {
+                Write-Host "$($dba.login) is already current Azure Active Directory DBA for SQL Server $sqlServerName"
             } else {
-                Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is already current Azure Active Directory DBA for SQL Server $sqlServerName"
+                $dba = az sql server ad-admin create -u "ericvan@microsoft.com" -i "115c3ab3-943b-4e0c-96ed-1a1763fbaa44" -g $paasAppResourceGroup -s $sqlServerName -o json | ConvertFrom-Json
+                Write-Host "$($dba.login) is now Azure Active Directory DBA for SQL Server $sqlServerName"
             }
 
             if ($GrantMSIAccess) {
@@ -144,17 +148,6 @@ try {
                     $msiSID = ConvertTo-Sid $msiClientId
                     $query = (Get-Content $queryFile) -replace "@msi_name",$msiName -replace "@msi_sid",$msiSID -replace "\-\-.*$",""
                     sqlcmd -S $sqlServerFQDN -d $sqlDB -Q "$query" -G -U $sqlAADUser
-                    if ($LASTEXITCODE -ne 0) {
-                        Write-Host "Sign-in dialog aborted/cancelled" -ForegroundColor Yellow
-                        if ($previousDBAName) {
-                            # Revert DBA change back to where we started
-                            Write-Host "Replacing $($dba.DisplayName) ($($dba.ObjectId)) back to $previousDBAName ($previousDBAObjectId) as Azure Active Directory DBA for SQL Server $sqlServerName..."                                      # BUG: Set-AzSqlServerActiveDirectoryAdministrator : Cannot find the Azure Active Directory object 'GeekzterAutomator'. Please make sure that the user or group you are authorizing is you are authorizing is registered in the current subscription's Azure Active directory
-                            $dba = Set-AzSqlServerActiveDirectoryAdministrator -DisplayName $previousDBAName -ObjectId $previousDBAObjectId -ServerName $sqlServerName -ResourceGroupName $paasAppResourceGroup
-                            Write-Host "$($dba.DisplayName) ($($dba.ObjectId)) is now Azure Active Directory DBA for SQL Server $sqlServerName"
-                        }
-                    } else {
-                        Write-Host "Added Managed Identity $msiName to $sqlServerName/$sqlDB"
-                    }
                 } else {
                     Write-Host "Unfortunately sqlcmd (currently) only supports AAD MFA login on Windows, skipping SQL Server access configuration" -ForegroundColor Yellow
                 }
@@ -180,7 +173,7 @@ try {
 
     # Wait for bastion to start
     if ((($All -or $StartBastion) -and $wait) -or $ConnectBastion) {
-        Get-AzVM -Name $bastionName -ResourceGroupName $vdcResourceGroup -Status | Where-Object {$_.PowerState -notmatch "running"} | Start-AzVM   
+        az vm start --ids $(az vm list -g $vdcResourceGroup --query "[?powerState!='VM running'].id" -o tsv)
     }
     
     # Set up RDP session to Bastion

@@ -58,6 +58,7 @@ if (!$VMResourceId) {
 $duration = New-TimeSpan -Hours 2
 $scheduleName = "$Frequency at $StartTime" -Replace ":",""
 Write-Verbose "Creating Automation Schedule '$scheduleName'..."
+# TODO: Replace with azure cli once possible, https://github.com/Azure/azure-cli/issues/12761
 if ($Frequency -ieq "Once") {
   $schedule = New-AzAutomationSchedule -ResourceGroupName $ResourceGroupName `
                                                   -AutomationAccountName $AutomationAccountName `

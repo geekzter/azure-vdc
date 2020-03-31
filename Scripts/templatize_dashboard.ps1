@@ -67,16 +67,9 @@ if ($InputFile) {
     $template = $($template | jq '.properties') # Use jq, ConvertFrom-Json does not parse properly
 } else {
     Write-Host "Retrieving resource $dashboardID..." -ForegroundColor Green
-    # This doesn't export full JSON
-    # Get-AzResource -ResourceId $dashboardID -ExpandProperties
-    # Resource Graph doesn't export full JSON either
-    # $dashboardQuery  = "Resources | where type == `"microsoft.portal/dashboards`" and id == `"$dashboardID`" | project properties"
-    # Write-Host "Executing Graph Query:`n$dashboardQuery" -ForegroundColor Green
-    # $dashboardProperties = Search-AzGraph -Query $dashboardQuery -Subscription $subscription
-    # HACK: Use Azure CLI instead
-    $dashboardProperties = az resource show --ids $dashboardID
-    $template = $dashboardProperties | jq '.properties'
+    $template = az resource show --ids $dashboardID --query "properties" -o json
 }
+
 
 $template = $template -Replace "/subscriptions/........-....-....-................./", "`$`{subscription`}/"
 if ($appInsightsID) {

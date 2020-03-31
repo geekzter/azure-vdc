@@ -186,9 +186,6 @@ try {
     }
 
     if ($Destroy) {
-        # Delete resources created with ARM templates, Terraform doesn't know about those
-        DeleteArmResources
-
         # Now let Terraform do it's work
         Invoke "terraform destroy $ForceArgs -parallelism=$Parallelism"
     }
