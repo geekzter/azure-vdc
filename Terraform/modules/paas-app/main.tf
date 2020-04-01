@@ -358,7 +358,7 @@ resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
   }
 }
 
-# TODO: re-enable (doesn't work with containers yet)
+# Doesn't work with containers yet
 resource azurerm_app_service_virtual_network_swift_connection network {
   app_service_id               = azurerm_app_service.paas_web_app.id
   subnet_id                    = var.integrated_subnet_id
@@ -532,13 +532,24 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
   }
 }
 
+# Inspired by https://github.com/terraform-providers/terraform-provider-azurerm/issues/3234#issuecomment-491405625
+data external account_info {
+  program = ["pwsh","-nop","-command","../Scripts/get_user_info.ps1"]
+}
+
+locals {
+  dba_object_id                = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? data.azurerm_client_config.current.object_id : data.external.account_info.result.objectId
+}
+
 # This is for Terraform acting as the AAD DBA (e.g. to execute change scripts)
 resource "azurerm_sql_active_directory_administrator" "dba" {
   # Configure as Terraform identity as DBA
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = "Automation"
-  object_id                    = data.azurerm_client_config.current.object_id
+  login                        = "Terraform"
+  # BUG: Not populated in Azure Cloud Shell  https://github.com/terraform-providers/terraform-provider-azurerm/issues/6310
+# object_id                    = data.azurerm_client_config.current.object_id 
+  object_id                    = local.dba_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 } 
 

@@ -26,7 +26,6 @@ param (
 
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][int]$MaxTests=60,
-    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 
@@ -50,7 +49,7 @@ function DeployWebApp () {
     az extension add --name azure-devops 
 
     # Set defaults
-    az account set --subscription $subscription
+    AzLogin
     az devops configure --defaults organization=$devOpsOrgUrl project=$devOpsProject
 
     $runid = $(az pipelines runs list --result succeeded --top 1 --query "[?definition.name == '$buildDefinitionName'].id | [0]")

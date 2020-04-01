@@ -243,7 +243,6 @@ resource "azurerm_subnet" "subnet" {
   virtual_network_name         = azurerm_virtual_network.spoke_vnet.name
   resource_group_name          = local.resource_group_name
   address_prefix               = element(values(var.subnets),count.index)
-  # TODO: Update at Private Endpoint GA
   enforce_private_link_endpoint_network_policies = true
   count                        = length(var.subnets)
   

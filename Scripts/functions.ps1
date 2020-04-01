@@ -73,8 +73,6 @@ function Execute-Sql (
     }
 
     try {
-        # Connect to SQL Server
-
         # Prepare SQL Command
         $query = Get-Content $QueryFile
         if ($Parameters){
@@ -100,27 +98,20 @@ function Execute-Sql (
 }
 
 function GetAccessToken (
-    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
-    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
-    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
+    [parameter(Mandatory=$false)][string]$Resource="https://database.windows.net/"
 ) {
-    # From https://blog.bredvid.no/handling-azure-managed-identity-access-to-azure-sql-in-an-azure-devops-pipeline-1e74e1beb10b
-    $resourceAppIdURI = 'https://database.windows.net/'
-    $tokenResponse = Invoke-RestMethod -Method Post -UseBasicParsing `
-        -Uri "https://login.windows.net/$($tenantid)/oauth2/token" `
-        -Body @{
-            resource=$resourceAppIdURI
-            client_id=$clientid
-            grant_type='client_credentials'
-            client_secret=$clientsecret
-        } -ContentType 'application/x-www-form-urlencoded'
-
-    if ($tokenResponse) {
-        Write-Debug "Access token type is $($tokenResponse.token_type), expires $($tokenResponse.expires_on)"
-        $token = $tokenResponse.access_token
-        Write-Debug "Access token is $token"
+    # Don't rely on ARM_*
+    if ($env:ARM_TENANT_ID) {
+        $tenantId = $env:ARM_TENANT_ID
     } else {
-        Write-Error "Unable to obtain access token"
+        $tenantId = $(az account show --query "tenantId" -o tsv)
+    }
+
+    $resourceAppIdURI = 'https://database.windows.net/'
+    $token = $(az account get-access-token --tenant $tenantId --resource $Resource --query "accessToken" -o tsv)
+    if (!$token) {
+        Write-Error "Could not obtain token for resource '$Resource' and tenant '$tenantId'"
+        return
     }
 
     return $token

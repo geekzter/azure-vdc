@@ -13,10 +13,7 @@ param (
     [parameter(Mandatory=$false)][switch]$ShowTemplate=$false,
     [parameter(Mandatory=$false)][switch]$DontWrite=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
-    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
-    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
-    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
-    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
+    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID
 ) 
 
 
@@ -81,6 +78,12 @@ if ($prefix) {
 if ($environment) {
     $template = $template -Replace "-${environment}-", "-`$`{environment`}-"
     $template = $template -Replace "\`"${environment}\`"", "`"`$`{environment`}`""
+}
+
+if ($env:ARM_SUBSCRIPTION_ID) {
+    $subscription = $env:ARM_SUBSCRIPTION_ID
+} else {
+    $subscription = $(az account show --query "id" -o tsv)
 }
 if ($subscription) {
     $template = $template -Replace "${subscription}", "`$`{subscription_guid`}"

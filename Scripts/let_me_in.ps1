@@ -15,9 +15,7 @@ param (
     [parameter(Mandatory=$false)][switch]$StartBastion=$false,
     [parameter(Mandatory=$false)][switch]$ConnectBastion=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
-    [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
-    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
-    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID
+    [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 
 # Provide at least one argument
@@ -50,8 +48,7 @@ try {
     if ($All -or $Network) {
         # Punch hole in PaaS Firewalls
         Write-Host "`nPunch hole in PaaS Firewalls" -ForegroundColor Green 
-        # TODO
-        #& (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
+        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
 
         # Get public IP address
         Write-Host "`nPunch hole in Azure Firewall (for bastion)" -ForegroundColor Green 
@@ -81,7 +78,6 @@ try {
 
             if ($bastionRule) {
                 Write-Host "NAT Rule collection $azFWNATRulesName found, rule '$bastionRuleName' already exists"
-
             } else {
                 Write-Host "NAT Rule collection $azFWNATRulesName found, adding bastion rule '$bastionRuleName'..."
                 az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $bastionRuleName `
