@@ -492,7 +492,7 @@ jobs:
       - Destroy
     displayName: 'Clean Up'
     # Run if Terraform destroy failed, or the whole pipeline was canceled
-    condition: or(ne(dependencies.Destroy.result, 'Succeeded'), canceled())
+    condition: or(succeededOrFailed(), canceled())
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
     variables:
