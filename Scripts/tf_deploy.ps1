@@ -98,8 +98,6 @@ try {
                 if (!$env:TF_VAR_backend_resource_group -or !$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container) {
                     Write-Error "Environment variables TF_VAR_backend_resource_group, TF_VAR_backend_storage_account, TF_VAR_backend_storage_container most all be set when creating a new backend from a pipeline"
                     exit
-                } else {
-
                 }
             } else {
                 $tfbackendArgs += " -input=true"
