@@ -82,7 +82,7 @@ if ($pipeline -or $Force) {
     $env:TF_INPUT=0
 }
 
-$PlanFile           = "$Workspace.tfplan".ToLower()
+$planFile           = "$Workspace.tfplan".ToLower()
 $varsFile           = "$Workspace.tfvars".ToLower()
 
 try {
@@ -111,13 +111,35 @@ try {
     terraform -version
 
     if ($Init -or $Upgrade) {
-        if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_account))   { Throw "You must set environment variable TF_VAR_backend_storage_account" }
-        $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
-        $InitCmd = "terraform init $tfbackendArgs"
-        if ($Upgrade) {
-            $InitCmd += " -upgrade"
+        $backendFile = (Join-Path $tfdirectory backend.tf)
+        $newBackend = (!(Test-Path $backendFile))
+        $tfbackendArgs = ""
+        if ($newBackend) {
+            # Terraform azurerm backend does not exist, create one
+            Copy-Item -Path "${backendFile}.sample" -Destination $backendFile
+            
+            if ($pipeline -and (!$env:TF_VAR_backend_resource_group -or !$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container)) {
+                Write-Error "Environment variables TF_VAR_backend_resource_group, TF_VAR_backend_storage_account, TF_VAR_backend_storage_container most all be set when creating a new backend"
+                exit
+            }
+            $tfbackendArgs += " -reconfigure -input=true"
         }
-        Invoke "`n$InitCmd" 
+
+        if ($env:TF_VAR_backend_resource_group) {
+            $tfbackendArgs += " -backend-config=`"resource_group_name=${env:TF_VAR_backend_resource_group}`""
+        }
+        if ($env:TF_VAR_backend_storage_account) {
+            $tfbackendArgs += " -backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
+        }
+        if ($env:TF_VAR_backend_storage_container) {
+            $tfbackendArgs += " -backend-config=`"container_name=${env:TF_VAR_backend_storage_container}`""
+        }
+
+        $initCmd = "terraform init $tfbackendArgs"
+        if ($Upgrade) {
+            $initCmd += " -upgrade"
+        }
+        Invoke "`n$initCmd" 
     }
 
     # Workspace can only be selected after init 
@@ -153,13 +175,13 @@ try {
         }
 
         # Create plan
-        Invoke "terraform plan $varArgs -parallelism=$Parallelism -out='$PlanFile'" 
+        Invoke "terraform plan $varArgs -parallelism=$Parallelism -out='$planFile'" 
     }
 
     if ($Apply) {
         if (!$Force) {
             # Prompt to continue
-            Write-Host "If you wish to proceed executing Terraform plan $PlanFile in workspace $WorkspaceLowercase, please reply 'yes' - null or N aborts" -ForegroundColor Cyan
+            Write-Host "If you wish to proceed executing Terraform plan $planFile in workspace $WorkspaceLowercase, please reply 'yes' - null or N aborts" -ForegroundColor Cyan
             $proceedanswer = Read-Host 
 
             if ($proceedanswer -ne "yes") {
@@ -168,7 +190,7 @@ try {
             }
         }
 
-        Invoke "terraform apply $ForceArgs -parallelism=$Parallelism '$PlanFile'"
+        Invoke "terraform apply $ForceArgs -parallelism=$Parallelism '$planFile'"
     }
 
     if ($Output) {
