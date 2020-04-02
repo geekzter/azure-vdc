@@ -46,34 +46,9 @@ AzLogin
 Set-PSDebug -trace $Trace
 if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
     # Increase debug information consistent with Azure Pipeline debug setting
-    $Trace = 2
+    Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
 }
-switch ($Trace) {
-    0 {
-        $Script:informationPreference = "SilentlyContinue"
-        $Script:warningPreference = "SilentlyContinue"
-        $Script:verbosePreference = "SilentlyContinue"
-        $Script:debugPreference   = "SilentlyContinue"    
-    }
-    1 {
-        $Script:warningPreference = "Continue"
-        $Script:informationPreference = "Continue"
-        $Script:verbosePreference = "Continue"
-        $Script:debugPreference   = "SilentlyContinue"
 
-        Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
-        Get-InstalledModule Az
-    }
-    Default {
-        $Script:warningPreference = "Continue"
-        $Script:informationPreference = "Continue"
-        $Script:verbosePreference = "Continue"
-        $Script:debugPreference   = "Continue"      
-
-        Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
-        Get-InstalledModule Az
-    }
-}
 $Script:ErrorActionPreference = "Stop"
 
 $pipeline = ![string]::IsNullOrEmpty($env:AGENT_VERSION)
@@ -94,6 +69,7 @@ try {
         Copy-Item $file.Value $tfdirectory
     }
 
+    # TODO: Do this from Terraform data.external data source
     $env:TF_VAR_branch=GetCurrentBranch
 
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
@@ -118,23 +94,17 @@ try {
             # Terraform azurerm backend does not exist, create one
             Copy-Item -Path "${backendFile}.sample" -Destination $backendFile
             
-            if ($pipeline -and (!$env:TF_VAR_backend_resource_group -or !$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container)) {
-                Write-Error "Environment variables TF_VAR_backend_resource_group, TF_VAR_backend_storage_account, TF_VAR_backend_storage_container most all be set when creating a new backend from a pipeline"
-                exit
-            }
-            $tfbackendArgs += " -reconfigure -input=true"
+            if ($pipeline) {
+                if (!$env:TF_VAR_backend_resource_group -or !$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container) {
+                    Write-Error "Environment variables TF_VAR_backend_resource_group, TF_VAR_backend_storage_account, TF_VAR_backend_storage_container most all be set when creating a new backend from a pipeline"
+                    exit
+                } else {
 
-            # If resource group is not specified, then either ARM_ACCESS_KEY or ARM_SAS_TOKEN must be specified
-            # See https://www.terraform.io/docs/backends/types/azurerm.html
-            if (!$env:TF_VAR_backend_resource_group -and !$env:ARM_ACCESS_KEY -and !$env:ARM_SAS_TOKEN -and $env:TF_VAR_backend_storage_account) {
-                # Try to obtain key
-                $env:ARM_ACCESS_KEY = $(az storage account keys list -n $env:TF_VAR_backend_storage_account --query "[?keyName=='key1'].value" -o tsv 2>$null)
-                if (!$env:ARM_ACCESS_KEY) {
-                    Write-Warning "None of environment variables ARM_SAS_TOKEN, TF_VAR_backend_resource_group are set, and ARM_ACCESS_KEY could not be obtained"
                 }
             } else {
-                Write-Warning "None of environment variables ARM_ACCESS_KEY, ARM_SAS_TOKEN, TF_VAR_backend_resource_group, TF_VAR_backend_storage_account are set"
+                $tfbackendArgs += " -input=true"
             }
+            $tfbackendArgs += " -reconfigure"
         }
 
         if ($env:TF_VAR_backend_resource_group) {
