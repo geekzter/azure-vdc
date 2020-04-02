@@ -119,10 +119,22 @@ try {
             Copy-Item -Path "${backendFile}.sample" -Destination $backendFile
             
             if ($pipeline -and (!$env:TF_VAR_backend_resource_group -or !$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container)) {
-                Write-Error "Environment variables TF_VAR_backend_resource_group, TF_VAR_backend_storage_account, TF_VAR_backend_storage_container most all be set when creating a new backend"
+                Write-Error "Environment variables TF_VAR_backend_resource_group, TF_VAR_backend_storage_account, TF_VAR_backend_storage_container most all be set when creating a new backend from a pipeline"
                 exit
             }
             $tfbackendArgs += " -reconfigure -input=true"
+
+            # If resource group is not specified, then either ARM_ACCESS_KEY or ARM_SAS_TOKEN must be specified
+            # See https://www.terraform.io/docs/backends/types/azurerm.html
+            if (!$env:TF_VAR_backend_resource_group -and !$env:ARM_ACCESS_KEY -and !$env:ARM_SAS_TOKEN -and $env:TF_VAR_backend_storage_account) {
+                # Try to obtain key
+                $env:ARM_ACCESS_KEY = $(az storage account keys list -n $env:TF_VAR_backend_storage_account --query "[?keyName=='key1'].value" -o tsv 2>$null)
+                if (!$env:ARM_ACCESS_KEY) {
+                    Write-Warning "None of environment variables ARM_SAS_TOKEN, TF_VAR_backend_resource_group are set, and ARM_ACCESS_KEY could not be obtained"
+                }
+            } else {
+                Write-Warning "None of environment variables ARM_ACCESS_KEY, ARM_SAS_TOKEN, TF_VAR_backend_resource_group, TF_VAR_backend_storage_account are set"
+            }
         }
 
         if ($env:TF_VAR_backend_resource_group) {
