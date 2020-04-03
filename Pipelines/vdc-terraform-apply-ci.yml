@@ -542,7 +542,7 @@ jobs:
       # Clear Terraform workspace, just in case
       # As a last resort, this also destroys any resources that may not have deleted before
       - task: AzureCLI@2
-        name: terraformConfig
+        name: terraform
         displayName: 'Clear Terraform workspace'
         condition: succeededOrFailed()
         enabled: true
