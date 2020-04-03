@@ -120,10 +120,6 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
         scriptLocation: inlineScript
-        # ARM_* environment variables are required by Terraform azurerm provider and backend
-        # https://www.terraform.io/docs/providers/azurerm/index.html
-        # https://www.terraform.io/docs/backends/types/azurerm.html
-        # Use Pipeline Service Principal and Service Connection to set up these variables
         inlineScript: |
           # List environment variables (debug)
           if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
@@ -179,12 +175,16 @@ jobs:
       - task: AzureCLI@2
         # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
         name: terraform
-        displayName: 'Terraform init & apply (Azure CLI)'
+        displayName: 'Terraform init & apply'
         enabled: true
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           scriptType: pscore
           scriptLocation: inlineScript
+          # ARM_* environment variables are required by Terraform azurerm provider and backend
+          # https://www.terraform.io/docs/providers/azurerm/index.html
+          # https://www.terraform.io/docs/backends/types/azurerm.html
+          # Use Pipeline Service Principal and Service Connection to set up these variables
           inlineScript: |
             $env:ARM_CLIENT_ID=$env:servicePrincipalId
             $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
@@ -262,12 +262,16 @@ jobs:
       # Test for failures that only occur when resources already exist
       - task: AzureCLI@2
         name: terraform
-        displayName: 'Terraform init and apply (re-entrance test) (Azure CLI)'
+        displayName: 'Terraform init and apply (re-entrance test)'
         enabled: true
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           scriptType: pscore
           scriptLocation: inlineScript
+          # ARM_* environment variables are required by Terraform azurerm provider and backend
+          # https://www.terraform.io/docs/providers/azurerm/index.html
+          # https://www.terraform.io/docs/backends/types/azurerm.html
+          # Use Pipeline Service Principal and Service Connection to set up these variables
           inlineScript: |
             $env:ARM_CLIENT_ID=$env:servicePrincipalId
             $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
@@ -445,13 +449,17 @@ jobs:
 
       - task: AzureCLI@2
         name: terraformConfig
-        displayName: 'Terraform destroy (Azure CLI)'
+        displayName: 'Terraform destroy'
         condition: succeededOrFailed()
         enabled: true
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           scriptType: pscore
           scriptLocation: inlineScript
+          # ARM_* environment variables are required by Terraform azurerm provider and backend
+          # https://www.terraform.io/docs/providers/azurerm/index.html
+          # https://www.terraform.io/docs/backends/types/azurerm.html
+          # Use Pipeline Service Principal and Service Connection to set up these variables
           inlineScript: |
             $env:ARM_CLIENT_ID=$env:servicePrincipalId
             $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
@@ -550,13 +558,17 @@ jobs:
       # As a last resort, this also destroys any resources that may not have deleted before
       - task: AzureCLI@2
         name: terraformConfig
-        displayName: 'Clear Terraform workspace (Azure CLI)'
+        displayName: 'Clear Terraform workspace'
         condition: succeededOrFailed()
         enabled: true
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           scriptType: pscore
           scriptLocation: inlineScript
+          # ARM_* environment variables are required by Terraform azurerm provider and backend
+          # https://www.terraform.io/docs/providers/azurerm/index.html
+          # https://www.terraform.io/docs/backends/types/azurerm.html
+          # Use Pipeline Service Principal and Service Connection to set up these variables
           inlineScript: |
             $env:ARM_CLIENT_ID=$env:servicePrincipalId
             $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey

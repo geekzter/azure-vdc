@@ -71,9 +71,6 @@ try {
         Copy-Item $file.Value $tfdirectory
     }
 
-    # TODO: Do this from Terraform data.external data source
-    $env:TF_VAR_branch=GetCurrentBranch
-
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
     foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
         $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
@@ -85,6 +82,8 @@ try {
 
     # Print version info
     terraform -version
+    $identity = $env:ARM_CLIENT_ID ? $env:ARM_CLIENT_ID : $(az account show --query "user.name" -o tsv)
+    Write-Host "Terraform is running as '$identity'"
 
     if ($Init -or $Upgrade) {
         $backendFile = (Join-Path $tfdirectory backend.tf)
@@ -93,16 +92,16 @@ try {
         $tfbackendArgs = ""
         if ($newBackend) {
             if (!$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container) {
-                Write-Warning "Environment variables TF_VAR_backend_storage_account and TF_VAR_backend_storage_container must be set when creating a new backend"
+                Write-Warning "Environment variables TF_VAR_backend_storage_account and TF_VAR_backend_storage_container must be set when creating a new backend from $backendTemplate"
                 $fail = $true
             }
             if (!($env:TF_VAR_backend_resource_group -or $env:ARM_ACCESS_KEY -or $env:ARM_SAS_TOKEN)) {
-                Write-Warning "Environment variables ARM_ACCESS_KEY or ARM_SAS_TOKEN or TF_VAR_backend_resource_group (with identity granted 'Storage Blob Data Contributor' role) must be set when creating a new backend"
+                Write-Warning "Environment variables ARM_ACCESS_KEY or ARM_SAS_TOKEN or TF_VAR_backend_resource_group (with $identity granted 'Storage Blob Data Contributor' role) must be set when creating a new backend from $backendTemplate"
                 $fail = $true
             }
             if ($fail) {
-                Write-Host "This script assumes Terraform backend exists at ${backendFile}, but ${backendFile} does not exist "
-                Write-Host "You can copy ${backendTemplate} -> ${backendFile} and configure a storage account"
+                Write-Warning "This script assumes Terraform backend exists at ${backendFile}, but is does not exist"
+                Write-Host "You can copy ${backendTemplate} -> ${backendFile} and configure a storage account manually"
                 Write-Host "See documentation at https://www.terraform.io/docs/backends/types/azurerm.html"
                 exit
             }
@@ -143,7 +142,7 @@ try {
         $ForceArgs = "-auto-approve"
     }
 
-    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_branch, TF_VAR_backend_storage_account) -and (Test-Path $varsFile)) {
+    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_backend_*) -and (Test-Path $varsFile)) {
         # Load variables from file, if it exists and environment variables have not been set
         $varArgs = "-var-file='$varsFile'"
     }
