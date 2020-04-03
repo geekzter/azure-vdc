@@ -1,6 +1,7 @@
 # This pipeline perfors a full CI test of the VDC:
 #  - Provision infrastructure
 #  - Destroy infrastructure
+# This CI pieline has as few dependencies as possible
 
 trigger:
   batch: true
@@ -194,7 +195,7 @@ jobs:
         scriptType: pscore
         scriptLocation: inlineScript
         inlineScript: |
-          $(scriptDirectory)/tf_clear_state.ps1 -environment dflt -clear $false -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
+          $(scriptDirectory)/erase.ps1 -environment dflt -clear $false -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
         addSpnToEnvironment: false
         useGlobalConfig: true
         failOnStandardError: true

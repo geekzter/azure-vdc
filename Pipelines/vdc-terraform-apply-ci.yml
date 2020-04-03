@@ -576,7 +576,7 @@ jobs:
             $env:ARM_TENANT_ID=$env:tenantId
 
             $(scriptDirectory)/tf_deploy.ps1 -init -trace $(trace)
-            $(scriptDirectory)/tf_clear_state.ps1 -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
+            $(scriptDirectory)/erase.ps1 -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true

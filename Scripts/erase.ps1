@@ -2,20 +2,20 @@
 
 <# 
 .SYNOPSIS 
-    Clears the state of a Terraform workspace, and optionally destroys the resources in that workspace
+    Clears the state of a Terraform workspace, and destroys resources 
  
 .DESCRIPTION 
     This script destroys resources independent from Terraform, as background job. 
     Therefore it is the fastest way to 'start over' with a clean workspace.
 
 .EXAMPLE
-    ./tf_clear_state.ps1 -Workspace test -Destroy
+    ./erase.ps1 -Workspace test -Destroy
 #> 
 
 param (
     [parameter(Mandatory=$false)][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][string]$Environment,
-    [parameter(Mandatory=$false)][bool]$Clear=$true,
+    [parameter(Mandatory=$false)][bool]$ClearTerraformState=$true,
     [parameter(Mandatory=$false)][switch]$Destroy=$false,
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
@@ -41,7 +41,7 @@ $application = "Automated VDC"
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
-if ($Clear) {
+if ($ClearTerraformState) {
     try {
         # Local backend, prompt the user to clear
         if (!$Force) {
