@@ -55,6 +55,8 @@ $pipeline = ![string]::IsNullOrEmpty($env:AGENT_VERSION)
 if ($pipeline -or $Force) {
     $env:TF_IN_AUTOMATION="true"
     $env:TF_INPUT=0
+} else {
+    $env:TF_INPUT=1
 }
 
 $planFile           = "$Workspace.tfplan".ToLower()
@@ -88,20 +90,29 @@ try {
 
     if ($Init -or $Upgrade) {
         $backendFile = (Join-Path $tfdirectory backend.tf)
+        $backendTemplate = "${backendFile}.sample"
         $newBackend = (!(Test-Path $backendFile))
         $tfbackendArgs = ""
         if ($newBackend) {
-            # Terraform azurerm backend does not exist, create one
-            Copy-Item -Path "${backendFile}.sample" -Destination $backendFile
-            
-            if ($pipeline) {
-                if (!$env:TF_VAR_backend_resource_group -or !$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container) {
-                    Write-Error "Environment variables TF_VAR_backend_resource_group, TF_VAR_backend_storage_account, TF_VAR_backend_storage_container most all be set when creating a new backend from a pipeline"
-                    exit
-                }
-            } else {
-                $tfbackendArgs += " -input=true"
+            if (!$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container) {
+                Write-Warning "Environment variables TF_VAR_backend_storage_account and TF_VAR_backend_storage_container must be set when creating a new backend"
+                $fail = $true
             }
+            if (!($env:TF_VAR_backend_resource_group -or $env:ARM_ACCESS_KEY -or $env:ARM_SAS_TOKEN)) {
+                Write-Warning "Environment variables ARM_ACCESS_KEY or ARM_SAS_TOKEN or TF_VAR_backend_resource_group (with identity granted 'Storage Blob Data Contributor' role) must be set when creating a new backend"
+                $fail = $true
+            }
+            if ($fail) {
+                Write-Host "This script assumes Terraform backend exists at ${backendFile} "
+                Write-Host "Terraform ${backendFile} does not exist. You can copy ${backendTemplate} -> ${backendFile} and configure a storage account"
+                Write-Host "See documentation at https://www.terraform.io/docs/backends/types/azurerm.html"
+                exit
+            }
+
+            # Terraform azurerm backend does not exist, create one
+            Write-Host "Creating '$backendFile'"
+            Copy-Item -Path $backendTemplate -Destination $backendFile
+            
             $tfbackendArgs += " -reconfigure"
         }
 
