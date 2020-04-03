@@ -15,7 +15,8 @@
 param (
     [parameter(Mandatory=$false)][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false)][string]$Environment,
-    [parameter(Mandatory=$false)][switch]$Destroy,
+    [parameter(Mandatory=$false)][bool]$Clear=$true,
+    [parameter(Mandatory=$false)][switch]$Destroy=$false,
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
     [parameter(Mandatory=$false)][int]$TimeoutMinutes=5,
@@ -40,7 +41,7 @@ $application = "Automated VDC"
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
-if ($Workspace -or $Environment) {
+if ($Clear) {
     try {
         # Local backend, prompt the user to clear
         if (!$Force) {
