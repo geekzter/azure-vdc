@@ -84,8 +84,6 @@ try {
     }
 
     # Print version info
-    $azModule = Get-Module Az -ListAvailable | Select-Object -First 1     
-    Write-Host "PowerShell $($azModule.Name) v$($azModule.Version)"
     terraform -version
 
     if ($Init -or $Upgrade) {
@@ -103,8 +101,8 @@ try {
                 $fail = $true
             }
             if ($fail) {
-                Write-Host "This script assumes Terraform backend exists at ${backendFile} "
-                Write-Host "Terraform ${backendFile} does not exist. You can copy ${backendTemplate} -> ${backendFile} and configure a storage account"
+                Write-Host "This script assumes Terraform backend exists at ${backendFile}, but ${backendFile} does not exist "
+                Write-Host "You can copy ${backendTemplate} -> ${backendFile} and configure a storage account"
                 Write-Host "See documentation at https://www.terraform.io/docs/backends/types/azurerm.html"
                 exit
             }
