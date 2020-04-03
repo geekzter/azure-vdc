@@ -7,11 +7,11 @@ function AzLogin (
         # Test whether we are logged in
         $Script:loginError = $(az account show -o none 2>&1)
         if (!$loginError) {
-            $userType = $(az account show --query "user.type" -o tsv)
+            $Script:userType = $(az account show --query "user.type" -o tsv)
             if ($userType -ieq "user") {
                 # Test whether credentials have expired
                 $Script:userError = $(az ad signed-in-user show -o none 2>&1)
-            }
+            } 
         }
     }
     if ($loginError -or $userError) {
@@ -23,6 +23,22 @@ function AzLogin (
     }
     if ($env:ARM_SUBSCRIPTION_ID) {
         az account set -s $env:ARM_SUBSCRIPTION_ID -o none
+    }
+
+    # Pass on pipeline service principal credentials to Terraform
+    if ($userType -ine "user") {
+        if (!$env:ARM_CLIENT_ID) {
+            $env:ARM_CLIENT_ID=$env:servicePrincipalId
+        }
+        if (!$env:ARM_CLIENT_SECRET) {
+            $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
+        }
+        if (!$env:ARM_TENANT_ID) {
+            $env:ARM_TENANT_ID=$env:tenantId
+        }
+        if (!$env:ARM_SUBSCRIPTION_ID) {
+            $env:ARM_SUBSCRIPTION_ID=$(az account show --query id) -replace '"',''
+        }
     }
 }
 
