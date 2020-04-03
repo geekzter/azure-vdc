@@ -79,20 +79,20 @@ jobs:
       name: terraformConfig
       inputs:
         azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
-        scriptLocation: inlineScript
+        scriptType: 'pscore'
+        scriptLocation: 'inlineScript'
         inlineScript: |
           # List environment variables (debug)
           if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
             Get-ChildItem -Path Env:ARM_* | Sort-Object -Property Name
           }
-
+          
           # This will write version info as output variable
           $(scriptDirectory)/get_tf_version.ps1 -version preferred
         addSpnToEnvironment: true
         useGlobalConfig: true
-        failOnStandardError: true
         workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
 
 - ${{ if eq(parameters.provision, true) }}:
   # Provision on self-hosted agent
