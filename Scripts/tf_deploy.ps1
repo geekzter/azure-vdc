@@ -149,7 +149,7 @@ try {
 
     if ($Clear) {
         # Clear Terraform workspace
-        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "tf_clear_state.ps1") 
+        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "erase.ps1") 
     }
 
     if ($Plan -or $Apply -or $Destroy) {
