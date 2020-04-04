@@ -483,6 +483,9 @@ jobs:
     dependsOn:
       - Prepare
       - Destroy
+      - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
+        - Provision
+        - Reprovision
     displayName: 'Clean Up'
     # Run if Terraform provision or destroy failed, or the whole pipeline was canceled
     condition: or(ne(dependencies.Provision.result, 'Succeeded'), ne(dependencies.Reprovision.result, 'Succeeded'), ne(dependencies.Destroy.result, 'Succeeded'), canceled())
