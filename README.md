@@ -41,7 +41,8 @@ To use all featues (e.g. VPN, SSL domains, CI/CD), more is involved:
 `git clone https://github.com/geekzter/azure-vdc.git`  
 2.  Change to the Terraform directrory  
 `cd Terraform`
-3.  Set up storage account for [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), configure `backend.tf` (copy `backend.tf.sample`) with the details of the storage account created. Make sure the user used for Azure CLI is in the `Storage Blob Data Contributor` or `Storage Blob Data Owner`role (It is not enough to have Owner/Contributor rights, as this is Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables.
+3.  Set up storage account for [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), configure `backend.tf` (copy `backend.tf.sample`) with the details of the storage account created. Make sure the user used for Azure CLI is in the `Storage Blob Data Contributor` or `Storage Blob Data Owner`role (It is not enough to have Owner/Contributor rights, as this is Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
+`$env:ARM_ACCESS_KEY=$(az storage account keys list -n STORAGE_ACCOUNT --query "[0].value" -o tsv)`
 4.	Initialize Terraform backend by running  
 `terraform init`  
 or  
@@ -66,7 +67,6 @@ to provision resources
 10.  Create build pipeline to build IIS application, see `Pipelines/iis-asp.net-ci.yml`
 11.  Create build pipeline to build APp Service application, see `azure-pipelines.yml` located here: [dotnetcore-sqldb-tutorial](https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml)
 12.  Create Terraform CI pipeline using either `vdc-terraform-apply-simple-ci.yml` or `vdc-terraform-apply-ci.yml`
-13.  Create release pipeline (no YAML unfortunately, Azure DevOps Environments do not support automatic provisioning of agent yet)
 
 
 ## Sources
@@ -81,7 +81,7 @@ to provision resources
 - [Visual Studio](https://visualstudio.microsoft.com/free-developer-offers/)
 
 ## Limitations & Known Issue's
-- Release Pipelines not yet available in YAML
+- Release Pipelines not yet available in YAML as the Azure DevOps Environments used in multi-staged YAML pipelines do not support automatic provisioning of agents yet. See [issue on GitHub](https://github.com/MicrosoftDocs/vsts-docs/issues/7698)
 
 ## Integration
 - Terraform output is exported as ad-hoc Azure Pipeline variables by `tf_deploy.ps1`, so they can be used un subsequent tasks in an Azure Pipeline Job
