@@ -19,18 +19,21 @@ This projects contains the following components
   - Several PaaS services connected as Service Endpoints into the AzureFirewall subnet
   - Application deployed from Azure DevOps Pipeline
 
-## Getting Started (TL;DR version)
-To get started yu just need Git, Terraform, Azure CLI. Of course you'll need an Azure subscription to deploy to.  
+## Getting Started (quickstart)
+To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to.  
 `git clone https://github.com/geekzter/azure-vdc.git`  
 `cd Terraform`  
+Login with Azure CLI:  
 `az login`  
-This also [authenticates](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) the Terraform provider.
-You can provision agents by running:  
+This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider. Optionally, you can select the subscription to target:  
+`az account set --subscription="00000000-0000-0000-0000-000000000000"`  
+You can provision resources by first initializing Terraform:   
 `terraform init`  
+And then running:  
 `terraform apply`
 
-## Pre-Requisites (long version)
-This project uses Terraform, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. brew, chocolatey, scoop) to install required components.
+## Pre-Requisites (all features)
+This project uses Terraform, PowerShell Core, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
 
 ## Getting Started (all features)
 To use all featues (e.g. VPN, SSL domains, CI/CD), more is involved:
@@ -42,9 +45,10 @@ To use all featues (e.g. VPN, SSL domains, CI/CD), more is involved:
 4.	Initialize Terraform backend by running  
 `terraform init`  
 or  
-`tf_deploy.ps1 -init -workspace default`
-5.	To deploy the VPN, set `deploy_vpn = true` in `variables.tf` or your `.auto.tfvars` file (see `config.auto.tfvars.sample`). Run  
-`create_certs.ps1`  
+`./tf_deploy.ps1 -init -workspace default`
+5.	To deploy the VPN, set `deploy_vpn = true` in `variables.tf` or your `.auto.tfvars` file (see `config.auto.tfvars.sample`).  
+Run  
+`./create_certs.ps1`  
 (Windows only at this point) to create the certificates required.
 6.  To use SSL for the demo app, set `use_vanity_domain_and_ssl = true` in `variables.tf` or your `.auto.tfvars` file. You will need to configure SSL certificates using the `vanity_` variables
 6.  Create Azure Pipelines [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/?view=azure-devops), to be used for IIS application
@@ -52,12 +56,12 @@ or
 8.  Run  
 `terraform plan`  
 or  
-`tf_deploy.ps1 -plan -workspace default`  
+`./tf_deploy.ps1 -plan -workspace default`  
 to simmulate what happens if terraform would provision resources. 
 9.  Run  
 `terraform apply`  
 or  
-`tf_deploy.ps1 -apply -workspace default`  
+`./tf_deploy.ps1 -apply -workspace default`  
 to provision resources
 10.  Create build pipeline to build IIS application, see `Pipelines/iis-asp.net-ci.yml`
 11.  Create build pipeline to build APp Service application, see `azure-pipelines.yml` located here: [dotnetcore-sqldb-tutorial](https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml)
