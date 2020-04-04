@@ -1,9 +1,11 @@
 # Install macOS dependecies with 'brew bundle' (requires Homebrew)
 # https://github.com/Homebrew/homebrew-bundle
 
+tap "microsoft/azdata-cli-release"
 tap "microsoft/mssql-release", "https://github.com/Microsoft/homebrew-mssql-release"
 
 # Scripting
+brew "azure-cli"
 brew "jq"
 cask "powershell"
 
