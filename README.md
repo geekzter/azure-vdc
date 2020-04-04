@@ -11,15 +11,16 @@ This projects contains the following components
 - Application Gateway as Web Application Firewall (WAF, HTTP ingress)
 - A Management server that is used as jump server to connect to other VM's. 
 - A Managed Bastion as well
-- A Point to Site (P2S VPN), that can be leveraged for transitive access to PaaS services using HTTPS Service Endpoints
-- Infrastructure provisioning through Terraform, PowerShell and (optionally) Azure Pipeline
+- A Point to Site (P2S VPN), with transitive access to PaaS services
+- Infrastructure provisioning through Terraform, PowerShell and Azure Pipelines
 - An IIS VM application deployed in a spoke network, with subnet segregation (app, data)
   - AppServers auto-joined to Azure Pipelines Deployment Group, application deployment from Azure Pipeline
 - An App Service web application integrated into another spoke network (experimental)
-  - Several PaaS services connected as Service Endpoints into the AzureFirewall subnet
+  - Several PaaS services connected as Service Endpoints into the AzureFirewall subnet, or through PrivateLink
+  - AAD auth between application tiers using MSI
   - Application deployed from Azure DevOps Pipeline
 
-## Getting Started (quickstart)
+## Quickstart (TL;DR)
 To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to.  
 `git clone https://github.com/geekzter/azure-vdc.git`  
 `cd Terraform`  
@@ -36,7 +37,7 @@ And then running:
 This project uses Terraform, PowerShell Core, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
 
 ## Getting Started (all features)
-To use all featues (e.g. VPN, SSL domains, CI/CD), more is involved:
+The quickstart uses defauls settings that disables some features. To use all featues (e.g. VPN, SSL domains, CI/CD), more is involved:
 1.	Clone repository:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
 2.  Change to the Terraform directrory  
@@ -78,7 +79,6 @@ to provision resources
 - [Terraform Download](https://www.terraform.io/downloads.html)
 - [Terraform Learning](https://learn.hashicorp.com/terraform/)
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Visual Studio](https://visualstudio.microsoft.com/free-developer-offers/)
 
 ## Limitations & Known Issue's
 - Release Pipelines not yet available in YAML as the Azure DevOps Environments used in multi-staged YAML pipelines do not support automatic provisioning of agents yet. See [issue on GitHub](https://github.com/MicrosoftDocs/vsts-docs/issues/7698)
