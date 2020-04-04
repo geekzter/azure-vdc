@@ -7,11 +7,11 @@ function AzLogin (
         # Test whether we are logged in
         $Script:loginError = $(az account show -o none 2>&1)
         if (!$loginError) {
-            $userType = $(az account show --query "user.type" -o tsv)
+            $Script:userType = $(az account show --query "user.type" -o tsv)
             if ($userType -ieq "user") {
                 # Test whether credentials have expired
                 $Script:userError = $(az ad signed-in-user show -o none 2>&1)
-            }
+            } 
         }
     }
     if ($loginError -or $userError) {
@@ -25,29 +25,21 @@ function AzLogin (
         az account set -s $env:ARM_SUBSCRIPTION_ID -o none
     }
 
-    # PowerShell Az
-    # if (Get-Command Connect-AzAccount -ErrorAction SilentlyContinue) {
-    #     if(!($subscription)) { Throw "You must supply a value for subscription" }
-    #     if(!($tenantid)) { Throw "You must supply a value for tenantid" }
-    #     if (!(Get-AzContext)) {
-    #         Write-Host "Reconnecting PowerShell Az with SPN..."
-    #         if ($AsUser) {
-    #             Connect-AzAccount -Tenant $tenantid -Subscription $subscription
-    #         } else {
-    #             if(!($clientid)) { Throw "You must supply a value for clientid" }
-    #             if(!($clientsecret)) { Throw "You must supply a value for clientsecret" }
-    #                     # Use Terraform ARM Backend config to authenticate to Azure
-    #             $secureClientSecret = ConvertTo-SecureString $clientsecret -AsPlainText -Force
-    #             $credential = New-Object System.Management.Automation.PSCredential ($clientid, $secureClientSecret)
-    #             $null = Connect-AzAccount -Tenant $tenantid -Subscription $subscription -ServicePrincipal -Credential $credential
-    #         }
-    #     } else {
-    #         if ($AsUser -and ((Get-AzContext).Account.Type -ine "User")) {
-    #             $null = Connect-AzAccount -Subscription $subscription -Tenant $tenantid -Confirm
-    #         } 
-    #     }
-    #     $null = Set-AzContext -Subscription $subscription -Tenant $tenantid
-    # }
+    # Pass on pipeline service principal credentials to Terraform
+    if ($userType -ine "user") {
+        if (!$env:ARM_CLIENT_ID) {
+            $env:ARM_CLIENT_ID=$env:servicePrincipalId
+        }
+        if (!$env:ARM_CLIENT_SECRET) {
+            $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
+        }
+        if (!$env:ARM_TENANT_ID) {
+            $env:ARM_TENANT_ID=$env:tenantId
+        }
+        if (!$env:ARM_SUBSCRIPTION_ID) {
+            $env:ARM_SUBSCRIPTION_ID=$(az account show --query id) -replace '"',''
+        }
+    }
 }
 
 # From: https://blog.bredvid.no/handling-azure-managed-identity-access-to-azure-sql-in-an-azure-devops-pipeline-1e74e1beb10b
@@ -60,46 +52,6 @@ function ConvertTo-Sid {
         $byteGuid += [System.String]::Format("{0:X2}", $byte)
     }
     return "0x" + $byteGuid
-}
-
-function DeleteArmResources () {
-    # Delete resources created with ARM templates, Terraform doesn't know about those
-    Invoke-Command -ScriptBlock {
-        $Private:ErrorActionPreference = "Continue"
-        $Script:armResourceIDs = terraform output -json arm_resource_ids 2>$null
-    }
-    if ($armResourceIDs) {
-        Write-Host "`nRemoving resources created in embedded ARM templates, this may take a while (no concurrency)..." -ForegroundColor Green
-        # Log on to Azure if not already logged on
-        AzLogin
-        
-        $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch       
-        $resourceIds = $armResourceIDs | ConvertFrom-Json
-        foreach ($resourceId in $resourceIds) {
-            if (![string]::IsNullOrEmpty($resourceId)) {
-                $resource = Get-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"
-                if ($resource) {
-                    Write-Host "Removing [id=$resourceId]..."
-                    $removed = $false
-                    $stopWatch.Reset()
-                    $stopWatch.Start()
-                    if ($force) {
-                        $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue" -Force
-                    } else {
-                        $removed = Remove-AzResource -ResourceId $resourceId -ErrorAction "SilentlyContinue"
-                    }
-                    $stopWatch.Stop()
-                    if ($removed) {
-                        # Mimic Terraform formatting
-                        $elapsed = $stopWatch.Elapsed.ToString("m'm's's'")
-                        Write-Host "Removed [id=$resourceId, ${elapsed} elapsed]" -ForegroundColor White
-                    }
-                } else {
-                    Write-Host "Resource [id=$resourceId] does not exist, nothing to remove"
-                }
-            }
-        }
-    }
 }
 
 function Execute-Sql (
@@ -137,8 +89,6 @@ function Execute-Sql (
     }
 
     try {
-        # Connect to SQL Server
-
         # Prepare SQL Command
         $query = Get-Content $QueryFile
         if ($Parameters){
@@ -164,27 +114,20 @@ function Execute-Sql (
 }
 
 function GetAccessToken (
-    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
-    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
-    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET
+    [parameter(Mandatory=$false)][string]$Resource="https://database.windows.net/"
 ) {
-    # From https://blog.bredvid.no/handling-azure-managed-identity-access-to-azure-sql-in-an-azure-devops-pipeline-1e74e1beb10b
-    $resourceAppIdURI = 'https://database.windows.net/'
-    $tokenResponse = Invoke-RestMethod -Method Post -UseBasicParsing `
-        -Uri "https://login.windows.net/$($tenantid)/oauth2/token" `
-        -Body @{
-            resource=$resourceAppIdURI
-            client_id=$clientid
-            grant_type='client_credentials'
-            client_secret=$clientsecret
-        } -ContentType 'application/x-www-form-urlencoded'
-
-    if ($tokenResponse) {
-        Write-Debug "Access token type is $($tokenResponse.token_type), expires $($tokenResponse.expires_on)"
-        $token = $tokenResponse.access_token
-        Write-Debug "Access token is $token"
+    # Don't rely on ARM_*
+    if ($env:ARM_TENANT_ID) {
+        $tenantId = $env:ARM_TENANT_ID
     } else {
-        Write-Error "Unable to obtain access token"
+        $tenantId = $(az account show --query "tenantId" -o tsv)
+    }
+
+    $resourceAppIdURI = 'https://database.windows.net/'
+    $token = $(az account get-access-token --tenant $tenantId --resource $Resource --query "accessToken" -o tsv)
+    if (!$token) {
+        Write-Error "Could not obtain token for resource '$Resource' and tenant '$tenantId'"
+        return
     }
 
     return $token

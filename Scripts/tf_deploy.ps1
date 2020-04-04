@@ -27,10 +27,6 @@ param (
     [parameter(Mandatory=$false,HelpMessage="Don't use Terraform resource_suffix variable if output exists")][switch]$StickySuffix=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform"),
     [parameter(Mandatory=$false)][int]$Parallelism=10, # Lower this to 10 if you run into rate limits
-    [parameter(Mandatory=$false)][string]$subscription=$env:ARM_SUBSCRIPTION_ID,
-    [parameter(Mandatory=$false)][string]$tenantid=$env:ARM_TENANT_ID,
-    [parameter(Mandatory=$false)][string]$clientid=$env:ARM_CLIENT_ID,
-    [parameter(Mandatory=$false)][string]$clientsecret=$env:ARM_CLIENT_SECRET,
     [parameter(Mandatory=$false)][int]$Trace=0
 ) 
 
@@ -50,43 +46,20 @@ AzLogin
 Set-PSDebug -trace $Trace
 if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
     # Increase debug information consistent with Azure Pipeline debug setting
-    $Trace = 2
+    Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
 }
-switch ($Trace) {
-    0 {
-        $Script:informationPreference = "SilentlyContinue"
-        $Script:warningPreference = "SilentlyContinue"
-        $Script:verbosePreference = "SilentlyContinue"
-        $Script:debugPreference   = "SilentlyContinue"    
-    }
-    1 {
-        $Script:warningPreference = "Continue"
-        $Script:informationPreference = "Continue"
-        $Script:verbosePreference = "Continue"
-        $Script:debugPreference   = "SilentlyContinue"
 
-        Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
-        Get-InstalledModule Az
-    }
-    Default {
-        $Script:warningPreference = "Continue"
-        $Script:informationPreference = "Continue"
-        $Script:verbosePreference = "Continue"
-        $Script:debugPreference   = "Continue"      
-
-        Get-ChildItem -Hidden -System Env:* | Sort-Object -Property Name
-        Get-InstalledModule Az
-    }
-}
 $Script:ErrorActionPreference = "Stop"
 
 $pipeline = ![string]::IsNullOrEmpty($env:AGENT_VERSION)
 if ($pipeline -or $Force) {
     $env:TF_IN_AUTOMATION="true"
     $env:TF_INPUT=0
+} else {
+    $env:TF_INPUT=1
 }
 
-$PlanFile           = "$Workspace.tfplan".ToLower()
+$planFile           = "$Workspace.tfplan".ToLower()
 $varsFile           = "$Workspace.tfvars".ToLower()
 
 try {
@@ -98,8 +71,6 @@ try {
         Copy-Item $file.Value $tfdirectory
     }
 
-    $env:TF_VAR_branch=GetCurrentBranch
-
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
     foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
         $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
@@ -110,18 +81,53 @@ try {
     }
 
     # Print version info
-    $azModule = Get-Module Az -ListAvailable | Select-Object -First 1     
-    Write-Host "PowerShell $($azModule.Name) v$($azModule.Version)"
     terraform -version
+    $identity = $env:ARM_CLIENT_ID ? $env:ARM_CLIENT_ID : $(az account show --query "user.name" -o tsv)
+    Write-Host "Terraform is running as '$identity'"
 
     if ($Init -or $Upgrade) {
-        if([string]::IsNullOrEmpty($env:TF_VAR_backend_storage_account))   { Throw "You must set environment variable TF_VAR_backend_storage_account" }
-        $tfbackendArgs = "-backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
-        $InitCmd = "terraform init $tfbackendArgs"
-        if ($Upgrade) {
-            $InitCmd += " -upgrade"
+        $backendFile = (Join-Path $tfdirectory backend.tf)
+        $backendTemplate = "${backendFile}.sample"
+        $newBackend = (!(Test-Path $backendFile))
+        $tfbackendArgs = ""
+        if ($newBackend) {
+            if (!$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container) {
+                Write-Warning "Environment variables TF_VAR_backend_storage_account and TF_VAR_backend_storage_container must be set when creating a new backend from $backendTemplate"
+                $fail = $true
+            }
+            if (!($env:TF_VAR_backend_resource_group -or $env:ARM_ACCESS_KEY -or $env:ARM_SAS_TOKEN)) {
+                Write-Warning "Environment variables ARM_ACCESS_KEY or ARM_SAS_TOKEN or TF_VAR_backend_resource_group (with $identity granted 'Storage Blob Data Contributor' role) must be set when creating a new backend from $backendTemplate"
+                $fail = $true
+            }
+            if ($fail) {
+                Write-Warning "This script assumes Terraform backend exists at ${backendFile}, but is does not exist"
+                Write-Host "You can copy ${backendTemplate} -> ${backendFile} and configure a storage account manually"
+                Write-Host "See documentation at https://www.terraform.io/docs/backends/types/azurerm.html"
+                exit
+            }
+
+            # Terraform azurerm backend does not exist, create one
+            Write-Host "Creating '$backendFile'"
+            Copy-Item -Path $backendTemplate -Destination $backendFile
+            
+            $tfbackendArgs += " -reconfigure"
         }
-        Invoke "`n$InitCmd" 
+
+        if ($env:TF_VAR_backend_resource_group) {
+            $tfbackendArgs += " -backend-config=`"resource_group_name=${env:TF_VAR_backend_resource_group}`""
+        }
+        if ($env:TF_VAR_backend_storage_account) {
+            $tfbackendArgs += " -backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
+        }
+        if ($env:TF_VAR_backend_storage_container) {
+            $tfbackendArgs += " -backend-config=`"container_name=${env:TF_VAR_backend_storage_container}`""
+        }
+
+        $initCmd = "terraform init $tfbackendArgs"
+        if ($Upgrade) {
+            $initCmd += " -upgrade"
+        }
+        Invoke "`n$initCmd" 
     }
 
     # Workspace can only be selected after init 
@@ -136,14 +142,14 @@ try {
         $ForceArgs = "-auto-approve"
     }
 
-    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_branch, TF_VAR_backend_storage_account) -and (Test-Path $varsFile)) {
+    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_backend_*) -and (Test-Path $varsFile)) {
         # Load variables from file, if it exists and environment variables have not been set
         $varArgs = "-var-file='$varsFile'"
     }
 
     if ($Clear) {
         # Clear Terraform workspace
-        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "tf_clear_state.ps1") 
+        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "erase.ps1") -Workspace $Workspace -Destroy:$false -Force
     }
 
     if ($Plan -or $Apply -or $Destroy) {
@@ -157,13 +163,13 @@ try {
         }
 
         # Create plan
-        Invoke "terraform plan $varArgs -parallelism=$Parallelism -out='$PlanFile'" 
+        Invoke "terraform plan $varArgs -parallelism=$Parallelism -out='$planFile'" 
     }
 
     if ($Apply) {
         if (!$Force) {
             # Prompt to continue
-            Write-Host "If you wish to proceed executing Terraform plan $PlanFile in workspace $WorkspaceLowercase, please reply 'yes' - null or N aborts" -ForegroundColor Cyan
+            Write-Host "If you wish to proceed executing Terraform plan $planFile in workspace $WorkspaceLowercase, please reply 'yes' - null or N aborts" -ForegroundColor Cyan
             $proceedanswer = Read-Host 
 
             if ($proceedanswer -ne "yes") {
@@ -172,7 +178,7 @@ try {
             }
         }
 
-        Invoke "terraform apply $ForceArgs -parallelism=$Parallelism '$PlanFile'"
+        Invoke "terraform apply $ForceArgs -parallelism=$Parallelism '$planFile'"
     }
 
     if ($Output) {
@@ -186,9 +192,6 @@ try {
     }
 
     if ($Destroy) {
-        # Delete resources created with ARM templates, Terraform doesn't know about those
-        DeleteArmResources
-
         # Now let Terraform do it's work
         Invoke "terraform destroy $ForceArgs -parallelism=$Parallelism"
     }

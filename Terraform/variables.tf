@@ -1,7 +1,3 @@
-variable branch {
-  default                      = ""
-}
-
 variable resource_prefix {
   description                  = "The prefix to put in front of resource names created"
   default                      = "vdc"
@@ -167,7 +163,7 @@ variable vdc_oms_solutions {
     "SQLVulnerabilityAssessment",
   # "SurfaceHub",
     "Updates",
-    "VMInsights",
+  # "VMInsights",
   # "VMware",
   # "WaaSUpdateInsights",
   # "WEF_10x",
