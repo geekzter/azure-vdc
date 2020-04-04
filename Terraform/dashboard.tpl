@@ -507,7 +507,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Compute/virtualMachines/${prefix}-${environment}-${suffix}-bastion"
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Compute/virtualMachines/${prefix}${environment}${suffix}mgmt"
               },
               {
                 "isOptional": true,
@@ -1333,12 +1333,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-14b77a63-3614-449b-88aa-ea20c9ee2047",
-              "StartboardPart-AnalyticsPart-14b77a63-3614-449b-88aa-ea20c9ee204d",
-              "StartboardPart-MonitorChartPart-14b77a63-3614-449b-88aa-ea20c9ee2053",
-              "StartboardPart-AnalyticsPart-14b77a63-3614-449b-88aa-ea20c9ee205d",
-              "StartboardPart-AnalyticsPart-14b77a63-3614-449b-88aa-ea20c9ee2067",
-              "StartboardPart-AnalyticsPart-14b77a63-3614-449b-88aa-ea20c9ee206d"
+              "StartboardPart-ApplicationMapPart-65b61a1f-7211-4c43-b0f2-c3e4b334904a",
+              "StartboardPart-AnalyticsPart-65b61a1f-7211-4c43-b0f2-c3e4b3349050",
+              "StartboardPart-MonitorChartPart-65b61a1f-7211-4c43-b0f2-c3e4b3349056",
+              "StartboardPart-AnalyticsPart-65b61a1f-7211-4c43-b0f2-c3e4b334905e",
+              "StartboardPart-AnalyticsPart-65b61a1f-7211-4c43-b0f2-c3e4b3349068",
+              "StartboardPart-AnalyticsPart-65b61a1f-7211-4c43-b0f2-c3e4b334906e"
             ],
             "model": {
               "format": "utc",

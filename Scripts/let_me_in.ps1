@@ -72,6 +72,7 @@ try {
         $rdpPort = $(terraform output "bastion_rdp_port" 2>$null)
         $bastionRuleName = "AllowInboundRDP from $ipPrefix"
 
+        az extension add --name azure-firewall 2>$null
         $ruleCollection = az network firewall nat-rule collection list -f $azFWName -g $vdcResourceGroup --query "[?name=='$azFWNATRulesName']" -o tsv
         if ($ruleCollection) {
             $bastionRule = az network firewall nat-rule list -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup --query "rules[?name=='$bastionRuleName']" 
