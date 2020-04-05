@@ -126,7 +126,7 @@ if ($Destroy) {
         Write-Verbose "Processing zone '$($dnsZone.name)'..."
         $dnsResourceIDs = $(az network dns record-set list -g $dnsZone.resourceGroup -z $dnsZone.name --query "$metadataQuery" -o tsv)
         if ($dnsResourceIDs) {
-            Write-Host "Removing DNS records from zone '$($dnsZone.name)' with metadata JMES PATH '${metadataQuery}'..." -ForegroundColor Green
+            Write-Information "Removing DNS records from zone '$($dnsZone.name)'..."
             az resource delete --ids $dnsResourceIDs -o none
         }
     }

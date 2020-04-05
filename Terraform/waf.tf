@@ -113,11 +113,6 @@ resource "azurerm_application_gateway" "waf" {
     }
   }
 
-/*
-  BUG: when use_vanity_domain_and_ssl = false
-Error: Error Creating/Updating Application Gateway "vdc-dev-uegl-waf" (Resource Group "vdc-dev-uegl"): network.ApplicationGatewaysClient#CreateOrUpdate: Failure sending request: StatusCode=400 -- Original Error: Code="ApplicationGatewayHttpListenersUsingSameFrontendPort" Message="Two Http Listeners of Application Gateway /resourceGroups/vdc-dev-uegl/providers/Microsoft.Network/applicationGateways/vdc-dev-uegl-waf are using the same Frontend Port /providers/Microsoft.Network/applicationGateways/vdc-dev-uegl-waf/frontendPorts/http." Details=[]
-*/
-
   #### IaaS IIS App
   backend_address_pool {
     name                       = local.iaas_app_backend_pool 

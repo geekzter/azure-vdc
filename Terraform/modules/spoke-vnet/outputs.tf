@@ -7,7 +7,7 @@ output access_dependencies {
 }
 
 output management_subnet_ids {
-  value = azurerm_subnet.managed_bastion_subnet.*.id
+  value                        = azurerm_subnet.managed_bastion_subnet.*.id
 }
 
 output spoke_virtual_network_id {

@@ -55,10 +55,10 @@ resource "azurerm_virtual_machine" "app_web_vm" {
     version                    = var.app_web_image_version
   }
   # Uncomment this line to delete the OS disk automatically when deleting the VM
-    delete_os_disk_on_termination = true
+  delete_os_disk_on_termination = true
 
   # Uncomment this line to delete the data disks automatically when deleting the VM
-    delete_data_disks_on_termination = true
+  delete_data_disks_on_termination = true
 
   storage_os_disk {
     name                       = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-osdisk"
@@ -99,7 +99,12 @@ resource "azurerm_virtual_machine" "app_web_vm" {
     delete                     = var.default_delete_timeout
   }  
 
-  tags                         = var.tags
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_connectivity_dependency
+    )
+  )
 }
 
 resource null_resource start_web_vm {
@@ -142,7 +147,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_gro
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.vm_agent_dependency
+      "dummy-dependency",        var.vm_connectivity_dependency
     )
   )
 
@@ -179,7 +184,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.vm_agent_dependency
+      "dummy-dependency",        var.vm_connectivity_dependency
     )
   )
 
@@ -236,7 +241,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.vm_agent_dependency
+      "dummy-dependency",        var.vm_connectivity_dependency
     )
   )
 
@@ -278,6 +283,11 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
   settings                     = <<EOF
     {
       "workspaceId"            : "${var.diagnostics_workspace_workspace_id}",
@@ -285,7 +295,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
       "stopOnMultipleConnections": "true"
     }
   EOF
-
   protected_settings = <<EOF
     { 
       "workspaceKey"           : "${var.diagnostics_workspace_key}"
@@ -295,11 +304,12 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.vm_agent_dependency
+      "dummy-dependency",        var.vm_connectivity_dependency
     )
   )
 
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+# count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  count                        = var.app_web_vm_number
 
   depends_on                   = [
                                   null_resource.start_db_vm,
@@ -419,10 +429,10 @@ resource "azurerm_virtual_machine" "app_db_vm" {
     version                    = var.app_db_image_version
   }
   # Uncomment this line to delete the OS disk automatically when deleting the VM
-    delete_os_disk_on_termination = true
+  delete_os_disk_on_termination = true
 
   # Uncomment this line to delete the data disks automatically when deleting the VM
-    delete_data_disks_on_termination = true
+  delete_data_disks_on_termination = true
 
   storage_os_disk {
     name                       = "${azurerm_resource_group.app_rg.name}-db-vm${count.index+1}-osdisk"
@@ -456,7 +466,12 @@ resource "azurerm_virtual_machine" "app_db_vm" {
     type                       = "SystemAssigned"
   }
 
-  tags                         = var.tags
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_connectivity_dependency
+    )
+  )  
 
   timeouts {
     create                     = var.default_create_timeout
@@ -515,7 +530,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.vm_agent_dependency
+      "dummy-dependency",        var.vm_connectivity_dependency
     )
   )
 
@@ -552,7 +567,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.vm_agent_dependency
+      "dummy-dependency",        var.vm_connectivity_dependency
     )
   )
 
@@ -609,7 +624,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.vm_agent_dependency
+      "dummy-dependency",        var.vm_connectivity_dependency
     )
   )
 
@@ -649,6 +664,11 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
   settings                     = <<EOF
     {
       "workspaceId"            : "${var.diagnostics_workspace_workspace_id}",
@@ -656,7 +676,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
       "stopOnMultipleConnections": "true"
     }
   EOF
-
   protected_settings = <<EOF
     { 
       "workspaceKey"           : "${var.diagnostics_workspace_key}"
@@ -666,11 +685,12 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
   tags                         = merge(
     var.tags,
     map(
-      "dummy-dependency",        var.vm_agent_dependency
+      "dummy-dependency",        var.vm_connectivity_dependency
     )
   )
 
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+# count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  count                        = var.app_db_vm_number
 
   depends_on                   = [
                                   null_resource.start_db_vm, 
