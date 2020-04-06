@@ -4,6 +4,19 @@ This project contains a sample starter Virtual Datacenter (VDC), which follows a
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-plan-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=45&branchName=master)
 ![alt text](diagram.png "Architecture")
 
+## TL;DR: Quickstart
+To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to.  
+`git clone https://github.com/geekzter/azure-vdc.git`  
+`cd Terraform`  
+Login with Azure CLI:  
+`az login`  
+This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider. Optionally, you can select the subscription to target:  
+`az account set --subscription="00000000-0000-0000-0000-000000000000"`  
+You can provision resources by first initializing Terraform:   
+`terraform init`  
+And then running:  
+`terraform apply`
+
 ## Components & Features
 This projects contains the following components
 - A hub network with subnets for shared components (dmz, mgmt, etc)
@@ -19,19 +32,6 @@ This projects contains the following components
   - Several PaaS services connected as Service Endpoints into the AzureFirewall subnet, or through PrivateLink
   - AAD auth between application tiers using MSI
   - Application deployed from Azure DevOps Pipeline
-
-## Quickstart (TL;DR)
-To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to.  
-`git clone https://github.com/geekzter/azure-vdc.git`  
-`cd Terraform`  
-Login with Azure CLI:  
-`az login`  
-This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider. Optionally, you can select the subscription to target:  
-`az account set --subscription="00000000-0000-0000-0000-000000000000"`  
-You can provision resources by first initializing Terraform:   
-`terraform init`  
-And then running:  
-`terraform apply`
 
 ## Pre-Requisites (all features)
 This project uses Terraform, PowerShell Core, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.

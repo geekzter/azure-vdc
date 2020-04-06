@@ -92,6 +92,9 @@ if ($suffix) {
     $template = $template -Replace "-${suffix}", "-`$`{suffix`}"
     $template = $template -Replace "\`'${suffix}\`'", "'`$`{suffix`}'"
 }
+if ($prefix -and $environment -and $suffix) {
+    $template = $template -Replace "${prefix}${environment}${suffix}", "`$`{prefix`}`$`{environment`}`$`{suffix`}"
+}
 if ($appRGShort) {
     $template = $template -Replace "${appRGShort}", "`$`{paas_app_resource_group_short`}"
 }

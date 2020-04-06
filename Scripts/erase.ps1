@@ -29,7 +29,7 @@ if (!$Workspace -and !$Environment) {
 if ($Workspace -and $Environment) { 
     Write-Warning "You must supply a value for either Environment or Workspace (not both)" 
 }
-if ($Environment) {
+if ($Environment -and $ClearTerraformState) {
     # Environment provided as argument
     $backendFile = (Join-Path $tfdirectory backend.tf)
     if (Test-Path $backendFile) {
@@ -126,7 +126,7 @@ if ($Destroy) {
         Write-Verbose "Processing zone '$($dnsZone.name)'..."
         $dnsResourceIDs = $(az network dns record-set list -g $dnsZone.resourceGroup -z $dnsZone.name --query "$metadataQuery" -o tsv)
         if ($dnsResourceIDs) {
-            Write-Host "Removing DNS records  from zone '$($dnsZone.name)' with metadata environment='${Environment}' and application='${application}'..." -ForegroundColor Green
+            Write-Information "Removing DNS records from zone '$($dnsZone.name)'..."
             az resource delete --ids $dnsResourceIDs -o none
         }
     }

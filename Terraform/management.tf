@@ -122,7 +122,7 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
   # Start VM, so we can destroy the extension
   provisioner local-exec {
     command                    = "az vm start --ids ${self.virtual_machine_id}"
-     when                       = destroy
+    when                       = destroy
   }
 
   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
@@ -139,13 +139,13 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
   auto_upgrade_minor_version   = true
   settings                     = <<EOF
     {
-      "workspaceId": "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}"
+      "workspaceId"            : "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}"
     }
   EOF
 
   protected_settings = <<EOF
     { 
-      "workspaceKey": "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
+      "workspaceKey"           : "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
     } 
   EOF
 
@@ -159,31 +159,35 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
   tags                         = local.tags
   depends_on                   = [null_resource.start_bastion]
 }
+resource "azurerm_virtual_machine_extension" "bastion_monitor" {
+  name                         = "MMAExtension"
+  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
+  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
+  type                         = "MicrosoftMonitoringAgent"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+  settings                     = <<EOF
+    {
+      "workspaceId"            : "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}",
+      "azureResourceId"        : "${azurerm_windows_virtual_machine.bastion.id}",
+      "stopOnMultipleConnections": "true"
+    }
+  EOF
+  protected_settings = <<EOF
+    { 
+      "workspaceKey"           : "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
+    } 
+  EOF
 
-# Installed by default now
-# resource "azurerm_virtual_machine_extension" "bastion_monitor" {
-#   name                         = "MicrosoftMonitoringAgent"
-#   virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
-#   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
-#   type                         = "MicrosoftMonitoringAgent"
-#   type_handler_version         = "1.0"
-#   auto_upgrade_minor_version   = true
-#   settings                     = <<EOF
-#     {
-#       "workspaceId": "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}"
-#     }
-#   EOF
-
-#   protected_settings = <<EOF
-#     { 
-#       "workspaceKey": "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
-#     } 
-#   EOF
-
-#   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
-#   tags                         = local.tags
-#   depends_on                   = [null_resource.start_bastion]
-# }
+# count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+  tags                         = local.tags
+  depends_on                   = [null_resource.start_bastion]
+}
 
 resource "azurerm_virtual_machine_extension" "bastion_watcher" {
   name                         = "AzureNetworkWatcherExtension"
@@ -268,7 +272,7 @@ resource "azurerm_automation_schedule" "daily" {
   frequency                    = "Day"
   interval                     = 1
   # https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms912391(v=winembedded.11)?redirectedfrom=MSDN
-  timezone                     = "Europe/Amsterdam"
+  timezone                     = "W. Europe Standard Time"
   start_time                   = timeadd(timestamp(), "1h30m")
   description                  = "Daily schedule"
 }

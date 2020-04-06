@@ -41,7 +41,6 @@ resource "azurerm_network_security_group" "mgmt_nsg" {
   }
 }
 
-# BUG: Resource is not destroyed
 resource azurerm_network_watcher_flow_log mgmt_nsg {
   network_watcher_name         = local.network_watcher_name
   resource_group_name          = local.network_watcher_resource_group

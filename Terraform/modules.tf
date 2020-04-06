@@ -64,10 +64,9 @@ locals {
                                  [
                                  azurerm_firewall_application_rule_collection.iag_app_rules.id,
                                  azurerm_firewall_network_rule_collection.iag_net_outbound_rules.id
-#                                module.p2s_vpn.gateway_id
   ])
   # HACK: This value is dependent on all elements of the list being created
-  vm_agent_dependency          = join("|",[for dep in local.vm_agent_dependencies : substr(dep,0,1)])
+  vm_connectivity_dependency   = join("|",[for dep in local.vm_agent_dependencies : substr(dep,0,1)])
 }
 
 module iis_app {
@@ -97,7 +96,7 @@ module iis_app {
   default_delete_timeout       = var.default_delete_timeout
   deploy_network_watcher       = var.deploy_network_watcher
   deploy_non_essential_vm_extensions = var.deploy_non_essential_vm_extensions
-  vm_agent_dependency          = local.vm_agent_dependency
+  vm_connectivity_dependency   = local.vm_connectivity_dependency
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
   diagnostics_workspace_workspace_id = azurerm_log_analytics_workspace.vcd_workspace.workspace_id
