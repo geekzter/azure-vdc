@@ -275,7 +275,7 @@ resource "azurerm_application_gateway" "waf" {
     name                       = "paas-rewrite-rules"
     rewrite_rule {
       name                     = "paas-rewrite-response-location"
-      rule_sequence            = 1
+      rule_sequence            = 2
       condition {
         variable               = "http_resp_Location"
         pattern                = "(https?):\\/\\/${module.paas_app.app_service_fqdn}(.*)$"
@@ -288,7 +288,7 @@ resource "azurerm_application_gateway" "waf" {
     }
     rewrite_rule {
       name                     = "paas-rewrite-response-redirect"
-      rule_sequence            = 2
+      rule_sequence            = 1
       condition {
         variable               = "http_resp_Location"
         pattern                = "(.*)redirect_uri=https%3A%2F%2F${module.paas_app.app_service_fqdn}(.*)$"

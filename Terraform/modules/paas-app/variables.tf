@@ -38,6 +38,12 @@ variable storage_import {
   type                         = bool
 }
 variable storage_replication_type {}
+variable vanity_certificate_name {}
+variable vanity_certificate_password {}
+variable vanity_certificate_path {}
+variable vanity_dns_zone_id {}
+variable vanity_domainname {}
+variable vanity_fqdn {}
 variable vanity_url {}
 variable waf_subnet_id {}
 

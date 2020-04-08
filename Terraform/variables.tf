@@ -309,7 +309,7 @@ variable vanity_certificate_path {
 }
 
 variable vanity_certificate_password {
-  description                  = "The full path to the SSL certificate PFX file used for vanity url"
+  description                  = "The password of the SSL certificate PFX file used for vanity url"
   default                      = null
 }
 

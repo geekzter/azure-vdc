@@ -15,9 +15,9 @@ app_db_vm_size                 = "Standard_D4s_v3"
 
 resource_prefix                = "demo"
 
+vanity_certificate_name        = "mydomain-com"
 vanity_certificate_path        = "STAR_mydoman_com.pfx"
 vanity_certificate_password    = "XXXXXXXXXX"
-vanity_certificate_name        = "mydomain-com"
 vanity_domainname              = "mydomain.com"
 
 vpn_root_cert_file             = "P2SRootCert.cer" 

@@ -22,6 +22,7 @@ locals {
   admin_ips                    = "${tolist(var.admin_ips)}"
   admin_login_ps               = var.admin_login != null ? var.admin_login : "$null"
   admin_object_id_ps           = var.admin_object_id != null ? var.admin_object_id : "$null"
+  vanity_dns_zone_rg           = "${element(split("/",var.vanity_dns_zone_id),length(split("/",var.vanity_dns_zone_id))-5)}"
   # Last element of resource id is resource name
   integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
@@ -30,6 +31,7 @@ locals {
 # linux_fx_version             = "DOCKER|appsvcsample/python-helloworld:latest"
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
+  vanity_hostname              = element(split(".",var.vanity_fqdn),0)
   vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
 }
 
@@ -296,6 +298,41 @@ resource "azurerm_app_service" "paas_web_app" {
 # We can't wait for App Service specific rules due to circular dependency.
 # The all rule will be removed after App Service rules and SQL DB have been provisioned
 # depends_on                   = [azurerm_sql_firewall_rule.azureall] 
+}
+
+resource "azurerm_dns_cname_record" "verify_record" {
+  name                         = "awverify.${local.vanity_hostname}"
+  zone_name                    = var.vanity_domainname
+  resource_group_name          = local.vanity_dns_zone_rg
+  ttl                          = 300
+  record                       = "awverify.${replace(azurerm_app_service.paas_web_app.default_site_hostname,"www.","")}"
+
+  count                        = var.vanity_fqdn != null ? 1 : 0
+  tags                         = var.tags
+} 
+resource azurerm_app_service_certificate vanity_ssl {
+  name                         = var.vanity_certificate_name
+  resource_group_name          = azurerm_app_service.paas_web_app.resource_group_name
+  location                     = azurerm_app_service.paas_web_app.location
+  pfx_blob                     = filebase64(var.vanity_certificate_path)
+  password                     = var.vanity_certificate_password
+
+  count                        = var.vanity_fqdn != null ? 1 : 0
+  tags                         = var.tags
+}
+resource azurerm_app_service_custom_hostname_binding vanity_domain {
+  hostname                     = var.vanity_fqdn
+  app_service_name             = azurerm_app_service.paas_web_app.name
+  resource_group_name          = azurerm_app_service.paas_web_app.resource_group_name
+
+  ssl_state                    = "SniEnabled"
+  thumbprint                   = azurerm_app_service_certificate.vanity_ssl.0.thumbprint
+
+  count                        = var.vanity_fqdn != null ? 1 : 0
+  depends_on                   = [
+                                  azurerm_dns_cname_record.verify_record,
+                                  azurerm_app_service_certificate.vanity_ssl
+                                 ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {

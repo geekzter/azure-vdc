@@ -175,6 +175,13 @@ module paas_app {
   shared_resources_group       = var.shared_resources_group
   storage_import               = var.paas_app_storage_import
   storage_replication_type     = var.app_storage_replication_type
+  vanity_certificate_name      = var.vanity_certificate_name
+  vanity_certificate_path      = var.vanity_certificate_path
+  vanity_certificate_password  = var.vanity_certificate_password
+  vanity_dns_zone_id           = data.azurerm_dns_zone.vanity_domain.0.id
+  vanity_domainname            = var.vanity_domainname
+# vanity_fqdn                  = var.use_vanity_domain_and_ssl ? local.paas_app_fqdn : null
+  vanity_fqdn                  = local.paas_app_fqdn
   vanity_url                   = local.paas_app_url
   waf_subnet_id                = azurerm_subnet.waf_subnet.id
 
