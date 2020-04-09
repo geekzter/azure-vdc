@@ -195,19 +195,15 @@ resource "azurerm_application_gateway" "waf" {
   backend_http_settings {
     name                       = local.paas_app_backend_setting
     cookie_based_affinity      = "Disabled"
-  # host_name                  = module.paas_app.app_service_fqdn
-  # path                       = "/"
-    # BUG: When using AAD Authentication:
-    #      Using port 80 causes too many redirects 
-    #      Using port 443 causes HTTP 401.71 status errors on every request 
-    #       (however, the request completes succesfully)
-    #       The URL on the detailed error message is https icw port 80
-    #       https://vdc-dev-paasapp-xxxx-appsvc-app:80/
+    # Used when terminating SSL at App Service
+    host_name                  = local.paas_app_fqdn
+    # Used when terminating SSL at App Gateway
+    # pick_host_name_from_backend_address = true
     port                       = 443
     probe_name                 = "paas-app-probe"
     protocol                   = "Https"
     request_timeout            = 1
-    pick_host_name_from_backend_address = true
+
   }
   http_listener {
     name                       = local.http80_listener
@@ -271,21 +267,10 @@ resource "azurerm_application_gateway" "waf" {
     }
   }
   # These rules rewrite the App Service URL with the vanity domain one
+  # This is required when terminating SSL at App Gateway
+  # This is also recommended in general, just to make sure redirects that use the wrong hostname still work
   rewrite_rule_set {
     name                       = "paas-rewrite-rules"
-    rewrite_rule {
-      name                     = "paas-rewrite-response-location"
-      rule_sequence            = 2
-      condition {
-        variable               = "http_resp_Location"
-        pattern                = "(https?):\\/\\/${module.paas_app.app_service_fqdn}(.*)$"
-        ignore_case            = true
-      }
-      response_header_configuration {
-        header_name            = "Location"
-        header_value           = "{http_resp_Location_1}://${local.paas_app_fqdn}{http_resp_Location_2}" 
-      }
-    }
     rewrite_rule {
       name                     = "paas-rewrite-response-redirect"
       rule_sequence            = 1
@@ -299,10 +284,26 @@ resource "azurerm_application_gateway" "waf" {
         header_value           = "{http_resp_Location_1}redirect_uri=https%3A%2F%2F${local.paas_app_fqdn}{http_resp_Location_2}" 
       }
     }
+    rewrite_rule {
+      name                     = "paas-rewrite-response-location"
+      rule_sequence            = 2
+      condition {
+        variable               = "http_resp_Location"
+        pattern                = "(https?):\\/\\/${module.paas_app.app_service_fqdn}(.*)$"
+        ignore_case            = true
+      }
+      response_header_configuration {
+        header_name            = "Location"
+        header_value           = "{http_resp_Location_1}://${local.paas_app_fqdn}{http_resp_Location_2}" 
+      }
+    }
   }
   probe {
     name                       = "paas-app-probe"
+    # Used when terminating SSL at App Service
+    #host                       = local.paas_app_fqdn # Loop
     path                       = "/"
+    # Used when terminating SSL at App Gateway
     pick_host_name_from_backend_http_settings = true
     protocol                   = "Https"
     interval                   = 5
@@ -313,8 +314,6 @@ resource "azurerm_application_gateway" "waf" {
       status_code              = ["200-399","401"]
     }
   }
-  # TODO:
-  # Allow redirect URL https://vdcdevwebapp.geekzter.io/.auth/login/aad/callback
 
   waf_configuration {
     enabled                    = true

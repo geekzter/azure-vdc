@@ -329,10 +329,7 @@ resource azurerm_app_service_custom_hostname_binding vanity_domain {
   thumbprint                   = azurerm_app_service_certificate.vanity_ssl.0.thumbprint
 
   count                        = var.vanity_fqdn != null ? 1 : 0
-  depends_on                   = [
-                                  azurerm_dns_cname_record.verify_record,
-                                  azurerm_app_service_certificate.vanity_ssl
-                                 ]
+  depends_on                   = [azurerm_dns_cname_record.verify_record]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
