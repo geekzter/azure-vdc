@@ -19,10 +19,10 @@ data "azurerm_client_config" "current" {}
 data "azurerm_subscription" "primary" {}
 
 locals {
+  aad_auth_client_id           = var.aad_auth_client_id_map != null ? lookup(var.aad_auth_client_id_map, terraform.workspace, null) : null
   admin_ips                    = "${tolist(var.admin_ips)}"
   admin_login_ps               = var.admin_login != null ? var.admin_login : "$null"
   admin_object_id_ps           = var.admin_object_id != null ? var.admin_object_id : "$null"
-  vanity_dns_zone_rg           = "${element(split("/",var.vanity_dns_zone_id),length(split("/",var.vanity_dns_zone_id))-5)}"
   # Last element of resource id is resource name
   integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
@@ -214,16 +214,18 @@ resource "azurerm_app_service" "paas_web_app" {
     WEBSITE_VNET_ROUTE_ALL     = "1"
   }
 
-  # BUG: The page cannot be displayed because an internal server error has occurred (when accessed via AppGW using vanity domain name) 
-  # auth_settings {
-  #   enabled                    = true
-  #   active_directory {
-  #     client_id                = var.aad_auth_client_id
-  #   }
-  #   allowed_external_redirect_urls = [var.vanity_url]
-  #   default_provider           = "AzureActiveDirectory"
-  #   unauthenticated_client_action = "RedirectToLoginPage"
-  # }
+  dynamic "auth_settings" {
+    for_each = range(local.aad_auth_client_id != null ? 1 : 0) 
+    content {
+      enabled                  = true
+      active_directory {
+        client_id              = local.aad_auth_client_id
+        client_secret          = var.aad_auth_client_id_map["${terraform.workspace}_client_secret"]
+      }
+      default_provider         = "AzureActiveDirectory"
+      unauthenticated_client_action = "RedirectToLoginPage"
+    }
+  }
 
   connection_string {
     name                       = "MyDbConnection"
@@ -303,9 +305,19 @@ resource "azurerm_app_service" "paas_web_app" {
 resource "azurerm_dns_cname_record" "verify_record" {
   name                         = "awverify.${local.vanity_hostname}"
   zone_name                    = var.vanity_domainname
-  resource_group_name          = local.vanity_dns_zone_rg
+  resource_group_name          = element(split("/",var.vanity_dns_zone_id),length(split("/",var.vanity_dns_zone_id))-5)
   ttl                          = 300
   record                       = "awverify.${replace(azurerm_app_service.paas_web_app.default_site_hostname,"www.","")}"
+
+  count                        = var.vanity_fqdn != null ? 1 : 0
+  tags                         = var.tags
+} 
+resource "azurerm_dns_cname_record" "app_service_alias" {
+  name                         = "${local.vanity_hostname}-appsvc"
+  zone_name                    = var.vanity_domainname
+  resource_group_name          = element(split("/",var.vanity_dns_zone_id),length(split("/",var.vanity_dns_zone_id))-5)
+  ttl                          = 300
+  record                       = azurerm_app_service.paas_web_app.default_site_hostname
 
   count                        = var.vanity_fqdn != null ? 1 : 0
   tags                         = var.tags
@@ -322,6 +334,18 @@ resource azurerm_app_service_certificate vanity_ssl {
 }
 resource azurerm_app_service_custom_hostname_binding vanity_domain {
   hostname                     = var.vanity_fqdn
+  app_service_name             = azurerm_app_service.paas_web_app.name
+  resource_group_name          = azurerm_app_service.paas_web_app.resource_group_name
+
+  ssl_state                    = "SniEnabled"
+  thumbprint                   = azurerm_app_service_certificate.vanity_ssl.0.thumbprint
+
+  count                        = var.vanity_fqdn != null ? 1 : 0
+  depends_on                   = [azurerm_dns_cname_record.verify_record]
+}
+# This is used for the App GW Probe
+resource azurerm_app_service_custom_hostname_binding alias_domain {
+  hostname                     = "${azurerm_dns_cname_record.app_service_alias.0.name}.${var.vanity_domainname}"
   app_service_name             = azurerm_app_service.paas_web_app.name
   resource_group_name          = azurerm_app_service.paas_web_app.resource_group_name
 

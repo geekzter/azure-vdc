@@ -150,7 +150,8 @@ module paas_app {
   vdc_resource_group_id        = azurerm_resource_group.vdc_rg.id
   location                     = azurerm_resource_group.vdc_rg.location
   tags                         = local.tags
-
+  
+  aad_auth_client_id_map        = var.paas_aad_auth_client_id_map
   admin_ips                    = local.admin_ips
   admin_ip_ranges              = local.admin_cidr_ranges
   admin_login                  = var.admin_login
@@ -178,7 +179,7 @@ module paas_app {
   vanity_certificate_name      = var.vanity_certificate_name
   vanity_certificate_path      = var.vanity_certificate_path
   vanity_certificate_password  = var.vanity_certificate_password
-  vanity_dns_zone_id           = data.azurerm_dns_zone.vanity_domain.0.id
+  vanity_dns_zone_id           = var.use_vanity_domain_and_ssl ? data.azurerm_dns_zone.vanity_domain.0.id : null
   vanity_domainname            = var.vanity_domainname
 # vanity_fqdn                  = var.use_vanity_domain_and_ssl ? local.paas_app_fqdn : null
   vanity_fqdn                  = local.paas_app_fqdn

@@ -9,7 +9,7 @@ variable admin_ip_ranges {}
 variable admin_login {}
 variable admin_object_id {}
 variable admin_username {}
-#variable aad_auth_client_id {}
+variable aad_auth_client_id_map {}
 variable management_subnet_ids {
   type                         = list
 }

@@ -4,6 +4,9 @@ output app_resource_group {
 output app_service_fqdn {
     value = azurerm_app_service.paas_web_app.default_site_hostname
 }
+output app_service_alias_fqdn {
+    value = var.vanity_fqdn != null ? azurerm_app_service_custom_hostname_binding.alias_domain.0.hostname : azurerm_app_service.paas_web_app.default_site_hostname
+}
 output app_service_msi_client_id {
   value       = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
 }

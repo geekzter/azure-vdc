@@ -21,7 +21,6 @@ resource "azurerm_public_ip" "waf_pip" {
   domain_name_label            = random_string.waf_domain_name_label.result
 
   tags                         = local.tags
-
 }
 
 resource "azurerm_dns_cname_record" "waf_iaas_app_cname" {
@@ -190,7 +189,7 @@ resource "azurerm_application_gateway" "waf" {
   #### PaaS App Service App
   backend_address_pool {
     name                       = local.paas_app_backend_pool
-    fqdns                      = ["${module.paas_app.app_service_fqdn}"]
+    fqdns                      = [module.paas_app.app_service_fqdn]
   }
   backend_http_settings {
     name                       = local.paas_app_backend_setting
@@ -300,11 +299,11 @@ resource "azurerm_application_gateway" "waf" {
   }
   probe {
     name                       = "paas-app-probe"
-    # Used when terminating SSL at App Service
-    #host                       = local.paas_app_fqdn # Loop
+    # Used alias when terminating SSL at App Service, as this will actually resolve to App Service
+    host                       = module.paas_app.app_service_alias_fqdn
     path                       = "/"
     # Used when terminating SSL at App Gateway
-    pick_host_name_from_backend_http_settings = true
+    #pick_host_name_from_backend_http_settings = true
     protocol                   = "Https"
     interval                   = 5
     timeout                    = 30
