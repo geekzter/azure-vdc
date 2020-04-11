@@ -123,7 +123,7 @@ resource "azurerm_application_gateway" "waf" {
     path                       = "/"
     port                       = 80
     protocol                   = "Http"
-    request_timeout            = 1
+    request_timeout            = 10
   }
   http_listener {
     name                       = local.http81_listener 
@@ -201,8 +201,7 @@ resource "azurerm_application_gateway" "waf" {
     port                       = 443
     probe_name                 = "paas-app-probe"
     protocol                   = "Https"
-    request_timeout            = 1
-
+    request_timeout            = 10
   }
   http_listener {
     name                       = local.http80_listener
@@ -299,14 +298,14 @@ resource "azurerm_application_gateway" "waf" {
   }
   probe {
     name                       = "paas-app-probe"
-    # Used alias when terminating SSL at App Service, as this will actually resolve to App Service
+    # Used alias when terminating SSL at App Service, as this will actually resolve to App Service (no loop to App Gateway)
     host                       = module.paas_app.app_service_alias_fqdn
     path                       = "/"
     # Used when terminating SSL at App Gateway
     #pick_host_name_from_backend_http_settings = true
     protocol                   = "Https"
-    interval                   = 5
-    timeout                    = 30
+    interval                   = 3
+    timeout                    = 3
     unhealthy_threshold        = 3
     match {
       body                     = ""
