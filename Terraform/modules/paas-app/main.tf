@@ -19,7 +19,7 @@ data "azurerm_client_config" "current" {}
 data "azurerm_subscription" "primary" {}
 
 locals {
-  aad_auth_client_id           = var.aad_auth_client_id_map != null ? lookup(var.aad_auth_client_id_map, terraform.workspace, null) : null
+  aad_auth_client_id           = var.aad_auth_client_id_map != null ? lookup(var.aad_auth_client_id_map, "${terraform.workspace}_client_id", null) : null
   admin_ips                    = "${tolist(var.admin_ips)}"
   admin_login_ps               = var.admin_login != null ? var.admin_login : "$null"
   admin_object_id_ps           = var.admin_object_id != null ? var.admin_object_id : "$null"
@@ -217,7 +217,7 @@ resource "azurerm_app_service" "paas_web_app" {
   dynamic "auth_settings" {
     for_each = range(local.aad_auth_client_id != null ? 1 : 0) 
     content {
-      enabled                  = true
+      enabled                  = var.enable_aad_auth
       active_directory {
         client_id              = local.aad_auth_client_id
         client_secret          = var.aad_auth_client_id_map["${terraform.workspace}_client_secret"]

@@ -10,6 +10,7 @@
 param (    
     [parameter(Mandatory=$false)][switch]$Database,
     [parameter(Mandatory=$false)][switch]$Website,
+    [parameter(Mandatory=$false)][switch]$Test,
     [parameter(Mandatory=$false)][switch]$All,
 
     # These parameters are either provided or their values retrieved from Terraform
@@ -187,7 +188,7 @@ function TestApp (
 }
 
 # Provide at least one argument
-if (!($All -or $Database -or $Website)) {
+if (!($All -or $Database -or $Website -or $Test)) {
     Write-Host "Please indicate what to do by using a command-line switch"
     Get-Help $MyInvocation.MyCommand.Definition
     exit
@@ -200,6 +201,9 @@ if (($All -or $Database) -and (!$SqlDatabase -or !$SqlServerFQDN -or !$AppResour
     $useTerraform = $true
 }
 if (($All -or $Website) -and (!$AppUrl -or !$DevOpsOrgUrl -or !$DevOpsProject -or !$AppAppServiceName -or !$AppResourceGroup)) {
+    $useTerraform = $true
+}
+if (($All -or $Test) -and !$AppUrl) {
     $useTerraform = $true
 }
 if ($useTerraform) {
@@ -256,7 +260,9 @@ if ($All -or $Database) {
 if ($All -or $Website) {
     # Deploy Web App
     DeployWebApp
+}
 
+if ($All -or $Test -or $Website) {
     # Test & Warm up 
     TestApp -AppUrl $AppUrl 
 }

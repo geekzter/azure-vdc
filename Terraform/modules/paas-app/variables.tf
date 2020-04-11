@@ -29,6 +29,9 @@ variable deploy_app_service_network_integration {
 variable deploy_private_dns_for_endpoint {
   type                         = bool
 }
+variable enable_aad_auth {
+  type                         = bool
+}
 variable iag_subnet_id {}
 variable integrated_subnet_range {}
 variable integrated_subnet_id {}

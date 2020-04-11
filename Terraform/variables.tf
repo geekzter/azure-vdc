@@ -342,6 +342,7 @@ variable default_delete_timeout {
   default                      = "60m"
 }
 
+#  Feature Toggles
 variable deploy_app_service_network_integration {
   description                  = "Whether to App Service Regional Virtual network Integration]"
   default                      = true
@@ -383,7 +384,11 @@ variable deploy_vpn {
   default                      = false
   type                         = bool
 }
-
+variable enable_app_service_aad_auth {
+  description                  = "Whether to enable App Service AAD auth"
+  default                      = false
+  type                         = bool
+}
 variable use_pipeline_environment {
   description                  = "Use environment rather than deployment group for Pipeline Agent"
   default                      = false
