@@ -572,6 +572,20 @@ resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
   }  
 }
 
+resource "azurerm_sql_virtual_network_rule" "data_subnet" {
+  name                         = "AllowDataSubnet"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  subnet_id                    = var.data_subnet_id
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+}
+
 resource null_resource app_service_rules {
   # Create SQL DB FW rule to allow App Service in
   # Create on this resource to prevent circular dependency between module.paas_app.azurerm_sql_database.app_sqldb, module.paas_app.azurerm_app_service.paas_web_app, module.paas_app.azurerm_sql_server.app_sqlserver

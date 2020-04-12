@@ -206,13 +206,25 @@ module paas_spoke_vnet {
   deploy_managed_bastion       = var.deploy_managed_bastion
   deploy_network_watcher       = var.deploy_network_watcher
   dns_servers                  = azurerm_virtual_network.hub_vnet.dns_servers
-  enable_routetable_for_subnets = []
+  enable_routetable_for_subnets = [
+                                  "appservice",
+                                  "data"
+                                  ]
   gateway_ip_address           = azurerm_firewall.iag.ip_configuration.0.private_ip_address # Delays provisioning to start after Azure FW is provisioned
   hub_gateway_dependency       = module.p2s_vpn.gateway_id
   hub_virtual_network_id       = azurerm_virtual_network.hub_vnet.id
   private_dns_zones            = [for z in azurerm_private_dns_zone.zone : z.name]
   service_endpoints            = {
-    appservice                 = ["Microsoft.EventHub","Microsoft.Storage"]
+    appservice                 = [
+                                  "Microsoft.AzureActiveDirectory",
+                                  "Microsoft.EventHub",
+                                  "Microsoft.Sql",
+                                  "Microsoft.Storage"
+                                 ]
+    data                       = [
+                                  "Microsoft.Sql",
+                                  "Microsoft.Storage"
+                                 ]
   }
   spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-paas-spoke-network"
   subnets                      = {
