@@ -79,7 +79,8 @@ function DeployWebApp () {
 
     # Publish web app
     Write-Host "Publishing $packageName to web app $appAppServiceName..."
-    $null = az webapp deployment source config-zip -g $appResourceGroup -n $appAppServiceName --src $packagePath
+    az webapp deployment source config-zip -g $appResourceGroup -n $appAppServiceName --src $packagePath -o none
+    az webapp restart -g $appResourceGroup -n $appAppServiceName 
 
     Write-Host "Web app $appAppServiceName published at $appUrl"
 }

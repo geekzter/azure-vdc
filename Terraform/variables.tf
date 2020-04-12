@@ -112,7 +112,7 @@ variable vdc_oms_solutions {
     "AntiMalware",
   # "ApplicationInsights", # Depricated
   # "ASRAnalytics",
-    "AzureActivity",
+  # "AzureActivity",
   # "AzureAppGatewayAnalytics",
   # "AzureAutomation",
   # "AzureCdnCoreAnalytics",

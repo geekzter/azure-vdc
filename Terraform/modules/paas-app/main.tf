@@ -68,7 +68,7 @@ resource "azurerm_storage_account" "app_storage" {
     # Allow the Firewall subnet
     virtual_network_subnet_ids = [
                                  var.iag_subnet_id,
-                                 var.integrated_subnet_id
+                                 var.data_subnet_id
     ]
   } 
 
@@ -283,9 +283,9 @@ resource "azurerm_app_service" "paas_web_app" {
       }
     }
     # HACK: Bogus IP rule without which AAD auth will throw a 500.79 (?!)
-    # ip_restriction {
-    #   ip_address               = "8.8.8.8/32"
-    # }
+    ip_restriction {
+      ip_address               = "8.8.8.8/32"
+    }
 
     # Required for containers
   # linux_fx_version           = local.linux_fx_version
