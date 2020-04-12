@@ -105,11 +105,8 @@ function ImportDatabase (
     $userName = "vdcadmin"
  
     # Create SQL Firewall rule for import
-    Invoke-Command -ScriptBlock {
-        $Private:ErrorActionPreference = "Continue"
-        $Script:sqlFWRule = $(az sql server firewall-rule show -g $ResourceGroup -s $SqlServer -n $sqlFWRuleName 2>$null)
-    }
-    if (!$sqlFWRule) {
+    $allAzureRuleIDs = $(az sql server firewall-rule list -g $ResourceGroup -s $SqlServer --query "[?startIpAddress=='0.0.0.0'].id" -o tsv)
+    if (!$allAzureRuleIDs) {
         Write-Information "Creating SQL Server ${SqlServer} Firewall rule '${sqlFWRuleName}' ..."
         $sqlFWRule = $(az sql server firewall-rule create -g $ResourceGroup -s $SqlServer -n $sqlFWRuleName --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0)
     } else {
@@ -137,10 +134,11 @@ function ImportDatabase (
                                 -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN `
                                 -UserName $UserName -SecurePassword $SecurePassword
 
-    if (!$sqlFWRule) {
-        # Remove SQL Firewall rule
-        Write-Verbose "Removing SQL Server ${SqlServer} Firewall rule $sqlFWRuleName ..."
-        az sql server firewall-rule delete -g $appResourceGroup -s $SqlServer -n $sqlFWRuleName -o none
+    # Remove Allow All Azure rule(s)
+    $allAzureRuleIDs = $(az sql server firewall-rule list -g $ResourceGroup -s $SqlServer --query "[?startIpAddress=='0.0.0.0'].id" -o tsv)
+    if ($allAzureRuleIDs) {
+        Write-Verbose "Removing SQL Server ${SqlServer} Firewall rules $allAzureRuleIDs ..."
+        az sql server firewall-rule delete --ids $allAzureRuleIDs
     }
 }
 function ResetDatabasePassword (
