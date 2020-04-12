@@ -5,16 +5,17 @@ resource_environment           = "dev"
 # https://azure.microsoft.com/en-us/global-infrastructure/services/?products=sql-database,monitor,azure-bastion,private-link
 # https://azure.microsoft.com/en-us/global-infrastructure/regions/
 #location                       = "eastus"
-location                       = "eastus"
+location                       = "westeurope"
 workspace_location             = "westeurope"
 
 deploy_app_service_network_integration = true
 deploy_auto_shutdown           = false
 deploy_network_watcher         = false
-deploy_non_essential_vm_extensions = true
+deploy_non_essential_vm_extensions = false
 deploy_managed_bastion         = false
 deploy_private_dns_for_endpoint= true
-deploy_vpn                     = true
+deploy_vpn                     = false
+enable_app_service_aad_auth    = false
 paas_app_storage_import        = false
 use_pipeline_environment       = false
 use_vanity_domain_and_ssl      = true

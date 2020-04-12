@@ -94,25 +94,27 @@ if ($Destroy) {
     }
     $jobs = @()
     if ($Workspace) {
-        $tagQuery = "[?tags.workspace == '${Workspace}' && tags.application == '${application}'].id"
+        $tagQuery = "[?tags.workspace == '${Workspace}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
         Write-Host "Removing resources with tags workspace='${Workspace}' and application='${application}'..." -ForegroundColor Green
     } else {
         Write-Host "Removing resources with tags environment='${Environment}' and application='${application}'..." -ForegroundColor Green
-        $tagQuery = "[?tags.environment == '${Environment}' && tags.application == '${application}'].id"
+        $tagQuery = "[?tags.environment == '${Environment}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
     }
     Write-Information "JMESPath Tags Query: $tagQuery"
     # Remove resource groups 
     # Async operation, as they have unique suffixes that won't clash with new deployments
     Write-Host "Removing VDC resource groups (async)..."
     $resourceGroupIDs = $(az group list --query "$tagQuery" -o tsv)
-    if ($resourceGroupIDs) {
+    if ($resourceGroupIDs -and $resourceGroupIDs.Length -gt 0) {
+        Write-Verbose "Starting job 'az resource delete --ids $resourceGroupIDs'"
         $jobs += Start-Job -Name "Remove ResourceGroups" -ScriptBlock {az resource delete --ids $args} -ArgumentList $resourceGroupIDs
     }
 
     # Remove resources in the NetworkWatcher resource group
     Write-Host "Removing VDC network watchers from shared resource group 'NetworkWatcherRG' (async)..."
     $resourceIDs = $(az resource list -g NetworkWatcherRG --query "$tagQuery" -o tsv)
-    if ($resourceIDs) {
+    if ($resourceIDs -and $resourceIDs.Length -gt 0) {
+        Write-Verbose "Starting job 'az resource delete --ids $resourceIDs'"
         $jobs += Start-Job -Name "Remove Resources from NetworkWatcherRG" -ScriptBlock {az resource delete --ids $args} -ArgumentList $resourceIDs
     }
 

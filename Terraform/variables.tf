@@ -278,6 +278,10 @@ variable app_db_image_version {
 variable app_database_template_storage_key {
   default                      = "?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D"
 }
+variable paas_aad_auth_client_id_map {
+  type                         = map
+  default                      = null
+}
 variable paas_app_storage_import {
   type                         = bool
   default                      = false
@@ -309,7 +313,7 @@ variable vanity_certificate_path {
 }
 
 variable vanity_certificate_password {
-  description                  = "The full path to the SSL certificate PFX file used for vanity url"
+  description                  = "The password of the SSL certificate PFX file used for vanity url"
   default                      = null
 }
 
@@ -338,6 +342,7 @@ variable default_delete_timeout {
   default                      = "60m"
 }
 
+#  Feature Toggles
 variable deploy_app_service_network_integration {
   description                  = "Whether to App Service Regional Virtual network Integration]"
   default                      = true
@@ -379,7 +384,11 @@ variable deploy_vpn {
   default                      = false
   type                         = bool
 }
-
+variable enable_app_service_aad_auth {
+  description                  = "Whether to enable App Service AAD auth"
+  default                      = false
+  type                         = bool
+}
 variable use_pipeline_environment {
   description                  = "Use environment rather than deployment group for Pipeline Agent"
   default                      = false

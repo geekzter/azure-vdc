@@ -10,7 +10,7 @@ resource "random_string" "password" {
   special                      = true
 # override_special             = "!@#$%&*()-_=+[]{}<>:?" # default
 # Avoid characters that may cause shell scripts to break
-  override_special             = "." 
+  override_special             = "!@#%*)(-_=+][]}{:?" 
 }
 
 # Random resource suffix, this will prevent name collisions when creating resources in parallel
@@ -37,6 +37,7 @@ locals {
   workspace_location           = var.workspace_location != "" ? var.workspace_location : var.location
   automation_location          = var.automation_location != "" ? var.automation_location : local.workspace_location
   password                     = ".Az9${random_string.password.result}"
+# password                     = ".Az9${random_string.password.override_special}" # Test
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result
   environment                  = var.resource_environment != "" ? lower(var.resource_environment) : substr(lower(replace(terraform.workspace,"/a|e|i|o|u|y/","")),0,4)
   vdc_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-${lower(local.suffix)}"

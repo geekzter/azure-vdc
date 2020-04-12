@@ -9,7 +9,7 @@ variable admin_ip_ranges {}
 variable admin_login {}
 variable admin_object_id {}
 variable admin_username {}
-#variable aad_auth_client_id {}
+variable aad_auth_client_id_map {}
 variable management_subnet_ids {
   type                         = list
 }
@@ -29,6 +29,9 @@ variable deploy_app_service_network_integration {
 variable deploy_private_dns_for_endpoint {
   type                         = bool
 }
+variable enable_aad_auth {
+  type                         = bool
+}
 variable iag_subnet_id {}
 variable integrated_subnet_range {}
 variable integrated_subnet_id {}
@@ -38,6 +41,12 @@ variable storage_import {
   type                         = bool
 }
 variable storage_replication_type {}
+variable vanity_certificate_name {}
+variable vanity_certificate_password {}
+variable vanity_certificate_path {}
+variable vanity_dns_zone_id {}
+variable vanity_domainname {}
+variable vanity_fqdn {}
 variable vanity_url {}
 variable waf_subnet_id {}
 

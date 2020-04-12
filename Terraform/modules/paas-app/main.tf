@@ -19,6 +19,7 @@ data "azurerm_client_config" "current" {}
 data "azurerm_subscription" "primary" {}
 
 locals {
+  aad_auth_client_id           = var.aad_auth_client_id_map != null ? lookup(var.aad_auth_client_id_map, "${terraform.workspace}_client_id", null) : null
   admin_ips                    = "${tolist(var.admin_ips)}"
   admin_login_ps               = var.admin_login != null ? var.admin_login : "$null"
   admin_object_id_ps           = var.admin_object_id != null ? var.admin_object_id : "$null"
@@ -30,6 +31,7 @@ locals {
 # linux_fx_version             = "DOCKER|appsvcsample/python-helloworld:latest"
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
+  vanity_hostname              = var.vanity_fqdn != null ? element(split(".",var.vanity_fqdn),0) : null
   vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
 }
 
@@ -212,16 +214,19 @@ resource "azurerm_app_service" "paas_web_app" {
     WEBSITE_VNET_ROUTE_ALL     = "1"
   }
 
-  # BUG: The page cannot be displayed because an internal server error has occurred (when accessed via AppGW using vanity domain name) 
-  # auth_settings {
-  #   enabled                    = true
-  #   active_directory {
-  #     client_id                = var.aad_auth_client_id
-  #   }
-  #   allowed_external_redirect_urls = [var.vanity_url]
-  #   default_provider           = "AzureActiveDirectory"
-  #   unauthenticated_client_action = "RedirectToLoginPage"
-  # }
+  dynamic "auth_settings" {
+    for_each = range(local.aad_auth_client_id != null ? 1 : 0) 
+    content {
+      active_directory {
+        client_id              = local.aad_auth_client_id
+        client_secret          = var.aad_auth_client_id_map["${terraform.workspace}_client_secret"]
+      }
+      default_provider         = "AzureActiveDirectory"
+      enabled                  = var.enable_aad_auth
+      issuer                   = "https://sts.windows.net/${data.azurerm_client_config.current.tenant_id}/"
+      unauthenticated_client_action = "RedirectToLoginPage"
+    }
+  }
 
   connection_string {
     name                       = "MyDbConnection"
@@ -277,6 +282,10 @@ resource "azurerm_app_service" "paas_web_app" {
         virtual_network_subnet_id = ip_restriction.value
       }
     }
+    # HACK: Bogus IP rule without which AAD auth will throw a 500.79 (?!)
+    # ip_restriction {
+    #   ip_address               = "8.8.8.8/32"
+    # }
 
     # Required for containers
   # linux_fx_version           = local.linux_fx_version
@@ -296,6 +305,60 @@ resource "azurerm_app_service" "paas_web_app" {
 # We can't wait for App Service specific rules due to circular dependency.
 # The all rule will be removed after App Service rules and SQL DB have been provisioned
 # depends_on                   = [azurerm_sql_firewall_rule.azureall] 
+}
+
+resource "azurerm_dns_cname_record" "verify_record" {
+  name                         = "awverify.${local.vanity_hostname}"
+  zone_name                    = var.vanity_domainname
+  resource_group_name          = element(split("/",var.vanity_dns_zone_id),length(split("/",var.vanity_dns_zone_id))-5)
+  ttl                          = 300
+  record                       = "awverify.${replace(azurerm_app_service.paas_web_app.default_site_hostname,"www.","")}"
+
+  count                        = var.vanity_fqdn != null ? 1 : 0
+  tags                         = var.tags
+} 
+resource "azurerm_dns_cname_record" "app_service_alias" {
+  name                         = "${local.vanity_hostname}-appsvc"
+  zone_name                    = var.vanity_domainname
+  resource_group_name          = element(split("/",var.vanity_dns_zone_id),length(split("/",var.vanity_dns_zone_id))-5)
+  ttl                          = 300
+  record                       = azurerm_app_service.paas_web_app.default_site_hostname
+
+  count                        = var.vanity_fqdn != null ? 1 : 0
+  tags                         = var.tags
+} 
+resource azurerm_app_service_certificate vanity_ssl {
+  name                         = var.vanity_certificate_name
+  resource_group_name          = azurerm_app_service.paas_web_app.resource_group_name
+  location                     = azurerm_app_service.paas_web_app.location
+  pfx_blob                     = filebase64(var.vanity_certificate_path)
+  password                     = var.vanity_certificate_password
+
+  count                        = var.vanity_fqdn != null ? 1 : 0
+  tags                         = var.tags
+}
+resource azurerm_app_service_custom_hostname_binding vanity_domain {
+  hostname                     = var.vanity_fqdn
+  app_service_name             = azurerm_app_service.paas_web_app.name
+  resource_group_name          = azurerm_app_service.paas_web_app.resource_group_name
+
+  ssl_state                    = "SniEnabled"
+  thumbprint                   = azurerm_app_service_certificate.vanity_ssl.0.thumbprint
+
+  count                        = var.vanity_fqdn != null ? 1 : 0
+  depends_on                   = [azurerm_dns_cname_record.verify_record]
+}
+# This is used for the App GW Probe
+resource azurerm_app_service_custom_hostname_binding alias_domain {
+  hostname                     = "${azurerm_dns_cname_record.app_service_alias.0.name}.${var.vanity_domainname}"
+  app_service_name             = azurerm_app_service.paas_web_app.name
+  resource_group_name          = azurerm_app_service.paas_web_app.resource_group_name
+
+  ssl_state                    = "SniEnabled"
+  thumbprint                   = azurerm_app_service_certificate.vanity_ssl.0.thumbprint
+
+  count                        = var.vanity_fqdn != null ? 1 : 0
+  depends_on                   = [azurerm_dns_cname_record.verify_record]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {

@@ -150,7 +150,8 @@ module paas_app {
   vdc_resource_group_id        = azurerm_resource_group.vdc_rg.id
   location                     = azurerm_resource_group.vdc_rg.location
   tags                         = local.tags
-
+  
+  aad_auth_client_id_map        = var.paas_aad_auth_client_id_map
   admin_ips                    = local.admin_ips
   admin_ip_ranges              = local.admin_cidr_ranges
   admin_login                  = var.admin_login
@@ -168,6 +169,7 @@ module paas_app {
   default_delete_timeout       = var.default_delete_timeout
   deploy_app_service_network_integration = var.deploy_app_service_network_integration
   deploy_private_dns_for_endpoint = var.deploy_private_dns_for_endpoint
+  enable_aad_auth              = var.enable_app_service_aad_auth
   iag_subnet_id                = azurerm_subnet.iag_subnet.id
   integrated_subnet_id         = lookup(module.paas_spoke_vnet.subnet_ids,"appservice","")
   integrated_subnet_range      = var.vdc_config["paas_spoke_appsvc_subnet"]
@@ -175,6 +177,12 @@ module paas_app {
   shared_resources_group       = var.shared_resources_group
   storage_import               = var.paas_app_storage_import
   storage_replication_type     = var.app_storage_replication_type
+  vanity_certificate_name      = var.vanity_certificate_name
+  vanity_certificate_path      = var.vanity_certificate_path
+  vanity_certificate_password  = var.vanity_certificate_password
+  vanity_dns_zone_id           = var.use_vanity_domain_and_ssl ? data.azurerm_dns_zone.vanity_domain.0.id : null
+  vanity_domainname            = var.vanity_domainname
+  vanity_fqdn                  = var.use_vanity_domain_and_ssl ? local.paas_app_fqdn : null
   vanity_url                   = local.paas_app_url
   waf_subnet_id                = azurerm_subnet.waf_subnet.id
 
