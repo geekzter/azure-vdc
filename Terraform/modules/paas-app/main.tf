@@ -217,12 +217,13 @@ resource "azurerm_app_service" "paas_web_app" {
   dynamic "auth_settings" {
     for_each = range(local.aad_auth_client_id != null ? 1 : 0) 
     content {
-      enabled                  = var.enable_aad_auth
       active_directory {
         client_id              = local.aad_auth_client_id
         client_secret          = var.aad_auth_client_id_map["${terraform.workspace}_client_secret"]
       }
       default_provider         = "AzureActiveDirectory"
+      enabled                  = var.enable_aad_auth
+      issuer                   = "https://sts.windows.net/${data.azurerm_client_config.current.tenant_id}/"
       unauthenticated_client_action = "RedirectToLoginPage"
     }
   }
@@ -281,6 +282,10 @@ resource "azurerm_app_service" "paas_web_app" {
         virtual_network_subnet_id = ip_restriction.value
       }
     }
+    # HACK: Bogus IP rule without which AAD auth will throw a 500.79 (?!)
+    # ip_restriction {
+    #   ip_address               = "8.8.8.8/32"
+    # }
 
     # Required for containers
   # linux_fx_version           = local.linux_fx_version

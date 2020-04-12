@@ -30,6 +30,16 @@ app_devops                     = {
     pat                        = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 }
 # $env:TF_VAR_app_devops = '{account="vstsaccount",team_project="VDC",web_deployment_group="AppServers",db_deployment_group="DBServers",pat="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}'
+paas_aad_auth_client_id_map    = {
+    cd_client_id               = "00000000-0000-0000-0000-000000000000"
+    cd_client_secret           = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    ci_client_id               = "00000000-0000-0000-0000-000000000000"
+    ci_client_secret           = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    default_client_id          = "00000000-0000-0000-0000-000000000000"
+    default_client_secret      = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    test_client_id             = "00000000-0000-0000-0000-000000000000"
+    test_client_secret         = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+}
 
 admin_login                    = "user@tenant.onmicrosoft.com"
 admin_object_id                = "00000000-0000-0000-0000-000000000000"
