@@ -182,8 +182,7 @@ module paas_app {
   vanity_certificate_password  = var.vanity_certificate_password
   vanity_dns_zone_id           = var.use_vanity_domain_and_ssl ? data.azurerm_dns_zone.vanity_domain.0.id : null
   vanity_domainname            = var.vanity_domainname
-# vanity_fqdn                  = var.use_vanity_domain_and_ssl ? local.paas_app_fqdn : null
-  vanity_fqdn                  = local.paas_app_fqdn
+  vanity_fqdn                  = var.use_vanity_domain_and_ssl ? local.paas_app_fqdn : null
   vanity_url                   = local.paas_app_url
   waf_subnet_id                = azurerm_subnet.waf_subnet.id
 

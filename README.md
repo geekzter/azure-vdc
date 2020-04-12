@@ -30,6 +30,7 @@ This projects contains the following components
   - AppServers auto-joined to Azure Pipelines Deployment Group, application deployment from Azure Pipeline
 - An App Service web application integrated into another spoke network (experimental)
   - Several PaaS services connected as Service Endpoints into the AzureFirewall subnet, or through PrivateLink
+  - AAD auth to App Service
   - AAD auth between application tiers using MSI
   - Application deployed from Azure DevOps Pipeline
 
