@@ -13,6 +13,10 @@ trigger:
     - 'Scripts/*' 
     - 'Terraform/*' 
     exclude:
+    - '*.md'
+    - '*.png'  
+    - '*.svg'  
+    - '*.vsdx'  
     - 'Apps/*'
     - 'Kusto/*'
     - 'Pipelines/*'
@@ -21,7 +25,13 @@ pr:
   branches:
     include:
     - '*'
-
+  paths:
+    exclude:
+    - '*.md'  
+    - '*.png'  
+    - '*.svg'  
+    - '*.vsdx'  
+    
 schedules:
   - cron: '0 2 * * *'
     displayName: 'Daily early morning build (UTC)'

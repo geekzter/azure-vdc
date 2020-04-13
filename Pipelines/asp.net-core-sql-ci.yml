@@ -5,6 +5,14 @@
 
 trigger:
 - master
+
+pr:
+  paths:
+    exclude:
+    - '*.md'  
+    - '*.png'  
+    - '*.svg'  
+    - '*.vsdx' 
     
 pool:
   vmImage: 'ubuntu-latest'

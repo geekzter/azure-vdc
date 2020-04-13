@@ -18,6 +18,8 @@ trigger:
     - 'Pipelines/vdc-terraform-plan-ci.yml'
     - 'Scripts/*' 
     - 'Terraform/*' 
+    exclude:
+    - '*.md'
 
 # Already triggering on every commit on any branch
 pr: none

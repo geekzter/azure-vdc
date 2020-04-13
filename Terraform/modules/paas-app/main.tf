@@ -421,8 +421,6 @@ resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
 resource azurerm_app_service_virtual_network_swift_connection network {
   app_service_id               = azurerm_app_service.paas_web_app.id
   subnet_id                    = var.integrated_subnet_id
-
-  count                        = var.deploy_app_service_network_integration ? 1 : 0
 }
 
 ### Event Hub

@@ -343,12 +343,6 @@ variable default_delete_timeout {
 }
 
 #  Feature Toggles
-variable deploy_app_service_network_integration {
-  description                  = "Whether to App Service Regional Virtual network Integration]"
-  default                      = true
-  type                         = bool
-}
-
 variable deploy_auto_shutdown {
   description                  = "Whether to deploy the Auto shutdown function"
   default                      = false
@@ -370,12 +364,6 @@ variable deploy_managed_bastion {
 variable deploy_network_watcher {
   description                  = "Whether to deploy connection monitors"
   default                      = false
-  type                         = bool
-}
-
-variable deploy_private_dns_for_endpoint {
-  description                  = "Whether to create DNS records for Private Endpoint(s)"
-  default                      = true
   type                         = bool
 }
 
