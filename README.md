@@ -17,7 +17,7 @@ You can provision resources by first initializing Terraform:
 And then running:  
 `terraform apply`
 
-## Full version
+## VDC
 This projects contains the following components
 - A hub network with subnets for shared components (dmz, mgmt, etc)
 - Azure Firewall used as Internet Access Gateway (egress, outbound FQDN whitelisting)
@@ -74,24 +74,23 @@ The Automated VDC has a number of features that are turned off by default. This 
 |[Network&nbsp;Watcher](https://azure.microsoft.com/en-us/services/network-watcher/)|`deploy_network_watcher`|`deploy_non_essential_vm_extensions` also needs to be set|
 |VPN, provisions [Point-to-Site (P2S) VPN](https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-rm-ps)|`deploy_vpn`|You need to create certificates used by P2S VPN with `create_certs.ps1` on Windows. These certificates need to exist in the `Certificates` sub-directory. Variable `vpn_root_cert_file` needs to be set (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample))).|
 |AAD&nbsp;Authentication. [Configure](https://docs.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad) App Service to authenticate using Azure Active Directory|`enable_app_service_aad_auth`|SSL and a vanity domain needs to have been set up. You also need to create an Azure AD App registration and configure the `paas_aad_auth_client_id_map` map for at least the `default` workspace (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample))). (Note: Terraform could provision this pre-requiste as well, but I'm assuming you don't have suffiient AAD permissions as this requires a Service Principal to create Service Principals in automation)|
-|Pipeline&nbsp;agent&nbsp;type. By default a [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/) will be used. Setting this to true will instead use an [Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments)|`use_pipeline_environment`|Multi-stage YAML Pipelines|
+|Pipeline&nbsp;agent&nbsp;type. By default a [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/) will be used. Setting this to `true` will instead use an [Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments)|`use_pipeline_environment`|Multi-stage YAML Pipelines|
 |SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegated the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and store it in the `Certificates` sub-directory. `vanity_certificate_*` need to be set accordingly (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample)).
 
-## Sources
+### Resources
 - [Azure CLI](http://aka.ms/azure-cli)
 - [Azure Pipelines](https://azure.microsoft.com/en-us/services/devops/pipelines/)
 - [PowerShell Core](https://github.com/PowerShell/PowerShell)
 - [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html)
 - [Terraform Azure Provider](https://www.terraform.io/docs/providers/azurerm/index.html)
-- [Terraform Download](https://www.terraform.io/downloads.html)
 - [Terraform Learning](https://learn.hashicorp.com/terraform/)
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
 
-## Limitations & Known Issue's
+### Limitations & Known Issue's
 - Release Pipelines not yet available in YAML as the Azure DevOps Environments used in multi-staged YAML pipelines do not support automatic provisioning of agents yet. See [issue on GitHub](https://github.com/MicrosoftDocs/vsts-docs/issues/7698)
 
-## Integration
-- Terraform output is exported as ad-hoc Azure Pipeline variables by `tf_deploy.ps1`, so they can be used un subsequent tasks in an Azure Pipeline Job
+### Integration
+- Terraform output is exported as ad-hoc Azure Pipeline variables by `tf_deploy.ps1`, so they can be used in subsequent tasks in an Azure Pipeline Job
 
 ## Disclaimer
 This project is provided as-is, and is not intended as a blueprint on how a VDC should be deployed, or Azure components and Terraform should be used. It is merely an example on how you can use the technology. The project creates a number of Azure resources, you are responsible for monitoring and managing cost.
