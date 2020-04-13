@@ -36,6 +36,7 @@ trigger:
     - 'Scripts/*' 
     - 'Terraform/*' 
     exclude:
+    - '*.md'
     - 'Apps/*'
     - 'Kusto/*'
     - 'Pipelines/*'
