@@ -282,10 +282,6 @@ resource "azurerm_app_service" "paas_web_app" {
         virtual_network_subnet_id = ip_restriction.value
       }
     }
-    # HACK: Bogus IP rule without which AAD auth will throw a 500.79 (?!)
-    ip_restriction {
-      ip_address               = "8.8.8.8/32"
-    }
 
     # Required for containers
   # linux_fx_version           = local.linux_fx_version
