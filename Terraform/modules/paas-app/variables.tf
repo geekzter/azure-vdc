@@ -23,12 +23,6 @@ variable default_create_timeout {}
 variable default_update_timeout {}
 variable default_read_timeout {}
 variable default_delete_timeout {}
-variable deploy_app_service_network_integration {
-  type                         = bool
-}
-variable deploy_private_dns_for_endpoint {
-  type                         = bool
-}
 variable enable_aad_auth {
   type                         = bool
 }

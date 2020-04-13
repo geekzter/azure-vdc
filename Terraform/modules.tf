@@ -167,8 +167,6 @@ module paas_app {
   default_update_timeout       = var.default_update_timeout
   default_read_timeout         = var.default_read_timeout
   default_delete_timeout       = var.default_delete_timeout
-  deploy_app_service_network_integration = var.deploy_app_service_network_integration
-  deploy_private_dns_for_endpoint = var.deploy_private_dns_for_endpoint
   enable_aad_auth              = var.enable_app_service_aad_auth
   iag_subnet_id                = azurerm_subnet.iag_subnet.id
   integrated_subnet_id         = lookup(module.paas_spoke_vnet.subnet_ids,"appservice","")

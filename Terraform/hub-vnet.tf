@@ -187,7 +187,6 @@ resource azurerm_private_dns_a_record sql_server_dns_record {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
   records                      = [module.paas_app.sql_server_private_ip_address]
-  count                        = var.deploy_private_dns_for_endpoint ? 1 : 0
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "link" {
