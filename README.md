@@ -34,10 +34,10 @@ This projects contains the following components
   - AAD auth between application tiers using MSI
   - Application deployed from Azure DevOps Pipeline
 
-### Pre-Requisites (all features)
+### Pre-Requisites
 This project uses Terraform, PowerShell Core, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
 
-### Getting Started (all features)
+### Getting Started
 The quickstart uses defauls settings that disables some features. To use all featues (e.g. VPN, SSL domains, CI/CD), more is involved:
 1.	Clone repository:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
@@ -66,16 +66,16 @@ to provision resources
 
 ### Features ###
 The Automated VDC has a number of features that are turned off by default. This can be because the feature has pre-requisites (e.g. certificates, or you need to own a domain). Another reason is the use of Azure preview features, or features that just simply take a long time to provision. Features are toggled by a corresponding variable in `variables.tf`.
-|Feature|Toggle|Description|Dependencies and Pre-requisites|
-|---|---|---|------------------|
-|Auto&nbsp;Shutdown|`deploy_auto_shutdown`|Azure Function to deallocate VM's, runs daily|This deployment depends on nested ARM template deployment using `azurerm_template_deployment`|
-|Non&#x2011;essential&nbsp;VM&nbsp;Extensions|`deploy_non_essential_vm_extensions`|Controls whether these extensions are provisioned: `Microsoft.VisualStudio.Services.TeamServicesAgent` (for VM's that are not a deployment target for an Azure Pipeline), `Microsoft.Compute.BGInfo`, `Microsoft.Azure.Monitoring.DependencyAgent.DependencyAgentWindows`, `Microsoft.Azure.NetworkWatcher.NetworkWatcherAgentWindows`|None|
-|Azure&nbsp;Bastion|`deploy_managed_bastion`|Provisions the Azure Bastion service in each Virtual Network|None|
-|Network&nbsp;Watcher|`deploy_network_watcher`|Deploys Network Watcher features|`deploy_non_essential_vm_extensions` also needs to be set|
-|VPN|`deploy_vpn`|Provisions Point-to-Site (P2S) VPN|You need to create certificates used by P2S VPN with `create_certs.ps1` on Windows. These certificates need to exist in the `Certificates` sub-directory. Variable `vpn_root_cert_file` needs to be set (see example in `config.auto.tfvars.sample`).|
-|AAD&nbsp;Authentication|`enable_app_service_aad_auth`|Configure App Service to authenticate using Azure Active Directory|SSL and a vanity domain needs to have been set up. You also need to create an Azure AD App registration and configure the `paas_aad_auth_client_id_map` map for at least the `default` workspace (see example in `config.auto.tfvars.sample`). (Note: Terraform could provision this pre-requiste as well, but I'm assuming you don't have suffiient AAD permissions as this requires a Service Principal to create Service Principals in automation)|
-|Pipeline&nbsp;agent&nbsp;type|`use_pipeline_environment`|By default a Deployment Group will be used. Setting this to true will instead use an Environment|Multi-stage YAML Pipelines|
-|SSL&nbsp;&&nbsp;Vanity&nbsp;domain|`use_vanity_domain_and_ssl`|Use HTTPS and Vanity domains (e.g. yourdomain.com)|You need to own a domain, and delegated the management of the domain to Azure DNS. The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and store it in the `Certificates` sub-directory. `vanity_certificate_*` need to be set accordingly (see example in `config.auto.tfvars.sample`).
+|Feature|Toggle|Dependencies and Pre-requisites|
+|---|---|---|
+|Auto&nbsp;Shutdown, Azure Function to deallocate VM's, runs daily|`deploy_auto_shutdown`|This deployment depends on nested ARM template deployment using `azurerm_template_deployment`|
+|Non&#x2011;essential&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `Microsoft.VisualStudio.Services.TeamServicesAgent` (for VM's that are not a deployment target for an Azure Pipeline), `Microsoft.Compute.BGInfo`, `Microsoft.Azure.Monitoring.DependencyAgent.DependencyAgentWindows`, `Microsoft.Azure.NetworkWatcher.NetworkWatcherAgentWindows`|`deploy_non_essential_vm_extensions`|None|
+|Azure&nbsp;Bastion. Provisions the Azure Bastion service in each Virtual Network|`deploy_managed_bastion`|None|
+|Network&nbsp;Watcher|`deploy_network_watcher`|`deploy_non_essential_vm_extensions` also needs to be set|
+|VPN, provisions Point-to-Site (P2S) VPN|`deploy_vpn`|You need to create certificates used by P2S VPN with `create_certs.ps1` on Windows. These certificates need to exist in the `Certificates` sub-directory. Variable `vpn_root_cert_file` needs to be set (see example in `config.auto.tfvars.sample`).|
+|AAD&nbsp;Authentication. Configure App Service to authenticate using Azure Active Directory|`enable_app_service_aad_auth`|SSL and a vanity domain needs to have been set up. You also need to create an Azure AD App registration and configure the `paas_aad_auth_client_id_map` map for at least the `default` workspace (see example in `config.auto.tfvars.sample`). (Note: Terraform could provision this pre-requiste as well, but I'm assuming you don't have suffiient AAD permissions as this requires a Service Principal to create Service Principals in automation)|
+|Pipeline&nbsp;agent&nbsp;type. By default a Deployment Group will be used. Setting this to true will instead use an Environment|`use_pipeline_environment`|Multi-stage YAML Pipelines|
+|SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegated the management of the domain to Azure DNS. The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and store it in the `Certificates` sub-directory. `vanity_certificate_*` need to be set accordingly (see example in `config.auto.tfvars.sample`).
 
 ## Sources
 - [Azure CLI](http://aka.ms/azure-cli)
