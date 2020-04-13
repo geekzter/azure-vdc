@@ -10,6 +10,7 @@
 param (    
     [parameter(Mandatory=$false)][switch]$Database,
     [parameter(Mandatory=$false)][switch]$Website,
+    [parameter(Mandatory=$false)][switch]$Restart,
     [parameter(Mandatory=$false)][switch]$Test,
     [parameter(Mandatory=$false)][switch]$All,
 
@@ -26,7 +27,7 @@ param (
     [parameter(Mandatory=$false)][object]$SqlDatabase,
 
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=$env:TF_WORKSPACE,
-    [parameter(Mandatory=$false)][int]$MaxTests=60,
+    [parameter(Mandatory=$false)][int]$MaxTests=600,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 
@@ -79,7 +80,7 @@ function DeployWebApp () {
 
     # Publish web app
     Write-Host "Publishing $packageName to web app $appAppServiceName..."
-    $null = az webapp deployment source config-zip -g $appResourceGroup -n $appAppServiceName --src $packagePath
+    az webapp deployment source config-zip -g $appResourceGroup -n $appAppServiceName --src $packagePath -o none
 
     Write-Host "Web app $appAppServiceName published at $appUrl"
 }
@@ -105,11 +106,8 @@ function ImportDatabase (
     $userName = "vdcadmin"
  
     # Create SQL Firewall rule for import
-    Invoke-Command -ScriptBlock {
-        $Private:ErrorActionPreference = "Continue"
-        $Script:sqlFWRule = $(az sql server firewall-rule show -g $ResourceGroup -s $SqlServer -n $sqlFWRuleName 2>$null)
-    }
-    if (!$sqlFWRule) {
+    $allAzureRuleIDs = $(az sql server firewall-rule list -g $ResourceGroup -s $SqlServer --query "[?startIpAddress=='0.0.0.0'].id" -o tsv)
+    if (!$allAzureRuleIDs) {
         Write-Information "Creating SQL Server ${SqlServer} Firewall rule '${sqlFWRuleName}' ..."
         $sqlFWRule = $(az sql server firewall-rule create -g $ResourceGroup -s $SqlServer -n $sqlFWRuleName --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0)
     } else {
@@ -137,10 +135,11 @@ function ImportDatabase (
                                 -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN `
                                 -UserName $UserName -SecurePassword $SecurePassword
 
-    if (!$sqlFWRule) {
-        # Remove SQL Firewall rule
-        Write-Verbose "Removing SQL Server ${SqlServer} Firewall rule $sqlFWRuleName ..."
-        az sql server firewall-rule delete -g $appResourceGroup -s $SqlServer -n $sqlFWRuleName -o none
+    # Remove Allow All Azure rule(s)
+    $allAzureRuleIDs = $(az sql server firewall-rule list -g $ResourceGroup -s $SqlServer --query "[?startIpAddress=='0.0.0.0'].id" -o tsv)
+    if ($allAzureRuleIDs) {
+        Write-Verbose "Removing SQL Server ${SqlServer} Firewall rules $allAzureRuleIDs ..."
+        az sql server firewall-rule delete --ids $allAzureRuleIDs
     }
 }
 function ResetDatabasePassword (
@@ -157,6 +156,27 @@ function ResetDatabasePassword (
     $securePassword = ConvertTo-SecureString $dbaPassword -AsPlainText -Force
     $securePassword.MakeReadOnly()
     return $securePassword
+}
+function RestartApp () {
+    # HACK: Creating and removing a bogus IP Access Restriction sometime get's rid of 500.79 errors with AAD authentication
+    $ruleName = "Bogusrule"
+    Write-Information "Adding App Service '$appAppServiceName' Access Restriction '$ruleName'..."
+    az webapp config access-restriction add -p 999 -r $ruleName --ip-address 1.2.3.4/32 -g $appResourceGroup -n $appAppServiceName -o none
+    $authEnabled = $(az webapp auth show -g $appResourceGroup -n $appAppServiceName --query "enabled" -o tsv)
+    Write-Information "Authentication for App Service '$appAppServiceName' is set to '$authEnabled'"
+    Write-Information "Disabling authentication for App Service '$appAppServiceName'..."
+    az webapp auth update --enabled false -g $appResourceGroup -n $appAppServiceName -o none
+
+    Write-Information "Restarting App Service '$appAppServiceName'..."
+    az webapp restart -g $appResourceGroup -n $appAppServiceName 
+
+    Write-Information "Removing App Service '$appAppServiceName' Access Restriction '$ruleName'..."
+    az webapp config access-restriction remove -r $ruleName -g $appResourceGroup -n $appAppServiceName -o none
+    Write-Information "Setting authentication for App Service '$appAppServiceName' to '$authEnabled'..."
+    az webapp auth update --enabled $authEnabled -g $appResourceGroup -n $appAppServiceName -o none
+
+    Write-Information "Restarting App Service '$appAppServiceName'..."
+    az webapp restart -g $appResourceGroup -n $appAppServiceName 
 }
 function TestApp (
     [parameter(Mandatory=$true)][string]$AppUrl
@@ -188,7 +208,7 @@ function TestApp (
 }
 
 # Provide at least one argument
-if (!($All -or $Database -or $Website -or $Test)) {
+if (!($All -or $Database -or $Website -or $Restart -or $Test)) {
     Write-Host "Please indicate what to do by using a command-line switch"
     Get-Help $MyInvocation.MyCommand.Definition
     exit
@@ -201,6 +221,9 @@ if (($All -or $Database) -and (!$SqlDatabase -or !$SqlServerFQDN -or !$AppResour
     $useTerraform = $true
 }
 if (($All -or $Website) -and (!$AppUrl -or !$DevOpsOrgUrl -or !$DevOpsProject -or !$AppAppServiceName -or !$AppResourceGroup)) {
+    $useTerraform = $true
+}
+if (($All -or $Restart) -and (!$AppUrl -or !$AppAppServiceName -or !$AppResourceGroup)) {
     $useTerraform = $true
 }
 if (($All -or $Test) -and !$AppUrl) {
@@ -261,8 +284,11 @@ if ($All -or $Website) {
     # Deploy Web App
     DeployWebApp
 }
-
-if ($All -or $Test -or $Website) {
+if ($All -or $Restart -or $Website) {
+    # Deploy Web App
+    RestartApp
+}
+if ($All -or $Restart -or $Test -or $Website) {
     # Test & Warm up 
     TestApp -AppUrl $AppUrl 
 }

@@ -68,7 +68,7 @@ resource "azurerm_storage_account" "app_storage" {
     # Allow the Firewall subnet
     virtual_network_subnet_ids = [
                                  var.iag_subnet_id,
-                                 var.integrated_subnet_id
+                                 var.data_subnet_id
     ]
   } 
 
@@ -282,10 +282,6 @@ resource "azurerm_app_service" "paas_web_app" {
         virtual_network_subnet_id = ip_restriction.value
       }
     }
-    # HACK: Bogus IP rule without which AAD auth will throw a 500.79 (?!)
-    # ip_restriction {
-    #   ip_address               = "8.8.8.8/32"
-    # }
 
     # Required for containers
   # linux_fx_version           = local.linux_fx_version
@@ -557,7 +553,6 @@ resource "azurerm_sql_firewall_rule" "adminclient" {
   count                        = length(local.admin_ips)
 }
 
-
 resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
   name                         = "AllowAzureFirewallSubnet"
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -572,13 +567,18 @@ resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
   }  
 }
 
-resource null_resource app_service_rules {
-  # Create SQL DB FW rule to allow App Service in
-  # Create on this resource to prevent circular dependency between module.paas_app.azurerm_sql_database.app_sqldb, module.paas_app.azurerm_app_service.paas_web_app, module.paas_app.azurerm_sql_server.app_sqlserver
-  provisioner "local-exec" {
-    command                    = "../Scripts/create_appsvc_sqldb_firewall_rules.ps1 -SqlServerName ${azurerm_sql_server.app_sqlserver.name} -ResourceGroupName ${azurerm_sql_server.app_sqlserver.resource_group_name} -OutboundIPAddresses ${azurerm_app_service.paas_web_app.outbound_ip_addresses}"
-    interpreter                = ["pwsh", "-nop", "-Command"]
-  }
+resource "azurerm_sql_virtual_network_rule" "data_subnet" {
+  name                         = "AllowDataSubnet"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  subnet_id                    = var.data_subnet_id
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 }
 
 resource "azurerm_private_endpoint" "sqlserver_endpoint" {
