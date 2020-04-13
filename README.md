@@ -69,7 +69,7 @@ The Automated VDC has a number of features that are turned off by default. This 
 |Feature|Toggle|Dependencies and Pre-requisites|
 |---|---|---|
 |Auto&nbsp;Shutdown, Azure Function to deallocate VM's, runs daily|`deploy_auto_shutdown`|This deployment depends on nested ARM template deployment using `azurerm_template_deployment`|
-|Non&#x2011;essential&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `Microsoft.VisualStudio.Services.TeamServicesAgent` (for VM's that are not a deployment target for an Azure Pipeline), `Microsoft.Compute.BGInfo`, `Microsoft.Azure.Monitoring.DependencyAgent.DependencyAgentWindows`, `Microsoft.Azure.NetworkWatcher.NetworkWatcherAgentWindows`|`deploy_non_essential_vm_extensions`|None|
+|Non&#x2011;essential&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `TeamServicesAgent` (for VM's that are not a deployment target for an Azure Pipeline), `BGInfo`, `DependencyAgentWindows`, `NetworkWatcherAgentWindows`|`deploy_non_essential_vm_extensions`|None|
 |Azure&nbsp;Bastion. Provisions the Azure Bastion service in each Virtual Network|`deploy_managed_bastion`|None|
 |Network&nbsp;Watcher|`deploy_network_watcher`|`deploy_non_essential_vm_extensions` also needs to be set|
 |VPN, provisions Point-to-Site (P2S) VPN|`deploy_vpn`|You need to create certificates used by P2S VPN with `create_certs.ps1` on Windows. These certificates need to exist in the `Certificates` sub-directory. Variable `vpn_root_cert_file` needs to be set (see example in `config.auto.tfvars.sample`).|
