@@ -20,6 +20,7 @@ variable tags {
   default = {
     application                = "Automated VDC"
     provisioner                = "terraform"
+    shutdown                   = "true"
   }
 } 
 
@@ -343,12 +344,6 @@ variable default_delete_timeout {
 }
 
 #  Feature Toggles
-variable deploy_auto_shutdown {
-  description                  = "Whether to deploy the Auto shutdown function"
-  default                      = false
-  type                         = bool
-}
-
 variable deploy_non_essential_vm_extensions {
   description                  = "Whether to deploy optional VM extensions"
   default                      = false

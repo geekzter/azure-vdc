@@ -68,7 +68,6 @@ to provision resources
 The Automated VDC has a number of features that are turned off by default. This can be because the feature has pre-requisites (e.g. certificates, or you need to own a domain). Another reason is the use of Azure preview features, or features that just simply take a long time to provision. Features are toggled by a corresponding variable in [`variables.tf`](./Terraform/variables.tf).
 |Feature|Toggle|Dependencies and Pre-requisites|
 |---|---|---|
-|Auto&nbsp;Shutdown, Azure Function to deallocate VM's, runs daily|`deploy_auto_shutdown`|This deployment depends on nested ARM [template](./Terraform/modules/auto-shutdown/automation-function.json) deployment using `azurerm_template_deployment`|
 |Non&#x2011;essential&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `TeamServicesAgent` (for VM's that are not a deployment target for an Azure Pipeline), `BGInfo`, `DependencyAgentWindows`, `NetworkWatcherAgentWindows`|`deploy_non_essential_vm_extensions`|None|
 |Azure&nbsp;Bastion. Provisions the [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) service in each Virtual Network|`deploy_managed_bastion`|None|
 |[Network&nbsp;Watcher](https://azure.microsoft.com/en-us/services/network-watcher/)|`deploy_network_watcher`|`deploy_non_essential_vm_extensions` also needs to be set|
