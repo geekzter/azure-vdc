@@ -376,7 +376,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
     ]
 
     translated_port            = "3389"
-    translated_address         = var.vdc_config["hub_bastion_address"]
+    translated_address         = var.vdc_config["hub_mgmt_address"]
     protocols                  = [
       "TCP"
     ]

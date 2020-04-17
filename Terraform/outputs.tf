@@ -35,34 +35,34 @@ output automation_account_resource_group {
   value       = azurerm_automation_account.automation.resource_group_name
 }
 
-output bastion_address {
-  value       = var.vdc_config["hub_bastion_address"]
+output mgmt_address {
+  value       = var.vdc_config["hub_mgmt_address"]
 }
 
-# output bastion_firstlogoncommand {
-#   value                  = templatefile("../Scripts/host/BastionFirstLogonCommands.xml", { 
+# output mgmt_firstlogoncommand {
+#   value                  = templatefile("../Scripts/host/ManagementFirstLogonCommands.xml", { 
 #     username               = var.admin_username, 
 #     password               = local.password, 
 #     hosts                  = concat(var.app_web_vms,var.app_web_vms),
-#     scripturl              = azurerm_storage_blob.bastion_prepare_script.url,
+#     scripturl              = azurerm_storage_blob.mgmt_prepare_script.url,
 #     sqlserver              = module.paas_app.sql_server_fqdn
 #   })
 # }
 
-output bastion_name {
-  value = azurerm_windows_virtual_machine.bastion.name
+output mgmt_name {
+  value = azurerm_windows_virtual_machine.mgmt.name
 }
 
-output bastion_rdp {
+output mgmt_rdp {
   value = "mstsc.exe /v:${azurerm_public_ip.iag_pip.fqdn}:${local.rdp_port}"
 }
 
-output bastion_rdp_port {
+output mgmt_rdp_port {
   value = local.rdp_port
 }
 
-output bastion_rdp_vpn {
-  value = "mstsc.exe /v:${var.vdc_config["hub_bastion_address"]}"
+output mgmt_rdp_vpn {
+  value = "mstsc.exe /v:${var.vdc_config["hub_mgmt_address"]}"
 }
 
 output devops_org_url {

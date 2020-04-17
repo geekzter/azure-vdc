@@ -3,14 +3,14 @@ locals {
 }
 
 resource "azurerm_network_interface" "bas_if" {
-  name                         = "${azurerm_resource_group.vdc_rg.name}-bastion-if"
+  name                         = "${azurerm_resource_group.vdc_rg.name}-mgmt-if"
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
 
   ip_configuration {
     name                       = "bas_ipconfig"
     subnet_id                  = azurerm_subnet.mgmt_subnet.id
-    private_ip_address         = var.vdc_config["hub_bastion_address"]
+    private_ip_address         = var.vdc_config["hub_mgmt_address"]
     private_ip_address_allocation = "static"
   }
 
@@ -23,16 +23,16 @@ resource "azurerm_storage_container" "scripts" {
   container_access_type        = "container"
 }
 
-resource "azurerm_storage_blob" "bastion_prepare_script" {
-  name                         = "prepare_bastion.ps1"
+resource "azurerm_storage_blob" "mgmt_prepare_script" {
+  name                         = "prepare_mgmtvm.ps1"
   storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
   storage_container_name       = azurerm_storage_container.scripts.name
 
   type                         = "Block"
-  source                       = "../Scripts/host/prepare_bastion.ps1"
+  source                       = "../Scripts/host/prepare_mgmtvm.ps1"
 }
 
-resource "azurerm_windows_virtual_machine" "bastion" {
+resource "azurerm_windows_virtual_machine" "mgmt" {
   name                         = local.mgmt_vm_name
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -64,11 +64,11 @@ resource "azurerm_windows_virtual_machine" "bastion" {
   }
   additional_unattend_content {
     setting                    = "FirstLogonCommands"
-    content                    = templatefile("../Scripts/host/BastionFirstLogonCommands.xml", { 
+    content                    = templatefile("../Scripts/host/ManagementFirstLogonCommands.xml", { 
       username                 = var.admin_username, 
       password                 = local.password, 
       hosts                    = concat(var.app_web_vms,var.app_db_vms),
-      scripturl                = azurerm_storage_blob.bastion_prepare_script.url,
+      scripturl                = azurerm_storage_blob.mgmt_prepare_script.url,
       sqlserver                = module.paas_app.sql_server_fqdn
     })
   }
@@ -80,14 +80,14 @@ resource "azurerm_windows_virtual_machine" "bastion" {
     type                       = "SystemAssigned"
   }
 
-  # Not zone redundant, we'll rely on zone redundant managed bastion
+  # Not zone redundant, we'll rely on zone redundant management server
 
   depends_on                   = [azurerm_firewall_application_rule_collection.iag_app_rules]
 
   tags                         = local.tags
 }
 
-resource null_resource start_bastion {
+resource null_resource start_mgmt {
   # Always run this
   triggers                     = {
     always_run                 = timestamp()
@@ -95,7 +95,7 @@ resource null_resource start_bastion {
 
   provisioner local-exec {
     # Start VM, so we can execute script through SSH
-    command                    = "az vm start --ids ${azurerm_windows_virtual_machine.bastion.id}"
+    command                    = "az vm start --ids ${azurerm_windows_virtual_machine.mgmt.id}"
   }
 }
 
@@ -107,9 +107,9 @@ resource azurerm_role_assignment vm_admin {
   count                        = var.admin_object_id != null ? 1 : 0
 }
 
-resource azurerm_virtual_machine_extension bastion_aadlogin {
+resource azurerm_virtual_machine_extension mgmt_aadlogin {
   name                         = "AADLoginForWindows"
-  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
   publisher                    = "Microsoft.Azure.ActiveDirectory"
   type                         = "AADLoginForWindows"
   type_handler_version         = "1.0"
@@ -117,12 +117,12 @@ resource azurerm_virtual_machine_extension bastion_aadlogin {
 
   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
-  depends_on                   = [null_resource.start_bastion]
+  depends_on                   = [null_resource.start_mgmt]
 } 
 
-resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
+resource "azurerm_virtual_machine_extension" "mgmt_bginfo" {
   name                         = "BGInfo"
-  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
   publisher                    = "Microsoft.Compute"
   type                         = "BGInfo"
   type_handler_version         = "2.1"
@@ -136,12 +136,12 @@ resource "azurerm_virtual_machine_extension" "bastion_bginfo" {
 
   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
-  depends_on                   = [null_resource.start_bastion]
+  depends_on                   = [null_resource.start_mgmt]
 }
 
-resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
+resource "azurerm_virtual_machine_extension" "mgmt_dependency_monitor" {
   name                         = "DAExtension"
-  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"
   type_handler_version         = "9.5"
@@ -166,11 +166,11 @@ resource "azurerm_virtual_machine_extension" "bastion_dependency_monitor" {
 
   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
-  depends_on                   = [null_resource.start_bastion]
+  depends_on                   = [null_resource.start_mgmt]
 }
-resource "azurerm_virtual_machine_extension" "bastion_monitor" {
+resource "azurerm_virtual_machine_extension" "mgmt_monitor" {
   name                         = "MMAExtension"
-  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
@@ -183,7 +183,7 @@ resource "azurerm_virtual_machine_extension" "bastion_monitor" {
   settings                     = <<EOF
     {
       "workspaceId"            : "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}",
-      "azureResourceId"        : "${azurerm_windows_virtual_machine.bastion.id}",
+      "azureResourceId"        : "${azurerm_windows_virtual_machine.mgmt.id}",
       "stopOnMultipleConnections": "true"
     }
   EOF
@@ -195,12 +195,12 @@ resource "azurerm_virtual_machine_extension" "bastion_monitor" {
 
 # count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
-  depends_on                   = [null_resource.start_bastion]
+  depends_on                   = [null_resource.start_mgmt]
 }
 
-resource "azurerm_virtual_machine_extension" "bastion_watcher" {
+resource "azurerm_virtual_machine_extension" "mgmt_watcher" {
   name                         = "AzureNetworkWatcherExtension"
-  virtual_machine_id           = azurerm_windows_virtual_machine.bastion.id
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
   publisher                    = "Microsoft.Azure.NetworkWatcher"
   type                         = "NetworkWatcherAgentWindows"
   type_handler_version         = "1.4"
@@ -214,7 +214,7 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 
   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
-  depends_on                   = [null_resource.start_bastion]
+  depends_on                   = [null_resource.start_mgmt]
 }
 
 # BUG: Get's recreated every run
@@ -226,7 +226,7 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 #   network_watcher_name         = local.network_watcher_name
 
 #   source {
-#     virtual_machine_id         = azurerm_windows_virtual_machine.bastion.id
+#     virtual_machine_id         = azurerm_windows_virtual_machine.mgmt.id
 #   }
 
 #   destination {
@@ -235,7 +235,7 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 #   }
 
 #   count                        = var.deploy_network_watcher ? 1 : 0
-#   depends_on                   = [azurerm_virtual_machine_extension.bastion_watcher]
+#   depends_on                   = [azurerm_virtual_machine_extension.mgmt_watcher]
 
 #   tags                         = local.tags
 # }
@@ -247,7 +247,7 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 #   network_watcher_name         = local.network_watcher_name
 
 #   source {
-#     virtual_machine_id         = azurerm_windows_virtual_machine.bastion.id
+#     virtual_machine_id         = azurerm_windows_virtual_machine.mgmt.id
 #   }
 
 #   destination {
@@ -256,13 +256,13 @@ resource "azurerm_virtual_machine_extension" "bastion_watcher" {
 #   }
 
 #   count                        = var.deploy_network_watcher ? 1 : 0
-#   depends_on                   = [azurerm_virtual_machine_extension.bastion_watcher]
+#   depends_on                   = [azurerm_virtual_machine_extension.mgmt_watcher]
 
 #   tags                         = local.tags
 # } 
 
 locals {
-  virtual_machine_ids          = concat(module.iis_app.virtual_machine_ids, [azurerm_windows_virtual_machine.bastion.id])
+  virtual_machine_ids          = concat(module.iis_app.virtual_machine_ids, [azurerm_windows_virtual_machine.mgmt.id])
   virtual_machine_ids_string   = join(",",local.virtual_machine_ids)
 }
 
@@ -299,7 +299,7 @@ resource "azurerm_automation_schedule" "daily" {
 #   depends_on                     =[
 #                                     azurerm_log_analytics_linked_service.automation,
 #                                     azurerm_log_analytics_solution.oms_solutions,
-# #                                   azurerm_virtual_machine_extension.bastion_monitor,
+# #                                   azurerm_virtual_machine_extension.mgmt_monitor,
 # #                                   module.iis_app.monitoring_agent_ids,
 #                                     module.iis_app
 #                                   ]
@@ -323,7 +323,7 @@ resource "azurerm_automation_schedule" "daily" {
 #   depends_on                   = [
 #                                  azurerm_log_analytics_linked_service.automation,
 #                                  azurerm_log_analytics_solution.oms_solutions,
-# #                                azurerm_virtual_machine_extension.bastion_monitor,
+# #                                azurerm_virtual_machine_extension.mgmt_monitor,
 # #                                module.iis_app.monitoring_agent_ids,
 #                                  module.iis_app
 #                                  ]

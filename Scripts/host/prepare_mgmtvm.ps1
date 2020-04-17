@@ -1,6 +1,6 @@
 <# 
 .SYNOPSIS 
-    Script used to bootstrap Bastion server
+    Script used to bootstrap Management server
  
 .DESCRIPTION 
     This script is downloaded and executed during first logon
