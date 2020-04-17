@@ -22,7 +22,7 @@ This projects contains the following components
 - A hub network with subnets for shared components (dmz, mgmt, etc)
 - Azure Firewall used as Internet Access Gateway (egress, outbound FQDN whitelisting)
 - Application Gateway as Web Application Firewall (WAF, HTTP ingress)
-- A Management server that is used as jump server to connect to other VM's. 
+- A Management VM that is used as jump server to connect to other VM's. 
 - A Managed Bastion as well
 - A Point to Site (P2S VPN), with transitive access to PaaS services
 - Infrastructure provisioning through Terraform, PowerShell and Azure Pipelines
