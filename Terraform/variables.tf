@@ -159,7 +159,7 @@ variable vdc_oms_solutions {
     "ServiceMap",
   # "SiteRecovery",
     "SQLAdvancedThreatProtection",
-    "SQLAssessment",
+  # "SQLAssessment",
   # "SQLThreatDetection",
     "SQLVulnerabilityAssessment",
   # "SurfaceHub",
