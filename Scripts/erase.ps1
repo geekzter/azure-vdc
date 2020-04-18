@@ -19,7 +19,7 @@ param (
     [parameter(Mandatory=$false)][switch]$Destroy=$false,
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
-    [parameter(Mandatory=$false)][int]$TimeoutMinutes=5,
+    [parameter(Mandatory=$false)][int]$TimeoutMinutes=50,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 )
 if (!$Workspace -and !$Environment) { 

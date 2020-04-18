@@ -20,6 +20,7 @@ variable tags {
   default = {
     application                = "Automated VDC"
     provisioner                = "terraform"
+    shutdown                   = "true"
   }
 } 
 
@@ -89,7 +90,7 @@ variable vdc_config {
 
     vpn_range                  = "192.168.0.0/24"
 
-    hub_bastion_address        = "10.0.2.132"
+    hub_mgmt_address        = "10.0.2.132"
   }
 }
 
@@ -158,7 +159,7 @@ variable vdc_oms_solutions {
     "ServiceMap",
   # "SiteRecovery",
     "SQLAdvancedThreatProtection",
-    "SQLAssessment",
+  # "SQLAssessment",
   # "SQLThreatDetection",
     "SQLVulnerabilityAssessment",
   # "SurfaceHub",
@@ -343,12 +344,6 @@ variable default_delete_timeout {
 }
 
 #  Feature Toggles
-variable deploy_auto_shutdown {
-  description                  = "Whether to deploy the Auto shutdown function"
-  default                      = false
-  type                         = bool
-}
-
 variable deploy_non_essential_vm_extensions {
   description                  = "Whether to deploy optional VM extensions"
   default                      = false

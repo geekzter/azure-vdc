@@ -22,6 +22,14 @@ resource "azurerm_role_assignment" "demo_admin" {
   count                        = var.admin_object_id != null ? 1 : 0
 }
 
+resource azurerm_role_assignment vm_admin {
+  scope                        = azurerm_resource_group.app_rg.id
+  role_definition_name         = "Virtual Machine Administrator Login"
+  principal_id                 = var.admin_object_id
+
+  count                        = var.admin_object_id != null ? 1 : 0
+}
+
 resource "azurerm_network_interface" "app_web_if" {
   name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-nic"
   location                     = azurerm_resource_group.app_rg.location
@@ -121,6 +129,18 @@ resource null_resource start_web_vm {
   count                        = var.app_web_vm_number
 }
 
+resource azurerm_virtual_machine_extension app_db_web_aadlogin {
+  name                         = "AADLoginForWindows"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
+  publisher                    = "Microsoft.Azure.ActiveDirectory"
+  type                         = "AADLoginForWindows"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  tags                         = var.tags
+  depends_on                   = [null_resource.start_web_vm]
+} 
 resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
@@ -497,6 +517,19 @@ resource null_resource start_db_vm {
 
   count                        = var.app_web_vm_number
 }
+
+resource azurerm_virtual_machine_extension app_db_vm_aadlogin {
+  name                         = "AADLoginForWindows"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  publisher                    = "Microsoft.Azure.ActiveDirectory"
+  type                         = "AADLoginForWindows"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  tags                         = var.tags
+  depends_on                   = [null_resource.start_db_vm]
+} 
 
 resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"

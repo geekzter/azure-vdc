@@ -22,7 +22,7 @@ This projects contains the following components
 - A hub network with subnets for shared components (dmz, mgmt, etc)
 - Azure Firewall used as Internet Access Gateway (egress, outbound FQDN whitelisting)
 - Application Gateway as Web Application Firewall (WAF, HTTP ingress)
-- A Management server that is used as jump server to connect to other VM's. 
+- A Management VM that is used as jump server to connect to other VM's. 
 - A Managed Bastion as well
 - A Point to Site (P2S VPN), with transitive access to PaaS services
 - Infrastructure provisioning through Terraform, PowerShell and Azure Pipelines
@@ -68,7 +68,6 @@ to provision resources
 The Automated VDC has a number of features that are turned off by default. This can be because the feature has pre-requisites (e.g. certificates, or you need to own a domain). Another reason is the use of Azure preview features, or features that just simply take a long time to provision. Features are toggled by a corresponding variable in [`variables.tf`](./Terraform/variables.tf).
 |Feature|Toggle|Dependencies and Pre-requisites|
 |---|---|---|
-|Auto&nbsp;Shutdown, Azure Function to deallocate VM's, runs daily|`deploy_auto_shutdown`|This deployment depends on nested ARM [template](./Terraform/modules/auto-shutdown/automation-function.json) deployment using `azurerm_template_deployment`|
 |Non&#x2011;essential&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `TeamServicesAgent` (for VM's that are not a deployment target for an Azure Pipeline), `BGInfo`, `DependencyAgentWindows`, `NetworkWatcherAgentWindows`|`deploy_non_essential_vm_extensions`|None|
 |Azure&nbsp;Bastion. Provisions the [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) service in each Virtual Network|`deploy_managed_bastion`|None|
 |[Network&nbsp;Watcher](https://azure.microsoft.com/en-us/services/network-watcher/)|`deploy_network_watcher`|`deploy_non_essential_vm_extensions` also needs to be set|
@@ -93,4 +92,4 @@ The Automated VDC has a number of features that are turned off by default. This 
 - Terraform output is exported as ad-hoc Azure Pipeline variables by `tf_deploy.ps1`, so they can be used in subsequent tasks in an Azure Pipeline Job
 
 ## Disclaimer
-This project is provided as-is, and is not intended as a blueprint on how a VDC should be deployed, or Azure components and Terraform should be used. It is merely an example on how you can use the technology. The project creates a number of Azure resources, you are responsible for monitoring and managing cost.
+This project is provided as-is, and is not intended as a blueprint on how a VDC should be deployed, or Azure components and Terraform should be used. It is merely an example on how you can use the technology. The project creates a number of Azure resources, you are responsible for monitoring and managing cost. You can configure auto shutdown on VM's through the Azure Portal, with the [Start/stop VMs during off-hours solution](https://docs.microsoft.com/en-us/azure/automation/automation-solution-vm-management), or with functions in my [azure-governance](https://github.com/geekzter/azure-governance/tree/master/functions) repo.

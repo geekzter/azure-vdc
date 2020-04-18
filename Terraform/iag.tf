@@ -278,10 +278,14 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.update.microsoft.com",
       "*.windowsupdate.com",
       "checkappexec.microsoft.com",
+      "device.login.microsoftonline.com",
+      "enterpriseregistration.windows.net",
+      "login.microsoftonline.com",
       "management.azure.com",
       "management.core.windows.net",
       "msft.sts.microsoft.com",
       "opinsightsweuomssa.blob.core.windows.net",
+      "pas.windows.net",
       "scadvisor.accesscontrol.windows.net",
       "scadvisorcontent.blob.core.windows.net",
       "scadvisorservice.accesscontrol.windows.net",
@@ -372,7 +376,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
     ]
 
     translated_port            = "3389"
-    translated_address         = var.vdc_config["hub_bastion_address"]
+    translated_address         = var.vdc_config["hub_mgmt_address"]
     protocols                  = [
       "TCP"
     ]

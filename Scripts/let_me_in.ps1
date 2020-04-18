@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 <# 
 .SYNOPSIS 
-    This creates allow rules for the current connection, start bastion, and displays credentials needed
+    This creates allow rules for the current connection, start management VM, and displays credentials needed
 
 #> 
 ### Arguments
@@ -12,14 +12,14 @@ param (
     [parameter(Mandatory=$false)][switch]$ShowCredentials=$false,
     [parameter(Mandatory=$false)][switch]$SqlServer=$false,
     [parameter(Mandatory=$false,HelpMessage="Grants App Service MSI access to database (reset should no longer be needed)")][switch]$GrantMSIAccess=$false,
-    [parameter(Mandatory=$false)][switch]$StartBastion=$false,
-    [parameter(Mandatory=$false)][switch]$ConnectBastion=$false,
+    [parameter(Mandatory=$false)][switch]$StartMgmtVM=$false,
+    [parameter(Mandatory=$false)][switch]$ConnectMgmtVM=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "Terraform")
 ) 
 
 # Provide at least one argument
-if (!($All -or $ConnectBastion -or $Network -or $ShowCredentials -or $SqlServer -or $StartBastion)) {
+if (!($All -or $ConnectMgmtVM -or $Network -or $ShowCredentials -or $SqlServer -or $StartMgmtVM)) {
     Write-Host "Please indicate what to do"
     Get-Help $MyInvocation.MyCommand.Definition
     exit
@@ -36,12 +36,12 @@ try {
     $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
     $paasAppResourceGroup = $(terraform output "paas_app_resource_group" 2>$null)
     
-    if ($All -or $StartBastion -or $ConnectBastion) {
-        $Script:bastionName = $(terraform output "bastion_name" 2>$null)
-        # Start bastion
-        if ($bastionName) {
-            Write-Host "`nStarting bastion" -ForegroundColor Green 
-            $null = Start-Job -Name "Start Bastion" -ScriptBlock {az vm start --ids $(az vm list -g $args --query "[?powerState!='VM running'].id" -o tsv)} -ArgumentList $vdcResourceGroup
+    if ($All -or $StartMgmtVM -or $ConnectMgmtVM) {
+        $Script:mgmtVMName = $(terraform output "mgmt_name" 2>$null)
+        # Start management VM
+        if ($mgmtVMName) {
+            Write-Host "`nStarting Management VM" -ForegroundColor Green 
+            $null = Start-Job -Name "Start Management VM" -ScriptBlock {az vm start --ids $(az vm list -g $args --query "[?powerState!='VM running'].id" -o tsv)} -ArgumentList $vdcResourceGroup
         }
     }
 
@@ -51,7 +51,7 @@ try {
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1") 
 
         # Get public IP address
-        Write-Host "`nPunch hole in Azure Firewall (for bastion)" -ForegroundColor Green 
+        Write-Host "`nPunch hole in Azure Firewall (for management VM)" -ForegroundColor Green 
         $ipAddress=$(Invoke-RestMethod https://ipinfo.io/ip) -replace "\n","" # Ipv4
         Write-Host "Public IP address is $ipAddress"
 
@@ -68,36 +68,36 @@ try {
         }
         $azFWPublicIPAddress = $(terraform output "iag_public_ip" 2>$null)
         $azFWNATRulesName = "$azFWName-letmein-rules"
-        $bastionAddress = $(terraform output "bastion_address" 2>$null)
-        $rdpPort = $(terraform output "bastion_rdp_port" 2>$null)
-        $bastionRuleName = "AllowInboundRDP from $ipPrefix"
+        $mgmtVMAddress = $(terraform output "mgmt_address" 2>$null)
+        $rdpPort = $(terraform output "mgmt_rdp_port" 2>$null)
+        $mgmtVMRuleName = "AllowInboundRDP from $ipPrefix"
 
         az extension add --name azure-firewall 2>$null
         $ruleCollection = az network firewall nat-rule collection list -f $azFWName -g $vdcResourceGroup --query "[?name=='$azFWNATRulesName']" -o tsv
         if ($ruleCollection) {
-            $bastionRule = az network firewall nat-rule list -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup --query "rules[?name=='$bastionRuleName']" 
+            $mgmtVMRule = az network firewall nat-rule list -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup --query "rules[?name=='$mgmtVMRuleName']" 
 
-            if ($bastionRule) {
-                Write-Host "NAT Rule collection $azFWNATRulesName found, rule '$bastionRuleName' already exists"
+            if ($mgmtVMRule) {
+                Write-Host "NAT Rule collection $azFWNATRulesName found, rule '$mgmtVMRuleName' already exists"
             } else {
-                Write-Host "NAT Rule collection $azFWNATRulesName found, adding bastion rule '$bastionRuleName'..."
-                az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $bastionRuleName `
+                Write-Host "NAT Rule collection $azFWNATRulesName found, adding management VM rule '$mgmtVMRuleName'..."
+                az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $mgmtVMRuleName `
                                     --protocols TCP `
                                     --source-addresses $ipPrefix `
                                     --destination-addresses $azFWPublicIPAddress `
                                     --destination-ports $rdpPort `
                                     --translated-port 3389 `
-                                    --translated-address $bastionAddress
+                                    --translated-address $mgmtVMAddress
             }
         } else {
-            Write-Host "NAT Rule collection $azFWNATRulesName not found, creating with bastion rule '$bastionRuleName '..."
-            az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $bastionRuleName `
+            Write-Host "NAT Rule collection $azFWNATRulesName not found, creating with management VM rule '$mgmtVMRuleName '..."
+            az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $mgmtVMRuleName `
                                 --protocols TCP `
                                 --source-addresses $ipPrefix `
                                 --destination-addresses $azFWPublicIPAddress `
                                 --destination-ports $rdpPort `
                                 --translated-port 3389 `
-                                --translated-address $bastionAddress `
+                                --translated-address $mgmtVMAddress `
                                 --priority 109 `
                                 --action Dnat
         }
@@ -150,35 +150,37 @@ try {
         }
     }
 
-    if ($All -or $ShowCredentials -or $ConnectBastion) {
+    if ($All -or $ShowCredentials -or $ConnectMgmtVM) {
         $Script:adminUser = $(terraform output admin_user 2>$null)
         $Script:adminPassword = $(terraform output admin_password 2>$null)
-        $Script:bastionHost = "$(terraform output iag_public_ip):$(terraform output bastion_rdp_port)"
+        $Script:mgmtVM = "$(terraform output iag_public_ip):$(terraform output mgmt_rdp_port)"
     }
 
-    # TODO: Request JIT access to Bastion VM, once azurrm Terraform provuider supports it
+    # TODO: Request JIT access to Management VM, once azurrm Terraform provuider supports it
 
-    if ($All -or $ShowCredentials -or $ConnectBastion) {
+    if ($All -or $ShowCredentials -or $ConnectMgmtVM) {
         Write-Host "`nConnection information:" -ForegroundColor Green 
         # Display connectivity info
-        Write-Host "Bastion VM RDP                 : $bastionHost"
+        Write-Host "Management VM RDP              : $mgmtVM"
         Write-Host "Admin user                     : $adminUser"
         Write-Host "Admin password                 : $adminPassword"
     }
 
-    # Wait for bastion to start
-    if ((($All -or $StartBastion) -and $wait) -or $ConnectBastion) {
+    # Wait for management VM to start
+    if ((($All -or $StartMgmtVM) -and $wait) -or $ConnectMgmtVM) {
         az vm start --ids $(az vm list -g $vdcResourceGroup --query "[?powerState!='VM running'].id" -o tsv)
     }
     
-    # Set up RDP session to Bastion
-    if ($All -or $ConnectBastion) {
+    # Set up RDP session to management VM
+    if ($All -or $ConnectMgmtVM) {
         if ($IsWindows) {
-            cmdkey.exe /generic:${bastionHost} /user:${adminUser} /pass:${adminPassword}
-            mstsc.exe /v:${bastionHost} /f
+            cmdkey.exe /generic:${mgmtVM} /user:${adminUser} /pass:${adminPassword}
+            mstsc.exe /v:${mgmtVM} /f
         }
         if ($IsMacOS) {
-            open rdp://${adminUser}:${adminPassword}@${bastionHost}
+            $rdpUrl = "rdp://${adminUser}:${adminPassword}@${mgmtVM}"
+            Write-Information "Opening $rdpUrl"
+            open $rdpUrl
         }
     }
 } finally {
