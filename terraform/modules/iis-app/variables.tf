@@ -43,6 +43,8 @@ variable diagnostics_workspace_workspace_id {
   description                  = "The workspace id of the Log Analytics workspace to use"
 }
 variable diagnostics_workspace_key {}
+variable key_vault_id {}
+variable key_vault_uri {}
 variable network_watcher_name {}
 variable network_watcher_resource_group_name {}
 

@@ -30,6 +30,22 @@ resource azurerm_role_assignment vm_admin {
   count                        = var.admin_object_id != null ? 1 : 0
 }
 
+# Adapted from https://github.com/Azure/terraform-azurerm-diskencrypt/blob/master/main.tf
+resource azurerm_key_vault_key disk_encryption_key {
+  name                         = "${azurerm_resource_group.app_rg.name}-disk-key"
+  key_vault_id                 = var.key_vault_id
+  key_type                     = "RSA"
+  key_size                     = 2048
+  key_opts                     = [
+                                "decrypt",
+                                "encrypt",
+                                "sign",
+                                "unwrapKey",
+                                "verify",
+                                "wrapKey",
+  ]
+}
+
 resource "azurerm_network_interface" "app_web_if" {
   name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-nic"
   location                     = azurerm_resource_group.app_rg.location
@@ -332,9 +348,39 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
   count                        = var.app_web_vm_number
 
   depends_on                   = [
-                                  null_resource.start_db_vm,
+                                  null_resource.start_web_vm,
                                   #azurerm_virtual_machine_extension.app_web_vm_watcher
                                  ]
+}
+resource azurerm_virtual_machine_extension app_web_vm_disk_encryption {
+  name                         = "DiskEncryption"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
+  publisher                    = "Microsoft.Azure.Security"
+  type                         = "AzureDiskEncryption"
+  type_handler_version         = "2.2"
+  auto_upgrade_minor_version   = true
+
+  settings = <<SETTINGS
+    {
+      "EncryptionOperation"    : "EnableEncryption",
+      "KeyVaultURL"            : "${var.key_vault_uri}",
+      "KeyVaultResourceId"     : "${var.key_vault_id}",
+      "KeyEncryptionKeyURL"    : "${var.key_vault_uri}keys/${azurerm_key_vault_key.disk_encryption_key.name}/${azurerm_key_vault_key.disk_encryption_key.version}",       
+      "KekVaultResourceId"     : "${var.key_vault_id}",
+      "KeyEncryptionAlgorithm" : "RSA-OAEP",
+      "VolumeType"             : "All"
+    }
+SETTINGS
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_connectivity_dependency
+    )
+  )
+
+  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  depends_on                   = [null_resource.start_web_vm]
 }
 # BUG: Get's recreated every run
 #      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909
@@ -729,6 +775,36 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
                                   null_resource.start_db_vm, 
                                   #azurerm_virtual_machine_extension.app_db_vm_watcher
                                  ]
+}
+resource azurerm_virtual_machine_extension app_db_vm_disk_encryption {
+  name                         = "DiskEncryption"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  publisher                    = "Microsoft.Azure.Security"
+  type                         = "AzureDiskEncryption"
+  type_handler_version         = "2.2"
+  auto_upgrade_minor_version   = true
+
+  settings = <<SETTINGS
+    {
+      "EncryptionOperation"    : "EnableEncryption",
+      "KeyVaultURL"            : "${var.key_vault_uri}",
+      "KeyVaultResourceId"     : "${var.key_vault_id}",
+      "KeyEncryptionKeyURL"    : "${var.key_vault_uri}keys/${azurerm_key_vault_key.disk_encryption_key.name}/${azurerm_key_vault_key.disk_encryption_key.version}",       
+      "KekVaultResourceId"     : "${var.key_vault_id}",
+      "KeyEncryptionAlgorithm" : "RSA-OAEP",
+      "VolumeType"             : "All"
+    }
+SETTINGS
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_connectivity_dependency
+    )
+  )
+
+  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  depends_on                   = [null_resource.start_db_vm]
 }
 
 resource azurerm_storage_container scripts {

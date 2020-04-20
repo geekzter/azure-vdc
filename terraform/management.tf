@@ -219,7 +219,7 @@ resource "azurerm_virtual_machine_extension" "mgmt_watcher" {
 
 # Adapted from https://github.com/Azure/terraform-azurerm-diskencrypt/blob/master/main.tf
 resource azurerm_key_vault_key disk_encryption_key {
-  name                         = "${local.mgmt_vm_name}-key"
+  name                         = "${local.mgmt_vm_name}-disk-key"
   key_vault_id                 = azurerm_key_vault.vault.id
   key_type                     = "RSA"
   key_size                     = 2048
@@ -232,26 +232,6 @@ resource azurerm_key_vault_key disk_encryption_key {
                                 "wrapKey",
   ]
 }
-
-# TODO: Not needed?
-# resource azurerm_key_vault_access_policy mgmt_vm_access {
-#   key_vault_id                 = azurerm_key_vault.vault.id
-#   tenant_id                    = data.azurerm_client_config.current.tenant_id
-#   object_id                    = azurerm_windows_virtual_machine.mgmt.identity.0.principal_id
-#   key_permissions              = [
-#                                 "create",
-#                                 "get",
-#                                 "delete",
-#                                 "list",
-#                                 "wrapkey",
-#                                 "unwrapkey"
-#   ]
-#   secret_permissions           = [
-#                                 "get",
-#                                 "delete",
-#                                 "set",
-#   ]
-# }
 
 resource azurerm_virtual_machine_extension mgmt_disk_encryption {
   name                         = "DiskEncryption"
@@ -275,7 +255,7 @@ SETTINGS
 
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
-  depends_on                   = [null_resource.start_mgmt, azurerm_key_vault_access_policy.mgmt_vm_access, azurerm_monitor_diagnostic_setting.key_vault_logs]
+  depends_on                   = [null_resource.start_mgmt, azurerm_monitor_diagnostic_setting.key_vault_logs]
 }
 
 # BUG: Get's recreated every run
