@@ -1,0 +1,123 @@
+# This pipeline performs a limited CI test of the VDC:
+#  - Plan infrastructure i.e. check for Terraform validation errors
+
+parameters:
+- name: debug
+  displayName: Debug
+  type: boolean
+  default: false
+
+trigger:
+  batch: true
+  branches:
+    include:
+    # Trigger on every branch, as this pipeline executes around 1 minute
+    - '*'
+  paths:
+    include:
+    - 'Pipelines/vdc-terraform-plan-ci.yml'
+    - 'scripts/*' 
+    - 'terraform/*' 
+    exclude:
+    - '*.md'
+
+# Already triggering on every commit on any branch
+pr: none
+
+# Global variables shared by all jobs
+variables:
+  # Variable Groups are referenced, but defined elsewhere (Library)
+
+  # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
+  # The Terraform VDC project requires quite a number of settings, see:
+  # https://github.com/geekzter/azure-vdc/blob/master/terraform/variables.tf
+  # https://github.com/geekzter/azure-vdc/blob/master/terraform/config.auto.tfvars.sample
+  # https://github.com/geekzter/azure-vdc/blob/master/terraform/ci.tfvars
+  # i.e. settings in these files should be captured in (a) variable group(s)
+  # These can be provided as TF_VAR_<input-variable> environment variables:
+  # https://www.terraform.io/docs/configuration/variables.html#environment-variables
+  # 'vdc' contains global settings common to all VDC pipelines
+- group: 'vdc'
+  # 'vdc-ci' contains build (non-release) settings
+- group: 'vdc-ci'
+  # 'vdc-vanity-domain' contains certificate, domain information
+- group: 'vdc-vanity-domain'
+
+
+# Inline variables shared across jobs
+- name: 'scriptDirectory'
+  value: '$(Build.SourcesDirectory)/Scripts'
+- name: 'system.debug'
+  value: ${{ parameters.debug }}
+- name: 'TF_IN_AUTOMATION'
+  value: 'true'
+- name: 'TF_INPUT'
+  value: 0
+- name: 'TF_WORKSPACE'
+  value: 'cip'
+
+jobs:
+- job: 'Plan'
+  displayName: 'Plan Infrastructure with Terraform'
+  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  workspace:
+    clean: all
+
+  steps:
+    - task: DownloadSecureFile@1
+      displayName: 'Download SSL certificate'
+      inputs:
+        secureFile: '$(TF_VAR_vanity_certificate_path)'
+
+    - task: DownloadSecureFile@1
+      displayName: 'Download VPN root certificate'
+      inputs:
+        secureFile: '$(TF_VAR_vpn_root_cert_file)'
+
+    - task: AzureCLI@2
+      displayName: 'Gather Terraform settings'
+      name: terraformConfig
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        # ARM_* environment variables are required by Terraform azurerm provider and backend
+        # https://www.terraform.io/docs/providers/azurerm/index.html
+        # https://www.terraform.io/docs/backends/types/azurerm.html
+        # Use Pipeline Service Principal and Service Connection to set up these variables
+        inlineScript: |
+          # List environment variables (debug)
+          if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
+            Get-ChildItem -Path Env:ARM_* | Sort-Object -Property Name
+          }
+
+          # This will write version info as output variable
+          $(scriptDirectory)/get_tf_version.ps1 -version preferred
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        failOnStandardError: true
+
+    # We could do this with tfenv, however there is no task for that
+    - task: TerraformInstaller@0
+      displayName: 'Use preferred Terraform version'
+      inputs:
+        terraformVersion: '$(terraformConfig.version)'
+
+    - task: AzureCLI@2
+      name: terraform
+      displayName: 'Terraform init & plan (Azure CLI)'
+      enabled: true
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          $(scriptDirectory)/tf_deploy.ps1 -init -plan -trace $(trace) -parallelism $(parallelism)
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        failOnStandardError: true
+        workingDirectory: '$(scriptDirectory)'
