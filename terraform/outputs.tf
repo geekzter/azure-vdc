@@ -242,6 +242,10 @@ output vdc_resource_group {
   value       = azurerm_resource_group.vdc_rg.name
 }
 
+output vpn_gateway_fqdn {
+  value       = var.deploy_vpn ? azurerm_dns_cname_record.vpn_gateway_cname.0.fqdn : null
+}
+
 output virtual_machine_ids {
   value       = local.virtual_machine_ids
 }

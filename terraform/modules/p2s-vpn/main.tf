@@ -1,3 +1,5 @@
+data "azurerm_client_config" "current" {}
+
 locals {
   resource_group_name          = element(split("/",var.resource_group_id),length(split("/",var.resource_group_id))-1)
   virtual_network_name         = element(split("/",var.virtual_network_id),length(split("/",var.virtual_network_id))-1)
@@ -10,6 +12,14 @@ resource "azurerm_subnet" "vpn_subnet" {
   address_prefix               = var.subnet_range
 }
 
+resource "random_string" "vpn_domain_name_label" {
+  length                       = 16
+  upper                        = false
+  lower                        = true
+  number                       = false
+  special                      = false
+}
+
 resource "azurerm_public_ip" "vpn_pip" {
   name                         = "${local.resource_group_name}-vpn-pip"
   location                     = var.location
@@ -17,6 +27,7 @@ resource "azurerm_public_ip" "vpn_pip" {
 
   allocation_method            = "Static"
   sku                          = "Standard" # Zone redundant
+  domain_name_label            = random_string.vpn_domain_name_label.result
 
   tags                         = var.tags
 }
@@ -40,15 +51,18 @@ resource "azurerm_virtual_network_gateway" "vpn_gw" {
     subnet_id                  = azurerm_subnet.vpn_subnet.id
   }
 
-
   vpn_client_configuration {
     address_space              = [var.vpn_range]
+    # root_certificate {
+    #   name                     = var.vpn_root_cert_name
+    #   public_cert_data         = filebase64(var.vpn_root_cert_file) # load cert from file
+    # }
+    vpn_client_protocols       = ["OpenVPN"]
+  }
 
-    root_certificate {
-      name                     = var.vpn_root_cert_name
-
-      public_cert_data         = filebase64(var.vpn_root_cert_file) # load cert from file
-    }
+  # Enable AAD auth
+  provisioner local-exec {
+    command                    = "az network vnet-gateway aad assign --gateway-name ${self.name} -g ${self.resource_group_name} --audience 41b23e61-6c1e-4545-b367-cd054e0ed4b4 --issuer 'https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/' --tenant ${data.azurerm_client_config.current.tenant_id} --query 'vpnClientConfiguration'"
   }
 
   timeouts {

@@ -153,10 +153,11 @@ try {
     if ($All -or $ShowCredentials -or $ConnectMgmtVM) {
         $Script:adminUser = $(terraform output admin_user 2>$null)
         $Script:adminPassword = $(terraform output admin_password 2>$null)
+        $Script:vpnFqdn = $(terraform output vpn_gateway_fqdn 2>$null)
         $Script:mgmtVM = "$(terraform output iag_public_ip):$(terraform output mgmt_rdp_port)"
     }
 
-    # TODO: Request JIT access to Management VM, once azurrm Terraform provuider supports it
+    # TODO: Request JIT access to Management VM, once azurerm Terraform provuider supports it
 
     if ($All -or $ShowCredentials -or $ConnectMgmtVM) {
         Write-Host "`nConnection information:" -ForegroundColor Green 
@@ -164,6 +165,7 @@ try {
         Write-Host "Management VM RDP              : $mgmtVM"
         Write-Host "Admin user                     : $adminUser"
         Write-Host "Admin password                 : $adminPassword"
+        Write-Host "VPN Gateway                    : $vpnFqdn"
     }
 
     # Wait for management VM to start
