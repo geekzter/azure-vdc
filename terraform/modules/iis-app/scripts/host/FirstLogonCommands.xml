@@ -1,0 +1,7 @@
+<FirstLogonCommands>
+    <SynchronousCommand>
+        <CommandLine>cmd.exe /c start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('${scripturl}'))}"</CommandLine>
+        <Description>Mount data disks</Description>
+        <Order>1</Order>
+    </SynchronousCommand>
+</FirstLogonCommands>

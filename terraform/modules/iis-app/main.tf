@@ -46,6 +46,31 @@ resource azurerm_key_vault_key disk_encryption_key {
   ]
 }
 
+
+resource azurerm_storage_container scripts {
+  name                         = "paasappscripts"
+  storage_account_name         = var.automation_storage_name
+  container_access_type        = "container"
+}
+
+resource azurerm_storage_blob install_agent_script {
+  name                         = "install_agent.ps1"
+  storage_account_name         = var.automation_storage_name
+  storage_container_name       = azurerm_storage_container.scripts.name
+
+  type                         = "Block"
+  source                       = "${path.module}/scripts/host/install_agent.ps1"
+}
+
+resource azurerm_storage_blob mount_data_disks_script {
+  name                         = "mount_data_disks.ps1"
+  storage_account_name         = var.automation_storage_name
+  storage_container_name       = azurerm_storage_container.scripts.name
+
+  type                         = "Block"
+  source                       = "${path.module}/scripts/host/mount_data_disks.ps1"
+}
+
 resource "azurerm_network_interface" "app_web_if" {
   name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-nic"
   location                     = azurerm_resource_group.app_rg.location
@@ -94,6 +119,7 @@ resource "azurerm_virtual_machine" "app_web_vm" {
  # Optional data disks
   storage_data_disk {
     name                       = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-datadisk"
+    caching                    = "ReadWrite"
     managed_disk_type          = "Premium_LRS"
     create_option              = "Empty"
     lun                        = 0
@@ -206,7 +232,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
   settings                     = <<EOF
     {
       "fileUris": [
-                                 "${azurerm_storage_blob.install_agent.url}"
+                                 "${azurerm_storage_blob.install_agent_script.url}"
       ]
     }
   EOF
@@ -352,8 +378,46 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
                                   #azurerm_virtual_machine_extension.app_web_vm_watcher
                                  ]
 }
+resource azurerm_virtual_machine_extension app_web_vm_mount_data_disks {
+  name                         = "DataDiskCustomScript"
+  virtual_machine_id           = azurerm_virtual_machine.app_web_vm[count.index].id
+  publisher                    = "Microsoft.Compute"
+  type                         = "CustomScriptExtension"
+  type_handler_version         = "1.10"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "fileUris": [
+                                 "${azurerm_storage_blob.mount_data_disks_script.url}"
+      ]
+    }
+  EOF
+
+  protected_settings           = <<EOF
+    { 
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./mount_data_disks.ps1\""
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_connectivity_dependency
+    )
+  )
+
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+
+  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  depends_on                   = [null_resource.start_web_vm]
+}
 resource azurerm_virtual_machine_extension app_web_vm_disk_encryption {
-  name                         = "DiskEncryption"
+  # Trigger new resource every run
+  name                         = "DiskEncryption${formatdate("YYYYMMDDhhmm",timestamp())}"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Security"
   type                         = "AzureDiskEncryption"
@@ -379,8 +443,14 @@ SETTINGS
     )
   )
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
-  depends_on                   = [null_resource.start_web_vm]
+  depends_on                   = [null_resource.start_web_vm,azurerm_virtual_machine_extension.app_web_vm_mount_data_disks]
 }
 # BUG: Get's recreated every run
 #      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909
@@ -510,6 +580,7 @@ resource "azurerm_virtual_machine" "app_db_vm" {
  # Optional data disks
   storage_data_disk {
     name                       = "${azurerm_resource_group.app_rg.name}-db-vm${count.index+1}-datadisk"
+    caching                    = "ReadWrite"
     managed_disk_type          = "Premium_LRS"
     create_option              = "Empty"
     lun                        = 0
@@ -626,7 +697,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
   settings                     = <<EOF
     {
       "fileUris": [
-                                 "${azurerm_storage_blob.install_agent.url}"
+                                 "${azurerm_storage_blob.install_agent_script.url}"
       ]
     }
   EOF
@@ -776,8 +847,46 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
                                   #azurerm_virtual_machine_extension.app_db_vm_watcher
                                  ]
 }
+resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
+  name                         = "DataDiskCustomScript"
+  virtual_machine_id           = azurerm_virtual_machine.app_db_vm[count.index].id
+  publisher                    = "Microsoft.Compute"
+  type                         = "CustomScriptExtension"
+  type_handler_version         = "1.10"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "fileUris": [
+                                 "${azurerm_storage_blob.mount_data_disks_script.url}"
+      ]
+    }
+  EOF
+
+  protected_settings           = <<EOF
+    { 
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./mount_data_disks.ps1\""
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_connectivity_dependency
+    )
+  )
+
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+
+  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  depends_on                   = [null_resource.start_web_vm]
+}
 resource azurerm_virtual_machine_extension app_db_vm_disk_encryption {
-  name                         = "DiskEncryption"
+  # Trigger new resource every run
+  name                         = "DiskEncryption${formatdate("YYYYMMDDhhmm",timestamp())}"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Security"
   type                         = "AzureDiskEncryption"
@@ -803,23 +912,14 @@ SETTINGS
     )
   )
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
-  depends_on                   = [null_resource.start_db_vm]
-}
-
-resource azurerm_storage_container scripts {
-  name                         = "paasappscripts"
-  storage_account_name         = var.automation_storage_name
-  container_access_type        = "container"
-}
-
-resource azurerm_storage_blob install_agent {
-  name                         = "install_agent.ps1"
-  storage_account_name         = var.automation_storage_name
-  storage_container_name       = azurerm_storage_container.scripts.name
-
-  type                         = "Block"
-  source                       = "${path.module}/scripts/host/install_agent.ps1"
+  depends_on                   = [null_resource.start_db_vm,azurerm_virtual_machine_extension.app_db_vm_mount_data_disks]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {
