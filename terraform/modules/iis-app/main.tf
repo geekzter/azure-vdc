@@ -379,7 +379,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
                                  ]
 }
 resource azurerm_virtual_machine_extension app_web_vm_mount_data_disks {
-  name                         = "DataDiskCustomScript"
+  name                         = "MountDataDisks"
   virtual_machine_id           = azurerm_virtual_machine.app_web_vm[count.index].id
   publisher                    = "Microsoft.Compute"
   type                         = "CustomScriptExtension"
@@ -399,12 +399,7 @@ resource azurerm_virtual_machine_extension app_web_vm_mount_data_disks {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
-  )
+  tags                         = var.tags
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
@@ -417,7 +412,7 @@ resource azurerm_virtual_machine_extension app_web_vm_mount_data_disks {
 }
 resource azurerm_virtual_machine_extension app_web_vm_disk_encryption {
   # Trigger new resource every run
-  name                         = "DiskEncryption${formatdate("YYYYMMDDhhmm",timestamp())}"
+  name                         = "DiskEncryption"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Security"
   type                         = "AzureDiskEncryption"
@@ -848,7 +843,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
                                  ]
 }
 resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
-  name                         = "DataDiskCustomScript"
+  name                         = "MountDataDisks"
   virtual_machine_id           = azurerm_virtual_machine.app_db_vm[count.index].id
   publisher                    = "Microsoft.Compute"
   type                         = "CustomScriptExtension"
@@ -868,12 +863,7 @@ resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
-  )
+  tags                         = var.tags
 
   # Start VM, so we can destroy the extension
   provisioner local-exec {
@@ -886,7 +876,7 @@ resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
 }
 resource azurerm_virtual_machine_extension app_db_vm_disk_encryption {
   # Trigger new resource every run
-  name                         = "DiskEncryption${formatdate("YYYYMMDDhhmm",timestamp())}"
+  name                         = "DiskEncryption"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Security"
   type                         = "AzureDiskEncryption"

@@ -1,6 +1,8 @@
 data "azurerm_client_config" "current" {}
 
 locals {
+  tenant_url                   = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/"
+  issuer_url                   = "https://sts.windows.net/${data.azurerm_client_config.current.tenant_id}/"
   resource_group_name          = element(split("/",var.resource_group_id),length(split("/",var.resource_group_id))-1)
   virtual_network_name         = element(split("/",var.virtual_network_id),length(split("/",var.virtual_network_id))-1)
 }
@@ -32,7 +34,7 @@ resource "azurerm_public_ip" "vpn_pip" {
   tags                         = var.tags
 }
 
-resource "azurerm_virtual_network_gateway" "vpn_gw" {
+resource azurerm_virtual_network_gateway vpn_gw {
   name                         = "${local.resource_group_name}-vpn"
   resource_group_name          = local.resource_group_name
   location                     = var.location
@@ -60,11 +62,6 @@ resource "azurerm_virtual_network_gateway" "vpn_gw" {
     vpn_client_protocols       = ["OpenVPN"]
   }
 
-  # Enable AAD auth
-  provisioner local-exec {
-    command                    = "az network vnet-gateway aad assign --gateway-name ${self.name} -g ${self.resource_group_name} --audience 41b23e61-6c1e-4545-b367-cd054e0ed4b4 --issuer 'https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/' --tenant ${data.azurerm_client_config.current.tenant_id} --query 'vpnClientConfiguration'"
-  }
-
   timeouts {
     create                     = var.default_create_timeout
     update                     = var.default_update_timeout
@@ -74,6 +71,16 @@ resource "azurerm_virtual_network_gateway" "vpn_gw" {
 
   count                        = var.deploy_vpn ? 1 : 0
   tags                         = var.tags
+}
+
+resource null_resource vpn_aad {
+  # Enable AAD auth
+  provisioner local-exec {
+    # tenant and issuer are the same url
+    command                    = "az network vnet-gateway aad assign --gateway-name ${azurerm_virtual_network_gateway.vpn_gw.0.name} -g ${azurerm_virtual_network_gateway.vpn_gw.0.resource_group_name} --audience 41b23e61-6c1e-4545-b367-cd054e0ed4b4 --issuer '${local.issuer_url}' --tenant '${local.tenant_url}' --query 'vpnClientConfiguration'"
+  }
+
+  count                        = var.deploy_vpn ? 1 : 0
 }
 
 resource "azurerm_monitor_diagnostic_setting" "vpn_logs" {

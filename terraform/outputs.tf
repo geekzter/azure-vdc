@@ -243,7 +243,11 @@ output vdc_resource_group {
 }
 
 output vpn_gateway_fqdn {
-  value       = var.deploy_vpn ? azurerm_dns_cname_record.vpn_gateway_cname.0.fqdn : null
+  value       = var.deploy_vpn ? replace(azurerm_dns_cname_record.vpn_gateway_cname.0.fqdn,"/\\W*$/","") : null
+}
+
+output vpn_gateway_id {
+  value       = module.p2s_vpn.gateway_id
 }
 
 output virtual_machine_ids {

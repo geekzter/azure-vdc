@@ -14,12 +14,13 @@ param (
     [parameter(Mandatory=$false,HelpMessage="Grants App Service MSI access to database (reset should no longer be needed)")][switch]$GrantMSIAccess=$false,
     [parameter(Mandatory=$false)][switch]$StartMgmtVM=$false,
     [parameter(Mandatory=$false)][switch]$ConnectMgmtVM=$false,
+    [parameter(Mandatory=$false)][switch]$VpnClient=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
 ) 
 
 # Provide at least one argument
-if (!($All -or $ConnectMgmtVM -or $Network -or $ShowCredentials -or $SqlServer -or $StartMgmtVM)) {
+if (!($All -or $ConnectMgmtVM -or $Network -or $ShowCredentials -or $SqlServer -or $StartMgmtVM -or $VpnClient)) {
     Write-Host "Please indicate what to do"
     Get-Help $MyInvocation.MyCommand.Definition
     exit
@@ -150,22 +151,27 @@ try {
         }
     }
 
+    if ($All -or $VpnClient) {
+        $gatewayId = $(terraform output vpn_gateway_id 2>$null)
+        if ($gatewayId) {
+            Write-Host "Use Azure VPN app (https://go.microsoft.com/fwlink/?linkid=2117554) to import profile downloaded from this link:`n"
+            az network vnet-gateway vpn-client show-url --ids $gatewayId -o tsv
+        } else {
+            Write-Host "Virtual network gateway, required for VPN, does not exist" -ForegroundColor Yellow
+        }
+    }
+
+    # TODO: Request JIT access to Management VM, once azurerm Terraform provider supports it
     if ($All -or $ShowCredentials -or $ConnectMgmtVM) {
         $Script:adminUser = $(terraform output admin_user 2>$null)
         $Script:adminPassword = $(terraform output admin_password 2>$null)
-        $Script:vpnFqdn = $(terraform output vpn_gateway_fqdn 2>$null)
         $Script:mgmtVM = "$(terraform output iag_public_ip):$(terraform output mgmt_rdp_port)"
-    }
 
-    # TODO: Request JIT access to Management VM, once azurerm Terraform provuider supports it
-
-    if ($All -or $ShowCredentials -or $ConnectMgmtVM) {
         Write-Host "`nConnection information:" -ForegroundColor Green 
         # Display connectivity info
         Write-Host "Management VM RDP              : $mgmtVM"
         Write-Host "Admin user                     : $adminUser"
         Write-Host "Admin password                 : $adminPassword"
-        Write-Host "VPN Gateway                    : $vpnFqdn"
     }
 
     # Wait for management VM to start

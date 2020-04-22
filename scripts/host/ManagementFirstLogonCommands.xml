@@ -9,6 +9,11 @@
         <Description>Bootstrap packages and PowerShell</Description>
         <Order>2</Order>
     </SynchronousCommand>
+    <SynchronousCommand>
+        <CommandLine>cmd.exe /k start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('${scripturl}'))}"</CommandLine>
+        <Description>Bootstrap packages and PowerShell</Description>
+        <Order>3</Order>
+    </SynchronousCommand>
 %{ for index, host in hosts ~}
     <SynchronousCommand>
         <CommandLine>cmdkey.exe /generic:${host} /user:${username} /pass:${password}</CommandLine>
