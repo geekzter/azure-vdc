@@ -98,7 +98,7 @@ variables:
 - name: 'appPipeline'
   value: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
 - name: 'jobTimeOutMinutes'
-  value: 120
+  value: 180
 - name: 'scriptDirectory'
   value: '$(Build.SourcesDirectory)/scripts'
 - name: 'system.debug'
