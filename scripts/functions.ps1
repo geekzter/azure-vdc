@@ -14,6 +14,7 @@ function AzLogin (
             } 
         }
     }
+    # Set Azure CLI context
     if ($loginError -or $userError) {
         if ($env:ARM_TENANT_ID) {
             az login -t $env:ARM_TENANT_ID -o none
@@ -25,6 +26,7 @@ function AzLogin (
         az account set -s $env:ARM_SUBSCRIPTION_ID -o none
     }
 
+    # Populate Terraform azurerm variables where appropriate
     # Pass on pipeline service principal credentials to Terraform
     if ($userType -ine "user") {
         if (!$env:ARM_CLIENT_ID) {
@@ -38,6 +40,12 @@ function AzLogin (
         }
         if (!$env:ARM_SUBSCRIPTION_ID) {
             $env:ARM_SUBSCRIPTION_ID=$(az account show --query id) -replace '"',''
+        }
+    }
+    # Variables for Terraform azurerm Storage backend
+    if (!$env:ARM_ACCESS_KEY -and !$env:ARM_SAS_TOKEN) {
+        if ($env:TF_VAR_backend_storage_account -and $env:TF_VAR_backend_storage_container) {
+            $env:ARM_SAS_TOKEN=$(az storage container generate-sas -n $env:TF_VAR_backend_storage_container --as-user --auth-mode login --account-name $env:TF_VAR_backend_storage_account --permissions acdlrw --expiry (Get-Date).AddDays(7).ToString("yyyy-MM-dd") -o tsv)
         }
     }
 }

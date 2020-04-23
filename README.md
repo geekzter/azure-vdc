@@ -47,7 +47,9 @@ The quickstart uses defauls settings that disables some features. To use all fea
 2.  Change to the Terraform directrory  
 `cd terraform`
 3.  Set up storage account for [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), configure `backend.tf` (copy `backend.tf.sample`) with the details of the storage account created. Make sure the user used for Azure CLI is in the `Storage Blob Data Contributor` or `Storage Blob Data Owner`role (It is not enough to have Owner/Contributor rights, as this is Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
-`$env:ARM_ACCESS_KEY=$(az storage account keys list -n STORAGE_ACCOUNT --query "[0].value" -o tsv)`
+`$env:ARM_ACCESS_KEY=$(az storage account keys list -n STORAGE_ACCOUNT --query "[0].value" -o tsv)`   
+or   
+`$env:ARM_SAS_TOKEN=$(az storage container generate-sas -n STORAGE_CONTAINER --permissions acdlrw --expiry 202Y-MM-DD --account-name STORAGE_ACCOUNT -o tsv)`   
 4.	Initialize Terraform backend by running  
 `terraform init`  
 or  
