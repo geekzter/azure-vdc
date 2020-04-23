@@ -2,7 +2,7 @@ locals {
    mgmt_vm_name                = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"-","")),0,16)}mgmt"
 }
 
-resource "azurerm_network_interface" "bas_if" {
+resource azurerm_network_interface bas_if {
   name                         = "${azurerm_resource_group.vdc_rg.name}-mgmt-if"
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -17,13 +17,13 @@ resource "azurerm_network_interface" "bas_if" {
   tags                         = local.tags
 }
 
-resource "azurerm_storage_container" "scripts" {
+resource azurerm_storage_container scripts {
   name                         = "scripts"
   storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
   container_access_type        = "container"
 }
 
-resource "azurerm_storage_blob" "mgmt_prepare_script" {
+resource azurerm_storage_blob mgmt_prepare_script {
   name                         = "prepare_mgmtvm.ps1"
   storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
   storage_container_name       = azurerm_storage_container.scripts.name
@@ -32,7 +32,51 @@ resource "azurerm_storage_blob" "mgmt_prepare_script" {
   source                       = "../scripts/host/prepare_mgmtvm.ps1"
 }
 
-resource "azurerm_windows_virtual_machine" "mgmt" {
+# Adapted from https://github.com/Azure/terraform-azurerm-diskencrypt/blob/master/main.tf
+resource azurerm_key_vault_key disk_encryption_key {
+  name                         = "${local.mgmt_vm_name}-disk-key"
+  key_vault_id                 = azurerm_key_vault.vault.id
+  key_type                     = "RSA"
+  key_size                     = 2048
+  key_opts                     = [
+                                "decrypt",
+                                "encrypt",
+                                "sign",
+                                "unwrapKey",
+                                "verify",
+                                "wrapKey",
+  ]
+}
+
+# AzureDiskEncryption VM extenstion breaks AutoLogon, use server side encryption
+resource azurerm_disk_encryption_set mgmt_disks {
+  name                         = "${local.mgmt_vm_name}-disk-key-set"
+  location                     = azurerm_resource_group.vdc_rg.location
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  key_vault_key_id             = azurerm_key_vault_key.disk_encryption_key.id
+  identity {
+    type                       = "SystemAssigned"
+  }
+}
+
+resource azurerm_key_vault_access_policy mgmt_disk_encryption_access {
+  key_vault_id                 = azurerm_key_vault.vault.id
+  tenant_id                    = azurerm_disk_encryption_set.mgmt_disks.identity.0.tenant_id
+  object_id                    = azurerm_disk_encryption_set.mgmt_disks.identity.0.principal_id
+  key_permissions = [
+                                "get",
+                                "unwrapKey",
+                                "wrapKey",
+  ]
+}
+
+resource azurerm_role_assignment mgmt_disk_encryption_access {
+  scope                        = azurerm_key_vault.vault.id
+  role_definition_name         = "Reader"
+  principal_id                 = azurerm_disk_encryption_set.mgmt_disks.identity.0.principal_id
+}
+
+resource azurerm_windows_virtual_machine mgmt {
   name                         = local.mgmt_vm_name
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -44,6 +88,7 @@ resource "azurerm_windows_virtual_machine" "mgmt" {
   os_disk {
     name                       = "${local.mgmt_vm_name}-osdisk"
     caching                    = "ReadWrite"
+    disk_encryption_set_id     = azurerm_disk_encryption_set.mgmt_disks.id
     storage_account_type       = "Premium_LRS"
   }
 
@@ -54,6 +99,7 @@ resource "azurerm_windows_virtual_machine" "mgmt" {
     version                    = "latest"
   }
 
+  # TODO: Does not work with AzureDiskEncryption VM extension
   additional_unattend_content {
     setting                    = "AutoLogon"
     content                    = templatefile("../scripts/host/AutoLogon.xml", { 
@@ -80,9 +126,13 @@ resource "azurerm_windows_virtual_machine" "mgmt" {
     type                       = "SystemAssigned"
   }
 
-  # Not zone redundant, we'll rely on zone redundant management server
+  # Not zone redundant, we'll rely on zone redundant Managed Bastion
 
-  depends_on                   = [azurerm_firewall_application_rule_collection.iag_app_rules]
+  depends_on                   = [
+                                  azurerm_firewall_application_rule_collection.iag_app_rules,
+                                  azurerm_key_vault_access_policy.mgmt_disk_encryption_access,
+                                  azurerm_role_assignment.mgmt_disk_encryption_access
+                                 ]
 
   tags                         = local.tags
 }
@@ -115,12 +165,18 @@ resource azurerm_virtual_machine_extension mgmt_aadlogin {
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
   depends_on                   = [null_resource.start_mgmt]
 } 
 
-resource "azurerm_virtual_machine_extension" "mgmt_bginfo" {
+resource azurerm_virtual_machine_extension mgmt_bginfo {
   name                         = "BGInfo"
   virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
   publisher                    = "Microsoft.Compute"
@@ -139,7 +195,7 @@ resource "azurerm_virtual_machine_extension" "mgmt_bginfo" {
   depends_on                   = [null_resource.start_mgmt]
 }
 
-resource "azurerm_virtual_machine_extension" "mgmt_dependency_monitor" {
+resource azurerm_virtual_machine_extension mgmt_dependency_monitor {
   name                         = "DAExtension"
   virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
@@ -168,7 +224,7 @@ resource "azurerm_virtual_machine_extension" "mgmt_dependency_monitor" {
   tags                         = local.tags
   depends_on                   = [null_resource.start_mgmt]
 }
-resource "azurerm_virtual_machine_extension" "mgmt_monitor" {
+resource azurerm_virtual_machine_extension mgmt_monitor {
   name                         = "MMAExtension"
   virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
   publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
@@ -198,7 +254,7 @@ resource "azurerm_virtual_machine_extension" "mgmt_monitor" {
   depends_on                   = [null_resource.start_mgmt]
 }
 
-resource "azurerm_virtual_machine_extension" "mgmt_watcher" {
+resource azurerm_virtual_machine_extension mgmt_watcher {
   name                         = "AzureNetworkWatcherExtension"
   virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
   publisher                    = "Microsoft.Azure.NetworkWatcher"
@@ -217,50 +273,42 @@ resource "azurerm_virtual_machine_extension" "mgmt_watcher" {
   depends_on                   = [null_resource.start_mgmt]
 }
 
-# Adapted from https://github.com/Azure/terraform-azurerm-diskencrypt/blob/master/main.tf
-resource azurerm_key_vault_key disk_encryption_key {
-  name                         = "${local.mgmt_vm_name}-disk-key"
-  key_vault_id                 = azurerm_key_vault.vault.id
-  key_type                     = "RSA"
-  key_size                     = 2048
-  key_opts                     = [
-                                "decrypt",
-                                "encrypt",
-                                "sign",
-                                "unwrapKey",
-                                "verify",
-                                "wrapKey",
-  ]
-}
+# # Does not work with AutoLogon
+# # use server side encryption with azurerm_disk_encryption_set instead
+# resource azurerm_virtual_machine_extension mgmt_disk_encryption {
+#   name                         = "DiskEncryption"
+#   virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
+#   publisher                    = "Microsoft.Azure.Security"
+#   type                         = "AzureDiskEncryption"
+#   type_handler_version         = "2.2"
+#   auto_upgrade_minor_version   = true
 
-resource azurerm_virtual_machine_extension mgmt_disk_encryption {
-  name                         = "DiskEncryption"
-  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
-  publisher                    = "Microsoft.Azure.Security"
-  type                         = "AzureDiskEncryption"
-  type_handler_version         = "2.2"
-  auto_upgrade_minor_version   = true
+#   settings = <<SETTINGS
+#     {
+#       "EncryptionOperation"    : "EnableEncryption",
+#       "KeyVaultURL"            : "${azurerm_key_vault.vault.vault_uri}",
+#       "KeyVaultResourceId"     : "${azurerm_key_vault.vault.id}",
+#       "KeyEncryptionKeyURL"    : "${azurerm_key_vault.vault.vault_uri}keys/${azurerm_key_vault_key.disk_encryption_key.name}/${azurerm_key_vault_key.disk_encryption_key.version}",       
+#       "KekVaultResourceId"     : "${azurerm_key_vault.vault.id}",
+#       "KeyEncryptionAlgorithm" : "RSA-OAEP",
+#       "VolumeType"             : "All"
+#     }
+# SETTINGS
 
-  settings = <<SETTINGS
-    {
-      "EncryptionOperation"    : "EnableEncryption",
-      "KeyVaultURL"            : "${azurerm_key_vault.vault.vault_uri}",
-      "KeyVaultResourceId"     : "${azurerm_key_vault.vault.id}",
-      "KeyEncryptionKeyURL"    : "${azurerm_key_vault.vault.vault_uri}keys/${azurerm_key_vault_key.disk_encryption_key.name}/${azurerm_key_vault_key.disk_encryption_key.version}",       
-      "KekVaultResourceId"     : "${azurerm_key_vault.vault.id}",
-      "KeyEncryptionAlgorithm" : "RSA-OAEP",
-      "VolumeType"             : "All"
-    }
-SETTINGS
+#   # Start VM, so we can destroy the extension
+#   provisioner local-exec {
+#     command                    = "az vm start --ids ${self.virtual_machine_id}"
+#     when                       = destroy
+#   }
 
-  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? 1 : 0
-  tags                         = local.tags
-  depends_on                   = [null_resource.start_mgmt, azurerm_monitor_diagnostic_setting.key_vault_logs]
-}
+#   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? 1 : 0
+#   tags                         = local.tags
+#   depends_on                   = [null_resource.start_mgmt]
+# }
 
 # BUG: Get's recreated every run
 #      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909
-# resource "azurerm_network_connection_monitor" "storage_watcher" {
+# resource azurerm_network_connection_monitor storage_watcher {
 #   name                         = "${module.paas_app.storage_account_name}-watcher"
 #   location                     = azurerm_resource_group.vdc_rg.location
 #   resource_group_name          = local.network_watcher_resource_group
@@ -281,7 +329,7 @@ SETTINGS
 #   tags                         = local.tags
 # }
 
-# resource "azurerm_network_connection_monitor" "eventhub_watcher" {
+# resource azurerm_network_connection_monitor eventhub_watcher {
 #   name                         = "${module.paas_app.eventhub_name}-watcher"
 #   location                     = azurerm_resource_group.vdc_rg.location
 #   resource_group_name          = local.network_watcher_resource_group
@@ -308,14 +356,14 @@ locals {
 }
 
 # Automation account, used for runbooks
-resource "azurerm_automation_account" "automation" {
+resource azurerm_automation_account automation {
   name                         = "${azurerm_resource_group.vdc_rg.name}-automation"
   location                     = local.automation_location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   sku_name                     = "Basic"
 }
 
-resource "azurerm_automation_schedule" "daily" {
+resource azurerm_automation_schedule daily {
   name                         = "${azurerm_automation_account.automation.name}-daily"
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   automation_account_name      = azurerm_automation_account.automation.name
@@ -348,7 +396,7 @@ resource "azurerm_automation_schedule" "daily" {
 
 # Configure function resources with ARM template as Terraform doesn't (yet) support this
 # https://docs.microsoft.com/en-us/azure/templates/microsoft.web/2018-11-01/sites/functions
-# resource "azurerm_template_deployment" "update_management" {
+# resource azurerm_template_deployment update_management {
 #   name                         = "${azurerm_automation_account.automation.name}-updates"
 #   resource_group_name          = azurerm_resource_group.vdc_rg.name
 #   deployment_mode              = "Incremental"

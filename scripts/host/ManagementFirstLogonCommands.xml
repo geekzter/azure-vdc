@@ -5,14 +5,9 @@
         <Order>1</Order>
     </SynchronousCommand>
     <SynchronousCommand>
-        <CommandLine>cmd.exe /c start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('${scripturl}'))}"</CommandLine>
+        <CommandLine>cmd.exe /c cmd.exe /k start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('${scripturl}'))}"</CommandLine>
         <Description>Bootstrap packages and PowerShell</Description>
         <Order>2</Order>
-    </SynchronousCommand>
-    <SynchronousCommand>
-        <CommandLine>cmd.exe /k start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('${scripturl}'))}"</CommandLine>
-        <Description>Bootstrap packages and PowerShell</Description>
-        <Order>3</Order>
     </SynchronousCommand>
 %{ for index, host in hosts ~}
     <SynchronousCommand>

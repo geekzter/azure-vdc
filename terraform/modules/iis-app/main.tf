@@ -179,6 +179,12 @@ resource azurerm_virtual_machine_extension app_db_web_aadlogin {
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   tags                         = var.tags
   depends_on                   = [null_resource.start_web_vm]
@@ -410,6 +416,7 @@ resource azurerm_virtual_machine_extension app_web_vm_mount_data_disks {
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [null_resource.start_web_vm]
 }
+# Does not work with AutoLogon
 resource azurerm_virtual_machine_extension app_web_vm_disk_encryption {
   # Trigger new resource every run
   name                         = "DiskEncryption"
@@ -638,11 +645,16 @@ resource azurerm_virtual_machine_extension app_db_vm_aadlogin {
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
 
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
   tags                         = var.tags
   depends_on                   = [null_resource.start_db_vm]
 } 
-
 resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
@@ -874,6 +886,7 @@ resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [null_resource.start_web_vm]
 }
+# Does not work with AutoLogon
 resource azurerm_virtual_machine_extension app_db_vm_disk_encryption {
   # Trigger new resource every run
   name                         = "DiskEncryption"
