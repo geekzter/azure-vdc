@@ -171,6 +171,43 @@ resource null_resource start_web_vm {
   count                        = var.app_web_vm_number
 }
 
+resource azurerm_virtual_machine_extension app_web_vm_monitor {
+  name                         = "MMAExtension"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
+  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
+  type                         = "MicrosoftMonitoringAgent"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+  settings                     = <<EOF
+    {
+      "workspaceId"            : "${var.diagnostics_workspace_workspace_id}",
+      "azureResourceId"        : "${element(azurerm_virtual_machine.app_web_vm.*.id, count.index)}",
+      "stopOnMultipleConnections": "true"
+    }
+  EOF
+  protected_settings = <<EOF
+    { 
+      "workspaceKey"           : "${var.diagnostics_workspace_key}"
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_connectivity_dependency
+    )
+  )
+
+# count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  count                        = var.app_web_vm_number
+
+  depends_on                   = [null_resource.start_web_vm]
+}
 resource azurerm_virtual_machine_extension app_db_web_aadlogin {
   name                         = "AADLoginForWindows"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
@@ -226,7 +263,10 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_gro
   }
 
   count                        = (var.use_pipeline_environment || var.app_devops["account"] == null) ? 0 : var.app_web_vm_number
-  depends_on                   = [null_resource.start_web_vm]
+  depends_on                   = [
+                                  null_resource.start_web_vm,
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor
+                                 ]
 }
 resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
   name                         = "PipelineAgentCustomScript"
@@ -263,7 +303,10 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
   }
 
   count                        = (var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_web_vm_number : 0
-  depends_on                   = [null_resource.start_web_vm]
+  depends_on                   = [
+                                  null_resource.start_web_vm,
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor
+                                 ]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   name                         = "BGInfo"
@@ -284,7 +327,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
 
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  #azurerm_virtual_machine_extension.app_web_vm_pipeline
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
@@ -321,7 +364,10 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
 
   count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
 
-  depends_on                   = [azurerm_virtual_machine_extension.app_web_vm_bginfo]
+  depends_on                   = [
+                                  null_resource.start_web_vm,
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor
+                                 ]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   name                         = "AzureNetworkWatcherExtension"
@@ -340,48 +386,8 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   tags                         = var.tags
   depends_on                   = [
-                                  null_resource.start_web_vm, 
-                                  #azurerm_virtual_machine_extension.app_web_vm_dependency_monitor
-                                 ]
-}
-resource "azurerm_virtual_machine_extension" "app_web_vm_monitor" {
-  name                         = "MMAExtension"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
-  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
-  type                         = "MicrosoftMonitoringAgent"
-  type_handler_version         = "1.0"
-  auto_upgrade_minor_version   = true
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-  settings                     = <<EOF
-    {
-      "workspaceId"            : "${var.diagnostics_workspace_workspace_id}",
-      "azureResourceId"        : "${element(azurerm_virtual_machine.app_web_vm.*.id, count.index)}",
-      "stopOnMultipleConnections": "true"
-    }
-  EOF
-  protected_settings = <<EOF
-    { 
-      "workspaceKey"           : "${var.diagnostics_workspace_key}"
-    } 
-  EOF
-
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
-  )
-
-# count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
-  count                        = var.app_web_vm_number
-
-  depends_on                   = [
                                   null_resource.start_web_vm,
-                                  #azurerm_virtual_machine_extension.app_web_vm_watcher
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor
                                  ]
 }
 resource azurerm_virtual_machine_extension app_web_vm_mount_data_disks {
@@ -414,7 +420,10 @@ resource azurerm_virtual_machine_extension app_web_vm_mount_data_disks {
   }
 
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
-  depends_on                   = [null_resource.start_web_vm]
+  depends_on                   = [
+                                  null_resource.start_web_vm,
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor
+                                 ]
 }
 # Does not work with AutoLogon
 resource azurerm_virtual_machine_extension app_web_vm_disk_encryption {
@@ -452,32 +461,12 @@ SETTINGS
   }
 
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
-  depends_on                   = [null_resource.start_web_vm,azurerm_virtual_machine_extension.app_web_vm_mount_data_disks]
+  depends_on                   = [
+                                  null_resource.start_web_vm,
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor,
+                                  azurerm_virtual_machine_extension.app_web_vm_mount_data_disks
+                                 ]
 }
-# BUG: Get's recreated every run
-#      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909
-# resource "azurerm_network_connection_monitor" "devops_watcher" {
-#   name                         = "${local.app_hostname}${count.index+1}-${var.app_devops["account"]}.visualstudio.com"
-#   location                     = var.location
-#   resource_group_name          = var.network_watcher_resource_group_name
-#   network_watcher_name         = var.network_watcher_name
-
-#   auto_start                   = true
-#   interval_in_seconds          = 60
-#   source {
-#     virtual_machine_id         = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
-#   }
-
-#   destination {
-#     address                    = "${var.app_devops["account"]}.visualstudio.com"
-#     port                       = 443
-#   }
-#   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
-
-#   depends_on                   = [null_resource.start_db_vm, azurerm_virtual_machine_extension.app_web_vm_monitor]
-
-#   tags                         = var.tags
-# }
 
 resource "azurerm_lb" "app_db_lb" {
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -637,6 +626,43 @@ resource null_resource start_db_vm {
   count                        = var.app_web_vm_number
 }
 
+resource azurerm_virtual_machine_extension app_db_vm_monitor {
+  name                         = "MMAExtension"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
+  type                         = "MicrosoftMonitoringAgent"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+  settings                     = <<EOF
+    {
+      "workspaceId"            : "${var.diagnostics_workspace_workspace_id}",
+      "azureResourceId"        : "${element(azurerm_virtual_machine.app_db_vm.*.id, count.index)}",
+      "stopOnMultipleConnections": "true"
+    }
+  EOF
+  protected_settings = <<EOF
+    { 
+      "workspaceKey"           : "${var.diagnostics_workspace_key}"
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_connectivity_dependency
+    )
+  )
+
+# count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  count                        = var.app_db_vm_number
+
+  depends_on                   = [null_resource.start_db_vm]
+}
 resource azurerm_virtual_machine_extension app_db_vm_aadlogin {
   name                         = "AADLoginForWindows"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
@@ -692,7 +718,10 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
   )
 
   count                        = (var.deploy_non_essential_vm_extensions && !var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
-  depends_on                   = [null_resource.start_db_vm]
+  depends_on                   = [
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor
+                                 ]
 }
 resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
   name                         = "PipelineAgentCustomScript"
@@ -729,7 +758,10 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
   )
 
   count                        = (var.deploy_non_essential_vm_extensions && var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
-  depends_on                   = [null_resource.start_db_vm]
+  depends_on                   = [
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor
+                                 ]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   name                         = "BGInfo"
@@ -750,7 +782,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
 
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  #azurerm_virtual_machine_extension.app_db_vm_pipeline
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
@@ -788,8 +820,8 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
 
   depends_on                   = [
-                                  null_resource.start_db_vm, 
-                                  #azurerm_virtual_machine_extension.app_db_vm_bginfo
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
@@ -810,48 +842,8 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
   tags                         = var.tags
 
   depends_on                   = [
-                                  null_resource.start_db_vm, 
-                                  #azurerm_virtual_machine_extension.app_db_vm_dependency_monitor
-                                 ]
-}
-resource "azurerm_virtual_machine_extension" "app_db_vm_monitor" {
-  name                         = "MMAExtension"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
-  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
-  type                         = "MicrosoftMonitoringAgent"
-  type_handler_version         = "1.0"
-  auto_upgrade_minor_version   = true
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-  settings                     = <<EOF
-    {
-      "workspaceId"            : "${var.diagnostics_workspace_workspace_id}",
-      "azureResourceId"        : "${element(azurerm_virtual_machine.app_db_vm.*.id, count.index)}",
-      "stopOnMultipleConnections": "true"
-    }
-  EOF
-  protected_settings = <<EOF
-    { 
-      "workspaceKey"           : "${var.diagnostics_workspace_key}"
-    } 
-  EOF
-
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
-  )
-
-# count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
-  count                        = var.app_db_vm_number
-
-  depends_on                   = [
-                                  null_resource.start_db_vm, 
-                                  #azurerm_virtual_machine_extension.app_db_vm_watcher
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor
                                  ]
 }
 resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
@@ -884,7 +876,10 @@ resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
   }
 
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
-  depends_on                   = [null_resource.start_web_vm]
+  depends_on                   = [
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor
+                                 ]
 }
 # Does not work with AutoLogon
 resource azurerm_virtual_machine_extension app_db_vm_disk_encryption {
@@ -922,7 +917,11 @@ SETTINGS
   }
 
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
-  depends_on                   = [null_resource.start_db_vm,azurerm_virtual_machine_extension.app_db_vm_mount_data_disks]
+  depends_on                   = [
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor,
+                                  azurerm_virtual_machine_extension.app_db_vm_mount_data_disks
+                                 ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {

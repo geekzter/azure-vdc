@@ -9,8 +9,8 @@ resource "azurerm_storage_account" "vdc_diag_storage" {
 
 
   provisioner "local-exec" {
-    command                    = "../scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    # TODO: Add --auth-mode login once supported
+    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
   }
 
   tags                         = local.tags
@@ -31,8 +31,8 @@ resource "azurerm_storage_account" "vdc_automation_storage" {
   enable_https_traffic_only    = true
 
   provisioner "local-exec" {
-    command                    = "../scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    # TODO: Add --auth-mode login once supported
+    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
   }
 
   tags                         = local.tags

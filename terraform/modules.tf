@@ -151,6 +151,7 @@ module paas_app {
   default_read_timeout         = var.default_read_timeout
   default_delete_timeout       = var.default_delete_timeout
   enable_aad_auth              = var.enable_app_service_aad_auth
+  grant_database_access        = var.grant_database_access
   iag_subnet_id                = azurerm_subnet.iag_subnet.id
   integrated_subnet_id         = lookup(module.paas_spoke_vnet.subnet_ids,"appservice","")
   integrated_subnet_range      = var.vdc_config["paas_spoke_appsvc_subnet"]

@@ -378,6 +378,11 @@ variable enable_app_service_aad_auth {
   default                      = false
   type                         = bool
 }
+variable grant_database_access {
+  description                  = "App Service MSI access to SQL Database (required for application deployment)"
+  default                      = false
+  type                         = bool
+}
 variable use_pipeline_environment {
   description                  = "Use environment rather than deployment group for Pipeline Agent"
   default                      = false

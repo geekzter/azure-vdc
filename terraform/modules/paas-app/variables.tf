@@ -26,6 +26,9 @@ variable default_delete_timeout {}
 variable enable_aad_auth {
   type                         = bool
 }
+variable grant_database_access {
+  type                         = bool
+}
 variable iag_subnet_id {}
 variable integrated_subnet_range {}
 variable integrated_subnet_id {}

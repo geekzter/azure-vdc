@@ -9,7 +9,7 @@
 
 $user = az account show --query "user" | ConvertFrom-Json
 if ($user.type -ieq "user") {
-    $objectId = $(az ad signed-in-user show --query "dobjectId" -o tsv)
+    $objectId = $(az ad signed-in-user show --query "objectId" -o tsv)
 }
 $result = @{
     displayName = $user.name

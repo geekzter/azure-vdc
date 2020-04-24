@@ -73,8 +73,8 @@ resource "azurerm_storage_account" "app_storage" {
   } 
 
   provisioner "local-exec" {
-    command                    = "../scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    # TODO: Add --auth-mode login once supported
+    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
   }
 
   timeouts {
@@ -143,8 +143,8 @@ resource "azurerm_storage_account" "archive_storage" {
   enable_https_traffic_only    = true
 
   provisioner "local-exec" {
-    command                    = "../scripts/enable_storage_logging.ps1 -StorageAccountName ${self.name} -ResourceGroupName ${self.resource_group_name} "
-    interpreter                = ["pwsh", "-nop", "-Command"]
+    # TODO: Add --auth-mode login once supported
+    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
   }
 
   tags                         = var.tags
@@ -597,10 +597,16 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
 
 # Inspired by https://github.com/terraform-providers/terraform-provider-azurerm/issues/3234#issuecomment-491405625
 data external account_info {
-  program = ["pwsh","-nop","-command","../scripts/get_user_info.ps1"]
+  program                      = [
+                                  "pwsh",
+                                  "-nop",
+                                  "-command",
+                                  "../scripts/get_user_info.ps1"
+                                 ]
 }
 
 locals {
+  # FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
   dba_object_id                = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? data.azurerm_client_config.current.object_id : data.external.account_info.result.objectId
 }
 
@@ -623,6 +629,7 @@ resource null_resource sql_database_access {
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
+  count                        = var.grant_database_access ? 1 : 0
   # Terraform change scripts require Terraform to be the AAD DBA
   depends_on                   = [azurerm_sql_active_directory_administrator.dba]
 }

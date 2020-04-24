@@ -104,13 +104,6 @@ resource azurerm_windows_virtual_machine mgmt {
     }
   }
 
-  # os_disk {
-  #   name                       = "${local.mgmt_vm_name}-osdisk"
-  #   caching                    = "ReadWrite"
-  #   disk_encryption_set_id     = azurerm_disk_encryption_set.mgmt_disks.id
-  #   storage_account_type       = "Premium_LRS"
-  # }
-
   source_image_reference {
     publisher                  = "MicrosoftWindowsServer"
     offer                      = "WindowsServer"
@@ -122,7 +115,7 @@ resource azurerm_windows_virtual_machine mgmt {
   additional_unattend_content {
     setting                    = "AutoLogon"
     content                    = templatefile("../scripts/host/AutoLogon.xml", { 
-      count                    = 1, 
+      count                    = 3, 
       username                 = var.admin_username, 
       password                 = local.password
     })
@@ -168,81 +161,6 @@ resource null_resource start_mgmt {
   }
 }
 
-resource azurerm_role_assignment vm_admin {
-  scope                        = azurerm_resource_group.vdc_rg.id
-  role_definition_name         = "Virtual Machine Administrator Login"
-  principal_id                 = var.admin_object_id
-
-  count                        = var.admin_object_id != null ? 1 : 0
-}
-
-resource azurerm_virtual_machine_extension mgmt_aadlogin {
-  name                         = "AADLoginForWindows"
-  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
-  publisher                    = "Microsoft.Azure.ActiveDirectory"
-  type                         = "AADLoginForWindows"
-  type_handler_version         = "1.0"
-  auto_upgrade_minor_version   = true
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
-  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? 1 : 0
-  tags                         = local.tags
-  depends_on                   = [null_resource.start_mgmt]
-} 
-
-resource azurerm_virtual_machine_extension mgmt_bginfo {
-  name                         = "BGInfo"
-  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
-  publisher                    = "Microsoft.Compute"
-  type                         = "BGInfo"
-  type_handler_version         = "2.1"
-  auto_upgrade_minor_version   = true
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
-  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
-  tags                         = local.tags
-  depends_on                   = [null_resource.start_mgmt]
-}
-
-resource azurerm_virtual_machine_extension mgmt_dependency_monitor {
-  name                         = "DAExtension"
-  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
-  publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
-  type                         = "DependencyAgentWindows"
-  type_handler_version         = "9.5"
-  auto_upgrade_minor_version   = true
-  settings                     = <<EOF
-    {
-      "workspaceId"            : "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}"
-    }
-  EOF
-
-  protected_settings = <<EOF
-    { 
-      "workspaceKey"           : "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
-    } 
-  EOF
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
-  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
-  tags                         = local.tags
-  depends_on                   = [null_resource.start_mgmt]
-}
 resource azurerm_virtual_machine_extension mgmt_monitor {
   name                         = "MMAExtension"
   virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
@@ -273,6 +191,90 @@ resource azurerm_virtual_machine_extension mgmt_monitor {
   depends_on                   = [null_resource.start_mgmt]
 }
 
+resource azurerm_role_assignment vm_admin {
+  scope                        = azurerm_resource_group.vdc_rg.id
+  role_definition_name         = "Virtual Machine Administrator Login"
+  principal_id                 = var.admin_object_id
+
+  count                        = var.admin_object_id != null ? 1 : 0
+}
+
+resource azurerm_virtual_machine_extension mgmt_aadlogin {
+  name                         = "AADLoginForWindows"
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
+  publisher                    = "Microsoft.Azure.ActiveDirectory"
+  type                         = "AADLoginForWindows"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+
+  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? 1 : 0
+  tags                         = local.tags
+  depends_on                   = [
+                                  null_resource.start_mgmt,
+                                  azurerm_virtual_machine_extension.mgmt_monitor
+                                 ]
+} 
+
+resource azurerm_virtual_machine_extension mgmt_bginfo {
+  name                         = "BGInfo"
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
+  publisher                    = "Microsoft.Compute"
+  type                         = "BGInfo"
+  type_handler_version         = "2.1"
+  auto_upgrade_minor_version   = true
+
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+
+  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+  tags                         = local.tags
+  depends_on                   = [
+                                  null_resource.start_mgmt,
+                                  azurerm_virtual_machine_extension.mgmt_monitor
+                                 ]
+}
+
+resource azurerm_virtual_machine_extension mgmt_dependency_monitor {
+  name                         = "DAExtension"
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
+  publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
+  type                         = "DependencyAgentWindows"
+  type_handler_version         = "9.5"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "workspaceId"            : "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}"
+    }
+  EOF
+
+  protected_settings = <<EOF
+    { 
+      "workspaceKey"           : "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
+    } 
+  EOF
+
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
+
+  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+  tags                         = local.tags
+  depends_on                   = [
+                                  null_resource.start_mgmt,
+                                  azurerm_virtual_machine_extension.mgmt_monitor
+                                 ]
+}
 resource azurerm_virtual_machine_extension mgmt_watcher {
   name                         = "AzureNetworkWatcherExtension"
   virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
@@ -289,9 +291,27 @@ resource azurerm_virtual_machine_extension mgmt_watcher {
 
   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
-  depends_on                   = [null_resource.start_mgmt]
+  depends_on                   = [
+                                  null_resource.start_mgmt,
+                                  azurerm_virtual_machine_extension.mgmt_monitor
+                                 ]
 }
 
+# Delay DiskEncryption to mitigate race condition
+resource null_resource mgmt_sleep {
+  # Always run this
+  triggers                     = {
+    mgmt_vm                    = azurerm_windows_virtual_machine.mgmt.id
+  }
+
+  provisioner "local-exec" {
+    command                    = "Start-Sleep 300"
+    interpreter                = ["pwsh", "-nop", "-Command"]
+  }
+
+  count                        = (!var.use_server_side_disk_encryption && (var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions)) ? 1 : 0
+  depends_on                   = [azurerm_windows_virtual_machine.mgmt]
+}
 # Does not work with AutoLogon
 # use server side encryption with azurerm_disk_encryption_set instead
 resource azurerm_virtual_machine_extension mgmt_disk_encryption {
@@ -322,52 +342,11 @@ SETTINGS
 
   count                        = (!var.use_server_side_disk_encryption && (var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions)) ? 1 : 0
   tags                         = local.tags
-  depends_on                   = [null_resource.start_mgmt]
+  depends_on                   = [
+                                  null_resource.start_mgmt,
+                                  null_resource.mgmt_sleep
+                                  ]
 }
-
-# BUG: Get's recreated every run
-#      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909
-# resource azurerm_network_connection_monitor storage_watcher {
-#   name                         = "${module.paas_app.storage_account_name}-watcher"
-#   location                     = azurerm_resource_group.vdc_rg.location
-#   resource_group_name          = local.network_watcher_resource_group
-#   network_watcher_name         = local.network_watcher_name
-
-#   source {
-#     virtual_machine_id         = azurerm_windows_virtual_machine.mgmt.id
-#   }
-
-#   destination {
-#     address                    = module.paas_app.blob_storage_fqdn
-#     port                       = 443
-#   }
-
-#   count                        = var.deploy_network_watcher ? 1 : 0
-#   depends_on                   = [azurerm_virtual_machine_extension.mgmt_watcher]
-
-#   tags                         = local.tags
-# }
-
-# resource azurerm_network_connection_monitor eventhub_watcher {
-#   name                         = "${module.paas_app.eventhub_name}-watcher"
-#   location                     = azurerm_resource_group.vdc_rg.location
-#   resource_group_name          = local.network_watcher_resource_group
-#   network_watcher_name         = local.network_watcher_name
-
-#   source {
-#     virtual_machine_id         = azurerm_windows_virtual_machine.mgmt.id
-#   }
-
-#   destination {
-#     address                    = module.paas_app.eventhub_namespace_fqdn
-#     port                       = 443
-#   }
-
-#   count                        = var.deploy_network_watcher ? 1 : 0
-#   depends_on                   = [azurerm_virtual_machine_extension.mgmt_watcher]
-
-#   tags                         = local.tags
-# } 
 
 locals {
   virtual_machine_ids          = concat(module.iis_app.virtual_machine_ids, [azurerm_windows_virtual_machine.mgmt.id])

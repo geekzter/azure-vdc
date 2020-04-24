@@ -14,5 +14,5 @@ param (
 
 # Enable logging on storage account
 Write-Host "Enabling blob logging for storage account ${StorageAccountName}..."
-$storageKey = $(az storage account keys list --account-name $StorageAccountName | ConvertFrom-Json | Select-Object -ExpandProperty value -First 1)
+$storageKey = $(az storage account keys list -n $StorageAccountName --query "[0].value" -o tsv)
 az storage logging update --account-name $StorageAccountName --account-key $storageKey --log rwd --retention 90 --services b
