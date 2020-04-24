@@ -85,12 +85,31 @@ resource azurerm_windows_virtual_machine mgmt {
   admin_username               = var.admin_username
   admin_password               = local.password
 
-  os_disk {
-    name                       = "${local.mgmt_vm_name}-osdisk"
-    caching                    = "ReadWrite"
-    disk_encryption_set_id     = azurerm_disk_encryption_set.mgmt_disks.id
-    storage_account_type       = "Premium_LRS"
+  dynamic "os_disk" {
+    for_each = range(var.use_server_side_disk_encryption ? 1 : 0) 
+    content {
+      name                     = "${local.mgmt_vm_name}-osdisk"
+      caching                  = "ReadWrite"
+      disk_encryption_set_id   = azurerm_disk_encryption_set.mgmt_disks.id
+      storage_account_type     = "Premium_LRS"
+    }
   }
+
+  dynamic "os_disk" {
+    for_each = range(var.use_server_side_disk_encryption ? 0 : 1) 
+    content {
+      name                     = "${local.mgmt_vm_name}-osdisk"
+      caching                  = "ReadWrite"
+      storage_account_type     = "Premium_LRS"
+    }
+  }
+
+  # os_disk {
+  #   name                       = "${local.mgmt_vm_name}-osdisk"
+  #   caching                    = "ReadWrite"
+  #   disk_encryption_set_id     = azurerm_disk_encryption_set.mgmt_disks.id
+  #   storage_account_type       = "Premium_LRS"
+  # }
 
   source_image_reference {
     publisher                  = "MicrosoftWindowsServer"
@@ -273,38 +292,38 @@ resource azurerm_virtual_machine_extension mgmt_watcher {
   depends_on                   = [null_resource.start_mgmt]
 }
 
-# # Does not work with AutoLogon
-# # use server side encryption with azurerm_disk_encryption_set instead
-# resource azurerm_virtual_machine_extension mgmt_disk_encryption {
-#   name                         = "DiskEncryption"
-#   virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
-#   publisher                    = "Microsoft.Azure.Security"
-#   type                         = "AzureDiskEncryption"
-#   type_handler_version         = "2.2"
-#   auto_upgrade_minor_version   = true
+# Does not work with AutoLogon
+# use server side encryption with azurerm_disk_encryption_set instead
+resource azurerm_virtual_machine_extension mgmt_disk_encryption {
+  name                         = "DiskEncryption"
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
+  publisher                    = "Microsoft.Azure.Security"
+  type                         = "AzureDiskEncryption"
+  type_handler_version         = "2.2"
+  auto_upgrade_minor_version   = true
 
-#   settings = <<SETTINGS
-#     {
-#       "EncryptionOperation"    : "EnableEncryption",
-#       "KeyVaultURL"            : "${azurerm_key_vault.vault.vault_uri}",
-#       "KeyVaultResourceId"     : "${azurerm_key_vault.vault.id}",
-#       "KeyEncryptionKeyURL"    : "${azurerm_key_vault.vault.vault_uri}keys/${azurerm_key_vault_key.disk_encryption_key.name}/${azurerm_key_vault_key.disk_encryption_key.version}",       
-#       "KekVaultResourceId"     : "${azurerm_key_vault.vault.id}",
-#       "KeyEncryptionAlgorithm" : "RSA-OAEP",
-#       "VolumeType"             : "All"
-#     }
-# SETTINGS
+  settings = <<SETTINGS
+    {
+      "EncryptionOperation"    : "EnableEncryption",
+      "KeyVaultURL"            : "${azurerm_key_vault.vault.vault_uri}",
+      "KeyVaultResourceId"     : "${azurerm_key_vault.vault.id}",
+      "KeyEncryptionKeyURL"    : "${azurerm_key_vault.vault.vault_uri}keys/${azurerm_key_vault_key.disk_encryption_key.name}/${azurerm_key_vault_key.disk_encryption_key.version}",       
+      "KekVaultResourceId"     : "${azurerm_key_vault.vault.id}",
+      "KeyEncryptionAlgorithm" : "RSA-OAEP",
+      "VolumeType"             : "All"
+    }
+SETTINGS
 
-#   # Start VM, so we can destroy the extension
-#   provisioner local-exec {
-#     command                    = "az vm start --ids ${self.virtual_machine_id}"
-#     when                       = destroy
-#   }
+  # Start VM, so we can destroy the extension
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.virtual_machine_id}"
+    when                       = destroy
+  }
 
-#   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? 1 : 0
-#   tags                         = local.tags
-#   depends_on                   = [null_resource.start_mgmt]
-# }
+  count                        = (!var.use_server_side_disk_encryption && (var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions)) ? 1 : 0
+  tags                         = local.tags
+  depends_on                   = [null_resource.start_mgmt]
+}
 
 # BUG: Get's recreated every run
 #      https://github.com/terraform-providers/terraform-provider-azurerm/issues/3909

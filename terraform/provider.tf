@@ -5,7 +5,7 @@
 # ARM_SUBSCRIPTION_ID, ARM_CLIENT_ID, ARM_CLIENT_SECRET and ARM_TENANT_ID
 #
 provider "azurerm" {
-    version = "~> 2.1"
+    version = "~> 2.7"
     features {
         virtual_machine {
             # Don't do this in production

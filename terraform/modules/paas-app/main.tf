@@ -591,6 +591,8 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
     private_connection_resource_id = azurerm_sql_server.app_sqlserver.id
     subresource_names          = ["sqlServer"]
   }
+
+  tags                         = var.tags
 }
 
 # Inspired by https://github.com/terraform-providers/terraform-provider-azurerm/issues/3234#issuecomment-491405625

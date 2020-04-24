@@ -384,6 +384,12 @@ variable use_pipeline_environment {
   type                         = bool
 }
 
+variable use_server_side_disk_encryption {
+  description                  = "Use server-side disk encryption (false = client side encryption)"
+  default                      = false
+  type                         = bool
+}
+
 variable use_vanity_domain_and_ssl {
   description                  = "Whether to use SSL (HTTPS) for demo application"
   default                      = false

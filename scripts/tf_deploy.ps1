@@ -52,11 +52,9 @@ if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($en
 $Script:ErrorActionPreference = "Stop"
 
 $pipeline = ![string]::IsNullOrEmpty($env:AGENT_VERSION)
-if ($pipeline -or $Force) {
+if ($pipeline) {
     $env:TF_IN_AUTOMATION="true"
     $env:TF_INPUT=0
-} else {
-    $env:TF_INPUT=1
 }
 
 $planFile           = "$Workspace.tfplan".ToLower()
