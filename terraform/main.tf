@@ -1,6 +1,23 @@
 data "azurerm_client_config" "current" {}
 data "azurerm_subscription" "primary" {}
 
+# FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
+# HACK: Retrieve user objectId in case it is not exposed in azurerm_client_config.current.object_id
+data external account_info {
+  program                      = [
+                                 "az",
+                                 "ad",
+                                 "signed-in-user",
+                                 "show",
+                                 "--query",
+                                 "{object_id:objectId}",
+                                 "-o",
+                                 "json",
+                                 ]
+  count                        = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? 0 : 1
+}
+
+
 # Random password generator
 resource "random_string" "password" {
   length                       = 12
@@ -51,6 +68,8 @@ locals {
   admin_ips                    = setunion(local.admin_ip,var.admin_ips)
   admin_ip_ranges              = setunion([for ip in local.admin_ips : format("%s/30", ip)],var.admin_ip_ranges) # /32 not allowed in network_rules
   admin_cidr_ranges            = [for range in local.admin_ip_ranges : cidrsubnet(range,0,0)] # Make sure ranges have correct base address
+  # FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
+  automation_object_id         = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? data.azurerm_client_config.current.object_id : data.external.account_info.0.result.object_id
 
   tags                         = merge(
     var.tags,
@@ -99,7 +118,7 @@ resource azurerm_key_vault vault {
   # Grant access to self
   access_policy {
     tenant_id                  = data.azurerm_client_config.current.tenant_id
-    object_id                  = data.azurerm_client_config.current.object_id
+    object_id                  = local.automation_object_id
 
     key_permissions            = [
                                 "create",
