@@ -1,5 +1,13 @@
 locals {
-   mgmt_vm_name                = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"-","")),0,16)}mgmt"
+  client_config                = map(
+    "scripturl",                 azurerm_storage_blob.mgmt_prepare_script.url,
+    "sqlserver",                 module.paas_app.sql_server_fqdn,
+    "environment",               local.environment,
+    "suffix",                    local.suffix,
+    "workspace",                 terraform.workspace
+  )
+
+  mgmt_vm_name                 = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"-","")),0,16)}mgmt"
 }
 
 resource azurerm_network_interface bas_if {
@@ -39,12 +47,12 @@ resource azurerm_key_vault_key disk_encryption_key {
   key_type                     = "RSA"
   key_size                     = 2048
   key_opts                     = [
-                                "decrypt",
-                                "encrypt",
-                                "sign",
-                                "unwrapKey",
-                                "verify",
-                                "wrapKey",
+                                 "decrypt",
+                                 "encrypt",
+                                 "sign",
+                                 "unwrapKey",
+                                 "verify",
+                                 "wrapKey",
   ]
 }
 
@@ -131,7 +139,7 @@ resource azurerm_windows_virtual_machine mgmt {
     })
   }
 
-  custom_data                  = base64encode("Hello World")
+  custom_data                  = base64encode(jsonencode(local.client_config))
 
   # Required for AAD Login
   identity {
