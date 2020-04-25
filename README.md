@@ -12,10 +12,10 @@ Make sure you have the latest version of Azure CLI. This requires some extra wor
 
 Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to.  
 `git clone https://github.com/geekzter/azure-vdc.git`  
-`cd Terraform`  
+`cd azure-vdc/terraform`  
 
 Login with Azure CLI:  
-`az login --tenant contoso.onmicrosoft.com`   
+`az login`   
 
 This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider. Optionally, you can select the subscription to target:  
 `az account set --subscription 00000000-0000-0000-0000-000000000000`   
@@ -43,8 +43,8 @@ This projects contains the following components
 - Azure Active Directory Authentication
   - User AAD auth to App Service
   - MSI auth between application tiers
-  - AAD auth to VM's (RDP)
-  - AAD auth on Point-to-Site VPN
+  - User AAD auth to VM's (RDP)
+  - User AAD auth on Point-to-Site VPN
 
 ### Pre-Requisites
 This project uses Terraform, PowerShell 7, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
@@ -98,7 +98,7 @@ The Automated VDC has a number of features that are turned off by default. This 
 - [PowerShell Core](https://github.com/PowerShell/PowerShell)
 - [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html)
 - [Terraform Azure Provider](https://www.terraform.io/docs/providers/azurerm/index.html)
-- [Terraform Learning](https://learn.hashicorp.com/terraform/)
+- [Terraform Learning](https://learn.hashicorp.com/terraform?track=azure#azure)
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
 
 ### Limitations & Known Issue's
