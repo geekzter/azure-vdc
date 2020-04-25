@@ -22,15 +22,6 @@ resource "random_string" "suffix" {
   special                      = false
 }
 
-data external git_info {
-  program                      = [
-                                 "pwsh",
-                                 "-nop",
-                                 "-command",
-                                 "$branch = (git rev-parse --abbrev-ref HEAD);@{branch=$branch} | ConvertTo-Json"
-                                 ]
-}
-
 # These variables will be used throughout the Terraform templates
 locals {
   # Making sure all character classes are represented, as random does not guarantee that  
@@ -64,7 +55,6 @@ locals {
   tags                         = merge(
     var.tags,
     map(
-      "branch",                  data.external.git_info.result.branch,
       "environment",             local.environment,
       "suffix",                  local.suffix,
       "workspace",               terraform.workspace,

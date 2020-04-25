@@ -595,19 +595,25 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
   tags                         = var.tags
 }
 
-# Inspired by https://github.com/terraform-providers/terraform-provider-azurerm/issues/3234#issuecomment-491405625
+# FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
+# HACK: Retrieve user objectId in case it is not exposed in azurerm_client_config.current.object_id
 data external account_info {
   program                      = [
-                                  "pwsh",
-                                  "-nop",
-                                  "-command",
-                                  "../scripts/get_user_info.ps1"
+                                 "az",
+                                 "ad",
+                                 "signed-in-user",
+                                 "show",
+                                 "--query",
+                                 "{object_id:objectId}",
+                                 "-o",
+                                 "json",
                                  ]
+  count                        = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? 0 : 1
 }
 
 locals {
   # FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
-  dba_object_id                = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? data.azurerm_client_config.current.object_id : data.external.account_info.result.objectId
+  dba_object_id                = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? data.azurerm_client_config.current.object_id : data.external.account_info.0.result.object_id
 }
 
 # This is for Terraform acting as the AAD DBA (e.g. to execute change scripts)

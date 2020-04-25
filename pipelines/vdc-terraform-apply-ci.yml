@@ -475,7 +475,7 @@ jobs:
         inputs:
           targetType: filePath
           filePath: '$(scriptDirectory)/get_tf_version.ps1'
-          arguments: ' -version installed | Out-File $(Build.SourcesDirectory)/Terraform/.terraform-version'
+          arguments: ' -version installed | Out-File $(Build.SourcesDirectory)/terraform/.terraform-version'
           pwsh: true
           workingDirectory: '$(scriptDirectory)'
 
