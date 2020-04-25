@@ -135,20 +135,23 @@ resource azurerm_key_vault vault {
     ]
   }
 
-  # Grant access to admin
-  access_policy {
-    tenant_id                  = data.azurerm_client_config.current.tenant_id
-    object_id                  = var.admin_object_id
+  # Grant access to admin, if defined
+  dynamic "access_policy" {
+    for_each = range(var.admin_object_id != null && var.admin_object_id != "" ? 1 : 0) 
+    content {
+      tenant_id                = data.azurerm_client_config.current.tenant_id
+      object_id                = var.admin_object_id
 
-    key_permissions            = [
-                                 "create",
-                                 "get",
-                                 "list",
-    ]
+      key_permissions          = [
+                                "create",
+                                "get",
+                                "list",
+      ]
 
-    secret_permissions         = [
-                                 "set",
-    ]
+      secret_permissions       = [
+                                "set",
+      ]
+    }
   }
 
   # TODO: network_acls
