@@ -117,7 +117,7 @@ jobs:
       inputs:
         terraformVersion: '$(terraformVersion)'
 
-      - task: AzureCLI@2
+    - task: AzureCLI@2
       name: terraformApply
       displayName: 'Terraform init & apply'
       enabled: true
@@ -143,7 +143,7 @@ jobs:
       env:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
   
-      - task: AzureCLI@2
+    - task: AzureCLI@2
       name: terraformDestroy
       displayName: 'Terraform destroy'
       enabled: true
