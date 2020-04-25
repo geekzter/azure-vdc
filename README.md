@@ -5,7 +5,12 @@ This project contains a sample starter Virtual Datacenter (VDC), which follows a
 ![alt text](diagram.png "Architecture")
 
 ## TL;DR: Quickstart
-To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to.  
+To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). 
+
+Debian/Ubuntu   
+`curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
+
+Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to.  
 `git clone https://github.com/geekzter/azure-vdc.git`  
 `cd Terraform`  
 Login with Azure CLI:  
