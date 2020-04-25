@@ -123,7 +123,7 @@ resource azurerm_windows_virtual_machine mgmt {
   additional_unattend_content {
     setting                    = "AutoLogon"
     content                    = templatefile("../scripts/host/AutoLogon.xml", { 
-      count                    = 3, 
+      count                    = 99, 
       username                 = var.admin_username, 
       password                 = local.password
     })

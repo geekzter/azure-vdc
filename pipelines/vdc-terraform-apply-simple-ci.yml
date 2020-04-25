@@ -117,23 +117,23 @@ jobs:
       inputs:
         terraformVersion: '$(terraformVersion)'
 
-    - task: AzureCLI@2
+      - task: AzureCLI@2
       name: terraformApply
       displayName: 'Terraform init & apply'
       enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
+        scriptType: bash
         scriptLocation: inlineScript
         # ARM_* environment variables are required by Terraform azurerm provider and backend
         # https://www.terraform.io/docs/providers/azurerm/index.html
         # https://www.terraform.io/docs/backends/types/azurerm.html
         # Use Pipeline Service Principal and Service Connection to set up these variables
         inlineScript: |
-          $env:ARM_CLIENT_ID=$env:servicePrincipalId
-          $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
-          $env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-          $env:ARM_TENANT_ID=$env:tenantId
+          ARM_CLIENT_ID=$servicePrincipalId
+          ARM_CLIENT_SECRET=$servicePrincipalKey
+          ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          ARM_TENANT_ID=$tenantId
           terraform init
           terraform apply -auto-approve
         addSpnToEnvironment: true
@@ -142,24 +142,24 @@ jobs:
         workingDirectory: '$(terraformDirectory)'
       env:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
-
-    - task: AzureCLI@2
+  
+      - task: AzureCLI@2
       name: terraformDestroy
       displayName: 'Terraform destroy'
       enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
+        scriptType: bash
         scriptLocation: inlineScript
         # ARM_* environment variables are required by Terraform azurerm provider and backend
         # https://www.terraform.io/docs/providers/azurerm/index.html
         # https://www.terraform.io/docs/backends/types/azurerm.html
         # Use Pipeline Service Principal and Service Connection to set up these variables
         inlineScript: |
-          $env:ARM_CLIENT_ID=$env:servicePrincipalId
-          $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
-          $env:ARM_SUBSCRIPTION_ID=$(az account show --query id) -replace '"',''
-          $env:ARM_TENANT_ID=$env:tenantId
+          ARM_CLIENT_ID=$servicePrincipalId
+          ARM_CLIENT_SECRET=$servicePrincipalKey
+          ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          ARM_TENANT_ID=$tenantId
           terraform destroy -auto-approve
         addSpnToEnvironment: true
         useGlobalConfig: true
