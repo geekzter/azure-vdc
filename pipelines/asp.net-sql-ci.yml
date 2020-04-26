@@ -10,7 +10,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: 'Apps/PaaS-ASP.NET-SQLDB/DotNetAppSqlDb.sln'
+  solution: 'apps/PaaS-ASP.NET-SQLDB/DotNetAppSqlDb.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 

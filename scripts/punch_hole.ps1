@@ -24,7 +24,8 @@ try {
         $Script:appStorageAccount      = $(terraform output "paas_app_storage_account_name" 2>$null)
         $Script:appEventHubNamespace   = $(terraform output "paas_app_eventhub_namespace"   2>$null)
         $Script:appSQLServer           = $(terraform output "paas_app_sql_server"           2>$null)
-        
+        $Script:keyVault               = $(terraform output "key_vault_name"                2>$null)
+        $Script:vdcResourceGroup       = $(terraform output "vdc_resource_group"            2>$null)
 
         $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(az group list --query "[?name=='$appResourceGroup']")))
     }
@@ -51,18 +52,24 @@ Write-Host "Public IP prefix is $ipPrefix"
 
 # Punch hole in PaaS Firewalls
 if ($appStorageAccount) {
-    Write-Host "Adding rule for storage account $appStorageAccount to allow address $ipAddress..."
+    Write-Host "Adding rule for Storage Account $appStorageAccount to allow address $ipAddress..."
     az storage account network-rule add -g $appResourceGroup --account-name $appStorageAccount --ip-address $ipAddress -o none
-    Write-Host "Adding rule for storage account $appStorageAccount to allow prefix $ipPrefix..."
+    Write-Host "Adding rule for Storage Account $appStorageAccount to allow prefix $ipPrefix..."
     az storage account network-rule add -g $appResourceGroup --account-name $appStorageAccount --ip-address $ipPrefix -o none
 }
 if ($appEventHubNamespace) {
-    Write-Host "Adding rule for event hub $appEventHubNamespace to allow address $ipAddress..."
+    Write-Host "Adding rule for Event Hub $appEventHubNamespace to allow address $ipAddress..."
     az eventhubs namespace network-rule add -g $appResourceGroup --namespace-name $appEventHubNamespace --ip-address $ipAddress --action Allow -o none
-    Write-Host "Adding rule for event hub $appEventHubNamespace to allow prefix $ipPrefix..."
+    Write-Host "Adding rule for Event Hub $appEventHubNamespace to allow prefix $ipPrefix..."
     az eventhubs namespace network-rule add -g $appResourceGroup --namespace-name $appEventHubNamespace --ip-address $ipPrefix --action Allow -o none
 }
 if ($appSQLServer) {
     Write-Host "Adding rule for SQL Server $appSQLServer to allow address $ipAddress... "
     az sql server firewall-rule create -g $appResourceGroup -s $appSQLServer -n "LetMeInRule $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress -o none
+}
+if ($keyVault) {
+    Write-Host "Adding rule for Key Vault $keyVault to allow address $ipAddress..."
+    az keyvault network-rule add -g $vdcResourceGroup -n $keyVault --ip-address $ipAddress -o none
+    Write-Host "Adding rule for Key Vault $keyVault to allow prefix $ipPrefix..."
+    az keyvault network-rule add -g $vdcResourceGroup -n $keyVault --ip-address $ipPrefix -o none
 }

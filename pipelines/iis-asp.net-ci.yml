@@ -18,7 +18,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: 'Apps/IaaS-ASP.NET/SampleIisWebApp.sln'
+  solution: 'apps/IaaS-ASP.NET/SampleIisWebApp.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
