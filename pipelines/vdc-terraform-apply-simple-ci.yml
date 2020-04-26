@@ -1,0 +1,204 @@
+# This pipeline perfors a full CI test of the VDC:
+#  - Provision infrastructure
+#  - Destroy infrastructure
+# This CI pieline has as few dependencies as possible
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - 'scripts/*' 
+    - 'terraform/*' 
+    exclude:
+    - '*.md'
+    - '*.png'  
+    - '*.svg'  
+    - '*.vsdx'  
+    - 'apps/*'
+    - 'kusto/*'
+    - 'pipelines/*'
+
+pr:
+  branches:
+    include:
+    - '*'
+  paths:
+    exclude:
+    - '*.md'  
+    - '*.png'  
+    - '*.svg'  
+    - '*.vsdx'  
+    
+schedules:
+  - cron: '0 2 * * *'
+    displayName: 'Daily early morning build (UTC)'
+    # Run if there are no changes
+    always: 'true'
+    branches:
+      include:
+      - master
+
+# Global variables shared by all jobs
+variables:
+- name: 'TF_IN_AUTOMATION'
+  value: 'true'
+- name: 'TF_INPUT'
+  value: 0
+
+# Inline variables shared across jobs
+- name: 'jobTimeOutMinutes'
+  value: 120
+- name: 'scriptDirectory'
+  value: '$(Build.SourcesDirectory)/scripts'
+- name: 'terraformDirectory'
+  value: '$(Build.SourcesDirectory)/terraform'
+
+jobs:
+- job: 'Prepare'
+  displayName: 'Prepare'
+  condition: succeeded()
+  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  workspace:
+    clean: all
+
+  steps:
+    - task: AzureCLI@2
+      displayName: 'Gather Terraform settings'
+      name: terraformConfig
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: 'pscore'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # List environment variables (debug)
+          if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
+            Get-ChildItem -Path Env:ARM_* | Sort-Object -Property Name
+          }
+          
+          # This will write version info as output variable
+          $(scriptDirectory)/get_tf_version.ps1 -version preferred
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
+
+# Provision on self-hosted agent
+- job: 'Provision'
+  dependsOn: Prepare
+  displayName: 'Provision Infrastructure with Terraform'
+  condition: succeeded()
+  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+  variables:
+    # Use earlier prepared Terraform config
+    terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  workspace:
+    clean: all
+
+  steps:
+    # We could do this with tfenv, however there is no task for that
+    - task: TerraformInstaller@0
+      displayName: 'Use preferred Terraform version'
+      inputs:
+        terraformVersion: '$(terraformVersion)'
+
+    - task: AzureCLI@2
+      name: terraformApply
+      displayName: 'Terraform init & apply'
+      enabled: true
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: bash
+        scriptLocation: inlineScript
+        # ARM_* environment variables are required by Terraform azurerm provider and backend
+        # https://www.terraform.io/docs/providers/azurerm/index.html
+        # https://www.terraform.io/docs/backends/types/azurerm.html
+        # Use Pipeline Service Principal and Service Connection to set up these variables
+        inlineScript: |
+          export ARM_CLIENT_ID=$servicePrincipalId
+          export ARM_CLIENT_SECRET=$servicePrincipalKey
+          export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          export ARM_TENANT_ID=$tenantId
+          terraform init
+          terraform apply -auto-approve
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        failOnStandardError: true
+        workingDirectory: '$(terraformDirectory)'
+      env:
+        TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+  
+    - task: AzureCLI@2
+      name: terraformDestroy
+      displayName: 'Terraform destroy'
+      enabled: true
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: bash
+        scriptLocation: inlineScript
+        # ARM_* environment variables are required by Terraform azurerm provider and backend
+        # https://www.terraform.io/docs/providers/azurerm/index.html
+        # https://www.terraform.io/docs/backends/types/azurerm.html
+        # Use Pipeline Service Principal and Service Connection to set up these variables
+        inlineScript: |
+          export ARM_CLIENT_ID=$servicePrincipalId
+          export ARM_CLIENT_SECRET=$servicePrincipalKey
+          export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          export ARM_TENANT_ID=$tenantId
+          terraform destroy -auto-approve
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        failOnStandardError: true
+        workingDirectory: '$(terraformDirectory)'
+      env:
+        TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+
+# Clean up resources, in the event 'terraform destroy' fails   
+- job: 'CleanUp'
+  dependsOn:
+    - Prepare
+    - Provision
+  displayName: 'Clean Up'
+  # Run if Terraform provision or destroy failed, or the whole pipeline was canceled
+  condition: or(ne(dependencies.Provision.result, 'Succeeded'), canceled())
+  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+  variables:
+    # Use earlier prepared Terraform config
+    terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  workspace:
+    clean: all
+
+  steps:
+    # Clear Terraform workspace, just in case
+    # As a last resort, this also destroys any resources that may not have deleted before
+    - task: AzureCLI@2
+      name: terraform
+      displayName: 'Clear Terraform workspace'
+      condition: succeededOrFailed()
+      enabled: true
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          $(scriptDirectory)/erase.ps1 -environment dflt -clear $false -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
+        addSpnToEnvironment: false
+        useGlobalConfig: true
+        failOnStandardError: true
+        workingDirectory: '$(terraformDirectory)'

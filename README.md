@@ -5,15 +5,24 @@ This project contains a sample starter Virtual Datacenter (VDC), which follows a
 ![alt text](diagram.png "Architecture")
 
 ## TL;DR: Quickstart
-To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to.  
+To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). 
+
+Make sure you have the latest version of Azure CLI. This requires some extra work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
+`curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
+
+Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to.  
 `git clone https://github.com/geekzter/azure-vdc.git`  
-`cd Terraform`  
+`cd azure-vdc/terraform`  
+
 Login with Azure CLI:  
-`az login`  
+`az login`   
+
 This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider. Optionally, you can select the subscription to target:  
-`az account set --subscription="00000000-0000-0000-0000-000000000000"`  
+`az account set --subscription 00000000-0000-0000-0000-000000000000`   
+
 You can provision resources by first initializing Terraform:   
 `terraform init`  
+
 And then running:  
 `terraform apply`
 
@@ -30,21 +39,26 @@ This projects contains the following components
   - AppServers auto-joined to Azure Pipelines Deployment Group, application deployment from Azure Pipeline
 - An App Service web application integrated into another spoke network (experimental)
   - Several PaaS services connected as Service Endpoints into the AzureFirewall subnet, or through PrivateLink
-  - AAD auth to App Service
-  - AAD auth between application tiers using MSI
   - Application deployed from Azure DevOps Pipeline
+- Azure Active Directory Authentication
+  - User AAD auth to App Service
+  - MSI auth between application tiers
+  - User AAD auth to VM's (RDP)
+  - User AAD auth on Point-to-Site VPN
 
 ### Pre-Requisites
-This project uses Terraform, PowerShell Core, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
+This project uses Terraform, PowerShell 7, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
 
 ### Getting Started
 The quickstart uses defauls settings that disables some features. To use all featues (e.g. VPN, SSL domains, CI/CD), more is involved:
 1.	Clone repository:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
-2.  Change to the Terraform directrory  
-`cd Terraform`
+2.  Change to the `terraform` directrory  
+`cd terraform`
 3.  Set up storage account for [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), configure `backend.tf` (copy `backend.tf.sample`) with the details of the storage account created. Make sure the user used for Azure CLI is in the `Storage Blob Data Contributor` or `Storage Blob Data Owner`role (It is not enough to have Owner/Contributor rights, as this is Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
-`$env:ARM_ACCESS_KEY=$(az storage account keys list -n STORAGE_ACCOUNT --query "[0].value" -o tsv)`
+`$env:ARM_ACCESS_KEY=$(az storage account keys list -n STORAGE_ACCOUNT --query "[0].value" -o tsv)`   
+or   
+`$env:ARM_SAS_TOKEN=$(az storage container generate-sas -n STORAGE_CONTAINER --permissions acdlrw --expiry 202Y-MM-DD --account-name STORAGE_ACCOUNT -o tsv)`   
 4.	Initialize Terraform backend by running  
 `terraform init`  
 or  
@@ -68,13 +82,15 @@ to provision resources
 The Automated VDC has a number of features that are turned off by default. This can be because the feature has pre-requisites (e.g. certificates, or you need to own a domain). Another reason is the use of Azure preview features, or features that just simply take a long time to provision. Features are toggled by a corresponding variable in [`variables.tf`](./Terraform/variables.tf).
 |Feature|Toggle|Dependencies and Pre-requisites|
 |---|---|---|
-|Non&#x2011;essential&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `TeamServicesAgent` (for VM's that are not a deployment target for an Azure Pipeline), `BGInfo`, `DependencyAgentWindows`, `NetworkWatcherAgentWindows`|`deploy_non_essential_vm_extensions`|None|
 |Azure&nbsp;Bastion. Provisions the [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) service in each Virtual Network|`deploy_managed_bastion`|None|
-|[Network&nbsp;Watcher](https://azure.microsoft.com/en-us/services/network-watcher/)|`deploy_network_watcher`|`deploy_non_essential_vm_extensions` also needs to be set|
-|VPN, provisions [Point-to-Site (P2S) VPN](https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-rm-ps)|`deploy_vpn`|You need to create certificates used by P2S VPN with `create_certs.ps1` on Windows. These certificates need to exist in the `Certificates` sub-directory. Variable `vpn_root_cert_file` needs to be set (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample))).|
+|Non&#x2011;essential&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `TeamServicesAgent` (for VM's that are not a deployment target for an Azure Pipeline), `BGInfo`, `DependencyAgentWindows`, `NetworkWatcherAgentWindows`|`deploy_non_essential_vm_extensions` (implies `deploy_security_vm_extensions`)|PowerShell 7|
+|[Network&nbsp;Watcher](https://azure.microsoft.com/en-us/services/network-watcher/)|`deploy_network_watcher`|`deploy_non_essential_vm_extensions` also needs to be set. This requires PowerShell 7|
+|Security&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `AADLoginForWindows`, `AzureDiskEncryption`|`deploy_security_vm_extensions`|None|
+|VPN, provisions [Point-to-Site (P2S) VPN](https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-rm-ps)|`deploy_vpn`|You need to have the [Azure VPN application](https://go.microsoft.com/fwlink/?linkid=2117554) [provisioned](https://docs.microsoft.com/en-us/azure/vpn-gateway/openvpn-azure-ad-tenant) in your Azure Active Directory tenant.|
 |AAD&nbsp;Authentication. [Configure](https://docs.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad) App Service to authenticate using Azure Active Directory|`enable_app_service_aad_auth`|SSL and a vanity domain needs to have been set up. You also need to create an Azure AD App registration and configure the `paas_aad_auth_client_id_map` map for at least the `default` workspace (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample))). (Note: Terraform could provision this pre-requiste as well, but I'm assuming you don't have suffiient AAD permissions as this requires a Service Principal to create Service Principals in automation)|
+|Grant access to SQL Database for App Service MSI and user/group defined by `admin_object_id`. This is required for database import and therefore application deployment|`grant_database_access`|PowerShell 7|
 |Pipeline&nbsp;agent&nbsp;type. By default a [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/) will be used. Setting this to `true` will instead use an [Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments)|`use_pipeline_environment`|Multi-stage YAML Pipelines|
-|SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegated the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and store it in the `Certificates` sub-directory. `vanity_certificate_*` need to be set accordingly (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample)).
+|SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegate the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and configure its location by setting `vanity_certificate_*` (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample)).
 
 ### Resources
 - [Azure CLI](http://aka.ms/azure-cli)
@@ -82,7 +98,7 @@ The Automated VDC has a number of features that are turned off by default. This 
 - [PowerShell Core](https://github.com/PowerShell/PowerShell)
 - [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html)
 - [Terraform Azure Provider](https://www.terraform.io/docs/providers/azurerm/index.html)
-- [Terraform Learning](https://learn.hashicorp.com/terraform/)
+- [Terraform Learning](https://learn.hashicorp.com/terraform?track=azure#azure)
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
 
 ### Limitations & Known Issue's

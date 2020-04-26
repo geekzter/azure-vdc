@@ -86,7 +86,6 @@ rcf/
 *.tfstate.*
 *.tfplan
 *.auto.tfvars
-*.svg
 backend.tf
 terraform.log
 
