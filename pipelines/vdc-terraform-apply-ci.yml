@@ -402,7 +402,7 @@ jobs:
             Start-Sleep -Seconds 30
             
             # Request page
-            Invoke-WebRequest $(appUrl)
+            Invoke-WebRequest -Uri $(appUrl) -MaximumRetryCount 9
           failOnStderr: true
           pwsh: true
 

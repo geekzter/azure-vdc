@@ -40,14 +40,14 @@ try {
 
 # Get public IP address
 # Use RIPE for both Ipv4 & Ipv6
-#$ipAddress=$(Invoke-RestMethod https://stat.ripe.net/data/whats-my-ip/data.json | Select-Object -ExpandProperty data | Select-Object -ExpandProperty ip)
+#$ipAddress=$(Invoke-RestMethod https://stat.ripe.net/data/whats-my-ip/data.json -MaximumRetryCount 9 | Select-Object -ExpandProperty data | Select-Object -ExpandProperty ip)
 # Stick to ipinfo for Ipv4 only
-$ipAddress=$(Invoke-RestMethod https://ipinfo.io/ip).Trim()
+$ipAddress=$(Invoke-RestMethod -Uri https://ipinfo.io/ip).Trim() -MaximumRetryCount 9
 Write-Host "Public IP address is $ipAddress"
 
 # Get block(s) the public IP address belongs to
 # HACK: We need this to cater for changing public IP addresses e.g. Azure Pipelines Hosted Agents
-$ipPrefix = Invoke-RestMethod https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
+$ipPrefix = Invoke-RestMethod -Uri https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} -MaximumRetryCount 9 | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
 Write-Host "Public IP prefix is $ipPrefix"
 
 # Punch hole in PaaS Firewalls
