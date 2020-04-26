@@ -15,7 +15,7 @@ trigger:
     - '*'
   paths:
     include:
-    - 'Pipelines/vdc-terraform-plan-ci.yml'
+    - 'pipelines/vdc-terraform-plan-ci.yml'
     - 'scripts/*' 
     - 'terraform/*' 
     exclude:
@@ -46,7 +46,7 @@ variables:
 
 # Inline variables shared across jobs
 - name: 'scriptDirectory'
-  value: '$(Build.SourcesDirectory)/Scripts'
+  value: '$(Build.SourcesDirectory)/scripts'
 - name: 'system.debug'
   value: ${{ parameters.debug }}
 - name: 'TF_IN_AUTOMATION'

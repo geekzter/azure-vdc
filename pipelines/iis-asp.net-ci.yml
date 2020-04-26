@@ -62,5 +62,5 @@ steps:
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: scripts'
   inputs:
-    PathtoPublish: Apps/IaaS-ASP.NET/scripts
+    PathtoPublish: apps/IaaS-ASP.NET/scripts
     ArtifactName: aspnetscripts

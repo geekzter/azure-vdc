@@ -52,7 +52,7 @@ steps:
 - task: ArchiveFiles@2
   displayName: 'Create ZipDeploy package'
   inputs:
-    rootFolderOrFile: '$(agent.builddirectory)\package\Content\D_C\a\1\s\Apps\PaaS-ASP.NET-SQLDB\DotNetAppSqlDb\obj\Release\Package\PackageTmp'
+    rootFolderOrFile: '$(agent.builddirectory)\package\Content\D_C\a\1\s\apps\PaaS-ASP.NET-SQLDB\DotNetAppSqlDb\obj\Release\Package\PackageTmp'
     includeRootFolder: false
     archiveType: 'zip'
     archiveFile: '$(build.artifactstagingdirectory)\ZipDeploy.zip'

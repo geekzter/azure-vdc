@@ -17,9 +17,9 @@ trigger:
     - '*.png'  
     - '*.svg'  
     - '*.vsdx'  
-    - 'Apps/*'
-    - 'Kusto/*'
-    - 'Pipelines/*'
+    - 'apps/*'
+    - 'kusto/*'
+    - 'pipelines/*'
 
 pr:
   branches:
