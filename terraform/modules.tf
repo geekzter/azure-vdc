@@ -199,9 +199,7 @@ module paas_spoke_vnet {
   service_endpoints            = {
     appservice                 = [
                                   "Microsoft.AzureActiveDirectory",
-                                  "Microsoft.EventHub"
-                                 ]
-    data                       = [
+                                  "Microsoft.EventHub",
                                   "Microsoft.Sql",
                                   "Microsoft.Storage"
                                  ]

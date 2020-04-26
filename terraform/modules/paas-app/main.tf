@@ -68,7 +68,7 @@ resource "azurerm_storage_account" "app_storage" {
     # Allow the Firewall subnet
     virtual_network_subnet_ids = [
                                  var.iag_subnet_id,
-                                 var.data_subnet_id
+                                 var.integrated_subnet_id
     ]
   } 
 
@@ -86,30 +86,17 @@ resource "azurerm_storage_account" "app_storage" {
 
   tags                         = var.tags
   
-  # FIX for race condition: Error waiting for Azure Storage Account "vdccipaasappb1375stor" to be created: Future#WaitForCompletion: the number of retries has been exceeded: StatusCode=400 -- Original Error: Code="NetworkAclsValidationFailure" Message="Validation of network acls failure: SubnetsNotProvisioned:Cannot proceed with operation because subnets appservice of the virtual network /subscriptions//resourceGroups/vdc-ci-b1375/providers/Microsoft.Network/virtualNetworks/vdc-ci-b1375-paas-spoke-network are not provisioned. They are in Updating state.."
-  depends_on                   = [azurerm_storage_container.archive_storage_container]
+  depends_on                   = [
+                                  azurerm_app_service_virtual_network_swift_connection.network,
+                                  # FIX for race condition: Error waiting for Azure Storage Account "vdccipaasappb1375stor" to be created: Future#WaitForCompletion: the number of retries has been exceeded: StatusCode=400 -- Original Error: Code="NetworkAclsValidationFailure" Message="Validation of network acls failure: SubnetsNotProvisioned:Cannot proceed with operation because subnets appservice of the virtual network /subscriptions//resourceGroups/vdc-ci-b1375/providers/Microsoft.Network/virtualNetworks/vdc-ci-b1375-paas-spoke-network are not provisioned. They are in Updating state.."
+                                  azurerm_storage_container.archive_storage_container
+  ]
 }
 
 resource azurerm_advanced_threat_protection app_storage {
   target_resource_id           = azurerm_storage_account.app_storage.id
   enabled                      = true
 }
-
-# BUG: Error updating Azure Storage Account Network Rules "vdcdemopaasappr460stor" (Resource Group "vdc-demo-paasapp-r460"): storage.AccountsClient#Update: Failure responding to request: StatusCode=400 -- Original Error: autorest/azure: Service returned an error. Status=400 Code="NetworkAclsValidationFailure" Message="Validation of network acls failure: SubnetsNotProvisioned:Cannot proceed with operation because subnets azurefirewallsubnet of the virtual network /subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/resourceGroups/vdc-demo-r460/providers/Microsoft.Network/virtualNetworks/vdc-demo-r460-hub-network are not provisioned. They are in Updating state.."
-# resource "azurerm_storage_account_network_rules" "app_storage" {
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   storage_account_name         = azurerm_storage_account.app_storage.name
-
-#   default_action               = "Deny"
-#   bypass                       = ["AzureServices","Logging","Metrics","AzureServices"] # Logging, Metrics, AzureServices, or None.
-#   # Without this hole we can't make (automated) changes. Disable it later in the interactive demo
-#   ip_rules                     = var.admin_ip_ranges
-#   # Allow the Firewall subnet
-#   virtual_network_subnet_ids   = [
-#                                   var.iag_subnet_id,
-#                                   var.integrated_subnet_id
-#   ]
-# }
 
 # BUG: 1.0;2019-11-29T15:10:06.7720881Z;GetContainerProperties;IpAuthorizationError;403;6;6;authenticated;XXXXXXX;XXXXXXX;blob;"https://XXXXXXX.blob.core.windows.net:443/data?restype=container";"/";ad97678d-101e-0016-5ec7-a608d2000000;0;10.139.212.72:44506;2018-11-09;481;0;130;246;0;;;;;;"Go/go1.12.6 (amd64-linux) go-autorest/v13.0.2 tombuildsstuff/giovanni/v0.5.0 storage/2018-11-09";;
 resource "azurerm_storage_container" "app_storage_container" {
@@ -565,11 +552,12 @@ resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
   }  
 }
 
-resource "azurerm_sql_virtual_network_rule" "data_subnet" {
-  name                         = "AllowDataSubnet"
+# https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#service-endpoints
+resource "azurerm_sql_virtual_network_rule" "appservice_subnet" {
+  name                         = "AllowAppServiceSubnet"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
-  subnet_id                    = var.data_subnet_id
+  subnet_id                    = var.integrated_subnet_id
 
   timeouts {
     create                     = var.default_create_timeout
@@ -577,6 +565,8 @@ resource "azurerm_sql_virtual_network_rule" "data_subnet" {
     read                       = var.default_read_timeout
     delete                     = var.default_delete_timeout
   }  
+
+  depends_on                   = [azurerm_app_service_virtual_network_swift_connection.network]
 }
 
 resource "azurerm_private_endpoint" "sqlserver_endpoint" {

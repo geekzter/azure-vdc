@@ -280,6 +280,7 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "checkappexec.microsoft.com",
       "device.login.microsoftonline.com",
       "enterpriseregistration.windows.net",
+      "graph.microsoft.com",
       "login.microsoftonline.com",
       "management.azure.com",
       "management.core.windows.net",
@@ -292,8 +293,9 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "settings-win.data.microsoft.com",
       "smartscreen-prod.microsoft.com",
       "sts.windows.net",
-      azurerm_storage_account.vdc_diag_storage.primary_blob_host,
-      azurerm_log_analytics_workspace.vcd_workspace.portal_url
+      "${azurerm_key_vault.vault.name}.vault.azure.net",
+      azurerm_log_analytics_workspace.vcd_workspace.portal_url,
+      azurerm_storage_account.vdc_diag_storage.primary_blob_host
     ]
 
     protocol {

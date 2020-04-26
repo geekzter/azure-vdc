@@ -54,6 +54,8 @@ resource azurerm_key_vault_key disk_encryption_key {
                                  "verify",
                                  "wrapKey",
   ]
+
+  depends_on                   = [azurerm_firewall_application_rule_collection.iag_app_rules]
 }
 
 # AzureDiskEncryption VM extenstion breaks AutoLogon, use server side encryption
@@ -76,6 +78,8 @@ resource azurerm_key_vault_access_policy mgmt_disk_encryption_access {
                                 "unwrapKey",
                                 "wrapKey",
   ]
+
+  depends_on                   = [azurerm_firewall_application_rule_collection.iag_app_rules]
 }
 
 resource azurerm_role_assignment mgmt_disk_encryption_access {
@@ -350,7 +354,9 @@ SETTINGS
 
   count                        = (!var.use_server_side_disk_encryption && (var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions)) ? 1 : 0
   tags                         = local.tags
+
   depends_on                   = [
+                                  azurerm_firewall_application_rule_collection.iag_app_rules,
                                   null_resource.start_mgmt,
                                   null_resource.mgmt_sleep
                                   ]

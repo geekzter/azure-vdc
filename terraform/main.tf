@@ -154,7 +154,15 @@ resource azurerm_key_vault vault {
     }
   }
 
-  # TODO: network_acls
+  network_acls {
+    default_action             = "Deny"
+    # When enabled_for_disk_encryption is true, network_acls.bypass must include "AzureServices"
+    bypass                     = "AzureServices"
+    ip_rules                   = local.admin_cidr_ranges
+    virtual_network_subnet_ids = [
+                                  azurerm_subnet.iag_subnet.id
+    ]
+  }
 
   tags                         = local.tags
 }

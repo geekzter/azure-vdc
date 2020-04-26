@@ -44,6 +44,8 @@ resource azurerm_key_vault_key disk_encryption_key {
                                 "verify",
                                 "wrapKey",
   ]
+
+  depends_on                   = [var.vm_connectivity_dependency]
 }
 
 

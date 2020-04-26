@@ -93,6 +93,7 @@ resource "azurerm_subnet" "iag_subnet" {
   service_endpoints           = [
                                 "Microsoft.AzureActiveDirectory",
                                 "Microsoft.EventHub",
+                                "Microsoft.KeyVault",
                                 "Microsoft.Sql",
                                 "Microsoft.Storage"
   ]
