@@ -42,7 +42,7 @@ try {
 # Use RIPE for both Ipv4 & Ipv6
 #$ipAddress=$(Invoke-RestMethod https://stat.ripe.net/data/whats-my-ip/data.json -MaximumRetryCount 9 | Select-Object -ExpandProperty data | Select-Object -ExpandProperty ip)
 # Stick to ipinfo for Ipv4 only
-$ipAddress=$(Invoke-RestMethod -Uri https://ipinfo.io/ip).Trim() -MaximumRetryCount 9
+$ipAddress=$(Invoke-RestMethod -Uri https://ipinfo.io/ip -MaximumRetryCount 9).Trim()
 Write-Host "Public IP address is $ipAddress"
 
 # Get block(s) the public IP address belongs to
