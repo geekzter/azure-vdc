@@ -33,6 +33,7 @@ variable use_pipeline_environment {
   type                         = bool
 }
 
+variable diagnostics_instrumentation_key {}
 variable diagnostics_storage_id {
   description                  = "The id of the diagnostics storage account to use"
 }

@@ -80,6 +80,7 @@ module iis_app {
   key_vault_uri                = azurerm_key_vault.vault.vault_uri
   deploy_security_vm_extensions = var.deploy_security_vm_extensions
   vm_connectivity_dependency   = local.vm_connectivity_dependency
+  diagnostics_instrumentation_key = azurerm_application_insights.vdc_insights.instrumentation_key
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
   diagnostics_workspace_workspace_id = azurerm_log_analytics_workspace.vcd_workspace.workspace_id

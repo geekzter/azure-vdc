@@ -24,6 +24,9 @@ variable tags {
   }
 } 
 
+variable alert_email {
+  default                      = "admin@contoso.com"
+}
 variable backend_storage_account {
   description = "The storage account name used for the Terraform azurerm backend. This is used for data source terraform_remote_state"
   default     = null

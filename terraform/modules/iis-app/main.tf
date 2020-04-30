@@ -4,7 +4,13 @@ locals {
   db_hostname                  = "${lower(var.resource_environment)}dbhost"
   db_dns_name                  = "${lower(var.resource_environment)}db_web_vm"
   resource_group_name_short    = substr(lower(replace(var.resource_group,"-","")),0,20)
+  diagnostics_storage_name     = element(split("/",var.diagnostics_storage_id),length(split("/",var.diagnostics_storage_id))-1)
   vdc_resource_group_name      = element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)
+}
+
+data azurerm_storage_account diagnostics {
+  name                         = local.diagnostics_storage_name
+  resource_group_name          = local.vdc_resource_group_name
 }
 
 resource "azurerm_resource_group" "app_rg" {
@@ -180,11 +186,6 @@ resource azurerm_virtual_machine_extension app_web_vm_monitor {
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
   settings                     = <<EOF
     {
       "workspaceId"            : "${var.diagnostics_workspace_workspace_id}",
@@ -205,12 +206,11 @@ resource azurerm_virtual_machine_extension app_web_vm_monitor {
     )
   )
 
-# count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   count                        = var.app_web_vm_number
 
   depends_on                   = [null_resource.start_web_vm]
 }
-resource azurerm_virtual_machine_extension app_db_web_aadlogin {
+resource azurerm_virtual_machine_extension app_web_vm_aadlogin {
   name                         = "AADLoginForWindows"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.ActiveDirectory"
@@ -218,16 +218,39 @@ resource azurerm_virtual_machine_extension app_db_web_aadlogin {
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   tags                         = var.tags
   depends_on                   = [null_resource.start_web_vm]
 } 
+resource azurerm_virtual_machine_extension app_web_vm_diagnostics {
+  name                         = "Microsoft.Insights.VMDiagnosticsSettings"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
+  publisher                    = "Microsoft.Azure.Diagnostics"
+  type                         = "IaaSDiagnostics"
+  type_handler_version         = "1.17"
+  auto_upgrade_minor_version   = true
+
+  settings                     = templatefile("./vmdiagnostics.json", { 
+    storage_account_name       = data.azurerm_storage_account.diagnostics.name, 
+    virtual_machine_id         = element(azurerm_virtual_machine.app_web_vm.*.id, count.index), 
+    application_insights_key   = var.diagnostics_instrumentation_key
+  })
+
+  protected_settings = <<EOF
+    { 
+      "storageAccountName"     : "${data.azurerm_storage_account.diagnostics.name}",
+      "storageAccountKey"      : "${data.azurerm_storage_account.diagnostics.primary_access_key}",
+      "storageAccountEndPoint" : "${data.azurerm_storage_account.diagnostics.primary_blob_endpoint}"
+    } 
+  EOF
+
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  tags                         = var.tags
+  depends_on                   = [
+                                  null_resource.start_web_vm,
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor
+                                 ]
+}
 resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
@@ -237,11 +260,11 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_gro
   auto_upgrade_minor_version   = true
   settings                     = <<EOF
     {
-      "VSTSAccountName": "${var.app_devops["account"]}",        
-      "TeamProject": "${var.app_devops["team_project"]}",
-      "DeploymentGroup": "${var.app_devops["web_deployment_group"]}",
-      "AgentName": "${local.app_hostname}${count.index+1}",
-      "Tags": "${var.resource_environment}"
+      "VSTSAccountName"        : "${var.app_devops["account"]}",        
+      "TeamProject"            : "${var.app_devops["team_project"]}",
+      "DeploymentGroup"        : "${var.app_devops["web_deployment_group"]}",
+      "AgentName"              : "${local.app_hostname}${count.index+1}",
+      "Tags"                   : "${var.resource_environment}"
     }
   EOF
 
@@ -257,12 +280,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_gro
       "dummy-dependency",        var.vm_connectivity_dependency
     )
   )
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
 
   count                        = (var.use_pipeline_environment || var.app_devops["account"] == null) ? 0 : var.app_web_vm_number
   depends_on                   = [
@@ -298,12 +315,6 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
     )
   )
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   count                        = (var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_web_vm,
@@ -317,12 +328,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
   type                         = "BGInfo"
   type_handler_version         = "2.1"
   auto_upgrade_minor_version   = true
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
 
   count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   tags                         = var.tags
@@ -358,12 +363,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
     )
   )
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
 
   depends_on                   = [
@@ -378,12 +377,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   type                         = "NetworkWatcherAgentWindows"
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
 
   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   tags                         = var.tags
@@ -414,12 +407,6 @@ resource azurerm_virtual_machine_extension app_web_vm_mount_data_disks {
   EOF
 
   tags                         = var.tags
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
 
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
@@ -456,18 +443,47 @@ SETTINGS
     )
   )
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_web_vm,
                                   azurerm_virtual_machine_extension.app_web_vm_monitor,
                                   azurerm_virtual_machine_extension.app_web_vm_mount_data_disks
                                  ]
+}
+
+# HACK: Use this as the last resource created for a VM, so we can set a destroy action to happen prior to VM (extensions) destroy
+resource azurerm_monitor_diagnostic_setting app_web_vm {
+  name                         = "${element(azurerm_virtual_machine.app_web_vm.*.name, count.index)}-diagnostics"
+  target_resource_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
+  storage_account_id           = data.azurerm_storage_account.diagnostics.id
+
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  # Start VM, so we can destroy VM extensions
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.target_resource_id}"
+    when                       = destroy
+  }
+
+  count                        = var.app_web_vm_number
+  depends_on                   = [
+                                  azurerm_virtual_machine_extension.app_web_vm_aadlogin,
+                                  azurerm_virtual_machine_extension.app_web_vm_bginfo,
+                                  azurerm_virtual_machine_extension.app_web_vm_dependency_monitor,
+                                  azurerm_virtual_machine_extension.app_web_vm_diagnostics,
+                                  azurerm_virtual_machine_extension.app_web_vm_disk_encryption,
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor,
+                                  azurerm_virtual_machine_extension.app_web_vm_mount_data_disks,
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_deployment_group,
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_web_vm_watcher
+  ]
 }
 
 resource "azurerm_lb" "app_db_lb" {
@@ -635,11 +651,6 @@ resource azurerm_virtual_machine_extension app_db_vm_monitor {
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
   settings                     = <<EOF
     {
       "workspaceId"            : "${var.diagnostics_workspace_workspace_id}",
@@ -673,16 +684,39 @@ resource azurerm_virtual_machine_extension app_db_vm_aadlogin {
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
   tags                         = var.tags
   depends_on                   = [null_resource.start_db_vm]
 } 
+resource azurerm_virtual_machine_extension app_db_vm_diagnostics {
+  name                         = "Microsoft.Insights.VMDiagnosticsSettings"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  publisher                    = "Microsoft.Azure.Diagnostics"
+  type                         = "IaaSDiagnostics"
+  type_handler_version         = "1.17"
+  auto_upgrade_minor_version   = true
+
+  settings                     = templatefile("./vmdiagnostics.json", { 
+    storage_account_name       = data.azurerm_storage_account.diagnostics.name, 
+    virtual_machine_id         = element(azurerm_virtual_machine.app_db_vm.*.id, count.index), 
+    application_insights_key   = var.diagnostics_instrumentation_key
+  })
+
+  protected_settings = <<EOF
+    { 
+      "storageAccountName"     : "${data.azurerm_storage_account.diagnostics.name}",
+      "storageAccountKey"      : "${data.azurerm_storage_account.diagnostics.primary_access_key}",
+      "storageAccountEndPoint" : "${data.azurerm_storage_account.diagnostics.primary_blob_endpoint}"
+    } 
+  EOF
+
+  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  tags                         = var.tags
+  depends_on                   = [
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor
+                                 ]
+}
 resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_group" {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
@@ -692,11 +726,11 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
   auto_upgrade_minor_version   = true
   settings                     = <<EOF
     {
-      "VSTSAccountName": "${var.app_devops["account"]}",        
-      "TeamProject": "${var.app_devops["team_project"]}",
-      "DeploymentGroup": "${var.app_devops["db_deployment_group"]}",
-      "AgentName": "${local.db_hostname}${count.index+1}",
-      "Tags": "${var.resource_environment}"
+      "VSTSAccountName"        : "${var.app_devops["account"]}",        
+      "TeamProject"            : "${var.app_devops["team_project"]}",
+      "DeploymentGroup"        : "${var.app_devops["db_deployment_group"]}",
+      "AgentName"              : "${local.db_hostname}${count.index+1}",
+      "Tags"                   : "${var.resource_environment}"
     }
   EOF
 
@@ -705,12 +739,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
       "PATToken": "${var.app_devops["pat"]}" 
     } 
   EOF
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
 
   tags                         = merge(
     var.tags,
@@ -746,12 +774,6 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
     } 
   EOF
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   tags                         = merge(
     var.tags,
     map(
@@ -772,12 +794,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   type                         = "BGInfo"
   type_handler_version         = "2.1"
   auto_upgrade_minor_version   = true
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
 
   count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
   tags                         = var.tags
@@ -806,12 +822,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
     } 
   EOF
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   tags                         = merge(
     var.tags,
     map(
@@ -833,12 +843,6 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
   type                         = "NetworkWatcherAgentWindows"
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
 
   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
   tags                         = var.tags
@@ -870,12 +874,6 @@ resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
   EOF
 
   tags                         = var.tags
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
 
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
@@ -912,18 +910,47 @@ SETTINGS
     )
   )
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_db_vm,
                                   azurerm_virtual_machine_extension.app_db_vm_monitor,
                                   azurerm_virtual_machine_extension.app_db_vm_mount_data_disks
                                  ]
+}
+
+# HACK: Use this as the last resource created for a VM, so we can set a destroy action to happen prior to VM (extensions) destroy
+resource azurerm_monitor_diagnostic_setting app_db_vm {
+  name                         = "${element(azurerm_virtual_machine.app_db_vm.*.name, count.index)}-diagnostics"
+  target_resource_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  storage_account_id           = data.azurerm_storage_account.diagnostics.id
+
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  # Start VM, so we can destroy VM extensions
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.target_resource_id}"
+    when                       = destroy
+  }
+
+  count                        = var.app_db_vm_number
+  depends_on                   = [
+                                  azurerm_virtual_machine_extension.app_db_vm_aadlogin,
+                                  azurerm_virtual_machine_extension.app_db_vm_bginfo,
+                                  azurerm_virtual_machine_extension.app_db_vm_dependency_monitor,
+                                  azurerm_virtual_machine_extension.app_db_vm_diagnostics,
+                                  azurerm_virtual_machine_extension.app_db_vm_disk_encryption,
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor,
+                                  azurerm_virtual_machine_extension.app_db_vm_mount_data_disks,
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_deployment_group,
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_db_vm_watcher
+  ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {
