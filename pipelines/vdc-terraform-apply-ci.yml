@@ -56,7 +56,7 @@ pr:
     - '*.vsdx'  
 
 schedules:
-  - cron: '0 4 * * *'
+  - cron: '0 3 * * *'
     displayName: 'Daily early morning build (UTC)'
     # Run if there are no changes
     always: 'true'
@@ -402,7 +402,7 @@ jobs:
             Start-Sleep -Seconds 30
             
             # Request page
-            Invoke-WebRequest $(appUrl)
+            Invoke-WebRequest -Uri $(appUrl) -MaximumRetryCount 9
           failOnStderr: true
           pwsh: true
 

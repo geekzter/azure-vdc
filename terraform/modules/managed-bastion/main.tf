@@ -9,7 +9,7 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
   name                         = "AzureBastionSubnet"
   virtual_network_name         = local.virtual_network_name
   resource_group_name          = local.resource_group_name
-  address_prefix               = var.subnet_range
+  address_prefixes             = [var.subnet_range]
 }
 
 resource "azurerm_public_ip" "managed_bastion_pip" {

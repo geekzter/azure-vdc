@@ -150,6 +150,26 @@ function GetCurrentBranch () {
     }
 }
 
+function GetEmailAddress () {
+    $emailRegex = "[A-Z0-9_\-.]+@[A-Z0-9.-]+$"
+    
+    $emailAddress = $(az account show --query "user.name" -o tsv)
+    if ($emailAddress -match $emailRegex) {
+        return $emailAddress
+    }
+    
+    if (Get-Command git -ErrorAction SilentlyContinue) {
+        Invoke-Command -ScriptBlock {
+            $Private:ErrorActionPreference = "Continue"
+            $emailAddress = $(git config user.email 2>$null)
+            if ($emailAddress -match $emailRegex) {
+                return $emailAddress
+            }
+        }
+    }
+    return $null
+}
+
 function PrintCurrentBranch () {
     $branch = GetCurrentBranch
     if (![string]::IsNullOrEmpty($branch)) {

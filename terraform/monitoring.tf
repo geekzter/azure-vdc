@@ -1,4 +1,4 @@
-resource "azurerm_storage_account" "vdc_diag_storage" {
+resource azurerm_storage_account vdc_diag_storage {
   name                         = "${lower(replace(local.vdc_resource_group,"-",""))}diagstor"
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   location                     = var.location
@@ -231,3 +231,48 @@ resource "azurerm_dashboard" "vdc_dashboard" {
       vso_url                  = var.vso_url != "" ? var.vso_url : "https://online.visualstudio.com/"
   })
 }
+
+resource azurerm_monitor_action_group main {
+  name                         = "${azurerm_resource_group.vdc_rg.name}-actions"
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  short_name                   = "PushAndEmail"
+
+  azure_app_push_receiver {
+    name                       = "pushtoadmin"
+    email_address              = var.alert_email
+  }
+  email_receiver {
+    name                       = "sendtoadmin"  
+    email_address              = var.alert_email
+  }
+
+  count                        = var.alert_email != null && var.alert_email != "" ? 1 : 0
+}
+
+# resource azurerm_monitor_metric_alert vm_alert {
+#   name                         = "${azurerm_resource_group.vdc_rg.name}-vm-alert"
+#   resource_group_name          = azurerm_resource_group.vdc_rg.name
+# # scopes                       = local.virtual_machine_ids
+#   scopes                       = [azurerm_windows_virtual_machine.mgmt.id]
+#   description                  = "Action will be triggered when Disk Queue Length is greater than 5."
+
+#   criteria {
+#     metric_namespace           = "Azure.VM.Windows.GuestMetrics"
+#     metric_name                = "LogicalDisk\\Avg. Disk Queue Length"
+#     aggregation                = "Total"
+#     operator                   = "GreaterThan"
+#     threshold                  = 5
+
+#     dimension {
+#       name                     = "Instance"
+#       operator                 = "Include"
+#       values                   = ["*"]
+#     }
+#   }
+
+#   action {
+#     action_group_id            = azurerm_monitor_action_group.main.0.id
+#   }
+
+#   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+# }

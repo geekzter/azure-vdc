@@ -242,7 +242,7 @@ resource "azurerm_subnet" "subnet" {
   name                         = element(keys(var.subnets),count.index)
   virtual_network_name         = azurerm_virtual_network.spoke_vnet.name
   resource_group_name          = local.resource_group_name
-  address_prefix               = element(values(var.subnets),count.index)
+  address_prefixes             = [element(values(var.subnets),count.index)]
   enforce_private_link_endpoint_network_policies = true
   count                        = length(var.subnets)
   
@@ -329,7 +329,7 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
   name                         = "AzureBastionSubnet"
   virtual_network_name         = azurerm_virtual_network.spoke_vnet.name
   resource_group_name          = local.resource_group_name
-  address_prefix               = var.bastion_subnet_range
+  address_prefixes             = [var.bastion_subnet_range]
   service_endpoints            = [
                                  "Microsoft.Web"
   ]

@@ -11,7 +11,7 @@ resource "azurerm_subnet" "vpn_subnet" {
   name                         = "GatewaySubnet"
   resource_group_name          = local.resource_group_name
   virtual_network_name         = local.virtual_network_name
-  address_prefix               = var.subnet_range
+  address_prefixes             = [var.subnet_range]
 }
 
 resource "random_string" "vpn_domain_name_label" {

@@ -180,11 +180,6 @@ resource azurerm_virtual_machine_extension mgmt_monitor {
   type                         = "MicrosoftMonitoringAgent"
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
   settings                     = <<EOF
     {
       "workspaceId"            : "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}",
@@ -219,12 +214,6 @@ resource azurerm_virtual_machine_extension mgmt_aadlogin {
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
   depends_on                   = [
@@ -241,12 +230,6 @@ resource azurerm_virtual_machine_extension mgmt_bginfo {
   type_handler_version         = "2.1"
   auto_upgrade_minor_version   = true
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
   depends_on                   = [
@@ -255,6 +238,35 @@ resource azurerm_virtual_machine_extension mgmt_bginfo {
                                  ]
 }
 
+resource azurerm_virtual_machine_extension mgmt_diagnostics {
+  name                         = "Microsoft.Insights.VMDiagnosticsSettings"
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
+  publisher                    = "Microsoft.Azure.Diagnostics"
+  type                         = "IaaSDiagnostics"
+  type_handler_version         = "1.17"
+  auto_upgrade_minor_version   = true
+
+  settings                     = templatefile("./vmdiagnostics.json", { 
+    storage_account_name       = azurerm_storage_account.vdc_diag_storage.name, 
+    virtual_machine_id         = azurerm_windows_virtual_machine.mgmt.id, 
+    application_insights_key   = azurerm_application_insights.vdc_insights.instrumentation_key
+  })
+
+  protected_settings = <<EOF
+    { 
+      "storageAccountName"     : "${azurerm_storage_account.vdc_diag_storage.name}",
+      "storageAccountKey"      : "${azurerm_storage_account.vdc_diag_storage.primary_access_key}",
+      "storageAccountEndPoint" : "${azurerm_storage_account.vdc_diag_storage.primary_blob_endpoint}"
+    } 
+  EOF
+
+  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+  tags                         = local.tags
+  depends_on                   = [
+                                  null_resource.start_mgmt,
+                                  azurerm_virtual_machine_extension.mgmt_monitor
+                                 ]
+}
 resource azurerm_virtual_machine_extension mgmt_dependency_monitor {
   name                         = "DAExtension"
   virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
@@ -274,12 +286,6 @@ resource azurerm_virtual_machine_extension mgmt_dependency_monitor {
     } 
   EOF
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
   depends_on                   = [
@@ -294,12 +300,6 @@ resource azurerm_virtual_machine_extension mgmt_watcher {
   type                         = "NetworkWatcherAgentWindows"
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
-
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
 
   count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? 1 : 0
   tags                         = local.tags
@@ -346,12 +346,6 @@ resource azurerm_virtual_machine_extension mgmt_disk_encryption {
     }
 SETTINGS
 
-  # Start VM, so we can destroy the extension
-  provisioner local-exec {
-    command                    = "az vm start --ids ${self.virtual_machine_id}"
-    when                       = destroy
-  }
-
   count                        = (!var.use_server_side_disk_encryption && (var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions)) ? 1 : 0
   tags                         = local.tags
 
@@ -360,6 +354,38 @@ SETTINGS
                                   null_resource.start_mgmt,
                                   null_resource.mgmt_sleep
                                   ]
+}
+
+# HACK: Use this as the last resource created for a VM, so we can set a destroy action to happen prior to VM (extensions) destroy
+resource azurerm_monitor_diagnostic_setting app_db_vm {
+  name                         = "${azurerm_windows_virtual_machine.mgmt.name}-diagnostics"
+  target_resource_id           = azurerm_windows_virtual_machine.mgmt.id
+  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
+
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  # Start VM, so we can destroy VM extensions
+  provisioner local-exec {
+    command                    = "az vm start --ids ${self.target_resource_id}"
+    when                       = destroy
+  }
+
+  count                        = var.app_db_vm_number
+  depends_on                   = [
+                                  azurerm_virtual_machine_extension.mgmt_aadlogin,
+                                  azurerm_virtual_machine_extension.mgmt_bginfo,
+                                  azurerm_virtual_machine_extension.mgmt_dependency_monitor,
+                                  azurerm_virtual_machine_extension.mgmt_diagnostics,
+                                  azurerm_virtual_machine_extension.mgmt_disk_encryption,
+                                  azurerm_virtual_machine_extension.mgmt_monitor,
+                                  azurerm_virtual_machine_extension.mgmt_watcher
+  ]
 }
 
 locals {
