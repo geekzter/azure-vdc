@@ -9,13 +9,13 @@ variable resource_suffix {
 }
 
 variable resource_environment {
-  description = "The logical environment (tier) resource will be deployed in"
-  default     = "" # Empty string defaults to workspace name
+  description                  = "The logical environment (tier) resource will be deployed in"
+  default                      = "" # Empty string defaults to workspace name
 }
 
 variable tags {
-  description = "A map of the tags to use for the resources that are deployed"
-  type        = map
+  description                  = "A map of the tags to use for the resources that are deployed"
+  type                         = map
 
   default = {
     application                = "Automated VDC"
@@ -25,32 +25,33 @@ variable tags {
 } 
 
 variable alert_email {
-  default                      = "admin@contoso.com"
+  description                  = "The email adres alerts for the created action group are sent to"
+  default                      = null
 }
 variable backend_storage_account {
-  description = "The storage account name used for the Terraform azurerm backend. This is used for data source terraform_remote_state"
-  default     = null
+  description                  = "The storage account name used for the Terraform azurerm backend. This is used for data source terraform_remote_state"
+  default                      = null
 }
 
 variable build_id {
-  description = "The ID of the Build Pipeline that deployed this resource, or created the artefacts"
-  default     = "" 
+  description                  = "The ID of the Build Pipeline that deployed this resource, or created the artefacts"
+  default                      = "" 
 }
 variable release_web_url {
-  description = "The url of the Release Pipeline that deployed this resource"
-  default     = "" 
+  description                  = "The url of the Release Pipeline that deployed this resource"
+  default                      = "" 
 }
 variable release_id {
-  description = "The ID of the Release Pipeline that deployed this resource"
-  default     = ""
+  description                  = "The ID of the Release Pipeline that deployed this resource"
+  default                      = ""
 }
 variable release_user_email {
-  description = "The email address of the user that triggered the pipeline that deployed this resource"
-  default     = ""
+  description =                = "The email address of the user that triggered the pipeline that deployed this resource"
+  default                      = ""
 }
 variable vso_url {
-  description = "The url of the Visual Studio Online environment used (if any)"
-  default     = ""
+  description                  = "The url of the Visual Studio Online environment used (if any)"
+  default                      = ""
 }
 
 ######### Resource Group #########

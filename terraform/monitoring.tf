@@ -245,6 +245,8 @@ resource azurerm_monitor_action_group main {
     name                       = "sendtoadmin"  
     email_address              = var.alert_email
   }
+
+  count                        = var.alert_email != null && var.alert_email != "" ? 1 : 0
 }
 
 # resource azurerm_monitor_metric_alert vm_alert {
@@ -269,7 +271,7 @@ resource azurerm_monitor_action_group main {
 #   }
 
 #   action {
-#     action_group_id            = azurerm_monitor_action_group.main.id
+#     action_group_id            = azurerm_monitor_action_group.main.0.id
 #   }
 
 #   count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
