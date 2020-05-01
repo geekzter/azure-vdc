@@ -46,7 +46,7 @@ variable release_id {
   default                      = ""
 }
 variable release_user_email {
-  description =                = "The email address of the user that triggered the pipeline that deployed this resource"
+  description                  = "The email address of the user that triggered the pipeline that deployed this resource"
   default                      = ""
 }
 variable vso_url {
