@@ -1,4 +1,4 @@
-resource "random_string" "iag_domain_name_label" {
+resource random_string iag_domain_name_label {
   length                      = 16
   upper                       = false
   lower                       = true
@@ -6,7 +6,7 @@ resource "random_string" "iag_domain_name_label" {
   special                     = false
 }
 
-resource "random_integer" "rdp_port" {
+resource random_integer rdp_port {
   min     = 1024
   max     = 64000
 }
@@ -15,7 +15,7 @@ locals {
   rdp_port                     = var.rdp_port != null ? var.rdp_port : random_integer.rdp_port.result
 }
 
-resource "azurerm_public_ip" "iag_pip" {
+resource azurerm_public_ip iag_pip {
   name                         = "${azurerm_resource_group.vdc_rg.name}-iag-pip"
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -26,7 +26,7 @@ resource "azurerm_public_ip" "iag_pip" {
   tags                         = local.tags
 }
 
-resource "azurerm_dns_cname_record" "iag_pip_cname" {
+resource azurerm_dns_cname_record iag_pip_cname {
   name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}iag"
   zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
   resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name
@@ -38,7 +38,7 @@ resource "azurerm_dns_cname_record" "iag_pip_cname" {
   tags                         = local.tags
 } 
 
-resource "azurerm_firewall" "iag" {
+resource azurerm_firewall iag {
   name                         = "${azurerm_resource_group.vdc_rg.name}-iag"
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -54,7 +54,7 @@ resource "azurerm_firewall" "iag" {
 }
 
 # Outbound domain whitelisting
-resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
+resource azurerm_firewall_application_rule_collection iag_app_rules {
   name                         = "${azurerm_firewall.iag.name}-app-rules"
   azure_firewall_name          = azurerm_firewall.iag.name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -271,6 +271,7 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "*.do.dsp.mp.microsoft.com",
       "*.events.data.microsoft.com",
       "*.loganalytics.io",
+      "*.monitoring.azure.com",
       "*.ods.opinsights.azure.com",
       "*.oms.opinsights.azure.com",
       "*.systemcenteradvisor.com",
@@ -293,9 +294,12 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
       "settings-win.data.microsoft.com",
       "smartscreen-prod.microsoft.com",
       "sts.windows.net",
+      "validation-v2.sls.microsoft.com",
       "${azurerm_key_vault.vault.name}.vault.azure.net",
+      "${var.location}.prod.hot.ingestion.msftcloudes.com",
       azurerm_log_analytics_workspace.vcd_workspace.portal_url,
-      azurerm_storage_account.vdc_diag_storage.primary_blob_host
+      azurerm_storage_account.vdc_diag_storage.primary_blob_host,
+      azurerm_storage_account.vdc_diag_storage.primary_table_host
     ]
 
     protocol {
@@ -333,8 +337,32 @@ resource "azurerm_firewall_application_rule_collection" "iag_app_rules" {
   }
 } 
 
+# Outbound domain whitelisting
+# resource azurerm_firewall_application_rule_collection iag_debug_app_rules {
+#   name                         = "${azurerm_firewall.iag.name}-debug-app-rules"
+#   azure_firewall_name          = azurerm_firewall.iag.name
+#   resource_group_name          = azurerm_resource_group.vdc_rg.name
+#   priority                     = 999
+#   action                       = "Allow"
+
+#   rule {
+#     name                       = "Allow All from ..."
+
+#     source_addresses           = [
+#       "${var.vdc_config["iaas_spoke_app_subnet"]}",
+#     ]
+
+#     target_fqdns               = ["*"]
+
+#     protocol {
+#         port                   = "443"
+#         type                   = "Https"
+#     }
+#   }
+# } 
+
 # Inbound port forwarding rules
-resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
+resource azurerm_firewall_nat_rule_collection iag_nat_rules {
   name                         = "${azurerm_firewall.iag.name}-fwd-rules"
   azure_firewall_name          = azurerm_firewall.iag.name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -385,7 +413,7 @@ resource "azurerm_firewall_nat_rule_collection" "iag_nat_rules" {
   }
 }
   
-resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
+resource azurerm_firewall_network_rule_collection iag_net_outbound_rules {
   name                         = "${azurerm_firewall.iag.name}-net-out-rules"
   azure_firewall_name          = azurerm_firewall.iag.name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -415,7 +443,7 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
   }
   
   rule {
-    name = "AllowAzureActiveDirectory"
+    name                       = "AllowAzureActiveDirectory"
 
     source_addresses           = [
       var.vdc_config["vdc_range"],
@@ -456,12 +484,11 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     ]
   }  
 
-
   rule {
-    name = "AllowAllOutboundFromAppSubnet"
+    name                       = "AllowICMP"
 
     source_addresses           = [
-      var.vdc_config["iaas_spoke_app_subnet"],
+      var.vdc_config["vdc_range"],
     ]
 
     destination_ports          = [
@@ -472,14 +499,89 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     ]
 
     protocols                  = [
-      "TCP",
-      "UDP",
+      "ICMP",
     ]
   }
 
-/*   
   rule {
-    name                       = "Allow all Outbound (DEBUG)"
+    name                       = "AllowKMS"
+
+    source_addresses           = [
+      var.vdc_config["vdc_range"],
+    ]
+
+    destination_ports          = [
+      "1688",
+    ]
+    destination_addresses      = [
+      "*",
+    ]
+
+    protocols                  = [
+      "TCP",
+    ]
+  }
+
+  rule {
+    name                       = "AllowNTP"
+
+    source_addresses           = [
+      var.vdc_config["vdc_range"],
+    ]
+
+    destination_ports          = [
+      "123",
+    ]
+    destination_addresses      = [
+      "*",
+    ]
+
+    protocols                  = [
+      "UDP",
+    ]
+  }
+}
+
+# BUG: 'HTTPS request from 10.1.1.5:49775. Action: Deny. Reason: SNI TLS extension was missing.'
+# HACK: Use network rules with DNS provider as a workaround
+# This only allows the IP address looked up at provisioning time. If the IP address changes (this is Traffic Manager), the newly used IP address will not be whitelisted.
+data dns_a_record_set diagnostics_ingestion {
+  host                         = "${var.location}.prod.hot.ingestion.msftcloudes.com"
+}
+resource azurerm_firewall_network_rule_collection iag_net_outbound_http_rules {
+  name                         = "${azurerm_firewall.iag.name}-net-out-http-rules"
+  azure_firewall_name          = azurerm_firewall.iag.name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  priority                     = 102
+  action                       = "Allow"
+
+  rule {
+    name                       = "AllowOutboundToDiagnosticsIngestion"
+
+    source_addresses           = [
+      var.vdc_config["vdc_range"],
+    ]
+    destination_ports          = [
+      "443",
+    ]
+    destination_addresses      = data.dns_a_record_set.diagnostics_ingestion.addrs
+    protocols                  = [
+      "TCP",
+    ]
+  }
+}
+
+/*
+resource azurerm_firewall_network_rule_collection iag_net_outbound_debug_rules {
+  name                         = "${azurerm_firewall.iag.name}-net-out-debug-rules"
+  azure_firewall_name          = azurerm_firewall.iag.name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  priority                     = 999
+  action                       = "Allow"
+
+
+  rule {
+    name                       = "DEBUGAllowAllOutbound"
 
     source_addresses           = [
       "${var.vdc_config["vdc_range"]}"
@@ -495,10 +597,11 @@ resource "azurerm_firewall_network_rule_collection" "iag_net_outbound_rules" {
     protocols                  = [
       "Any"
     ]
-  } */
+  }
 }
+*/
 
-resource "azurerm_monitor_diagnostic_setting" "iag_pip_logs" {
+resource azurerm_monitor_diagnostic_setting iag_pip_logs {
   name                         = "${azurerm_public_ip.iag_pip.name}-logs"
   target_resource_id           = azurerm_public_ip.iag_pip.id
   storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
@@ -540,7 +643,7 @@ resource "azurerm_monitor_diagnostic_setting" "iag_pip_logs" {
   }
 }
 
-resource "azurerm_monitor_diagnostic_setting" "iag_logs" {
+resource azurerm_monitor_diagnostic_setting iag_logs {
   name                         = "${azurerm_firewall.iag.name}-logs"
   target_resource_id           = azurerm_firewall.iag.id
   storage_account_id           = azurerm_storage_account.vdc_diag_storage.id

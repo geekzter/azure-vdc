@@ -22,22 +22,22 @@
                 "scheduledTransferPeriod": "PT1M",
                 "PerformanceCounterConfiguration": [
                     {
-                        "counterSpecifier": "\\Processor Information(_Total)\\% Processor Time",
+                        "counterSpecifier": "\\Processor Information(*)\\% Processor Time",
                         "unit": "Percent",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\Processor Information(_Total)\\% Privileged Time",
+                        "counterSpecifier": "\\Processor Information(*)\\% Privileged Time",
                         "unit": "Percent",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\Processor Information(_Total)\\% User Time",
+                        "counterSpecifier": "\\Processor Information(*)\\% User Time",
                         "unit": "Percent",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\Processor Information(_Total)\\Processor Frequency",
+                        "counterSpecifier": "\\Processor Information(*)\\Processor Frequency",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
@@ -47,12 +47,12 @@
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\Process(_Total)\\Thread Count",
+                        "counterSpecifier": "\\Process(*)\\Thread Count",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\Process(_Total)\\Handle Count",
+                        "counterSpecifier": "\\Process(*)\\Handle Count",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
@@ -112,102 +112,102 @@
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\Process(_Total)\\Working Set",
+                        "counterSpecifier": "\\Process(*)\\Working Set",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\Process(_Total)\\Working Set - Private",
+                        "counterSpecifier": "\\Process(*)\\Working Set - Private",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\% Disk Time",
+                        "counterSpecifier": "\\LogicalDisk(*)\\% Disk Time",
                         "unit": "Percent",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\% Disk Read Time",
+                        "counterSpecifier": "\\LogicalDisk(*)\\% Disk Read Time",
                         "unit": "Percent",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\% Disk Write Time",
+                        "counterSpecifier": "\\LogicalDisk(*)\\% Disk Write Time",
                         "unit": "Percent",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\% Idle Time",
+                        "counterSpecifier": "\\LogicalDisk(*)\\% Idle Time",
                         "unit": "Percent",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Disk Bytes/sec",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Disk Bytes/sec",
                         "unit": "BytesPerSecond",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Disk Read Bytes/sec",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Disk Read Bytes/sec",
                         "unit": "BytesPerSecond",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Disk Write Bytes/sec",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Disk Write Bytes/sec",
                         "unit": "BytesPerSecond",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Disk Transfers/sec",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Disk Transfers/sec",
                         "unit": "BytesPerSecond",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Disk Reads/sec",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Disk Reads/sec",
                         "unit": "BytesPerSecond",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Disk Writes/sec",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Disk Writes/sec",
                         "unit": "BytesPerSecond",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Avg. Disk sec/Transfer",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Avg. Disk sec/Transfer",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Avg. Disk sec/Read",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Avg. Disk sec/Read",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Avg. Disk sec/Write",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Avg. Disk sec/Write",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Avg. Disk Queue Length",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Avg. Disk Queue Length",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Avg. Disk Read Queue Length",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Avg. Disk Read Queue Length",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Avg. Disk Write Queue Length",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Avg. Disk Write Queue Length",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\% Free Space",
+                        "counterSpecifier": "\\LogicalDisk(*)\\% Free Space",
                         "unit": "Percent",
                         "sampleRate": "PT60S"
                     },
                     {
-                        "counterSpecifier": "\\LogicalDisk(_Total)\\Free Megabytes",
+                        "counterSpecifier": "\\LogicalDisk(*)\\Free Megabytes",
                         "unit": "Count",
                         "sampleRate": "PT60S"
                     },

@@ -218,7 +218,7 @@ resource azurerm_virtual_machine_extension app_web_vm_aadlogin {
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   tags                         = var.tags
   depends_on                   = [null_resource.start_web_vm]
 } 
@@ -240,11 +240,11 @@ resource azurerm_virtual_machine_extension app_web_vm_diagnostics {
     { 
       "storageAccountName"     : "${data.azurerm_storage_account.diagnostics.name}",
       "storageAccountKey"      : "${data.azurerm_storage_account.diagnostics.primary_access_key}",
-      "storageAccountEndPoint" : "${data.azurerm_storage_account.diagnostics.primary_blob_endpoint}"
+      "storageAccountEndPoint" : "https://core.windows.net"
     } 
   EOF
 
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  count                        = var.deploy_monitoring_vm_extensions ? var.app_web_vm_number : 0
   tags                         = var.tags
   depends_on                   = [
                                   null_resource.start_web_vm,
@@ -363,7 +363,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
     )
   )
 
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  count                        = var.deploy_monitoring_vm_extensions ? var.app_web_vm_number : 0
 
   depends_on                   = [
                                   null_resource.start_web_vm,
@@ -378,7 +378,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  count                        = var.deploy_network_watcher ? var.app_web_vm_number : 0
   tags                         = var.tags
   depends_on                   = [
                                   null_resource.start_web_vm,
@@ -443,7 +443,7 @@ SETTINGS
     )
   )
 
-  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_web_vm,
                                   azurerm_virtual_machine_extension.app_web_vm_monitor,
@@ -671,7 +671,7 @@ resource azurerm_virtual_machine_extension app_db_vm_monitor {
     )
   )
 
-# count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+# count                        = var.deploy_monitoring_vm_extensions ? var.app_db_vm_number : 0
   count                        = var.app_db_vm_number
 
   depends_on                   = [null_resource.start_db_vm]
@@ -684,7 +684,7 @@ resource azurerm_virtual_machine_extension app_db_vm_aadlogin {
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  count                        = var.deploy_security_vm_extensions ? var.app_db_vm_number : 0
   tags                         = var.tags
   depends_on                   = [null_resource.start_db_vm]
 } 
@@ -706,11 +706,11 @@ resource azurerm_virtual_machine_extension app_db_vm_diagnostics {
     { 
       "storageAccountName"     : "${data.azurerm_storage_account.diagnostics.name}",
       "storageAccountKey"      : "${data.azurerm_storage_account.diagnostics.primary_access_key}",
-      "storageAccountEndPoint" : "${data.azurerm_storage_account.diagnostics.primary_blob_endpoint}"
+      "storageAccountEndPoint" : "https://core.windows.net"
     } 
   EOF
 
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  count                        = var.deploy_monitoring_vm_extensions ? var.app_db_vm_number : 0
   tags                         = var.tags
   depends_on                   = [
                                   null_resource.start_db_vm,
@@ -829,7 +829,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
     )
   )
 
-  count                        = var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  count                        = var.deploy_monitoring_vm_extensions ? var.app_db_vm_number : 0
 
   depends_on                   = [
                                   null_resource.start_db_vm,
@@ -844,7 +844,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? var.app_db_vm_number : 0
+  count                        = var.deploy_network_watcher ? var.app_db_vm_number : 0
   tags                         = var.tags
 
   depends_on                   = [
@@ -910,7 +910,7 @@ SETTINGS
     )
   )
 
-  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_db_vm,
                                   azurerm_virtual_machine_extension.app_db_vm_monitor,

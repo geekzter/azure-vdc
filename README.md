@@ -83,7 +83,8 @@ The Automated VDC has a number of features that are turned off by default. This 
 |Feature|Toggle|Dependencies and Pre-requisites|
 |---|---|---|
 |Azure&nbsp;Bastion. Provisions the [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) service in each Virtual Network|`deploy_managed_bastion`|None|
-|Non&#x2011;essential&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `TeamServicesAgent` (for VM's that are not a deployment target for an Azure Pipeline), `BGInfo`, `DependencyAgentWindows`, `IaaSDiagnostics`,`NetworkWatcherAgentWindows`|`deploy_non_essential_vm_extensions` (implies `deploy_security_vm_extensions`)|PowerShell 7|
+|Monitoring&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `IaaSDiagnostics`, `MicrosoftMonitoringAgent`, `DependencyAgentWindows`|`deploy_monitoring_vm_extensions`|None|
+|Non&#x2011;essential&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `TeamServicesAgent` (for VM's that are not a deployment target for an Azure Pipeline), `BGInfo`|`deploy_non_essential_vm_extensions`|PowerShell 7|
 |[Network&nbsp;Watcher](https://azure.microsoft.com/en-us/services/network-watcher/)|`deploy_network_watcher`|`deploy_non_essential_vm_extensions` also needs to be set. This requires PowerShell 7|
 |Security&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `AADLoginForWindows`, `AzureDiskEncryption`|`deploy_security_vm_extensions`|None|
 |VPN, provisions [Point-to-Site (P2S) VPN](https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-rm-ps)|`deploy_vpn`|You need to have the [Azure VPN application](https://go.microsoft.com/fwlink/?linkid=2117554) [provisioned](https://docs.microsoft.com/en-us/azure/vpn-gateway/openvpn-azure-ad-tenant) in your Azure Active Directory tenant.|

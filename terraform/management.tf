@@ -193,7 +193,7 @@ resource azurerm_virtual_machine_extension mgmt_monitor {
     } 
   EOF
 
-# count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+# count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
   tags                         = local.tags
   depends_on                   = [null_resource.start_mgmt]
 }
@@ -214,7 +214,7 @@ resource azurerm_virtual_machine_extension mgmt_aadlogin {
   type_handler_version         = "1.0"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? 1 : 0
+  count                        = var.deploy_security_vm_extensions ? 1 : 0
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
@@ -256,11 +256,11 @@ resource azurerm_virtual_machine_extension mgmt_diagnostics {
     { 
       "storageAccountName"     : "${azurerm_storage_account.vdc_diag_storage.name}",
       "storageAccountKey"      : "${azurerm_storage_account.vdc_diag_storage.primary_access_key}",
-      "storageAccountEndPoint" : "${azurerm_storage_account.vdc_diag_storage.primary_blob_endpoint}"
+      "storageAccountEndPoint" : "https://core.windows.net"
     } 
   EOF
 
-  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+  count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
@@ -286,7 +286,7 @@ resource azurerm_virtual_machine_extension mgmt_dependency_monitor {
     } 
   EOF
 
-  count                        = var.deploy_non_essential_vm_extensions ? 1 : 0
+  count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
@@ -301,7 +301,7 @@ resource azurerm_virtual_machine_extension mgmt_watcher {
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_network_watcher && var.deploy_non_essential_vm_extensions ? 1 : 0
+  count                        = var.deploy_network_watcher ? 1 : 0
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
@@ -321,7 +321,7 @@ resource null_resource mgmt_sleep {
     interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
-  count                        = (!var.use_server_side_disk_encryption && (var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions)) ? 1 : 0
+  count                        = (!var.use_server_side_disk_encryption && var.deploy_security_vm_extensions) ? 1 : 0
   depends_on                   = [azurerm_windows_virtual_machine.mgmt]
 }
 # Does not work with AutoLogon
@@ -346,7 +346,7 @@ resource azurerm_virtual_machine_extension mgmt_disk_encryption {
     }
 SETTINGS
 
-  count                        = (!var.use_server_side_disk_encryption && (var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions)) ? 1 : 0
+  count                        = (!var.use_server_side_disk_encryption && var.deploy_security_vm_extensions) ? 1 : 0
   tags                         = local.tags
 
   depends_on                   = [
@@ -357,7 +357,7 @@ SETTINGS
 }
 
 # HACK: Use this as the last resource created for a VM, so we can set a destroy action to happen prior to VM (extensions) destroy
-resource azurerm_monitor_diagnostic_setting app_db_vm {
+resource azurerm_monitor_diagnostic_setting mgmt_vm {
   name                         = "${azurerm_windows_virtual_machine.mgmt.name}-diagnostics"
   target_resource_id           = azurerm_windows_virtual_machine.mgmt.id
   storage_account_id           = azurerm_storage_account.vdc_diag_storage.id

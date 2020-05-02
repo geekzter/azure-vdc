@@ -74,11 +74,12 @@ module iis_app {
   default_update_timeout       = var.default_update_timeout
   default_read_timeout         = var.default_read_timeout
   default_delete_timeout       = var.default_delete_timeout
+  deploy_monitoring_vm_extensions = var.deploy_monitoring_vm_extensions
   deploy_network_watcher       = var.deploy_network_watcher
   deploy_non_essential_vm_extensions = var.deploy_non_essential_vm_extensions
+  deploy_security_vm_extensions = var.deploy_security_vm_extensions
   key_vault_id                 = azurerm_key_vault.vault.id
   key_vault_uri                = azurerm_key_vault.vault.vault_uri
-  deploy_security_vm_extensions = var.deploy_security_vm_extensions
   vm_connectivity_dependency   = local.vm_connectivity_dependency
   diagnostics_instrumentation_key = azurerm_application_insights.vdc_insights.instrumentation_key
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id

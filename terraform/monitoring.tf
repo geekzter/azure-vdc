@@ -7,11 +7,16 @@ resource azurerm_storage_account vdc_diag_storage {
   account_replication_type     = var.app_storage_replication_type
   enable_https_traffic_only    = true
 
-
   provisioner "local-exec" {
     # TODO: Add --auth-mode login once supported
     command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
   }
+
+  # TODO
+  # network_rules {
+  #   default_action             = "Deny"
+  #   virtual_network_subnet_ids = [azurerm_subnet.iag_subnet.id]
+  # }
 
   tags                         = local.tags
 }
