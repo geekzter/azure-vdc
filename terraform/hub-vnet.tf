@@ -1,5 +1,5 @@
 # ******************* NSG's ******************* #
-resource "azurerm_network_security_group" "mgmt_nsg" {
+resource azurerm_network_security_group mgmt_nsg {
   name                        = "${azurerm_resource_group.vdc_rg.name}-mgmt-nsg"
   location                    = azurerm_resource_group.vdc_rg.location
   resource_group_name         = azurerm_resource_group.vdc_rg.name
@@ -65,7 +65,7 @@ resource azurerm_network_watcher_flow_log mgmt_nsg {
 }
 
 # ******************* Routing ******************* #
-resource "azurerm_route_table" "mgmt_route_table" {
+resource azurerm_route_table viag_route_table {
   name                        = "${azurerm_resource_group.vdc_rg.name}-mgmt-routes"
   location                    = azurerm_resource_group.vdc_rg.location
   resource_group_name         = azurerm_resource_group.vdc_rg.name
@@ -78,14 +78,14 @@ resource "azurerm_route_table" "mgmt_route_table" {
   }
 }
 # ******************* VNET ******************* #
-resource "azurerm_virtual_network" "hub_vnet" {
+resource azurerm_virtual_network hub_vnet {
   name                        = "${azurerm_resource_group.vdc_rg.name}-hub-network"
   location                    = var.location
   address_space               = [var.vdc_config["hub_range"]]
   resource_group_name         = azurerm_resource_group.vdc_rg.name
 }
 
-resource "azurerm_subnet" "iag_subnet" {
+resource azurerm_subnet iag_subnet {
   name                        = "AzureFirewallSubnet"
   virtual_network_name        = azurerm_virtual_network.hub_vnet.name
   resource_group_name         = azurerm_resource_group.vdc_rg.name
@@ -106,7 +106,7 @@ resource "azurerm_subnet" "iag_subnet" {
   }  
 }
 
-resource "azurerm_subnet" "waf_subnet" {
+resource azurerm_subnet waf_subnet {
   name                        = "WAFSubnet1"
   virtual_network_name        = azurerm_virtual_network.hub_vnet.name
   resource_group_name         = azurerm_resource_group.vdc_rg.name
@@ -123,13 +123,13 @@ resource "azurerm_subnet" "waf_subnet" {
   }  
 }
 
-resource "azurerm_subnet" "mgmt_subnet" {
+resource azurerm_subnet mgmt_subnet {
   name                         = "Management"
   virtual_network_name         = azurerm_virtual_network.hub_vnet.name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   address_prefixes             = [var.vdc_config["hub_mgmt_subnet"]]
-
   service_endpoints            = [
+                                 "Microsoft.Storage",
                                  "Microsoft.Web"
   ]
 
@@ -140,10 +140,9 @@ resource "azurerm_subnet" "mgmt_subnet" {
     delete                     = var.default_delete_timeout
   }  
 }
-
-resource "azurerm_subnet_route_table_association" "mgmt_subnet_routes" {
+resource azurerm_subnet_route_table_association mgmt_subnet_routes {
   subnet_id                    = azurerm_subnet.mgmt_subnet.id
-  route_table_id               = azurerm_route_table.mgmt_route_table.id
+  route_table_id               = azurerm_route_table.viag_route_table.id
 
   timeouts {
     create                     = var.default_create_timeout
@@ -154,8 +153,7 @@ resource "azurerm_subnet_route_table_association" "mgmt_subnet_routes" {
 
   depends_on                   = [azurerm_firewall.iag]
 }
-
-resource "azurerm_subnet_network_security_group_association" "mgmt_subnet_nsg" {
+resource azurerm_subnet_network_security_group_association mgmt_subnet_nsg {
   subnet_id                    = azurerm_subnet.mgmt_subnet.id
   network_security_group_id    = azurerm_network_security_group.mgmt_nsg.id
 
@@ -172,10 +170,43 @@ resource "azurerm_subnet_network_security_group_association" "mgmt_subnet_nsg" {
   ]
 }
 
-resource "azurerm_private_dns_zone" "zone" {
+resource azurerm_subnet shared_paas_subnet {
+  name                         = "SharedPaaS"
+  virtual_network_name         = azurerm_virtual_network.hub_vnet.name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  address_prefixes             = [var.vdc_config["hub_paas_subnet"]]
+  enforce_private_link_endpoint_network_policies = true
+  service_endpoints            = [
+                                 "Microsoft.Storage",
+  ]
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+}
+resource azurerm_subnet_route_table_association shared_paas_subnet_routes {
+  subnet_id                    = azurerm_subnet.shared_paas_subnet.id
+  route_table_id               = azurerm_route_table.viag_route_table.id
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
+  depends_on                   = [azurerm_firewall.iag]
+}
+
+
+resource azurerm_private_dns_zone zone {
   for_each                     = {
     sqldb                      = "privatelink.database.windows.net"
     blob                       = "privatelink.blob.core.windows.net"
+    table                      = "privatelink.table.core.windows.net"
   }
   name                         = each.value
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -190,7 +221,7 @@ resource azurerm_private_dns_a_record sql_server_dns_record {
   records                      = [module.paas_app.sql_server_private_ip_address]
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "link" {
+resource azurerm_private_dns_zone_virtual_network_link hub_link {
   for_each                     = azurerm_private_dns_zone.zone
   name                         = "${azurerm_virtual_network.hub_vnet.name}-dns-${each.key}"
   resource_group_name          = azurerm_resource_group.vdc_rg.name
@@ -198,7 +229,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "link" {
   virtual_network_id           = azurerm_virtual_network.hub_vnet.id
 }
 
-resource "azurerm_dns_cname_record" "vpn_gateway_cname" {
+resource azurerm_dns_cname_record vpn_gateway_cname {
   name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}vpn"
   zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
   resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name

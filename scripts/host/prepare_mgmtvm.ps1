@@ -28,6 +28,17 @@ $bootstrapShortcut = $wsh.CreateShortcut("$($env:USERPROFILE)\Desktop\Setup.lnk"
 $bootstrapShortcut.TargetPath = $localBatchScript
 $bootstrapShortcut.Save()
 
+# Create Private DNS demo script
+$lookupScript = "$env:USERPROFILE\Desktop\privatelink_lookup.cmd"
+if ($config -and $config.privatelinkfqdns) {
+    $privateLinkFQDNs = $config.privatelinkfqdns.Split(",")
+    Write-Output "echo Private DNS resolved PaaS FQDNs:" | Out-File $lookupScript -Force -Encoding OEM
+    foreach ($privateLinkFQDN in $privateLinkFQDNs) {
+        Write-Output "nslookup $privateLinkFQDN" | Out-File $lookupScript -Append -Encoding OEM
+    }
+    Write-Output "pause" | Out-File $lookupScript -Append -Encoding OEM
+}
+
 # Invoke bootstrap script from bootstrap-os repository
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/geekzter/bootstrap-os/master/windows/bootstrap_windows.ps1'))
 

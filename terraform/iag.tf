@@ -128,7 +128,6 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       var.vdc_config["iaas_spoke_app_subnet"],
       var.vdc_config["iaas_spoke_data_subnet"],
       var.vdc_config["hub_mgmt_subnet"],
-      var.vdc_config["vpn_range"]
     ]
 
     target_fqdns               = [
@@ -137,8 +136,12 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "*.pkgs.visualstudio.com",
       "*.visualstudio.com",
       "*.vsassets.io",
+      "*.vsblob.visualstudio.com", # Pipeline artifacts
       "*.vsrm.visualstudio.com",
       "*.vssps.visualstudio.com",
+      "*.vstmrblob.vsassets.io",
+    # "*vsblob*.blob.core.windows.net", # Pipeline artifacts, wildcard not allowed. So instead use:
+      "*.blob.core.windows.net", # Pipeline artifacts
       "dev.azure.com",
       "login.microsoftonline.com",
       "visualstudio-devdiv-c2s.msedge.net",

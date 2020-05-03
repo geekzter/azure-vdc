@@ -12,13 +12,61 @@ resource azurerm_storage_account vdc_diag_storage {
     command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
   }
 
-  # TODO
-  # network_rules {
-  #   default_action             = "Deny"
-  #   virtual_network_subnet_ids = [azurerm_subnet.iag_subnet.id]
-  # }
+  network_rules {
+    default_action             = "Deny"
+    # This is used for diagnostics only
+    bypass                     = ["Logging","Metrics"]
+  }
 
   tags                         = local.tags
+}
+
+resource azurerm_private_endpoint diag_blob_storage_endpoint {
+  name                         = "${azurerm_storage_account.vdc_diag_storage.name}-blob-endpoint"
+  resource_group_name          = azurerm_storage_account.vdc_diag_storage.resource_group_name
+  location                     = azurerm_storage_account.vdc_diag_storage.location
+  
+  # TODO: Use shared infra subnet (?)
+  subnet_id                    = azurerm_subnet.shared_paas_subnet.id
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_storage_account.vdc_diag_storage.name}-blob-endpoint-connection"
+    private_connection_resource_id = azurerm_storage_account.vdc_diag_storage.id
+    subresource_names          = ["blob"]
+  }
+
+  tags                         = local.tags
+}
+resource azurerm_private_dns_a_record diag_storage_blob_dns_record {
+  name                         = azurerm_storage_account.vdc_diag_storage.name 
+  zone_name                    = azurerm_private_dns_zone.zone["blob"].name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.diag_blob_storage_endpoint.private_service_connection[0].private_ip_address]
+}
+resource azurerm_private_endpoint diag_table_storage_endpoint {
+  name                         = "${azurerm_storage_account.vdc_diag_storage.name}-table-endpoint"
+  resource_group_name          = azurerm_storage_account.vdc_diag_storage.resource_group_name
+  location                     = azurerm_storage_account.vdc_diag_storage.location
+  
+  subnet_id                    = azurerm_subnet.shared_paas_subnet.id
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_storage_account.vdc_diag_storage.name}-table-endpoint-connection"
+    private_connection_resource_id = azurerm_storage_account.vdc_diag_storage.id
+    subresource_names          = ["table"]
+  }
+
+  tags                         = local.tags
+}
+resource azurerm_private_dns_a_record diag_storage_table_dns_record {
+  name                         = azurerm_storage_account.vdc_diag_storage.name 
+  zone_name                    = azurerm_private_dns_zone.zone["table"].name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.diag_table_storage_endpoint.private_service_connection[0].private_ip_address]
 }
 
 resource azurerm_advanced_threat_protection vdc_diag_storage {

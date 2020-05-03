@@ -1,19 +1,14 @@
 <FirstLogonCommands>
     <SynchronousCommand>
-        <CommandLine>cmd.exe /c "echo nslookup ${sqlserver} &gt;C:\Users\${username}\Desktop\privatelink_lookup.cmd &amp;&amp; echo pause &gt;&gt;C:\Users\${username}\Desktop\privatelink_lookup.cmd"</CommandLine>
-        <Description>Create demo script</Description>
-        <Order>1</Order>
-    </SynchronousCommand>
-    <SynchronousCommand>
         <CommandLine>cmd.exe /c start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('${scripturl}'))}"</CommandLine>
         <Description>Bootstrap packages and PowerShell</Description>
-        <Order>2</Order>
+        <Order>1</Order>
     </SynchronousCommand>
 %{ for index, host in hosts ~}
     <SynchronousCommand>
         <CommandLine>cmdkey.exe /generic:${host} /user:${username} /pass:${password}</CommandLine>
         <Description>Save RDP credentials</Description>
-        <Order>${index+3}</Order>
+        <Order>${index+2}</Order>
     </SynchronousCommand>
 %{ endfor ~}
 </FirstLogonCommands>

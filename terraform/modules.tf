@@ -20,10 +20,12 @@ module iaas_spoke_vnet {
   hub_virtual_network_id       = azurerm_virtual_network.hub_vnet.id
   private_dns_zones            = [for z in azurerm_private_dns_zone.zone : z.name]
   service_endpoints            = {
-    app                        = []
-    data                       = []
+    app                        = [
+                                 ]
+    data                       = [
+                                 ]
   }
-  spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-iaas-spoke-network"
+    spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-iaas-spoke-network"
   subnets                      = {
     app                        = var.vdc_config["iaas_spoke_app_subnet"]
     data                       = var.vdc_config["iaas_spoke_data_subnet"]

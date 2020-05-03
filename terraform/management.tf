@@ -1,8 +1,13 @@
 locals {
   client_config                = map(
+    "environment",               local.environment,
+    "privatelinkfqdns",          join(",",[
+      module.paas_app.sql_server_fqdn,
+      azurerm_storage_account.vdc_diag_storage.primary_blob_host,
+      azurerm_storage_account.vdc_diag_storage.primary_table_host,
+    ]),
     "scripturl",                 azurerm_storage_blob.mgmt_prepare_script.url,
     "sqlserver",                 module.paas_app.sql_server_fqdn,
-    "environment",               local.environment,
     "suffix",                    local.suffix,
     "workspace",                 terraform.workspace
   )
