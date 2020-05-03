@@ -19,6 +19,9 @@ variable tags {
 variable automation_storage_name {}
 
 # Toggles
+variable deploy_monitoring_vm_extensions {
+  type                         = bool
+}
 variable deploy_network_watcher {
   description                  = "Whether to deploy connection monitors"
   type                         = bool

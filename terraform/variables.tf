@@ -81,6 +81,7 @@ variable vdc_config {
     hub_waf_subnet             = "10.0.1.64/26"
     hub_mgmt_subnet            = "10.0.2.128/26"
     hub_vpn_subnet             = "10.0.3.224/27"
+    hub_paas_subnet            = "10.0.4.0/26"
     iaas_spoke_range           = "10.1.0.0/16"
     iaas_spoke_bastion_subnet  = "10.1.255.192/27"
     iaas_spoke_app_subnet      = "10.1.1.0/24"
@@ -94,7 +95,7 @@ variable vdc_config {
 
     vpn_range                  = "192.168.0.0/24"
 
-    hub_mgmt_address        = "10.0.2.132"
+    hub_mgmt_address           = "10.0.2.132"
   }
 }
 
@@ -125,7 +126,7 @@ variable vdc_oms_solutions {
     "AzureNetworking", # Depricated
   # "AzureNSGAnalytics", # Depricated
   # "AzureSecurityOfThings",
-    "AzureSQLAnalytics",
+  # "AzureSQLAnalytics",
   # "AzureWebAppsAnalytics", # Depricated
   # "Backup", # Depricated
   # "CapacityPerformance", # Not found
@@ -354,8 +355,8 @@ variable deploy_managed_bastion {
   type                         = bool
 }
 
-variable deploy_non_essential_vm_extensions {
-  description                  = "Whether to deploy optional VM extensions"
+variable deploy_monitoring_vm_extensions {
+  description                  = "Whether to deploy optional monitoring VM extensions"
   default                      = false
   type                         = bool
 }
@@ -366,8 +367,14 @@ variable deploy_network_watcher {
   type                         = bool
 }
 
+variable deploy_non_essential_vm_extensions {
+  description                  = "Whether to deploy optional VM extensions"
+  default                      = false
+  type                         = bool
+}
+
 variable deploy_security_vm_extensions {
-  description                  = "Whether to deploy optional security VM extensions (AAD Login, Disk Encryption)"
+  description                  = "Whether to deploy optional security VM extensions"
   default                      = false
   type                         = bool
 }

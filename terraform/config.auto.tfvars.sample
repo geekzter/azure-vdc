@@ -1,26 +1,23 @@
+# Feature toggles
+deploy_managed_bastion         = false
+deploy_monitoring_vm_extensions = false
+deploy_network_watcher         = false
+deploy_non_essential_vm_extensions = false
+deploy_security_vm_extensions  = false
+deploy_vpn                     = false
+enable_app_service_aad_auth    = false
+grant_database_access          = false
+paas_app_storage_import        = false
+use_pipeline_environment       = false
+use_server_side_disk_encryption = false
+use_vanity_domain_and_ssl      = false
+
 admin_ip_ranges = [
     "123.45.67.89/32"
-  ]
-# $env:TF_VAR_admin_ip_ranges = '["123.45.67.89/32"]'
-
-
+]
 admin_ips = [
     "123.45.67.89"
-  ]
-# $env:TF_VAR_admin_ips = '["123.45.67.89"]'
-
-
-app_web_vm_size                = "Standard_D4s_v3"
-app_db_vm_size                 = "Standard_D4s_v3"
-
-resource_prefix                = "demo"
-
-vanity_certificate_name        = "mydomain-com"
-vanity_certificate_path        = "STAR_mydoman_com.pfx"
-vanity_certificate_password    = "XXXXXXXXXX"
-vanity_domainname              = "mydomain.com"
-
-vpn_root_cert_file             = "P2SRootCert.cer" 
+]
 
 app_devops                     = {
     account                    = "vstsaccount"
@@ -29,7 +26,18 @@ app_devops                     = {
     db_deployment_group        = "DBServers"
     pat                        = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 }
-# $env:TF_VAR_app_devops = '{account="vstsaccount",team_project="VDC",web_deployment_group="AppServers",db_deployment_group="DBServers",pat="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}'
+app_db_vm_number               = 2
+app_db_vm_size                 = "Standard_D2s_v3"
+app_web_vm_number              = 2
+app_web_vm_size                = "Standard_D2s_v3"
+
+shared_resources_group         = "Shared"
+resource_prefix                = "demo"
+vanity_certificate_name        = "mydomain-com"
+vanity_certificate_path        = "STAR_mydoman_com.pfx"
+vanity_certificate_password    = "XXXXXXXXXX"
+vanity_domainname              = "mydomain.com"
+
 paas_aad_auth_client_id_map    = {
     cd_client_id               = "00000000-0000-0000-0000-000000000000"
     cd_client_secret           = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
@@ -41,9 +49,8 @@ paas_aad_auth_client_id_map    = {
     test_client_secret         = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 }
 
+# User configuration
 alert_email                    = "admin@contoso.com"
-admin_login                    = "user@tenant.onmicrosoft.com"
+admin_login                    = "admin@contoso.com"
 admin_object_id                = "00000000-0000-0000-0000-000000000000"
-app_database_template_storage_key = "aaaaaaaaaaaaaaaaaaaaa/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
-shared_resources_group         = "Shared"
 vso_url                        = "https://online.visualstudio.com/environment/00000000-0000-0000-0000-000000000000"
