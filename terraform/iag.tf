@@ -547,6 +547,7 @@ resource azurerm_firewall_network_rule_collection iag_net_outbound_rules {
 # This only allows the IP address looked up at provisioning time. If the IP address changes (this is Traffic Manager), the newly used IP address will not be whitelisted.
 data dns_a_record_set diagnostics_ingestion {
   host                         = "${var.location}.prod.hot.ingestion.msftcloudes.com"
+  count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
 }
 resource azurerm_firewall_network_rule_collection iag_net_outbound_http_rules {
   name                         = "${azurerm_firewall.iag.name}-net-out-http-rules"
@@ -564,11 +565,13 @@ resource azurerm_firewall_network_rule_collection iag_net_outbound_http_rules {
     destination_ports          = [
       "443",
     ]
-    destination_addresses      = data.dns_a_record_set.diagnostics_ingestion.addrs
+    destination_addresses      = data.dns_a_record_set.diagnostics_ingestion.0.addrs
     protocols                  = [
       "TCP",
     ]
   }
+
+  count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
 }
 
 /*

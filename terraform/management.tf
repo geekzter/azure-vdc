@@ -264,7 +264,8 @@ resource azurerm_virtual_machine_extension mgmt_diagnostics {
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
-                                  azurerm_virtual_machine_extension.mgmt_monitor
+                                  azurerm_virtual_machine_extension.mgmt_monitor,
+                                  azurerm_firewall_network_rule_collection.iag_net_outbound_http_rules
                                  ]
 }
 resource azurerm_virtual_machine_extension mgmt_dependency_monitor {
