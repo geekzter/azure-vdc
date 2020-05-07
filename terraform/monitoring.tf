@@ -15,7 +15,13 @@ resource azurerm_storage_account vdc_diag_storage {
   network_rules {
     default_action             = "Deny"
     # This is used for diagnostics only
-    bypass                     = ["Logging","Metrics"]
+    bypass                     = [
+                                   # TODO: Instead of AzureServices use Service Endpoints
+                                   #       https://docs.microsoft.com/en-us/azure/network-watcher/frequently-asked-questions#nsg-flow-logs
+                                  "AzureServices",
+                                  "Logging",
+                                  "Metrics"
+    ]
   }
 
   tags                         = local.tags

@@ -196,6 +196,7 @@ resource "azurerm_app_service" "paas_web_app" {
   # DOCKER_REGISTRY_SERVER_PASSWORD = "${data.azurerm_container_registry.vdc_images.admin_password}"
   # WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
+    WEBSITE_DNS_SERVER         = "168.63.129.16" # Private DNS
     WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
     # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#regional-vnet-integration
     WEBSITE_VNET_ROUTE_ALL     = "1"
