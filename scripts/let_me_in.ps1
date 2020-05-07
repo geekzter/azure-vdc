@@ -155,7 +155,8 @@ try {
         $gatewayId = $(terraform output vpn_gateway_id 2>$null)
         if ($gatewayId) {
             Write-Host "Use Azure VPN app (https://go.microsoft.com/fwlink/?linkid=2117554) to import profile downloaded from this link:`n"
-            az network vnet-gateway vpn-client show-url --ids $gatewayId -o tsv
+            az network vnet-gateway vpn-client generate --ids $gatewayId  --authentication-method EAPTLS -o tsv
+            #az network vnet-gateway vpn-client show-url --ids $gatewayId -o tsv
         } else {
             Write-Host "Virtual network gateway, required for VPN, does not exist" -ForegroundColor Yellow
         }
