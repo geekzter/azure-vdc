@@ -246,6 +246,10 @@ output shared_resources_group {
   value       = var.shared_resources_group
 }
 
+output vdc_dns_server {
+  value       = azurerm_network_interface.bas_if.private_ip_address
+}
+
 output vdc_resource_group {
   value       = azurerm_resource_group.vdc_rg.name
 }

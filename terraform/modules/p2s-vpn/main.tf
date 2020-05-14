@@ -44,7 +44,9 @@ resource azurerm_virtual_network_gateway vpn_gw {
 
   active_active                = false
   enable_bgp                   = false
+  #generation                   = "Generation2"
   sku                          = "VpnGw1AZ"
+  #sku                          = "VpnGw2AZ"
 
   ip_configuration {
     name                       = "vnetGatewayConfig"

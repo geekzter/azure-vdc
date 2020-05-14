@@ -16,7 +16,7 @@ $localBatchScript = "$env:PUBLIC\setup.cmd"
 Write-Output "PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command `"`& {$($MyInvocation.MyCommand.Definition)}`"" | Out-File -FilePath $localBatchScript -Encoding OEM
 
 # Schedule bootstrap command to run on every logon
-schtasks.exe /create /f /sc onlogon /tn "Bootstrap" /tr $localBatchScript
+schtasks.exe /create /f /rl HIGHEST /sc onlogon /tn "Bootstrap" /tr $localBatchScript
 
 # Download PowerShell script
 $localPSScript = "$env:PUBLIC\setup.ps1"
@@ -47,5 +47,7 @@ choco install azure-data-studio microsoftazurestorageexplorer sql-server-managem
 choco install TelnetClient --source windowsfeatures -r -y
 
 # Clone VDC repository
-Push-Location ~\Source\Public
+$repoRoot = "~\Source\GitHub\geekzter"
+$null = New-Item -ItemType Directory -Force -Path $repoRoot
+Push-Location $repoRoot
 git clone https://github.com/geekzter/azure-vdc

@@ -75,6 +75,7 @@ locals {
     var.tags,
     map(
       "environment",             local.environment,
+      "shutdown",                "true",
       "suffix",                  local.suffix,
       "workspace",               terraform.workspace,
       "release-id",              var.release_id,

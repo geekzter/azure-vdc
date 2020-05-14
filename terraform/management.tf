@@ -12,7 +12,8 @@ locals {
     "workspace",                 terraform.workspace
   )
 
-  mgmt_vm_name                 = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"-","")),0,16)}mgmt"
+  mgmt_vm_name                 = "${azurerm_resource_group.vdc_rg.name}-mgmt"
+  mgmt_vm_computer_name        = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"-","")),0,16)}mgmt"
 }
 
 resource azurerm_network_interface bas_if {
@@ -43,6 +44,15 @@ resource azurerm_storage_blob mgmt_prepare_script {
 
   type                         = "Block"
   source                       = "../scripts/host/prepare_mgmtvm.ps1"
+}
+
+resource azurerm_storage_blob configure_mgmtvm_roles {
+  name                         = "configure_mgmtvm_roles.ps1"
+  storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
+  storage_container_name       = azurerm_storage_container.scripts.name
+
+  type                         = "Block"
+  source                       = "../scripts/host/configure_mgmtvm_roles.ps1"
 }
 
 # Adapted from https://github.com/Azure/terraform-azurerm-diskencrypt/blob/master/main.tf
@@ -95,6 +105,7 @@ resource azurerm_role_assignment mgmt_disk_encryption_access {
 
 resource azurerm_windows_virtual_machine mgmt {
   name                         = local.mgmt_vm_name
+  computer_name                = local.mgmt_vm_computer_name
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   network_interface_ids        = [azurerm_network_interface.bas_if.id]
@@ -123,8 +134,8 @@ resource azurerm_windows_virtual_machine mgmt {
 
   source_image_reference {
     publisher                  = "MicrosoftWindowsServer"
-    offer                      = "WindowsServer"
-    sku                        = "2019-Datacenter"
+    offer                      = var.app_web_image_offer
+    sku                        = var.app_web_image_sku
     version                    = "latest"
   }
 
@@ -176,6 +187,36 @@ resource null_resource start_mgmt {
     # Start VM, so we can execute script through SSH
     command                    = "az vm start --ids ${azurerm_windows_virtual_machine.mgmt.id}"
   }
+}
+
+resource azurerm_virtual_machine_extension mgmt_roles {
+  name                         = "ServerRolesConfiguration"
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
+  publisher                    = "Microsoft.Compute"
+  type                         = "CustomScriptExtension"
+  type_handler_version         = "1.10"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "fileUris": [
+                                 "${azurerm_storage_blob.configure_mgmtvm_roles.url}"
+      ]
+    }
+  EOF
+
+  protected_settings           = <<EOF
+    { 
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./configure_mgmtvm_roles.ps1\""
+    } 
+  EOF
+
+  # provisioner local-exec {
+  #   # Once extension has provisioned DNS server role, configure DNS on VNet
+  #   command                    = "az network vnet update --ids ${azurerm_virtual_network.hub_vnet.id} --dns-servers ${azurerm_network_interface.bas_if.private_ip_address} --query 'dhcpOptions'"
+  # }
+
+  tags                         = local.tags
+  depends_on                   = [null_resource.start_mgmt]
 }
 
 resource azurerm_virtual_machine_extension mgmt_monitor {
@@ -390,6 +431,7 @@ resource azurerm_monitor_diagnostic_setting mgmt_vm {
                                   azurerm_virtual_machine_extension.mgmt_diagnostics,
                                   azurerm_virtual_machine_extension.mgmt_disk_encryption,
                                   azurerm_virtual_machine_extension.mgmt_monitor,
+                                  azurerm_virtual_machine_extension.mgmt_roles,
                                   azurerm_virtual_machine_extension.mgmt_watcher
   ]
 }
