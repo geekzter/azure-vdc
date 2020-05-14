@@ -171,15 +171,15 @@ try {
             $dnsservers = $vpnProfileXml.CreateElement("dnsservers", $vpnProfileXml.AzVpnProfile.xmlns)
             $dnsserver = $vpnProfileXml.CreateElement("dnsserver", $vpnProfileXml.AzVpnProfile.xmlns)
             $dnsserver.InnerText = $(terraform output "vdc_dns_server" 2>$null)
-            $dnsservers.AppendChild($dnsserver)
+            $dnsservers.AppendChild($dnsserver) | Out-Null
             $clientconfig.AppendChild($dnsservers)
             $clientconfig.RemoveAttribute("nil","http://www.w3.org/2001/XMLSchema-instance")
 
             if (Get-Command azurevpn -ErrorAction SilentlyContinue) {
-                $vpnProfileFile = (Join-Path $env:userprofile\AppData\Local\Packages\Microsoft.AzureVpn_8wekyb3d8bbwe\LocalState ${vdcResourceGroup}.xml)
+                $vpnProfileFile = (Join-Path $env:userprofile\AppData\Local\Packages\Microsoft.AzureVpn_8wekyb3d8bbwe\LocalState ("$vdcResourceGroup{0}" -f ".xml"))
                 $vpnProfileXml.Save($vpnProfileFile)
                 azurevpn -i (Split-Path $vpnProfileFile -Leaf) -f
-                Write-Host "Azure VPN app imported '$vpnProfileFile'"
+                Write-Host "Azure VPN app imported profile '$vpnProfileFile'"
             } else {
                 $vpnProfileXml.Save($vpnProfileTempFile)
                 Write-Host "Use the Azure VPN app (https://go.microsoft.com/fwlink/?linkid=2117554) to import this profile:`n${vpnProfileTempFile}"
