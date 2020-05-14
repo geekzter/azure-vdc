@@ -41,6 +41,10 @@ PrintCurrentBranch
 
 AzLogin
 
+Write-Host "Using subscription '$(az account show --query "name" -o tsv)'"
+$identity = $env:ARM_CLIENT_ID ? $env:ARM_CLIENT_ID : $(az account show --query "user.name" -o tsv)
+Write-Host "Terraform is running as '$identity'"
+
 ### Main routine
 # Configure instrumentation
 Set-PSDebug -trace $Trace
@@ -80,8 +84,6 @@ try {
 
     # Print version info
     terraform -version
-    $identity = $env:ARM_CLIENT_ID ? $env:ARM_CLIENT_ID : $(az account show --query "user.name" -o tsv)
-    Write-Host "Terraform is running as '$identity'"
 
     if ($Init -or $Upgrade) {
         $backendFile = (Join-Path $tfdirectory backend.tf)

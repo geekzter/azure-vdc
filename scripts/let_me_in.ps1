@@ -180,6 +180,7 @@ try {
                 $vpnProfileXml.Save($vpnProfileFile)
                 Write-Host "Azure VPN app importing profile '$vpnProfileFile'..."
                 azurevpn -i (Split-Path $vpnProfileFile -Leaf) -f
+                #Get-DnsClientNrptPolicy
             } else {
                 $vpnProfileXml.Save($vpnProfileTempFile)
                 Write-Host "Use the Azure VPN app (https://go.microsoft.com/fwlink/?linkid=2117554) to import this profile:`n${vpnProfileTempFile}"
