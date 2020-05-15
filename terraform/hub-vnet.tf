@@ -201,24 +201,17 @@ resource azurerm_subnet_route_table_association shared_paas_subnet_routes {
   depends_on                   = [azurerm_firewall.iag]
 }
 
-
 resource azurerm_private_dns_zone zone {
   for_each                     = {
-    sqldb                      = "privatelink.database.windows.net"
     blob                       = "privatelink.blob.core.windows.net"
+  # servicebus                 = "privatelink.servicebus.windows.net"
+    sqldb                      = "privatelink.database.windows.net"
     table                      = "privatelink.table.core.windows.net"
+    vault                      = "privatelink.vaultcore.azure.net"
+    web                        = "privatelink.azurewebsites.net"
   }
   name                         = each.value
   resource_group_name          = azurerm_resource_group.vdc_rg.name
-}
-
-# DNS Records for PaaS services created connected in spoke VNet's
-resource azurerm_private_dns_a_record sql_server_dns_record {
-  name                         = module.paas_app.sql_server
-  zone_name                    = azurerm_private_dns_zone.zone["sqldb"].name
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  ttl                          = 300
-  records                      = [module.paas_app.sql_server_private_ip_address]
 }
 
 resource azurerm_private_dns_zone_virtual_network_link hub_link {

@@ -73,6 +73,9 @@ output sql_server {
 output sql_server_endpoint_id {
     value = azurerm_private_endpoint.sqlserver_endpoint.id
 }
+output sql_server_endpoint_fqdn {
+    value = replace(azurerm_private_dns_a_record.sql_server_dns_record.fqdn,"/\\W*$/","")
+}
 output sql_server_fqdn {
   value       = azurerm_sql_server.app_sqlserver.fully_qualified_domain_name
 }

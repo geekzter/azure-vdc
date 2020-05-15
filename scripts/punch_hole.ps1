@@ -63,10 +63,11 @@ if ($appEventHubNamespace) {
     Write-Host "Adding rule for Event Hub $appEventHubNamespace to allow prefix $ipPrefix..."
     az eventhubs namespace network-rule add -g $appResourceGroup --namespace-name $appEventHubNamespace --ip-address $ipPrefix --action Allow -o none
 }
-if ($appSQLServer) {
-    Write-Host "Adding rule for SQL Server $appSQLServer to allow address $ipAddress... "
-    az sql server firewall-rule create -g $appResourceGroup -s $appSQLServer -n "LetMeInRule $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress -o none
-}
+
+# if ($appSQLServer) {
+#     Write-Host "Adding rule for SQL Server $appSQLServer to allow address $ipAddress... "
+#     az sql server firewall-rule create -g $appResourceGroup -s $appSQLServer -n "PunchHole $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress -o none
+# }
 if ($keyVault) {
     Write-Host "Adding rule for Key Vault $keyVault to allow address $ipAddress..."
     az keyvault network-rule add -g $vdcResourceGroup -n $keyVault --ip-address $ipAddress -o none

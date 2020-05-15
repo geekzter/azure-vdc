@@ -167,6 +167,29 @@ resource azurerm_key_vault vault {
 
   tags                         = local.tags
 }
+resource azurerm_private_endpoint vault_endpoint {
+  name                         = "${azurerm_key_vault.vault.name}-endpoint"
+  resource_group_name          = azurerm_key_vault.vault.resource_group_name
+  location                     = azurerm_key_vault.vault.location
+  
+  subnet_id                    = azurerm_subnet.shared_paas_subnet.id
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_key_vault.vault.name}-endpoint-connection"
+    private_connection_resource_id = azurerm_key_vault.vault.id
+    subresource_names          = ["vault"]
+  }
+
+  tags                         = local.tags
+}
+resource azurerm_private_dns_a_record vault_dns_record {
+  name                         = azurerm_key_vault.vault.name
+  zone_name                    = azurerm_private_dns_zone.zone["vault"].name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.vault_endpoint.private_service_connection[0].private_ip_address]
+}
 resource azurerm_monitor_diagnostic_setting key_vault_logs {
   name                         = "${azurerm_key_vault.vault.name}-logs"
   target_resource_id           = azurerm_key_vault.vault.id

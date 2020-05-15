@@ -90,6 +90,7 @@ variable vdc_config {
     iaas_spoke_app_db_lb_address = "10.1.2.4"
     paas_spoke_range           = "10.2.0.0/16"
     paas_spoke_bastion_subnet  = "10.2.255.192/27"
+    paas_spoke_app_subnet      = "10.2.3.0/24"
     paas_spoke_appsvc_subnet   = "10.2.1.0/24"
     paas_spoke_data_subnet     = "10.2.2.0/24"
 

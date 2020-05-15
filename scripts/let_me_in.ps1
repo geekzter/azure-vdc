@@ -37,11 +37,11 @@ try {
     $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
     $paasAppResourceGroup = $(terraform output "paas_app_resource_group" 2>$null)
     
-    if ($All -or $StartMgmtVM -or $ConnectMgmtVM) {
+    if ($All -or $StartMgmtVM -or $ConnectMgmtVM -or $VpnClient) {
         $Script:mgmtVMName = $(terraform output "mgmt_name" 2>$null)
         # Start management VM
         if ($mgmtVMName) {
-            Write-Host "`nStarting Management VM" -ForegroundColor Green 
+            Write-Host "`nStarting Management & DNS Server (async)" -ForegroundColor Green 
             $null = Start-Job -Name "Start Management VM" -ScriptBlock {az vm start --ids $(az vm list -g $args --query "[?powerState!='VM running'].id" -o tsv)} -ArgumentList $vdcResourceGroup
         }
     }

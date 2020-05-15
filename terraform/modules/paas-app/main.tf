@@ -50,7 +50,7 @@ resource "azurerm_role_assignment" "demo_admin" {
   count                        = var.admin_object_id != null ? 1 : 0
 }
 
-resource "azurerm_storage_account" "app_storage" {
+resource azurerm_storage_account app_storage {
   name                         = "${local.resource_group_name_short}stor"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -93,6 +93,53 @@ resource "azurerm_storage_account" "app_storage" {
   ]
 }
 
+resource azurerm_private_endpoint app_blob_storage_endpoint {
+  name                         = "${azurerm_storage_account.app_storage.name}-blob-endpoint"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  location                     = azurerm_resource_group.app_rg.location
+  subnet_id                    = var.data_subnet_id
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_storage_account.app_storage.name}-blob-endpoint-connection"
+    private_connection_resource_id = azurerm_storage_account.app_storage.id
+    subresource_names          = ["blob"]
+  }
+
+  tags                         = var.tags
+}
+
+resource azurerm_private_dns_a_record app_blob_storage_dns_record {
+  name                         = azurerm_storage_account.app_storage.name
+  zone_name                    = "privatelink.blob.core.windows.net"
+  resource_group_name          = local.vdc_resource_group_name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.app_blob_storage_endpoint.private_service_connection[0].private_ip_address]
+  tags                         = var.tags
+}
+resource azurerm_private_endpoint app_table_storage_endpoint {
+  name                         = "${azurerm_storage_account.app_storage.name}-table-endpoint"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  location                     = azurerm_resource_group.app_rg.location
+  subnet_id                    = var.data_subnet_id
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_storage_account.app_storage.name}-table-endpoint-connection"
+    private_connection_resource_id = azurerm_storage_account.app_storage.id
+    subresource_names          = ["table"]
+  }
+
+  tags                         = var.tags
+}
+resource azurerm_private_dns_a_record app_table_storage_dns_record {
+  name                         = azurerm_storage_account.app_storage.name
+  zone_name                    = "privatelink.table.core.windows.net"
+  resource_group_name          = local.vdc_resource_group_name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.app_table_storage_endpoint.private_service_connection[0].private_ip_address]
+  tags                         = var.tags
+}
 resource azurerm_advanced_threat_protection app_storage {
   target_resource_id           = azurerm_storage_account.app_storage.id
   enabled                      = true
@@ -120,7 +167,7 @@ resource "azurerm_storage_blob" "app_storage_blob_sample" {
   count                        = var.storage_import ? 1 : 0
 }
 
-resource "azurerm_storage_account" "archive_storage" {
+resource azurerm_storage_account archive_storage {
   name                         = "${local.resource_group_name_short}arch"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -134,6 +181,56 @@ resource "azurerm_storage_account" "archive_storage" {
     command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
   }
 
+  tags                         = var.tags
+}
+
+resource azurerm_private_endpoint archive_blob_storage_endpoint {
+  name                         = "${azurerm_storage_account.archive_storage.name}-blob-endpoint"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  location                     = azurerm_resource_group.app_rg.location
+  subnet_id                    = var.data_subnet_id
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_storage_account.archive_storage.name}-blob-endpoint-connection"
+    private_connection_resource_id = azurerm_storage_account.archive_storage.id
+    subresource_names          = ["blob"]
+  }
+
+  tags                         = var.tags
+}
+
+resource azurerm_private_dns_a_record archive_blob_storage_dns_record {
+  name                         = azurerm_storage_account.archive_storage.name
+  zone_name                    = "privatelink.blob.core.windows.net"
+  resource_group_name          = local.vdc_resource_group_name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.archive_blob_storage_endpoint.private_service_connection[0].private_ip_address]
+  tags                         = var.tags
+}
+
+resource azurerm_private_endpoint archive_table_storage_endpoint {
+  name                         = "${azurerm_storage_account.archive_storage.name}-table-endpoint"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  location                     = azurerm_resource_group.app_rg.location
+  subnet_id                    = var.data_subnet_id
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_storage_account.archive_storage.name}-table-endpoint-connection"
+    private_connection_resource_id = azurerm_storage_account.archive_storage.id
+    subresource_names          = ["table"]
+  }
+
+  tags                         = var.tags
+}
+
+resource azurerm_private_dns_a_record archive_table_storage_dns_record {
+  name                         = azurerm_storage_account.archive_storage.name
+  zone_name                    = "privatelink.table.core.windows.net"
+  resource_group_name          = local.vdc_resource_group_name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.archive_table_storage_endpoint.private_service_connection[0].private_ip_address]
   tags                         = var.tags
 }
 
@@ -345,6 +442,31 @@ resource azurerm_app_service_custom_hostname_binding alias_domain {
   depends_on                   = [azurerm_dns_cname_record.verify_record]
 }
 
+# TODO
+# resource azurerm_private_endpoint app_service_endpoint {
+#   name                         = "${azurerm_app_service.paas_web_app.name}-endpoint"
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   location                     = azurerm_resource_group.app_rg.location
+#   subnet_id                    = var.app_subnet_id
+
+#   private_service_connection {
+#     is_manual_connection       = false
+#     name                       = "${azurerm_app_service.paas_web_app.name}-endpoint-connection"
+#     private_connection_resource_id = azurerm_app_service.paas_web_app.id
+#     subresource_names          = ["site"]
+#   }
+
+#   tags                         = var.tags
+# }
+# resource azurerm_private_dns_a_record app_service_dns_record {
+#   name                         = azurerm_app_service.paas_web_app.name
+#   zone_name                    = "privatelink.azurewebsites.net"
+#   resource_group_name          = local.vdc_resource_group_name
+#   ttl                          = 300
+#   records                      = [azurerm_private_endpoint.app_service_endpoint.private_service_connection[0].private_ip_address]
+#   tags                         = var.tags
+# }
+
 resource "azurerm_monitor_diagnostic_setting" "app_service_logs" {
   name                         = "AppService_Logs"
   target_resource_id           = azurerm_app_service.paas_web_app.id
@@ -412,8 +534,8 @@ resource azurerm_app_service_virtual_network_swift_connection network {
 }
 
 ### Event Hub
-resource "azurerm_eventhub_namespace" "app_eventhub" {
-  name                         = "${lower(replace(var.resource_group_name,"-",""))}eventhubNamespace"
+resource azurerm_eventhub_namespace app_eventhub {
+  name                         = "${lower(replace(var.resource_group_name,"-",""))}eventhubnamespace"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
   sku                          = "Standard"
@@ -468,8 +590,38 @@ resource "azurerm_eventhub" "app_eventhub" {
     }
   }
 }
+# Private endpoint connections on Event Hubs are only supported by namespaces created under a dedicated cluster
+# resource azurerm_private_endpoint eventhub_endpoint {
+#   name                         = "${azurerm_eventhub_namespace.app_eventhub.name}-endpoint"
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   location                     = azurerm_resource_group.app_rg.location
+#   subnet_id                    = var.data_subnet_id
 
-resource "azurerm_monitor_diagnostic_setting" "eventhub_logs" {
+#   private_service_connection {
+#     is_manual_connection       = false
+#     name                       = "${azurerm_eventhub_namespace.app_eventhub.name}-endpoint-connection"
+#     private_connection_resource_id = azurerm_eventhub_namespace.app_eventhub.id
+#     subresource_names          = ["namespace"]
+#   }
+
+#   tags                         = var.tags
+# }
+
+# resource azurerm_private_dns_a_record eventhub_dns_record {
+#   name                         = azurerm_eventhub_namespace.app_eventhub.name
+#   zone_name                    = "privatelink.servicebus.windows.net"
+#   resource_group_name          = local.vdc_resource_group_name
+#   ttl                          = 300
+#   records                      = [azurerm_private_endpoint.eventhub_endpoint.private_service_connection[0].private_ip_address]
+
+#   # Disable public access
+#   # provisioner local-exec {
+#   #   command                    = "az ..."
+#   # }
+#   tags                         = var.tags
+# }
+
+resource azurerm_monitor_diagnostic_setting eventhub_logs {
   name                         = "EventHub_Logs"
   target_resource_id           = azurerm_eventhub_namespace.app_eventhub.id
   storage_account_id           = var.diagnostics_storage_id
@@ -522,55 +674,55 @@ resource "azurerm_sql_server" "app_sqlserver" {
   tags                         = var.tags
 }
 
-resource "azurerm_sql_firewall_rule" "tfclient" {
-  name                         = "TerraformClientRule"
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  server_name                  = azurerm_sql_server.app_sqlserver.name
-  start_ip_address             = chomp(data.http.localpublicip.body)
-  end_ip_address               = chomp(data.http.localpublicip.body)
-}
+# resource "azurerm_sql_firewall_rule" "tfclient" {
+#   name                         = "TerraformClientRule"
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   server_name                  = azurerm_sql_server.app_sqlserver.name
+#   start_ip_address             = chomp(data.http.localpublicip.body)
+#   end_ip_address               = chomp(data.http.localpublicip.body)
+# }
 
-resource "azurerm_sql_firewall_rule" "adminclient" {
-  name                         = "AdminClientRule${count.index}"
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  server_name                  = azurerm_sql_server.app_sqlserver.name
-  start_ip_address             = element(local.admin_ips, count.index)
-  end_ip_address               = element(local.admin_ips, count.index)
-  count                        = length(local.admin_ips)
-}
+# resource "azurerm_sql_firewall_rule" "adminclient" {
+#   name                         = "AdminClientRule${count.index}"
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   server_name                  = azurerm_sql_server.app_sqlserver.name
+#   start_ip_address             = element(local.admin_ips, count.index)
+#   end_ip_address               = element(local.admin_ips, count.index)
+#   count                        = length(local.admin_ips)
+# }
 
-resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
-  name                         = "AllowAzureFirewallSubnet"
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  server_name                  = azurerm_sql_server.app_sqlserver.name
-  subnet_id                    = var.iag_subnet_id
+# resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
+#   name                         = "AllowAzureFirewallSubnet"
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   server_name                  = azurerm_sql_server.app_sqlserver.name
+#   subnet_id                    = var.iag_subnet_id
 
-  timeouts {
-    create                     = var.default_create_timeout
-    update                     = var.default_update_timeout
-    read                       = var.default_read_timeout
-    delete                     = var.default_delete_timeout
-  }  
-}
+#   timeouts {
+#     create                     = var.default_create_timeout
+#     update                     = var.default_update_timeout
+#     read                       = var.default_read_timeout
+#     delete                     = var.default_delete_timeout
+#   }  
+# }
 
-# https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#service-endpoints
-resource "azurerm_sql_virtual_network_rule" "appservice_subnet" {
-  name                         = "AllowAppServiceSubnet"
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  server_name                  = azurerm_sql_server.app_sqlserver.name
-  subnet_id                    = var.integrated_subnet_id
+# # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#service-endpoints
+# resource "azurerm_sql_virtual_network_rule" "appservice_subnet" {
+#   name                         = "AllowAppServiceSubnet"
+#   resource_group_name          = azurerm_resource_group.app_rg.name
+#   server_name                  = azurerm_sql_server.app_sqlserver.name
+#   subnet_id                    = var.integrated_subnet_id
 
-  timeouts {
-    create                     = var.default_create_timeout
-    update                     = var.default_update_timeout
-    read                       = var.default_read_timeout
-    delete                     = var.default_delete_timeout
-  }  
+#   timeouts {
+#     create                     = var.default_create_timeout
+#     update                     = var.default_update_timeout
+#     read                       = var.default_read_timeout
+#     delete                     = var.default_delete_timeout
+#   }  
 
-  depends_on                   = [azurerm_app_service_virtual_network_swift_connection.network]
-}
+#   depends_on                   = [azurerm_app_service_virtual_network_swift_connection.network]
+# }
 
-resource "azurerm_private_endpoint" "sqlserver_endpoint" {
+resource azurerm_private_endpoint sqlserver_endpoint {
   name                         = "${azurerm_sql_server.app_sqlserver.name}-endpoint"
   resource_group_name          = azurerm_resource_group.app_rg.name
   location                     = azurerm_resource_group.app_rg.location
@@ -584,6 +736,30 @@ resource "azurerm_private_endpoint" "sqlserver_endpoint" {
   }
 
   tags                         = var.tags
+}
+resource azurerm_private_dns_a_record sql_server_dns_record {
+  name                         = azurerm_sql_server.app_sqlserver.name
+  zone_name                    = "privatelink.database.windows.net"
+  resource_group_name          = local.vdc_resource_group_name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.sqlserver_endpoint.private_service_connection[0].private_ip_address]
+
+  tags                         = var.tags
+}
+
+resource null_resource sql_server_public_network_access {
+  triggers                     = {
+    always                     = timestamp()
+  }
+  # Disable public access
+  provisioner local-exec {
+    command                    = "az sql server update -n ${azurerm_sql_server.app_sqlserver.name} -g ${azurerm_sql_server.app_sqlserver.resource_group_name} --set publicNetworkAccess='Disabled' --query 'publicNetworkAccess' -o tsv"
+  }
+
+  depends_on                   = [
+                                  azurerm_private_dns_a_record.sql_server_dns_record,
+                                  null_resource.sql_database_access
+                                 ]
 }
 
 # FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)

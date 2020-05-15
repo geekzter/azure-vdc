@@ -185,7 +185,7 @@ output paas_app_sql_server_endpoint_id {
 }
 
 output paas_app_sql_server_endpoint_fqdn {
-  value       = azurerm_private_dns_a_record.sql_server_dns_record.fqdn
+  value       = module.paas_app.sql_server_endpoint_fqdn
 }
 
 output paas_app_sql_server_fqdn {

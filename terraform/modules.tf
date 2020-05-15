@@ -144,6 +144,7 @@ module paas_app {
   admin_login                  = var.admin_login
   admin_object_id              = var.admin_object_id
   admin_username               = var.admin_username
+  app_subnet_id                = lookup(module.paas_spoke_vnet.subnet_ids,"app","")
   management_subnet_ids        = concat(module.paas_spoke_vnet.management_subnet_ids,
                                  [
                                  azurerm_subnet.mgmt_subnet.id
@@ -210,6 +211,7 @@ module paas_spoke_vnet {
   }
   spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-paas-spoke-network"
   subnets                      = {
+    app                        = var.vdc_config["paas_spoke_app_subnet"]
     appservice                 = var.vdc_config["paas_spoke_appsvc_subnet"]
     data                       = var.vdc_config["paas_spoke_data_subnet"]
   }
