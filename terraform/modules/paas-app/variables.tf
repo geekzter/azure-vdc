@@ -27,6 +27,9 @@ variable default_delete_timeout {}
 variable enable_aad_auth {
   type                         = bool
 }
+variable enable_public_database_access {
+  type                         = bool
+}
 variable grant_database_access {
   type                         = bool
 }

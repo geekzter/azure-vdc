@@ -246,6 +246,12 @@ output shared_resources_group {
   value       = var.shared_resources_group
 }
 
+output terraform_public_ip_address {
+  value       = chomp(data.http.localpublicip.body)
+}
+output terraform_public_ip_prefix {
+  value       = local.ipprefixdata.data.prefix
+}
 output vdc_dns_server {
   value       = azurerm_network_interface.bas_if.private_ip_address
 }

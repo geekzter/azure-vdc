@@ -81,76 +81,6 @@ resource azurerm_advanced_threat_protection vdc_diag_storage {
   enabled                      = true
 }
 
-resource "azurerm_storage_account" "vdc_automation_storage" {
-  name                         = "${lower(replace(local.vdc_resource_group,"-",""))}autstorage"
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  location                     = local.automation_location
-  account_kind                 = "StorageV2"
-  account_tier                 = "Standard"
-  account_replication_type     = var.app_storage_replication_type
-  enable_https_traffic_only    = true
-
-  provisioner "local-exec" {
-    # TODO: Add --auth-mode login once supported
-    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
-  }
-
-  tags                         = local.tags
-}
-resource azurerm_private_endpoint aut_blob_storage_endpoint {
-  name                         = "${azurerm_storage_account.vdc_automation_storage.name}-blob-endpoint"
-  resource_group_name          = azurerm_storage_account.vdc_automation_storage.resource_group_name
-  location                     = azurerm_storage_account.vdc_automation_storage.location
-  
-  subnet_id                    = azurerm_subnet.shared_paas_subnet.id
-
-  private_service_connection {
-    is_manual_connection       = false
-    name                       = "${azurerm_storage_account.vdc_automation_storage.name}-blob-endpoint-connection"
-    private_connection_resource_id = azurerm_storage_account.vdc_automation_storage.id
-    subresource_names          = ["blob"]
-  }
-
-  tags                         = local.tags
-}
-resource azurerm_private_dns_a_record aut_storage_blob_dns_record {
-  name                         = azurerm_storage_account.vdc_automation_storage.name 
-  zone_name                    = azurerm_private_dns_zone.zone["blob"].name
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  ttl                          = 300
-  records                      = [azurerm_private_endpoint.aut_blob_storage_endpoint.private_service_connection[0].private_ip_address]
-  tags                         = var.tags
-}
-resource azurerm_private_endpoint aut_table_storage_endpoint {
-  name                         = "${azurerm_storage_account.vdc_automation_storage.name}-table-endpoint"
-  resource_group_name          = azurerm_storage_account.vdc_automation_storage.resource_group_name
-  location                     = azurerm_storage_account.vdc_automation_storage.location
-  
-  subnet_id                    = azurerm_subnet.shared_paas_subnet.id
-
-  private_service_connection {
-    is_manual_connection       = false
-    name                       = "${azurerm_storage_account.vdc_automation_storage.name}-table-endpoint-connection"
-    private_connection_resource_id = azurerm_storage_account.vdc_automation_storage.id
-    subresource_names          = ["table"]
-  }
-
-  tags                         = local.tags
-}
-resource azurerm_private_dns_a_record aut_storage_table_dns_record {
-  name                         = azurerm_storage_account.vdc_automation_storage.name 
-  zone_name                    = azurerm_private_dns_zone.zone["table"].name
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  ttl                          = 300
-  records                      = [azurerm_private_endpoint.aut_table_storage_endpoint.private_service_connection[0].private_ip_address]
-  tags                         = var.tags
-}
-
-resource azurerm_advanced_threat_protection vdc_automation_storage {
-  target_resource_id           = azurerm_storage_account.vdc_automation_storage.id
-  enabled                      = true
-}
-
 resource "azurerm_log_analytics_workspace" "vcd_workspace" {
   name                         = "${local.vdc_resource_group}-loganalytics"
   # Doesn't deploy in all regions e.g. South India
@@ -246,7 +176,7 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
 resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
   name                         = "Automation_Logs"
   target_resource_id           = azurerm_automation_account.automation.id
-  storage_account_id           = azurerm_storage_account.vdc_automation_storage.id
+  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
   log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
 
 
@@ -302,7 +232,7 @@ resource null_resource network_watcher {
   count                        = var.deploy_network_watcher ? 1 : 0
 }
 
-resource "azurerm_application_insights" "vdc_insights" {
+resource azurerm_application_insights vdc_insights {
   name                         = "${azurerm_resource_group.vdc_rg.name}-insights"
   location                     = azurerm_log_analytics_workspace.vcd_workspace.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name

@@ -361,28 +361,28 @@ variable deploy_monitoring_vm_extensions {
   default                      = false
   type                         = bool
 }
-
 variable deploy_network_watcher {
   description                  = "Whether to deploy connection monitors"
   default                      = false
   type                         = bool
 }
-
 variable deploy_non_essential_vm_extensions {
   description                  = "Whether to deploy optional VM extensions"
   default                      = false
   type                         = bool
 }
-
 variable deploy_security_vm_extensions {
   description                  = "Whether to deploy optional security VM extensions"
   default                      = false
   type                         = bool
 }
-
 variable deploy_vpn {
   description                  = "Whether to deploy the point to Site VPN"
   default                      = false
+  type                         = bool
+}
+variable enable_public_database_access {
+  default                      = true
   type                         = bool
 }
 variable enable_app_service_aad_auth {
