@@ -35,6 +35,9 @@ output automation_account_resource_group {
   value       = azurerm_automation_account.automation.resource_group_name
 }
 
+output automation_storage_account_name {
+  value       = azurerm_storage_account.vdc_automation_storage.name
+}
 output mgmt_address {
   value       = var.vdc_config["hub_mgmt_address"]
 }
@@ -152,6 +155,10 @@ output paas_app_eventhub_name {
 
 output paas_app_service_fqdn {
   value       = module.paas_app.app_service_fqdn
+}
+
+output paas_app_eventhub_storage_account_name {
+  value       = module.paas_app.eventhub_storage_account_name
 }
 
 output paas_app_service_outbound_ip_addresses {

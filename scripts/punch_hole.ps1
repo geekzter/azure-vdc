@@ -19,13 +19,15 @@ try {
     }
     
     Invoke-Command -ScriptBlock {
-        $Private:ErrorActionPreference = "Continue"
-        $Script:appResourceGroup       = $(terraform output "paas_app_resource_group"       2>$null)
-        $Script:appStorageAccount      = $(terraform output "paas_app_storage_account_name" 2>$null)
-        $Script:appEventHubNamespace   = $(terraform output "paas_app_eventhub_namespace"   2>$null)
-        $Script:appSQLServer           = $(terraform output "paas_app_sql_server"           2>$null)
-        $Script:keyVault               = $(terraform output "key_vault_name"                2>$null)
-        $Script:vdcResourceGroup       = $(terraform output "vdc_resource_group"            2>$null)
+        $Private:ErrorActionPreference    = "Continue"
+        $Script:appResourceGroup          = $(terraform output "paas_app_resource_group"                2>$null)
+        $Script:appStorageAccount         = $(terraform output "paas_app_storage_account_name"          2>$null)
+        $Script:appEventHubStorageAccount = $(terraform output "paas_app_eventhub_storage_account_name" 2>$null)
+        $Script:appEventHubNamespace      = $(terraform output "paas_app_eventhub_namespace"            2>$null)
+        $Script:appSQLServer              = $(terraform output "paas_app_sql_server"                    2>$null)
+        $Script:automationStorageAccount  = $(terraform output "automation_storage_account_name"        2>$null)
+        $Script:keyVault                  = $(terraform output "key_vault_name"                         2>$null)
+        $Script:vdcResourceGroup          = $(terraform output "vdc_resource_group"                     2>$null)
 
         $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(az group list --query "[?name=='$appResourceGroup']")))
     }
@@ -51,12 +53,21 @@ $ipPrefix = Invoke-RestMethod -Uri https://stat.ripe.net/data/network-info/data.
 Write-Host "Public IP prefix is $ipPrefix"
 
 # Punch hole in PaaS Firewalls
-if ($appStorageAccount) {
-    Write-Host "Adding rule for Storage Account $appStorageAccount to allow address $ipAddress..."
-    az storage account network-rule add -g $appResourceGroup --account-name $appStorageAccount --ip-address $ipAddress -o none
-    Write-Host "Adding rule for Storage Account $appStorageAccount to allow prefix $ipPrefix..."
-    az storage account network-rule add -g $appResourceGroup --account-name $appStorageAccount --ip-address $ipPrefix -o none
+foreach ($storageAccount in @($appStorageAccount,$appEventHubStorageAccount)) {
+    if ($storageAccount) {
+        Write-Host "Adding rule for Storage Account $storageAccount to allow address $ipAddress..."
+        az storage account network-rule add -g $appResourceGroup --account-name $storageAccount --ip-address $ipAddress -o none
+        Write-Host "Adding rule for Storage Account $storageAccount to allow prefix $ipPrefix..."
+        az storage account network-rule add -g $appResourceGroup --account-name $storageAccount --ip-address $ipPrefix -o none
+    }
 }
+if ($automationStorageAccount) {
+    Write-Host "Adding rule for Storage Account $automationStorageAccount to allow address $ipAddress..."
+    az storage account network-rule add -g $vdcResourceGroup --account-name $storageAccount --ip-address $ipAddress -o none
+    Write-Host "Adding rule for Storage Account $automationStorageAccount to allow prefix $ipPrefix..."
+    az storage account network-rule add -g $vdcResourceGroup --account-name $storageAccount --ip-address $ipPrefix -o none
+}
+
 if ($appEventHubNamespace) {
     Write-Host "Adding rule for Event Hub $appEventHubNamespace to allow address $ipAddress..."
     az eventhubs namespace network-rule add -g $appResourceGroup --namespace-name $appEventHubNamespace --ip-address $ipAddress --action Allow -o none

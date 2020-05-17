@@ -45,6 +45,10 @@ output eventhub_namespace_fqdn {
   value       = "${lower(azurerm_eventhub.app_eventhub.name)}.servicebus.windows.net"
 }
 
+output eventhub_storage_account_name {
+    value = azurerm_storage_account.archive_storage.name
+}
+
 output primary_blob_host {
     value = azurerm_storage_account.app_storage.primary_blob_host
 }
