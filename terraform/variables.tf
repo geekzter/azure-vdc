@@ -381,7 +381,7 @@ variable deploy_vpn {
   default                      = false
   type                         = bool
 }
-variable enable_public_database_access {
+variable disable_public_database_access {
   default                      = true
   type                         = bool
 }

@@ -12,6 +12,9 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
   address_prefixes             = [var.subnet_range]
 }
 
+# TODO: Add NSG
+# https://docs.microsoft.com/en-us/azure/bastion/bastion-nsg
+
 resource "azurerm_public_ip" "managed_bastion_pip" {
   name                         = "${local.virtual_network_name}-managed-bastion-pip"
   location                     = var.location

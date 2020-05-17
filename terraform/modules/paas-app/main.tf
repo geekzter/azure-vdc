@@ -188,7 +188,7 @@ resource azurerm_storage_account archive_storage {
   account_replication_type     = var.storage_replication_type
   enable_https_traffic_only    = true
 
-  provisioner "local-exec" {
+  provisioner local-exec {
     # TODO: Add --auth-mode login once supported
     command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
   }
@@ -367,6 +367,11 @@ resource azurerm_app_service paas_web_app {
         retention_in_mb          = 100
       }
     }
+  }
+
+  # Configure more logging with Azure CLI
+  provisioner local-exec {
+    command                    = "az webapp log config --ids ${self.id} --application-logging true --detailed-error-messages true --failed-request-tracing true"
   }
 
   site_config {
@@ -745,7 +750,7 @@ resource "azurerm_sql_virtual_network_rule" "appservice_subnet" {
     delete                     = var.default_delete_timeout
   }  
 
-  count                        = var.enable_public_database_access ? 1 : 0
+  count                        = var.disable_public_database_access ? 0 : 1
 
   depends_on                   = [azurerm_app_service_virtual_network_swift_connection.network]
 }
@@ -784,7 +789,7 @@ resource null_resource sql_server_public_network_access {
     command                    = "az sql server update -n ${azurerm_sql_server.app_sqlserver.name} -g ${azurerm_sql_server.app_sqlserver.resource_group_name} --set publicNetworkAccess='Disabled' --query 'publicNetworkAccess' -o tsv"
   }
 
-  count                        = var.enable_public_database_access ? 0 : 1
+  count                        = var.disable_public_database_access ? 1 : 0
 
   depends_on                   = [
                                   azurerm_private_dns_a_record.sql_server_dns_record,

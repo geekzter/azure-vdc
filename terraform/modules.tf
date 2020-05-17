@@ -159,8 +159,8 @@ module paas_app {
   default_update_timeout       = var.default_update_timeout
   default_read_timeout         = var.default_read_timeout
   default_delete_timeout       = var.default_delete_timeout
+  disable_public_database_access= var.disable_public_database_access
   enable_aad_auth              = var.enable_app_service_aad_auth
-  enable_public_database_access= var.enable_public_database_access
   grant_database_access        = var.grant_database_access
   iag_subnet_id                = azurerm_subnet.iag_subnet.id
   integrated_subnet_id         = lookup(module.paas_spoke_vnet.subnet_ids,"appservice","")

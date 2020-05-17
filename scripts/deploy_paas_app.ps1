@@ -197,6 +197,11 @@ function RestartApp () {
 
     Write-Information "Restarting App Service '$appAppServiceName'..."
     az webapp restart -g $appResourceGroup -n $appAppServiceName 
+
+    # Sleep to prevent false positive testing
+    $appStartupWaitTime = 15
+    Write-Host "Sleeping $appStartupWaitTime seconds for application to start up..."
+    Start-Sleep -Seconds $appStartupWaitTime
 }
 function TestApp (
     [parameter(Mandatory=$true)][string]$AppUrl

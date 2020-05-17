@@ -24,10 +24,10 @@ variable default_create_timeout {}
 variable default_update_timeout {}
 variable default_read_timeout {}
 variable default_delete_timeout {}
-variable enable_aad_auth {
+variable disable_public_database_access {
   type                         = bool
 }
-variable enable_public_database_access {
+variable enable_aad_auth {
   type                         = bool
 }
 variable grant_database_access {
