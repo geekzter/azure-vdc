@@ -7,6 +7,7 @@ locals {
       azurerm_storage_account.vdc_diag_storage.primary_table_host,
     ]),
     "scripturl",                 azurerm_storage_blob.mgmt_prepare_script.url,
+    "sqldatabase",               module.paas_app.sql_database,
     "sqlserver",                 module.paas_app.sql_server_fqdn,
     "suffix",                    local.suffix,
     "workspace",                 terraform.workspace

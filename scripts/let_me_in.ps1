@@ -133,7 +133,8 @@ try {
             if ($dba) {
                 Write-Host "$($dba.login) is already current Azure Active Directory DBA for SQL Server $sqlServerName"
             } else {
-                $dba = az sql server ad-admin create -u "ericvan@microsoft.com" -i "115c3ab3-943b-4e0c-96ed-1a1763fbaa44" -g $paasAppResourceGroup -s $sqlServerName -o json | ConvertFrom-Json
+                $loggedInUser = (az ad signed-in-user show --query "{ObjectId:objectId,UserName:userPrincipalName}" | ConvertFrom-Json)
+                $dba = az sql server ad-admin create -u $loggedInUser.UserName -i $loggedInUser.ObjectId -g $paasAppResourceGroup -s $sqlServerName -o json | ConvertFrom-Json
                 Write-Host "$($dba.login) is now Azure Active Directory DBA for SQL Server $sqlServerName"
             }
 
