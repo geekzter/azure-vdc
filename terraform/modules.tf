@@ -106,6 +106,10 @@ module managed_bastion_hub {
   subnet_range                 = var.vdc_config["hub_bastion_subnet"]
   virtual_network_id           = azurerm_virtual_network.hub_vnet.id
 
+  default_create_timeout       = var.default_create_timeout
+  default_update_timeout       = var.default_update_timeout
+  default_read_timeout         = var.default_read_timeout
+  default_delete_timeout       = var.default_delete_timeout
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
 

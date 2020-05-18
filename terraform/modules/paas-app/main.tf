@@ -737,7 +737,7 @@ resource "azurerm_sql_firewall_rule" "tfclient" {
 # }
 
 # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#service-endpoints
-resource "azurerm_sql_virtual_network_rule" "appservice_subnet" {
+resource azurerm_sql_virtual_network_rule appservice_subnet {
   name                         = "AllowAppServiceSubnet"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
@@ -823,9 +823,9 @@ resource azurerm_sql_active_directory_administrator dba {
   # Configure as Terraform identity as DBA
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
-  login                        = "Terraform"
+# login                        = "Terraform"
+  login                        = local.dba_object_id
   # BUG: Not populated in Azure Cloud Shell  https://github.com/terraform-providers/terraform-provider-azurerm/issues/6310
-# object_id                    = data.azurerm_client_config.current.object_id 
   object_id                    = local.dba_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 } 
