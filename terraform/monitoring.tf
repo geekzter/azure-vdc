@@ -41,6 +41,13 @@ resource azurerm_private_endpoint diag_blob_storage_endpoint {
     subresource_names          = ["blob"]
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   tags                         = local.tags
 }
 resource azurerm_private_dns_a_record diag_storage_blob_dns_record {
@@ -64,6 +71,13 @@ resource azurerm_private_endpoint diag_table_storage_endpoint {
     private_connection_resource_id = azurerm_storage_account.vdc_diag_storage.id
     subresource_names          = ["table"]
   }
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   tags                         = local.tags
 }

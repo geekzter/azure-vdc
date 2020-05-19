@@ -191,6 +191,13 @@ resource azurerm_private_endpoint vault_endpoint {
     subresource_names          = ["vault"]
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   tags                         = local.tags
 }
 resource azurerm_private_dns_a_record vault_dns_record {
@@ -260,6 +267,13 @@ resource azurerm_private_endpoint aut_blob_storage_endpoint {
     private_connection_resource_id = azurerm_storage_account.vdc_automation_storage.id
     subresource_names          = ["blob"]
   }
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   tags                         = local.tags
 }

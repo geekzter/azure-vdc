@@ -109,6 +109,13 @@ resource azurerm_private_endpoint app_blob_storage_endpoint {
     subresource_names          = ["blob"]
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   tags                         = var.tags
 }
 
@@ -132,6 +139,13 @@ resource azurerm_private_endpoint app_table_storage_endpoint {
     private_connection_resource_id = azurerm_storage_account.app_storage.id
     subresource_names          = ["table"]
   }
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   tags                         = var.tags
 }
@@ -209,6 +223,13 @@ resource azurerm_private_endpoint archive_blob_storage_endpoint {
     subresource_names          = ["blob"]
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   tags                         = var.tags
 }
 
@@ -233,6 +254,13 @@ resource azurerm_private_endpoint archive_table_storage_endpoint {
     private_connection_resource_id = azurerm_storage_account.archive_storage.id
     subresource_names          = ["table"]
   }
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   tags                         = var.tags
 }
@@ -767,6 +795,13 @@ resource azurerm_private_endpoint sqlserver_endpoint {
     private_connection_resource_id = azurerm_sql_server.app_sqlserver.id
     subresource_names          = ["sqlServer"]
   }
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   tags                         = var.tags
 }
