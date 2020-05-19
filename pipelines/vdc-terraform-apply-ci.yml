@@ -312,6 +312,8 @@ jobs:
       appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
       appSQLServer: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server'] ]
       appSQLServerFQDN: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server_fqdn'] ]
+      dbaName: $[ dependencies.Provision.outputs['terraform.admin_login'] ]
+      dbaObjectID: $[ dependencies.Provision.outputs['terraform.admin_object_id'] ]
       paasResourceGroup: $[ dependencies.Provision.outputs['terraform.paas_app_resource_group'] ]
       storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
       storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
@@ -357,6 +359,8 @@ jobs:
                                   -AppResourceGroup $(paasResourceGroup) `
                                   -AppAppServiceIdentity $(appMSIName) `
                                   -AppAppServiceClientID $(appMSIClientID) `
+                                  -DBAName $(dbaName) `
+                                  -DBAObjectId $(dbaObjectId) `
                                   -SqlServer $(appSQLServer) `
                                   -SqlServerFQDN $(appSQLServerFQDN) `
                                   -SqlDatabase $(appSQLDatabase)

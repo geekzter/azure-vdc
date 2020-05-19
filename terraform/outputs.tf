@@ -1,9 +1,9 @@
 output admin_login {
-  value       = var.admin_login
+  value       = var.admin_login != null ? var.admin_login : module.paas_app.dba_login
 }
 
 output admin_object_id {
-  value       = var.admin_object_id
+  value       = var.admin_object_id != null ? var.admin_object_id : module.paas_app.dba_object_id
 }
 
 output admin_user {

@@ -25,6 +25,14 @@ output app_service_outbound_ip_addresses {
     value = azurerm_app_service.paas_web_app.outbound_ip_addresses
 }
 
+output dba_login {
+    value = azurerm_sql_active_directory_administrator.dba.login
+}
+
+output dba_object_id {
+    value = azurerm_sql_active_directory_administrator.dba.object_id
+}
+
 output eventhub_name {
     value = azurerm_eventhub.app_eventhub.name
 }
