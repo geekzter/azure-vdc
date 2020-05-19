@@ -593,6 +593,23 @@
         },
         "22": {
           "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Automation/automationAccounts/${prefix}-${environment}-${suffix}-automation"
+              }
+            ],
+            "type": "Extension/Microsoft_Azure_Automation/PartType/AccountDashboardBladePinnedPart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 11
+          }
+        },
+        "23": {
+          "metadata": {
             "asset": {
               "idInputName": "ComponentId",
               "type": "ApplicationInsights"
@@ -672,59 +689,7 @@
             "y": 12
           }
         },
-        "23": {
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Automation/automationAccounts/${prefix}-${environment}-${suffix}-automation"
-              }
-            ],
-            "type": "Extension/Microsoft_Azure_Automation/PartType/AccountDashboardBladePinnedPart"
-          },
-          "position": {
-            "colSpan": 2,
-            "rowSpan": 1,
-            "x": 10,
-            "y": 12
-          }
-        },
         "24": {
-          "metadata": {
-            "inputs": [
-              {
-                "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
-              },
-              {
-                "isOptional": true,
-                "name": "solutionId"
-              },
-              {
-                "isOptional": true,
-                "name": "timeInterval",
-                "value": {
-                  "_Now": "2019-11-19T12:10:07.715Z",
-                  "_duration": 86400000,
-                  "_end": null
-                }
-              },
-              {
-                "binding": "timeRange",
-                "isOptional": true,
-                "name": "timeRange"
-              }
-            ],
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
-          },
-          "position": {
-            "colSpan": 4,
-            "rowSpan": 2,
-            "x": 0,
-            "y": 13
-          }
-        },
-        "25": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -782,10 +747,57 @@
             "colSpan": 2,
             "rowSpan": 2,
             "x": 10,
+            "y": 12
+          }
+        },
+        "25": {
+          "metadata": {
+            "inputs": [
+              {
+                "name": "id",
+                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
+              },
+              {
+                "isOptional": true,
+                "name": "solutionId"
+              },
+              {
+                "isOptional": true,
+                "name": "timeInterval",
+                "value": {
+                  "_Now": "2019-11-19T12:10:07.715Z",
+                  "_duration": 86400000,
+                  "_end": null
+                }
+              },
+              {
+                "binding": "timeRange",
+                "isOptional": true,
+                "name": "timeRange"
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/ViewTileIFramePart"
+          },
+          "position": {
+            "colSpan": 4,
+            "rowSpan": 2,
+            "x": 0,
             "y": 13
           }
         },
         "26": {
+          "metadata": {
+            "inputs": [],
+            "type": "Extension/Microsoft_Azure_FlowLog/PartType/TrafficAnalyticsDashboardPinnedPart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 2,
+            "x": 10,
+            "y": 14
+          }
+        },
+        "27": {
           "metadata": {
             "inputs": [
               {
@@ -820,7 +832,7 @@
             "y": 15
           }
         },
-        "27": {
+        "28": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -896,7 +908,7 @@
             "y": 16
           }
         },
-        "28": {
+        "29": {
           "metadata": {
             "inputs": [
               {
@@ -931,7 +943,29 @@
             "y": 17
           }
         },
-        "29": {
+        "3": {
+          "metadata": {
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "resourceGroup"
+              },
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
+          },
+          "position": {
+            "colSpan": 5,
+            "rowSpan": 4,
+            "x": 12,
+            "y": 0
+          }
+        },
+        "30": {
           "metadata": {
             "inputs": [
               {
@@ -966,29 +1000,7 @@
             "y": 19
           }
         },
-        "3": {
-          "metadata": {
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "resourceGroup"
-              },
-              {
-                "isOptional": true,
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
-              }
-            ],
-            "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
-          },
-          "position": {
-            "colSpan": 5,
-            "rowSpan": 4,
-            "x": 12,
-            "y": 0
-          }
-        },
-        "30": {
+        "31": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -1333,12 +1345,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-65b61a1f-7211-4c43-b0f2-c3e4b334904a",
-              "StartboardPart-AnalyticsPart-65b61a1f-7211-4c43-b0f2-c3e4b3349050",
-              "StartboardPart-MonitorChartPart-65b61a1f-7211-4c43-b0f2-c3e4b3349056",
-              "StartboardPart-AnalyticsPart-65b61a1f-7211-4c43-b0f2-c3e4b334905e",
-              "StartboardPart-AnalyticsPart-65b61a1f-7211-4c43-b0f2-c3e4b3349068",
-              "StartboardPart-AnalyticsPart-65b61a1f-7211-4c43-b0f2-c3e4b334906e"
+              "StartboardPart-ApplicationMapPart-b0bc79ff-ebd1-4955-b971-2e53aeee51eb",
+              "StartboardPart-AnalyticsPart-b0bc79ff-ebd1-4955-b971-2e53aeee51f1",
+              "StartboardPart-MonitorChartPart-b0bc79ff-ebd1-4955-b971-2e53aeee51f7",
+              "StartboardPart-AnalyticsPart-b0bc79ff-ebd1-4955-b971-2e53aeee51ff",
+              "StartboardPart-AnalyticsPart-b0bc79ff-ebd1-4955-b971-2e53aeee5209",
+              "StartboardPart-AnalyticsPart-b0bc79ff-ebd1-4955-b971-2e53aeee520f"
             ],
             "model": {
               "format": "utc",

@@ -19,6 +19,8 @@ param (
     [parameter(Mandatory=$false)][object]$AppAppServiceName=$null,
     [parameter(Mandatory=$false)][object]$AppAppServiceIdentity,
     [parameter(Mandatory=$false)][object]$AppAppServiceClientID,
+    [parameter(Mandatory=$false)][object]$DBAName,
+    [parameter(Mandatory=$false)][object]$DBAObjectId,
     [parameter(Mandatory=$false)][object]$AppUrl,
     [parameter(Mandatory=$false)][object]$DevOpsOrgUrl,
     [parameter(Mandatory=$false)][object]$DevOpsProject,
@@ -140,11 +142,31 @@ function ImportDatabase (
         Write-Host "Database ${SqlServer}/${SqlDatabaseName} is not empty, skipping import"
     }
 
-    # Fix permissions on database, so App Service MSI has access
-    Write-Verbose "./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword"
-    ./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId `
-                                -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN `
-                                -UserName $UserName -SecurePassword $SecurePassword
+    # Fix permissions on database, so App Service MSI and DBA (e.g. current user) have access
+    # Try to fetch user we grant access to (import hase erased database level users)
+    if (!($DBAName) -or !($DBAObjectId)) {
+        if ($(az account show --query "user.type" -o tsv) -ieq "user") {
+            $loggedInUser = (az ad signed-in-user show --query "{ObjectId:objectId,UserName:userPrincipalName}" | ConvertFrom-Json)
+        }
+        if ($loggedInUser) {
+            $DBAName = $loggedInUser.UserName
+            $DBAObjectId = $loggedInUser.ObjectId
+        }
+    }
+    # Execute DB script
+    if ($DBAName -and $DBAObjectId) {
+        Write-Verbose "./grant_database_access.ps1 -DBAName $DBAName -DBAObjectId $DBAObjectId -MSIName $MSIName -MSIClientId $MSIClientId -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword"
+        ./grant_database_access.ps1 -DBAName $DBAName -DBAObjectId $DBAObjectId `
+                                    -MSIName $MSIName -MSIClientId $MSIClientId `
+                                    -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN `
+                                    -UserName $UserName -SecurePassword $SecurePassword
+    } else {
+        Write-Verbose "./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword"
+        ./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId `
+                                    -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN `
+                                    -UserName $UserName -SecurePassword $SecurePassword
+    }
+
 
     # Reset Public Network Access to what it was before
     az sql server update -n $SqlServer -g $ResourceGroup --set publicNetworkAccess="$sqlPublicNetworkAccess" -o none
@@ -269,6 +291,9 @@ if ($useTerraform) {
 
             $script:AppAppServiceIdentity  ??= $(terraform output "paas_app_service_msi_name"      2>$null)
             $script:AppAppServiceClientID  ??= $(terraform output "paas_app_service_msi_client_id" 2>$null)
+
+            $script:DBAName                ??= $(terraform output "admin_login"                    2>$null)
+            $script:DBAObjectId            ??= $(terraform output "admin_object_id"                2>$null)
 
             $script:AppUrl                 ??= $(terraform output "paas_app_url"                   2>$null)
             $script:DevOpsOrgUrl           ??= $(terraform output "devops_org_url"                 2>$null)

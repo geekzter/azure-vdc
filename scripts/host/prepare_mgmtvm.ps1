@@ -50,6 +50,7 @@ $ssmsShortcut = $wsh.CreateShortcut("$($env:USERPROFILE)\Desktop\$($config.sqlda
 $ssmsShortcut.TargetPath = $ssmsPath
 # MFA switch not yet supported: https://docs.microsoft.com/en-us/sql/ssms/ssms-utility?view=sql-server-ver15
 # $ssmsShortcut.Arguments = "-s $($config.sqlserver) -d $($config.sqlserver) -G"
+#$ssmsShortcut.Arguments = "-d $($config.sqldatabase)"
 $ssmsShortcut.Description = "$($config.sqlserver)/$($config.sqldatabase)"
 $ssmsShortcut.Save()
 

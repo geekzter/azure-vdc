@@ -1,3 +1,11 @@
+output admin_login {
+  value       = var.admin_login
+}
+
+output admin_object_id {
+  value       = var.admin_object_id
+}
+
 output admin_user {
   sensitive   = false
   description = "VDC Admin username"
