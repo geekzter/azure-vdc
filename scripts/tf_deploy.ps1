@@ -34,6 +34,10 @@ param (
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
 ### Validation
+if ( $PSVersionTable.PSVersion -lt 7) {
+    Write-Warning "PowerShell 7 required, exiting"
+    exit
+}
 if (!($Workspace)) { Throw "You must supply a value for Workspace" }
 
 Write-Host $MyInvocation.line -ForegroundColor Green

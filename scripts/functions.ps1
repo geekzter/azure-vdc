@@ -27,20 +27,14 @@ function AzLogin (
     }
 
     # Populate Terraform azurerm variables where possible
-    # Pass on pipeline service principal credentials to Terraform
     if ($userType -ine "user") {
-        if (!$env:ARM_CLIENT_ID) {
-            $env:ARM_CLIENT_ID=$env:servicePrincipalId
-        }
-        if (!$env:ARM_CLIENT_SECRET) {
-            $env:ARM_CLIENT_SECRET=$env:servicePrincipalKey
-        }
-        if (!$env:ARM_TENANT_ID) {
-            $env:ARM_TENANT_ID=($env:tenantId ? $env:tenantId : $(az account show --query tenantId -o tsv))
-        }
-        if (!$env:ARM_SUBSCRIPTION_ID) {
-            $env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-        }
+        # Pass on pipeline service principal credentials to Terraform
+        $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+        $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+        $env:ARM_TENANT_ID       ??= $env:tenantId
+        # Get from Azure CLI context
+        $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+        $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
     }
     # Variables for Terraform azurerm Storage backend
     if (!$env:ARM_ACCESS_KEY -and !$env:ARM_SAS_TOKEN) {
