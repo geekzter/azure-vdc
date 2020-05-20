@@ -158,6 +158,7 @@ try {
             $vpnPackageUrl = $(az network vnet-gateway vpn-client generate --ids $gatewayId --authentication-method EAPTLS -o tsv)
 
             # Download VPN Profile
+            Write-Host "Generating VPN profile..."
             $packageFile = New-TemporaryFile
             Invoke-WebRequest -UseBasicParsing -Uri $vpnPackageUrl -OutFile $packageFile
             $tempPackagePath = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
@@ -167,6 +168,7 @@ try {
             Write-Verbose "VPN Temp Profile ${vpnProfileTempFile}"
 
             # Edit VPN Profile
+            Write-Host "Modifying VPN profile DNS configuration..."
             $vpnProfileXml = [xml](Get-Content $vpnProfileTempFile)
             $clientconfig = $vpnProfileXml.SelectSingleNode("//*[name()='clientconfig']")
             $dnsservers = $vpnProfileXml.CreateElement("dnsservers", $vpnProfileXml.AzVpnProfile.xmlns)
