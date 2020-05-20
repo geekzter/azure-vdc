@@ -25,6 +25,18 @@ parameters:
   displayName: Destroy infrastructure
   type: boolean
   default: true
+- name: workspace
+  displayName: Terraform Workspace
+  type: string
+  default: ci
+  values:
+  - ci
+  - ci1
+  - ci2
+  - ci3
+  - tst1
+  - tst2
+  - tst3
 
 trigger:
   batch: true
@@ -90,7 +102,7 @@ variables:
 - name: 'TF_INPUT'
   value: 0
 - name: 'TF_WORKSPACE'
-  value: 'ci'
+  value: ${{ parameters.workspace }}
 
 # Inline variables shared across jobs
   # This references this pipeline:
