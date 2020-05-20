@@ -182,8 +182,10 @@ function Invoke (
 ) {
     Write-Host "`n$cmd" -ForegroundColor Green 
     Invoke-Expression $cmd
-    if ($LASTEXITCODE -ne 0) {
-        exit
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
+        Write-Warning "'$cmd' exited with status $exitCode"
+        exit $exitCode
     }
 }
 

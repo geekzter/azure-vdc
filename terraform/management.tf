@@ -217,7 +217,10 @@ resource azurerm_virtual_machine_extension mgmt_roles {
   # }
 
   tags                         = local.tags
-  depends_on                   = [null_resource.start_mgmt]
+  depends_on                   = [
+                                  null_resource.start_mgmt,
+                                  azurerm_private_dns_a_record.aut_storage_blob_dns_record
+                                 ]
 }
 
 resource azurerm_virtual_machine_extension mgmt_monitor {

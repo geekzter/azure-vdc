@@ -49,6 +49,8 @@ resource azurerm_private_endpoint diag_blob_storage_endpoint {
   }  
 
   tags                         = local.tags
+
+  depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record diag_storage_blob_dns_record {
   name                         = azurerm_storage_account.vdc_diag_storage.name 
@@ -80,6 +82,8 @@ resource azurerm_private_endpoint diag_table_storage_endpoint {
   }  
 
   tags                         = local.tags
+
+  depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record diag_storage_table_dns_record {
   name                         = azurerm_storage_account.vdc_diag_storage.name 

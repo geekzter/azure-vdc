@@ -199,6 +199,8 @@ resource azurerm_private_endpoint vault_endpoint {
   }  
 
   tags                         = local.tags
+
+  depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record vault_dns_record {
   name                         = azurerm_key_vault.vault.name
@@ -276,6 +278,8 @@ resource azurerm_private_endpoint aut_blob_storage_endpoint {
   }  
 
   tags                         = local.tags
+
+  depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record aut_storage_blob_dns_record {
   name                         = azurerm_storage_account.vdc_automation_storage.name 

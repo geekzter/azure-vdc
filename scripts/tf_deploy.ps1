@@ -127,14 +127,14 @@ try {
         if ($Upgrade) {
             $initCmd += " -upgrade"
         }
-        Invoke "`n$initCmd" 
+        Invoke "$initCmd" 
     }
 
     # Workspace can only be selected after init 
     $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
     if ($Validate) {
-        Invoke "`nterraform validate" 
+        Invoke "terraform validate" 
     }
     
     # Prepare common arguments

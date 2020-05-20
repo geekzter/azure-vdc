@@ -49,6 +49,7 @@ locals {
                                  azurerm_private_dns_a_record.aut_storage_blob_dns_record.id,
                                  azurerm_private_dns_a_record.diag_storage_blob_dns_record.id,
                                  azurerm_private_dns_a_record.diag_storage_table_dns_record.id,
+                                 azurerm_private_dns_a_record.vault_dns_record.id,
                                  azurerm_storage_account_network_rules.automation_storage_rules.id
   ])
   # HACK: This value is dependent on all elements of the list being created

@@ -212,6 +212,7 @@ jobs:
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
+          powerShellIgnoreLASTEXITCODE: false
           workingDirectory: '$(scriptDirectory)'
         env:
           TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
@@ -259,22 +260,20 @@ jobs:
       # Deallocate/Stop MV's to force tf_deploy.ps1 to test for stopped VM's
       # Stopped VM's do not allow extensions to be installed
       - task: AzureResourceGroupDeployment@2
-        displayName: 'Deallocate VM''s in App resource group'
-        enabled: true
-        inputs:
-          azureSubscription: '$(subscriptionConnection)'
-          # TODO
-          #action: StopWithDeallocate
-          action: Stop
-          resourceGroupName: '$(iaasResourceGroup)'
-
-      - task: AzureResourceGroupDeployment@2
         displayName: 'Stop VM''s in VDC resource group'
         enabled: true
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           action: Stop
           resourceGroupName: '$(vdcResourceGroup)'
+
+      - task: AzureResourceGroupDeployment@2
+        displayName: 'Deallocate VM''s in App resource group'
+        enabled: true
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          action: StopWithDeallocate
+          resourceGroupName: '$(iaasResourceGroup)'
 
       # Test for failures that only occur when resources already exist
       - task: AzureCLI@2
