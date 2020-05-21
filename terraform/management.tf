@@ -315,6 +315,8 @@ resource azurerm_virtual_machine_extension mgmt_diagnostics {
   depends_on                   = [
                                   null_resource.start_mgmt,
                                   azurerm_virtual_machine_extension.mgmt_monitor,
+#                                  azurerm_private_dns_a_record.diag_storage_table_dns_record,
+#                                  azurerm_private_dns_a_record.diag_storage_blob_dns_record,
                                   azurerm_firewall_network_rule_collection.iag_net_outbound_http_rules
                                  ]
 }
@@ -402,6 +404,7 @@ SETTINGS
 
   depends_on                   = [
                                   azurerm_firewall_application_rule_collection.iag_app_rules,
+#                                  azurerm_private_dns_a_record.vault_dns_record,
                                   null_resource.start_mgmt,
                                   null_resource.mgmt_sleep
                                   ]
@@ -429,6 +432,8 @@ resource azurerm_monitor_diagnostic_setting mgmt_vm {
 
   count                        = var.app_db_vm_number
   depends_on                   = [
+#                                  azurerm_private_dns_a_record.diag_storage_table_dns_record,
+#                                  azurerm_private_dns_a_record.diag_storage_blob_dns_record,
                                   azurerm_virtual_machine_extension.mgmt_aadlogin,
                                   azurerm_virtual_machine_extension.mgmt_bginfo,
                                   azurerm_virtual_machine_extension.mgmt_dependency_monitor,
