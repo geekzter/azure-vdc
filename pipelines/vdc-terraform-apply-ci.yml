@@ -451,7 +451,7 @@ jobs:
       name: $(pipelineEnvironment)
       resourceType: VirtualMachine
       tags: 'web'
-    strategy:    strategy:
+    strategy:
       runOnce:
         deploy:
           steps:
