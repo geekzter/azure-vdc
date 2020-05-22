@@ -56,16 +56,16 @@ variables:
 - name: 'pipelineEnvironment'
   value: 'vdc-${{ parameters.workspace }}'
 
-- stage: deploy
-  jobs:
-  - deployment: DeployWeb
-    displayName: deploy Web App
-    pool:
-      vmImage: 'Ubuntu-latest'
-    # creates an environment if it doesn't exist
-    environment: 'vdc-ci'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - script: echo Hello world
+#- stage: deploy
+jobs:
+- deployment: DeployWeb
+  displayName: deploy Web App
+  pool:
+    vmImage: 'Ubuntu-latest'
+  # creates an environment if it doesn't exist
+  environment: 'vdc-ci'
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - script: echo Hello world
