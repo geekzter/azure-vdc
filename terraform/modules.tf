@@ -45,7 +45,12 @@ locals {
   vm_agent_dependencies        = concat(module.iaas_spoke_vnet.access_dependencies,
                                  [
                                  azurerm_firewall_application_rule_collection.iag_app_rules.id,
-                                 azurerm_firewall_network_rule_collection.iag_net_outbound_rules.id
+                                 azurerm_firewall_network_rule_collection.iag_net_outbound_rules.id,
+                                 azurerm_private_dns_a_record.aut_storage_blob_dns_record.id,
+                                 azurerm_private_dns_a_record.diag_storage_blob_dns_record.id,
+                                 azurerm_private_dns_a_record.diag_storage_table_dns_record.id,
+                                 azurerm_private_dns_a_record.vault_dns_record.id,
+                                 azurerm_storage_account_network_rules.automation_storage_rules.id
   ])
   # HACK: This value is dependent on all elements of the list being created
   vm_connectivity_dependency   = join("|",[for dep in local.vm_agent_dependencies : substr(dep,0,1)])
@@ -102,6 +107,10 @@ module managed_bastion_hub {
   subnet_range                 = var.vdc_config["hub_bastion_subnet"]
   virtual_network_id           = azurerm_virtual_network.hub_vnet.id
 
+  default_create_timeout       = var.default_create_timeout
+  default_update_timeout       = var.default_update_timeout
+  default_read_timeout         = var.default_read_timeout
+  default_delete_timeout       = var.default_delete_timeout
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
 
@@ -144,6 +153,7 @@ module paas_app {
   admin_login                  = var.admin_login
   admin_object_id              = var.admin_object_id
   admin_username               = var.admin_username
+  app_subnet_id                = lookup(module.paas_spoke_vnet.subnet_ids,"app","")
   management_subnet_ids        = concat(module.paas_spoke_vnet.management_subnet_ids,
                                  [
                                  azurerm_subnet.mgmt_subnet.id
@@ -154,6 +164,7 @@ module paas_app {
   default_update_timeout       = var.default_update_timeout
   default_read_timeout         = var.default_read_timeout
   default_delete_timeout       = var.default_delete_timeout
+  disable_public_database_access= var.disable_public_database_access
   enable_aad_auth              = var.enable_app_service_aad_auth
   grant_database_access        = var.grant_database_access
   iag_subnet_id                = azurerm_subnet.iag_subnet.id
@@ -210,6 +221,7 @@ module paas_spoke_vnet {
   }
   spoke_virtual_network_name   = "${azurerm_resource_group.vdc_rg.name}-paas-spoke-network"
   subnets                      = {
+    app                        = var.vdc_config["paas_spoke_app_subnet"]
     appservice                 = var.vdc_config["paas_spoke_appsvc_subnet"]
     data                       = var.vdc_config["paas_spoke_data_subnet"]
   }

@@ -222,6 +222,7 @@ resource azurerm_network_watcher_flow_log spoke_nsg {
   network_security_group_id    = azurerm_network_security_group.spoke_nsg.id
   storage_account_id           = var.diagnostics_storage_id
   enabled                      = true
+  version                      = 2
 
   retention_policy {
     enabled                    = true

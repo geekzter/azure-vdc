@@ -25,6 +25,14 @@ output app_service_outbound_ip_addresses {
     value = azurerm_app_service.paas_web_app.outbound_ip_addresses
 }
 
+output dba_login {
+    value = azurerm_sql_active_directory_administrator.dba.login
+}
+
+output dba_object_id {
+    value = azurerm_sql_active_directory_administrator.dba.object_id
+}
+
 output eventhub_name {
     value = azurerm_eventhub.app_eventhub.name
 }
@@ -43,6 +51,10 @@ output eventhub_namespace_connection_string {
 
 output eventhub_namespace_fqdn {
   value       = "${lower(azurerm_eventhub.app_eventhub.name)}.servicebus.windows.net"
+}
+
+output eventhub_storage_account_name {
+    value = azurerm_storage_account.archive_storage.name
 }
 
 output primary_blob_host {
@@ -72,6 +84,9 @@ output sql_server {
 }
 output sql_server_endpoint_id {
     value = azurerm_private_endpoint.sqlserver_endpoint.id
+}
+output sql_server_endpoint_fqdn {
+    value = replace(azurerm_private_dns_a_record.sql_server_dns_record.fqdn,"/\\W*$/","")
 }
 output sql_server_fqdn {
   value       = azurerm_sql_server.app_sqlserver.fully_qualified_domain_name

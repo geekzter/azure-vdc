@@ -90,6 +90,7 @@ variable vdc_config {
     iaas_spoke_app_db_lb_address = "10.1.2.4"
     paas_spoke_range           = "10.2.0.0/16"
     paas_spoke_bastion_subnet  = "10.2.255.192/27"
+    paas_spoke_app_subnet      = "10.2.3.0/24"
     paas_spoke_appsvc_subnet   = "10.2.1.0/24"
     paas_spoke_data_subnet     = "10.2.2.0/24"
 
@@ -360,28 +361,28 @@ variable deploy_monitoring_vm_extensions {
   default                      = false
   type                         = bool
 }
-
 variable deploy_network_watcher {
   description                  = "Whether to deploy connection monitors"
   default                      = false
   type                         = bool
 }
-
 variable deploy_non_essential_vm_extensions {
   description                  = "Whether to deploy optional VM extensions"
   default                      = false
   type                         = bool
 }
-
 variable deploy_security_vm_extensions {
   description                  = "Whether to deploy optional security VM extensions"
   default                      = false
   type                         = bool
 }
-
 variable deploy_vpn {
   description                  = "Whether to deploy the point to Site VPN"
   default                      = false
+  type                         = bool
+}
+variable disable_public_database_access {
+  default                      = true
   type                         = bool
 }
 variable enable_app_service_aad_auth {

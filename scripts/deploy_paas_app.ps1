@@ -19,6 +19,8 @@ param (
     [parameter(Mandatory=$false)][object]$AppAppServiceName=$null,
     [parameter(Mandatory=$false)][object]$AppAppServiceIdentity,
     [parameter(Mandatory=$false)][object]$AppAppServiceClientID,
+    [parameter(Mandatory=$false)][object]$DBAName,
+    [parameter(Mandatory=$false)][object]$DBAObjectId,
     [parameter(Mandatory=$false)][object]$AppUrl,
     [parameter(Mandatory=$false)][object]$DevOpsOrgUrl,
     [parameter(Mandatory=$false)][object]$DevOpsProject,
@@ -105,6 +107,17 @@ function ImportDatabase (
     $storageUrl = "https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac"
     $userName = "vdcadmin"
  
+    # https://aka.ms/azuresqlconnectivitysettings
+    # Enable Public Network Access
+    $sqlPublicNetworkAccess = $(az sql server show -n $SqlServer -g $ResourceGroup --query "publicNetworkAccess" -o tsv)
+    Write-Information "Enabling Public Network Access for ${SqlServer} ..."
+    Write-Verbose "az sql server update -n $SqlServer -g $ResourceGroup --set publicNetworkAccess=`"Enabled`" --query `"publicNetworkAccess`""
+    az sql server update -n $SqlServer -g $ResourceGroup --set publicNetworkAccess="Enabled" --query "publicNetworkAccess" -o tsv
+
+    # Create SQL Firewall rule for query
+    $ipAddress=$(Invoke-RestMethod -Uri https://ipinfo.io/ip -MaximumRetryCount 9).Trim()
+    az sql server firewall-rule create -g $ResourceGroup -s $SqlServer -n "ImportQuery $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress -o none
+
     # Create SQL Firewall rule for import
     $allAzureRuleIDs = $(az sql server firewall-rule list -g $ResourceGroup -s $SqlServer --query "[?startIpAddress=='0.0.0.0'].id" -o tsv)
     if (!$allAzureRuleIDs) {
@@ -129,18 +142,47 @@ function ImportDatabase (
         Write-Host "Database ${SqlServer}/${SqlDatabaseName} is not empty, skipping import"
     }
 
-    # Fix permissions on database, so App Service MSI has access
-    Write-Verbose "./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword"
-    ./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId `
-                                -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN `
-                                -UserName $UserName -SecurePassword $SecurePassword
-
-    # Remove Allow All Azure rule(s)
-    $allAzureRuleIDs = $(az sql server firewall-rule list -g $ResourceGroup -s $SqlServer --query "[?startIpAddress=='0.0.0.0'].id" -o tsv)
-    if ($allAzureRuleIDs) {
-        Write-Verbose "Removing SQL Server ${SqlServer} Firewall rules $allAzureRuleIDs ..."
-        az sql server firewall-rule delete --ids $allAzureRuleIDs
+    # Fix permissions on database, so App Service MSI and DBA (e.g. current user) have access
+    # Try to fetch user we grant access to (import hase erased database level users)
+    if (!($DBAName) -or !($DBAObjectId)) {
+        if ($(az account show --query "user.type" -o tsv) -ieq "user") {
+            $loggedInUser = (az ad signed-in-user show --query "{ObjectId:objectId,UserName:userPrincipalName}" | ConvertFrom-Json)
+        }
+        if ($loggedInUser) {
+            $DBAName = $loggedInUser.UserName
+            $DBAObjectId = $loggedInUser.ObjectId
+        }
     }
+    # Execute DB script
+    if ($DBAName -and $DBAObjectId) {
+        Write-Verbose "./grant_database_access.ps1 -DBAName $DBAName -DBAObjectId $DBAObjectId -MSIName $MSIName -MSIClientId $MSIClientId -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword"
+        ./grant_database_access.ps1 -DBAName $DBAName -DBAObjectId $DBAObjectId `
+                                    -MSIName $MSIName -MSIClientId $MSIClientId `
+                                    -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN `
+                                    -UserName $UserName -SecurePassword $SecurePassword
+    } else {
+        Write-Verbose "./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $SecurePassword"
+        ./grant_database_access.ps1 -MSIName $MSIName -MSIClientId $MSIClientId `
+                                    -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN `
+                                    -UserName $UserName -SecurePassword $SecurePassword
+    }
+
+
+    # Reset Public Network Access to what it was before
+    az sql server update -n $SqlServer -g $ResourceGroup --set publicNetworkAccess="$sqlPublicNetworkAccess" -o none
+
+    if ($sqlPublicNetworkAccess -ieq "Disabled") {
+        # Clean up all FW rules
+        $sqlFWIds = $(az sql server firewall-rule list -g $ResourceGroup -s $SqlServer --query "[].id" -o tsv)
+    } else {
+        # Clean up just the all Azure rule
+        $sqlFWIds = $(az sql server firewall-rule list -g $ResourceGroup -s $SqlServer --query "[?startIpAddress=='0.0.0.0'].id" -o tsv)
+    }
+    if ($sqlFWIds) {
+        Write-Verbose "Removing SQL Server ${SqlServer} Firewall rules $sqlFWIds ..."
+        az sql server firewall-rule delete --ids $sqlFWIds -o none
+    }
+
 }
 function ResetDatabasePassword (
     [parameter(Mandatory=$false)][string]$SqlServer=$SqlServerFQDN.Split(".")[0],
@@ -177,6 +219,11 @@ function RestartApp () {
 
     Write-Information "Restarting App Service '$appAppServiceName'..."
     az webapp restart -g $appResourceGroup -n $appAppServiceName 
+
+    # Sleep to prevent false positive testing
+    $appStartupWaitTime = 15
+    Write-Host "Sleeping $appStartupWaitTime seconds for application to start up..."
+    Start-Sleep -Seconds $appStartupWaitTime
 }
 function TestApp (
     [parameter(Mandatory=$true)][string]$AppUrl
@@ -244,6 +291,9 @@ if ($useTerraform) {
 
             $script:AppAppServiceIdentity  ??= $(terraform output "paas_app_service_msi_name"      2>$null)
             $script:AppAppServiceClientID  ??= $(terraform output "paas_app_service_msi_client_id" 2>$null)
+
+            $script:DBAName                ??= $(terraform output "admin_login"                    2>$null)
+            $script:DBAObjectId            ??= $(terraform output "admin_object_id"                2>$null)
 
             $script:AppUrl                 ??= $(terraform output "paas_app_url"                   2>$null)
             $script:DevOpsOrgUrl           ??= $(terraform output "devops_org_url"                 2>$null)

@@ -17,6 +17,16 @@ data external account_info {
   count                        = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? 0 : 1
 }
 
+data http localpublicip {
+# Get public IP address of the machine running this terraform template
+  url                          = "http://ipinfo.io/ip"
+# url                          = "https://ipapi.co/ip" 
+}
+
+data http localpublicprefix {
+# Get public IP prefix of the machine running this terraform template
+  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${chomp(data.http.localpublicip.body)}"
+}
 
 # Random password generator
 resource "random_string" "password" {
@@ -75,6 +85,7 @@ locals {
     var.tags,
     map(
       "environment",             local.environment,
+      "shutdown",                "true",
       "suffix",                  local.suffix,
       "workspace",               terraform.workspace,
       "release-id",              var.release_id,
@@ -166,6 +177,38 @@ resource azurerm_key_vault vault {
 
   tags                         = local.tags
 }
+resource azurerm_private_endpoint vault_endpoint {
+  name                         = "${azurerm_key_vault.vault.name}-endpoint"
+  resource_group_name          = azurerm_key_vault.vault.resource_group_name
+  location                     = azurerm_key_vault.vault.location
+  
+  subnet_id                    = azurerm_subnet.shared_paas_subnet.id
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_key_vault.vault.name}-endpoint-connection"
+    private_connection_resource_id = azurerm_key_vault.vault.id
+    subresource_names          = ["vault"]
+  }
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
+  tags                         = local.tags
+
+  depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
+}
+resource azurerm_private_dns_a_record vault_dns_record {
+  name                         = azurerm_key_vault.vault.name
+  zone_name                    = azurerm_private_dns_zone.zone["vault"].name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.vault_endpoint.private_service_connection[0].private_ip_address]
+}
 resource azurerm_monitor_diagnostic_setting key_vault_logs {
   name                         = "${azurerm_key_vault.vault.name}-logs"
   target_resource_id           = azurerm_key_vault.vault.id
@@ -190,13 +233,64 @@ resource azurerm_monitor_diagnostic_setting key_vault_logs {
   }
 }
 
-data "http" "localpublicip" {
-# Get public IP address of the machine running this terraform template
-  url                          = "http://ipinfo.io/ip"
-# url                          = "https://ipapi.co/ip" 
+resource azurerm_storage_account vdc_automation_storage {
+  name                         = "${lower(replace(local.vdc_resource_group,"-",""))}autstorage"
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  location                     = local.automation_location
+  account_kind                 = "StorageV2"
+  account_tier                 = "Standard"
+  account_replication_type     = var.app_storage_replication_type
+  enable_https_traffic_only    = true
+
+  provisioner "local-exec" {
+    # TODO: Add --auth-mode login once supported
+    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
+  }
+
+  tags                         = local.tags
+}
+resource azurerm_storage_account_network_rules automation_storage_rules {
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
+  default_action               = "Deny"
+  bypass                       = ["AzureServices"]
+  ip_rules                     = [local.ipprefixdata.data.prefix]
+}
+resource azurerm_private_endpoint aut_blob_storage_endpoint {
+  name                         = "${azurerm_storage_account.vdc_automation_storage.name}-blob-endpoint"
+  resource_group_name          = azurerm_storage_account.vdc_automation_storage.resource_group_name
+  location                     = azurerm_storage_account.vdc_automation_storage.location
+  
+  subnet_id                    = azurerm_subnet.shared_paas_subnet.id
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_storage_account.vdc_automation_storage.name}-blob-endpoint-connection"
+    private_connection_resource_id = azurerm_storage_account.vdc_automation_storage.id
+    subresource_names          = ["blob"]
+  }
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
+  tags                         = local.tags
+
+  depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
+}
+resource azurerm_private_dns_a_record aut_storage_blob_dns_record {
+  name                         = azurerm_storage_account.vdc_automation_storage.name 
+  zone_name                    = azurerm_private_dns_zone.zone["blob"].name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.aut_blob_storage_endpoint.private_service_connection[0].private_ip_address]
+  tags                         = var.tags
 }
 
-data "http" "localpublicprefix" {
-# Get public IP prefix of the machine running this terraform template
-  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${chomp(data.http.localpublicip.body)}"
+resource azurerm_advanced_threat_protection vdc_automation_storage {
+  target_resource_id           = azurerm_storage_account.vdc_automation_storage.id
+  enabled                      = true
 }

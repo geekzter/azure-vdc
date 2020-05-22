@@ -37,11 +37,11 @@ try {
     $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
     $paasAppResourceGroup = $(terraform output "paas_app_resource_group" 2>$null)
     
-    if ($All -or $StartMgmtVM -or $ConnectMgmtVM) {
+    if ($All -or $StartMgmtVM -or $ConnectMgmtVM -or $VpnClient) {
         $Script:mgmtVMName = $(terraform output "mgmt_name" 2>$null)
         # Start management VM
         if ($mgmtVMName) {
-            Write-Host "`nStarting Management VM" -ForegroundColor Green 
+            Write-Host "`nStarting Management & DNS Server (async)" -ForegroundColor Green 
             $null = Start-Job -Name "Start Management VM" -ScriptBlock {az vm start --ids $(az vm list -g $args --query "[?powerState!='VM running'].id" -o tsv)} -ArgumentList $vdcResourceGroup
         }
     }
@@ -133,7 +133,8 @@ try {
             if ($dba) {
                 Write-Host "$($dba.login) is already current Azure Active Directory DBA for SQL Server $sqlServerName"
             } else {
-                $dba = az sql server ad-admin create -u "ericvan@microsoft.com" -i "115c3ab3-943b-4e0c-96ed-1a1763fbaa44" -g $paasAppResourceGroup -s $sqlServerName -o json | ConvertFrom-Json
+                $loggedInUser = (az ad signed-in-user show --query "{ObjectId:objectId,UserName:userPrincipalName}" | ConvertFrom-Json)
+                $dba = az sql server ad-admin create -u $loggedInUser.UserName -i $loggedInUser.ObjectId -g $paasAppResourceGroup -s $sqlServerName -o json | ConvertFrom-Json
                 Write-Host "$($dba.login) is now Azure Active Directory DBA for SQL Server $sqlServerName"
             }
 
@@ -154,8 +155,39 @@ try {
     if ($All -or $VpnClient) {
         $gatewayId = $(terraform output vpn_gateway_id 2>$null)
         if ($gatewayId) {
-            Write-Host "Use Azure VPN app (https://go.microsoft.com/fwlink/?linkid=2117554) to import profile downloaded from this link:`n"
-            az network vnet-gateway vpn-client show-url --ids $gatewayId -o tsv
+            $vpnPackageUrl = $(az network vnet-gateway vpn-client generate --ids $gatewayId --authentication-method EAPTLS -o tsv)
+
+            # Download VPN Profile
+            Write-Host "Generating VPN profile..."
+            $packageFile = New-TemporaryFile
+            Invoke-WebRequest -UseBasicParsing -Uri $vpnPackageUrl -OutFile $packageFile
+            $tempPackagePath = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+            $null = New-Item -ItemType "directory" -Path $tempPackagePath
+            Expand-Archive -Path $packageFile -DestinationPath $tempPackagePath
+            $vpnProfileTempFile = Join-Path $tempPackagePath AzureVPN azurevpnconfig.xml
+            Write-Verbose "VPN Temp Profile ${vpnProfileTempFile}"
+
+            # Edit VPN Profile
+            Write-Host "Modifying VPN profile DNS configuration..."
+            $vpnProfileXml = [xml](Get-Content $vpnProfileTempFile)
+            $clientconfig = $vpnProfileXml.SelectSingleNode("//*[name()='clientconfig']")
+            $dnsservers = $vpnProfileXml.CreateElement("dnsservers", $vpnProfileXml.AzVpnProfile.xmlns)
+            $dnsserver = $vpnProfileXml.CreateElement("dnsserver", $vpnProfileXml.AzVpnProfile.xmlns)
+            $dnsserver.InnerText = $(terraform output "vdc_dns_server" 2>$null)
+            $dnsservers.AppendChild($dnsserver) | Out-Null
+            $clientconfig.AppendChild($dnsservers) | Out-Null
+            $clientconfig.RemoveAttribute("nil","http://www.w3.org/2001/XMLSchema-instance")
+
+            if ((Get-Command azurevpn -ErrorAction SilentlyContinue) -and $IsWindows) {
+                $vpnProfileFile = (Join-Path $env:userprofile\AppData\Local\Packages\Microsoft.AzureVpn_8wekyb3d8bbwe\LocalState ("$vdcResourceGroup{0}" -f ".xml"))
+                $vpnProfileXml.Save($vpnProfileFile)
+                Write-Host "Azure VPN app importing profile '$vpnProfileFile'..."
+                azurevpn -i (Split-Path $vpnProfileFile -Leaf) -f
+                #Get-DnsClientNrptPolicy
+            } else {
+                $vpnProfileXml.Save($vpnProfileTempFile)
+                Write-Host "Use the Azure VPN app (https://go.microsoft.com/fwlink/?linkid=2117554) to import this profile:`n${vpnProfileTempFile}"
+            }
         } else {
             Write-Host "Virtual network gateway, required for VPN, does not exist" -ForegroundColor Yellow
         }

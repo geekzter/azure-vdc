@@ -34,12 +34,20 @@ param (
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
 ### Validation
+if ( $PSVersionTable.PSVersion -lt 7) {
+    Write-Warning "PowerShell 7 required, exiting"
+    exit
+}
 if (!($Workspace)) { Throw "You must supply a value for Workspace" }
 
 Write-Host $MyInvocation.line -ForegroundColor Green
 PrintCurrentBranch
 
 AzLogin
+
+Write-Host "Using subscription '$(az account show --query "name" -o tsv)'"
+$identity = $env:ARM_CLIENT_ID ? $env:ARM_CLIENT_ID : $(az account show --query "user.name" -o tsv)
+Write-Host "Terraform is running as '$identity'"
 
 ### Main routine
 # Configure instrumentation
@@ -80,8 +88,6 @@ try {
 
     # Print version info
     terraform -version
-    $identity = $env:ARM_CLIENT_ID ? $env:ARM_CLIENT_ID : $(az account show --query "user.name" -o tsv)
-    Write-Host "Terraform is running as '$identity'"
 
     if ($Init -or $Upgrade) {
         $backendFile = (Join-Path $tfdirectory backend.tf)
@@ -125,14 +131,14 @@ try {
         if ($Upgrade) {
             $initCmd += " -upgrade"
         }
-        Invoke "`n$initCmd" 
+        Invoke "$initCmd" 
     }
 
     # Workspace can only be selected after init 
     $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
     if ($Validate) {
-        Invoke "`nterraform validate" 
+        Invoke "terraform validate" 
     }
     
     # Prepare common arguments

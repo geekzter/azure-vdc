@@ -25,6 +25,18 @@ parameters:
   displayName: Destroy infrastructure
   type: boolean
   default: true
+- name: workspace
+  displayName: Terraform Workspace
+  type: string
+  default: ci
+  values:
+  - ci
+  - ci1
+  - ci2
+  - ci3
+  - tst1
+  - tst2
+  - tst3
 
 trigger:
   batch: true
@@ -90,7 +102,7 @@ variables:
 - name: 'TF_INPUT'
   value: 0
 - name: 'TF_WORKSPACE'
-  value: 'ci'
+  value: ${{ parameters.workspace }}
 
 # Inline variables shared across jobs
   # This references this pipeline:
@@ -200,6 +212,7 @@ jobs:
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
+          powerShellIgnoreLASTEXITCODE: false
           workingDirectory: '$(scriptDirectory)'
         env:
           TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
@@ -247,22 +260,20 @@ jobs:
       # Deallocate/Stop MV's to force tf_deploy.ps1 to test for stopped VM's
       # Stopped VM's do not allow extensions to be installed
       - task: AzureResourceGroupDeployment@2
-        displayName: 'Deallocate VM''s in App resource group'
-        enabled: true
-        inputs:
-          azureSubscription: '$(subscriptionConnection)'
-          # TODO
-          #action: StopWithDeallocate
-          action: Stop
-          resourceGroupName: '$(iaasResourceGroup)'
-
-      - task: AzureResourceGroupDeployment@2
         displayName: 'Stop VM''s in VDC resource group'
         enabled: true
         inputs:
           azureSubscription: '$(subscriptionConnection)'
           action: Stop
           resourceGroupName: '$(vdcResourceGroup)'
+
+      - task: AzureResourceGroupDeployment@2
+        displayName: 'Deallocate VM''s in App resource group'
+        enabled: true
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          action: StopWithDeallocate
+          resourceGroupName: '$(iaasResourceGroup)'
 
       # Test for failures that only occur when resources already exist
       - task: AzureCLI@2
@@ -312,6 +323,8 @@ jobs:
       appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
       appSQLServer: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server'] ]
       appSQLServerFQDN: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server_fqdn'] ]
+      dbaName: $[ dependencies.Provision.outputs['terraform.admin_login'] ]
+      dbaObjectID: $[ dependencies.Provision.outputs['terraform.admin_object_id'] ]
       paasResourceGroup: $[ dependencies.Provision.outputs['terraform.paas_app_resource_group'] ]
       storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
       storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
@@ -357,6 +370,8 @@ jobs:
                                   -AppResourceGroup $(paasResourceGroup) `
                                   -AppAppServiceIdentity $(appMSIName) `
                                   -AppAppServiceClientID $(appMSIClientID) `
+                                  -DBAName $(dbaName) `
+                                  -DBAObjectId $(dbaObjectId) `
                                   -SqlServer $(appSQLServer) `
                                   -SqlServerFQDN $(appSQLServerFQDN) `
                                   -SqlDatabase $(appSQLDatabase)

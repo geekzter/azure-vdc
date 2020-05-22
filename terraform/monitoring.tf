@@ -15,7 +15,13 @@ resource azurerm_storage_account vdc_diag_storage {
   network_rules {
     default_action             = "Deny"
     # This is used for diagnostics only
-    bypass                     = ["Logging","Metrics"]
+    bypass                     = [
+                                   # TODO: Instead of AzureServices use Service Endpoints
+                                   #       https://docs.microsoft.com/en-us/azure/network-watcher/frequently-asked-questions#nsg-flow-logs
+                                  "AzureServices",
+                                  "Logging",
+                                  "Metrics"
+    ]
   }
 
   tags                         = local.tags
@@ -26,7 +32,6 @@ resource azurerm_private_endpoint diag_blob_storage_endpoint {
   resource_group_name          = azurerm_storage_account.vdc_diag_storage.resource_group_name
   location                     = azurerm_storage_account.vdc_diag_storage.location
   
-  # TODO: Use shared infra subnet (?)
   subnet_id                    = azurerm_subnet.shared_paas_subnet.id
 
   private_service_connection {
@@ -36,7 +41,16 @@ resource azurerm_private_endpoint diag_blob_storage_endpoint {
     subresource_names          = ["blob"]
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   tags                         = local.tags
+
+  depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record diag_storage_blob_dns_record {
   name                         = azurerm_storage_account.vdc_diag_storage.name 
@@ -44,6 +58,7 @@ resource azurerm_private_dns_a_record diag_storage_blob_dns_record {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
   records                      = [azurerm_private_endpoint.diag_blob_storage_endpoint.private_service_connection[0].private_ip_address]
+  tags                         = var.tags
 }
 resource azurerm_private_endpoint diag_table_storage_endpoint {
   name                         = "${azurerm_storage_account.vdc_diag_storage.name}-table-endpoint"
@@ -59,7 +74,16 @@ resource azurerm_private_endpoint diag_table_storage_endpoint {
     subresource_names          = ["table"]
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   tags                         = local.tags
+
+  depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record diag_storage_table_dns_record {
   name                         = azurerm_storage_account.vdc_diag_storage.name 
@@ -67,32 +91,11 @@ resource azurerm_private_dns_a_record diag_storage_table_dns_record {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
   records                      = [azurerm_private_endpoint.diag_table_storage_endpoint.private_service_connection[0].private_ip_address]
+  tags                         = var.tags
 }
 
 resource azurerm_advanced_threat_protection vdc_diag_storage {
   target_resource_id           = azurerm_storage_account.vdc_diag_storage.id
-  enabled                      = true
-}
-
-resource "azurerm_storage_account" "vdc_automation_storage" {
-  name                         = "${lower(replace(local.vdc_resource_group,"-",""))}autstorage"
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  location                     = local.automation_location
-  account_kind                 = "StorageV2"
-  account_tier                 = "Standard"
-  account_replication_type     = var.app_storage_replication_type
-  enable_https_traffic_only    = true
-
-  provisioner "local-exec" {
-    # TODO: Add --auth-mode login once supported
-    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
-  }
-
-  tags                         = local.tags
-}
-
-resource azurerm_advanced_threat_protection vdc_automation_storage {
-  target_resource_id           = azurerm_storage_account.vdc_automation_storage.id
   enabled                      = true
 }
 
@@ -191,7 +194,7 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
 resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
   name                         = "Automation_Logs"
   target_resource_id           = azurerm_automation_account.automation.id
-  storage_account_id           = azurerm_storage_account.vdc_automation_storage.id
+  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
   log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
 
 
@@ -247,7 +250,7 @@ resource null_resource network_watcher {
   count                        = var.deploy_network_watcher ? 1 : 0
 }
 
-resource "azurerm_application_insights" "vdc_insights" {
+resource azurerm_application_insights vdc_insights {
   name                         = "${azurerm_resource_group.vdc_rg.name}-insights"
   location                     = azurerm_log_analytics_workspace.vcd_workspace.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name

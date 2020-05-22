@@ -275,6 +275,8 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "*.events.data.microsoft.com",
       "*.loganalytics.io",
       "*.monitoring.azure.com",
+      "*.msauth.net",
+      "*.msftauth.net",
       "*.ods.opinsights.azure.com",
       "*.oms.opinsights.azure.com",
       "*.systemcenteradvisor.com",

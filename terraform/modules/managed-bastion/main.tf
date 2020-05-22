@@ -10,7 +10,17 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
   virtual_network_name         = local.virtual_network_name
   resource_group_name          = local.resource_group_name
   address_prefixes             = [var.subnet_range]
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 }
+
+# TODO: Add NSG
+# https://docs.microsoft.com/en-us/azure/bastion/bastion-nsg
 
 resource "azurerm_public_ip" "managed_bastion_pip" {
   name                         = "${local.virtual_network_name}-managed-bastion-pip"
@@ -18,6 +28,13 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
   resource_group_name          = local.resource_group_name
   allocation_method            = "Static"
   sku                          = "Standard" # Zone redundant
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 }
 
 resource "azurerm_bastion_host" "managed_bastion" {
@@ -30,6 +47,13 @@ resource "azurerm_bastion_host" "managed_bastion" {
     subnet_id                  = azurerm_subnet.managed_bastion_subnet.id
     public_ip_address_id       = azurerm_public_ip.managed_bastion_pip.id
   }
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   count                        = var.deploy_managed_bastion ? 1 : 0
 }

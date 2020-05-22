@@ -1,3 +1,11 @@
+output admin_login {
+  value       = var.admin_login != null ? var.admin_login : module.paas_app.dba_login
+}
+
+output admin_object_id {
+  value       = var.admin_object_id != null ? var.admin_object_id : module.paas_app.dba_object_id
+}
+
 output admin_user {
   sensitive   = false
   description = "VDC Admin username"
@@ -35,6 +43,9 @@ output automation_account_resource_group {
   value       = azurerm_automation_account.automation.resource_group_name
 }
 
+output automation_storage_account_name {
+  value       = azurerm_storage_account.vdc_automation_storage.name
+}
 output mgmt_address {
   value       = var.vdc_config["hub_mgmt_address"]
 }
@@ -154,6 +165,10 @@ output paas_app_service_fqdn {
   value       = module.paas_app.app_service_fqdn
 }
 
+output paas_app_eventhub_storage_account_name {
+  value       = module.paas_app.eventhub_storage_account_name
+}
+
 output paas_app_service_outbound_ip_addresses {
   value       = module.paas_app.app_service_outbound_ip_addresses
 }
@@ -185,7 +200,7 @@ output paas_app_sql_server_endpoint_id {
 }
 
 output paas_app_sql_server_endpoint_fqdn {
-  value       = azurerm_private_dns_a_record.sql_server_dns_record.fqdn
+  value       = module.paas_app.sql_server_endpoint_fqdn
 }
 
 output paas_app_sql_server_fqdn {
@@ -244,6 +259,16 @@ output resource_suffix {
 
 output shared_resources_group {
   value       = var.shared_resources_group
+}
+
+output terraform_public_ip_address {
+  value       = chomp(data.http.localpublicip.body)
+}
+output terraform_public_ip_prefix {
+  value       = local.ipprefixdata.data.prefix
+}
+output vdc_dns_server {
+  value       = azurerm_network_interface.bas_if.private_ip_address
 }
 
 output vdc_resource_group {
