@@ -483,9 +483,9 @@ jobs:
               CreateOrUpdateAppPoolForWebsite: true
               AppPoolNameForWebsite: DemoAppPool
               AppCmdCommands: |
-              start apppool /apppool.name:DemoAppPool
-              set config /section:defaultDocument "/~files" 
-              set config /section:defaultDocument "/+files.[@start,value='default.aspx']"          
+                start apppool /apppool.name:DemoAppPool
+                set config /section:defaultDocument "/~files" 
+                set config /section:defaultDocument "/+files.[@start,value='default.aspx']"          
 
           - task: IISWebAppDeploymentOnMachineGroup@0
             displayName: 'Deploy IIS App'
