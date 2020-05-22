@@ -34,9 +34,9 @@ parameters:
   - ci1
   - ci2
   - ci3
-  - tst1
-  - tst2
-  - tst3
+  - test1
+  - test2
+  - test3
 
 trigger:
   batch: true
@@ -103,6 +103,8 @@ variables:
   value: 0
 - name: 'TF_WORKSPACE'
   value: ${{ parameters.workspace }}
+- name: 'TF_VAR_resource_environment'
+  value: ''
 
 # Inline variables shared across jobs
   # This references this pipeline:

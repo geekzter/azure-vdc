@@ -304,7 +304,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.tags["environment"]}-app -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]}\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.resource_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${var.resource_environment},web\""
     } 
   EOF
 
@@ -770,7 +770,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.tags["environment"]}-app -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]}\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.resource_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${var.resource_environment},db\""
     } 
   EOF
 
