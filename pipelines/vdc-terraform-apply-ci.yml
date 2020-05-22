@@ -105,6 +105,8 @@ variables:
   value: ${{ parameters.workspace }}
 - name: 'TF_VAR_resource_environment'
   value: ''
+- name: 'TF_VAR_use_pipeline_environment'
+  value: 'true'
 
 # Inline variables shared across jobs
   # This references this pipeline:
@@ -123,6 +125,8 @@ variables:
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-paasapp-$(TF_VAR_resource_suffix)'
 - name: 'vdcResourceGroup' 
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
+- name: 'pipelineEnvironment'
+  value: 'vdc-${{ parameters.workspace }}'
 
 jobs:
 - job: 'Prepare'
@@ -423,6 +427,28 @@ jobs:
           failOnStderr: true
           pwsh: true
 
+- ${{ if eq(parameters.deploy, true) }}:
+  # Deploy IaaS application 
+  - job: 'DeployEnvironment'
+    dependsOn:
+      - Prepare
+      - Provision
+      - ${{ if eq(parameters.provision, true) }}:
+        - Reprovision
+    displayName: 'Deploy & Test IaaS Application'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    environment: $(pipelineEnvironment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo Hello world
+
 - ${{ if eq(parameters.destroy, true) }}:
   # Destroy infrastructure
   - job: 'Destroy'
@@ -432,6 +458,7 @@ jobs:
         - Provision
       - ${{ if eq(parameters.deploy, true) }}:
         - Deploy
+        - DeployEnvironment
     displayName: 'Destroy Infrastructure with Terraform'
     condition: succeededOrFailed()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
