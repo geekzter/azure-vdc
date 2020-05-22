@@ -448,8 +448,8 @@ jobs:
       vmImage: 'ubuntu-latest'
 
     environment:
-      name: $(pipelineEnvironment)
-      resourceType: VirtualMachine
+      name: '$(pipelineEnvironment)'
+      resourceType: virtualMachine
       tags: 'web'
     strategy:
       runOnce:
