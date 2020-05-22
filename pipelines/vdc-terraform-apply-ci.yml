@@ -448,9 +448,10 @@ jobs:
       vmImage: 'ubuntu-latest'
 
     environment:
-      name: '$(pipelineEnvironment)'
+    # name: '$(pipelineEnvironment)'
+      name: vdc-ci
       resourceType: virtualMachine
-      tags: 'web'
+    # tags: 'web'
     strategy:
       runOnce:
         deploy:
