@@ -444,9 +444,6 @@ jobs:
       appScriptsDirectory: '$(Pipeline.Workspace)/aspnetscripts'
       appPackage: '$(appArtifactDirectory)/SampleIisWebApp.zip'
 
-    pool:
-      vmImage: 'ubuntu-latest'
-
     environment:
     # name: '$(pipelineEnvironment)'
       name: vdc-ci
