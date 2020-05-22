@@ -428,92 +428,103 @@ jobs:
           pwsh: true
 
 - ${{ if eq(parameters.deploy, true) }}:
-  # Deploy IaaS application 
-  - job: 'DeployEnvironment'
-    dependsOn:
-      - Prepare
-      - Provision
-      - ${{ if eq(parameters.provision, true) }}:
-        - Reprovision
-    displayName: 'Deploy & Test IaaS Application'
-    condition: succeeded()
-    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
-
-    variables:
-      appArtifactDirectory: '$(Pipeline.Workspace)/aspnet'
-      appScriptsDirectory: '$(Pipeline.Workspace)/aspnetscripts'
-      appPackage: '$(appArtifactDirectory)/SampleIisWebApp.zip'
-
-    environment:
-    # name: '$(pipelineEnvironment)'
-      name: vdc-ci
-      resourceType: virtualMachine
-    # tags: 'web'
+  - job: DeployWeb
+    displayName: deploy Web App
+    pool:
+      vmImage: 'Ubuntu-latest'
+    # creates an environment if it doesn't exist
+    environment: 'vdc-dev'
     strategy:
       runOnce:
         deploy:
           steps:
           - script: echo Hello world
+  # Deploy IaaS application 
+  # - job: 'DeployEnvironment'
+  #   dependsOn:
+  #     - Prepare
+  #     - Provision
+  #     - ${{ if eq(parameters.provision, true) }}:
+  #       - Reprovision
+  #   displayName: 'Deploy & Test IaaS Application'
+  #   condition: succeeded()
+  #   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
-          # Download IaaS Application Pipeline artifacts
-          # This consumes artifacts published by this pipeline:
-          # https://github.com/geekzter/azure-vdc/blob/master/pipelines/iis-asp.net-ci.yml
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Download ASP.NET Core App Artifacts'
-            enabled: true
-            inputs:
-              buildType: 'specific'
-              project: '$(appArtifectProject)'
-              definition: '63'
-              specificBuildWithTriggering: true
-              buildVersionToDownload: 'latest'
-              artifactName: 'aspnetcoresql'
-              targetPath: '$(appArtifactDirectory)'
+  #   variables:
+  #     appArtifactDirectory: '$(Pipeline.Workspace)/aspnet'
+  #     appScriptsDirectory: '$(Pipeline.Workspace)/aspnetscripts'
+  #     appPackage: '$(appArtifactDirectory)/SampleIisWebApp.zip'
 
-          - task: IISWebAppManagementOnMachineGroup@0
-            displayName: 'Configure IIS App'
-            enabled: true
-            inputs:
-              EnableIIS: true
-              WebsiteName: 'Default Web Site'
-              AddBinding: true
-              Bindings: '{"bindings":[{"protocol":"http","ipAddress":"All Unassigned","port":"80","hostname":"","sslThumbprint":"","sniFlag":false}]}'
-              CreateOrUpdateAppPoolForWebsite: true
-              AppPoolNameForWebsite: DemoAppPool
-              AppCmdCommands: |
-                start apppool /apppool.name:DemoAppPool
-                set config /section:defaultDocument "/~files" 
-                set config /section:defaultDocument "/+files.[@start,value='default.aspx']"          
+  #   environment:
+  #   # name: '$(pipelineEnvironment)'
+  #     name: vdc-ci
+  #     resourceType: virtualMachine
+  #   # tags: 'web'
+  #   strategy:
+  #     runOnce:
+  #       deploy:
+  #         steps:
+  #         - script: echo Hello world
 
-          - task: IISWebAppDeploymentOnMachineGroup@0
-            displayName: 'Deploy IIS App'
-            enabled: false
-            inputs:
-              WebSiteName: 'Default Web Site'
-              Package: '$(appPackage)'
-              TakeAppOfflineFlag: true
+  #         # Download IaaS Application Pipeline artifacts
+  #         # This consumes artifacts published by this pipeline:
+  #         # https://github.com/geekzter/azure-vdc/blob/master/pipelines/iis-asp.net-ci.yml
+  #         - task: DownloadPipelineArtifact@2
+  #           displayName: 'Download ASP.NET Core App Artifacts'
+  #           enabled: true
+  #           inputs:
+  #             buildType: 'specific'
+  #             project: '$(appArtifectProject)'
+  #             definition: '63'
+  #             specificBuildWithTriggering: true
+  #             buildVersionToDownload: 'latest'
+  #             artifactName: 'aspnetcoresql'
+  #             targetPath: '$(appArtifactDirectory)'
 
-          - powershell: |
-              # Write your powershell commands here.
-              Invoke-WebRequest -Uri http://127.0.0.1/default.aspx -UseBasicParsing
+  #         - task: IISWebAppManagementOnMachineGroup@0
+  #           displayName: 'Configure IIS App'
+  #           enabled: true
+  #           inputs:
+  #             EnableIIS: true
+  #             WebsiteName: 'Default Web Site'
+  #             AddBinding: true
+  #             Bindings: '{"bindings":[{"protocol":"http","ipAddress":"All Unassigned","port":"80","hostname":"","sslThumbprint":"","sniFlag":false}]}'
+  #             CreateOrUpdateAppPoolForWebsite: true
+  #             AppPoolNameForWebsite: DemoAppPool
+  #             AppCmdCommands: |
+  #               start apppool /apppool.name:DemoAppPool
+  #               set config /section:defaultDocument "/~files" 
+  #               set config /section:defaultDocument "/+files.[@start,value='default.aspx']"          
+
+  #         - task: IISWebAppDeploymentOnMachineGroup@0
+  #           displayName: 'Deploy IIS App'
+  #           enabled: false
+  #           inputs:
+  #             WebSiteName: 'Default Web Site'
+  #             Package: '$(appPackage)'
+  #             TakeAppOfflineFlag: true
+
+  #         - powershell: |
+  #             # Write your powershell commands here.
+  #             Invoke-WebRequest -Uri http://127.0.0.1/default.aspx -UseBasicParsing
               
-              # Use the environment variables input below to pass secret variables to this script.
-              errorActionPreference: continue
-            displayName: 'Initial Warmup'
-            enabled: false
+  #             # Use the environment variables input below to pass secret variables to this script.
+  #             errorActionPreference: continue
+  #           displayName: 'Initial Warmup'
+  #           enabled: false
 
-          - task: CopyFiles@2
-            displayName: 'Copy Warmup Scripts'
-            enabled: false
-            inputs:
-              SourceFolder: '$(appScriptsDirectory)'
-              TargetFolder: 'C:\Users\Public\Documents'
+  #         - task: CopyFiles@2
+  #           displayName: 'Copy Warmup Scripts'
+  #           enabled: false
+  #           inputs:
+  #             SourceFolder: '$(appScriptsDirectory)'
+  #             TargetFolder: 'C:\Users\Public\Documents'
 
-          - task: BatchScript@1
-            displayName: 'Schedule Warmup Scripts'
-            enabled: false
-            inputs:
-              filename: '$(appScriptsDirectory)/schedule-warmup.cmd'
+  #         - task: BatchScript@1
+  #           displayName: 'Schedule Warmup Scripts'
+  #           enabled: false
+  #           inputs:
+  #             filename: '$(appScriptsDirectory)/schedule-warmup.cmd'
 
 - ${{ if eq(parameters.destroy, true) }}:
   # Destroy infrastructure
