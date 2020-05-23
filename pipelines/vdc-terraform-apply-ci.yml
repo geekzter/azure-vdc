@@ -325,7 +325,6 @@ jobs:
       appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
       # Get application configuration from Terraform output
       appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
-      appUrl: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
       appMSIName: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_name'] ]
       appMSIClientID: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_client_id'] ]
       appSQLAdmin: 'vdcadmin'
@@ -417,33 +416,7 @@ jobs:
           appName: '$(appServiceName)'
           package: '$(appPackage)'
 
-      # Test PaaS Application
-      - task: PowerShell@2
-        displayName: 'Test ASP.NET Core App'
-        inputs:
-          targetType: 'inline'
-          script: |
-            # Wait for the WAF to get ready
-            Start-Sleep -Seconds 30
-            
-            # Request page
-            Invoke-WebRequest -Uri $(appUrl) -MaximumRetryCount 9
-          failOnStderr: true
-          pwsh: true
-
 - ${{ if eq(parameters.deploy, true) }}:
-  # - deployment: DeployEnvironment
-  #   displayName: 'Deploy & Test IaaS Application'
-  #   pool:
-  #     vmImage: 'Ubuntu-latest'
-  #   # creates an environment if it doesn't exist
-  #   environment: 'vdc-dev'
-  #   strategy:
-  #     runOnce:
-  #       deploy:
-  #         steps:
-  #         - script: echo Hello world
-  # Deploy IaaS application 
   - deployment: 'DeployEnvironment'
     dependsOn:
       - Prepare
@@ -468,8 +441,6 @@ jobs:
       runOnce:
         deploy:
           steps:
-          - script: echo Hello world
-
           # Download IaaS Application Pipeline artifacts
           # This consumes artifacts published by this pipeline:
           # https://github.com/geekzter/azure-vdc/blob/master/pipelines/iis-asp.net-ci.yml
@@ -521,6 +492,7 @@ jobs:
               artifactName: 'aspnetscripts'
               targetPath: '$(appScriptsDirectory)'
 
+          # Configure IIS on VM's
           - task: IISWebAppManagementOnMachineGroup@0
             displayName: 'Configure IIS App'
             enabled: true
@@ -566,6 +538,53 @@ jobs:
             inputs:
               filename: '$(appScriptsDirectory)/schedule-warmup.cmd'
 
+- ${{ if eq(parameters.deploy, true) }}:
+  # Test applications
+  - job: 'Test'
+    dependsOn:
+      - Deploy
+      - DeployEnvironment
+      - Provision
+    displayName: 'Test Applications'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+    variables:
+      iaasAppUrl: $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
+      paasAppUrl: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+      # Test IaaS Application
+      - task: PowerShell@2
+        displayName: 'Test IaaS Application'
+        inputs:
+          targetType: 'inline'
+          script: |
+            # Wait for the WAF to get ready
+            Start-Sleep -Seconds 10
+            
+            # Request page
+            Invoke-WebRequest -Uri $(iaasAppUrl) -MaximumRetryCount 9
+          failOnStderr: true
+          pwsh: true
+
+      # Test PaaS Application
+      - task: PowerShell@2
+        displayName: 'Test PaaS Application'
+        inputs:
+          targetType: 'inline'
+          script: |
+            # Wait for the WAF to get ready
+            Start-Sleep -Seconds 10
+            
+            # Request page
+            Invoke-WebRequest -Uri $(paasAppUrl) -MaximumRetryCount 9
+          failOnStderr: true
+          pwsh: true
+
 - ${{ if eq(parameters.destroy, true) }}:
   # Destroy infrastructure
   - job: 'Destroy'
@@ -576,6 +595,7 @@ jobs:
       - ${{ if eq(parameters.deploy, true) }}:
         - Deploy
         - DeployEnvironment
+        - Test
     displayName: 'Destroy Infrastructure with Terraform'
     condition: succeededOrFailed()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
