@@ -479,7 +479,6 @@ jobs:
               buildVersionToDownload: 'latest'
               artifactName: 'aspnetscripts'
               targetPath: '$(appScriptsDirectory)'
-
           - task: DownloadBuildArtifacts@0
             displayName: 'Download Scripts'
             enabled: true

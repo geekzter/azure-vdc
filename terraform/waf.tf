@@ -24,7 +24,7 @@ resource "azurerm_public_ip" "waf_pip" {
 }
 
 resource "azurerm_dns_cname_record" "waf_iaas_app_cname" {
-  name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}iisapp"
+  name                         = "${lower(var.resource_prefix)}${lower(local.environment)}iisapp"
   zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
   resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name
   ttl                          = 300
@@ -36,7 +36,7 @@ resource "azurerm_dns_cname_record" "waf_iaas_app_cname" {
 } 
 
 resource "azurerm_dns_cname_record" "waf_paas_app_cname" {
-  name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}webapp"
+  name                         = "${lower(var.resource_prefix)}${lower(local.environment)}webapp"
   zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
   resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name
   ttl                          = 300
