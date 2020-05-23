@@ -428,7 +428,7 @@ jobs:
           pwsh: true
 
 - ${{ if eq(parameters.deploy, true) }}:
-  - job: DeployWeb
+  - deployment: DeployWeb
     displayName: deploy Web App
     pool:
       vmImage: 'Ubuntu-latest'
