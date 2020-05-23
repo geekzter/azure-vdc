@@ -182,7 +182,9 @@ jobs:
 - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
   # Provision on self-hosted agent
   - job: 'Provision'
-    dependsOn: Prepare
+    dependsOn: 
+    - Prepare
+    - CreateEnvironment
     displayName: 'Provision Infrastructure with Terraform'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
