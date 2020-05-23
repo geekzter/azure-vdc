@@ -514,7 +514,7 @@ jobs:
 
           - task: IISWebAppDeploymentOnMachineGroup@0
             displayName: 'Deploy IIS App'
-            enabled: false
+            enabled: true
             inputs:
               WebSiteName: 'Default Web Site'
               Package: '$(appPackage)'
@@ -531,14 +531,14 @@ jobs:
 
           - task: CopyFiles@2
             displayName: 'Copy Warmup Scripts'
-            enabled: false
+            enabled: true
             inputs:
               SourceFolder: '$(appScriptsDirectory)'
               TargetFolder: 'C:\Users\Public\Documents'
 
           - task: BatchScript@1
             displayName: 'Schedule Warmup Scripts'
-            enabled: false
+            enabled: true
             inputs:
               filename: '$(appScriptsDirectory)/schedule-warmup.cmd'
 
