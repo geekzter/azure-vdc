@@ -455,18 +455,18 @@ jobs:
               buildVersionToDownload: 'latest'
               artifactName: 'aspnet'
               targetPath: '$(appArtifactDirectory)'
-
           - task: DownloadBuildArtifacts@0
             displayName: 'Download ASP.NET Core App Artifacts'
             enabled: true
             inputs:
               buildType: 'specific'
               project: '$(appArtifectProject)'
-              definition: '$(appBuildDefinitionIaaS)'
+              pipeline: '$(appBuildDefinitionIaaS)'
               specificBuildWithTriggering: true
               buildVersionToDownload: 'latest'
+              downloadType: 'single'
               artifactName: 'aspnet'
-              targetPath: '$(appArtifactDirectory)'
+              downloadPath: '$(appArtifactDirectory)'
 
           - task: DownloadPipelineArtifact@2
             displayName: 'Download Scripts'
@@ -486,11 +486,12 @@ jobs:
             inputs:
               buildType: 'specific'
               project: '$(appArtifectProject)'
-              definition: '$(appBuildDefinitionIaaS)'
+              pipeline: '$(appBuildDefinitionIaaS)'
               specificBuildWithTriggering: true
               buildVersionToDownload: 'latest'
+              downloadType: 'single'
               artifactName: 'aspnetscripts'
-              targetPath: '$(appScriptsDirectory)'
+              downloadPath: '$(appScriptsDirectory)'
 
           # Configure IIS on VM's
           - task: IISWebAppManagementOnMachineGroup@0
