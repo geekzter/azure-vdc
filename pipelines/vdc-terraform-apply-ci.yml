@@ -177,6 +177,7 @@ jobs:
         deploy:
           steps:
           - script: echo Environment $(pipelineEnvironment) exists
+            displayName: 'Create environment $(pipelineEnvironment)'
 
 - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
   # Provision on self-hosted agent

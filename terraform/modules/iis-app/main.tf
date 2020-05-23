@@ -836,7 +836,7 @@ resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
 
   tags                         = var.tags
 
-  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  count                        = (var.deploy_security_vm_extensions && !var.use_pipeline_environment) || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_db_vm,
                                   azurerm_virtual_machine_extension.app_db_vm_monitor
