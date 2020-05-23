@@ -166,6 +166,19 @@ jobs:
         workingDirectory: '$(scriptDirectory)'
 
 - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
+  # Creates an environment if it doesn't exist yet
+  - deployment: CreateEnvironment
+    displayName: Create environment (if it does not exist yet)
+    pool:
+      vmImage: 'ubuntu-latest'
+    environment: '$(pipelineEnvironment)'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo Environment $(pipelineEnvironment) exists
+
+- ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
   # Provision on self-hosted agent
   - job: 'Provision'
     dependsOn: Prepare
