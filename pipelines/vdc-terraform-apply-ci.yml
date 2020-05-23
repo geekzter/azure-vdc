@@ -315,7 +315,7 @@ jobs:
       - Provision
       - ${{ if eq(parameters.provision, true) }}:
         - Reprovision
-    displayName: 'Deploy & Test PaaS Application'
+    displayName: 'Deploy PaaS Application'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
@@ -423,7 +423,7 @@ jobs:
       - Provision
       - ${{ if eq(parameters.provision, true) }}:
         - Reprovision
-    displayName: 'Deploy & Test IaaS Application'
+    displayName: 'Deploy IaaS Application'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
