@@ -712,41 +712,41 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
                                   azurerm_virtual_machine_extension.app_db_vm_monitor
                                  ]
 }
-# Commented out; we can only have one CustomScriptExtension extension per VM
-# resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
-#   name                         = "PipelineAgentCustomScript"
-#   virtual_machine_id           = azurerm_virtual_machine.app_db_vm[count.index].id
-#   publisher                    = "Microsoft.Compute"
-#   type                         = "CustomScriptExtension"
-#   type_handler_version         = "1.10"
-#   auto_upgrade_minor_version   = true
-#   settings                     = <<EOF
-#     {
-#       "fileUris": [
-#                                  "${azurerm_storage_blob.install_agent_script.url}"
-#       ]
-#     }
-#   EOF
+# We can only have one CustomScriptExtension extension per VM, this is not added if deploy_security_vm_extensions = true
+resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
+  name                         = "PipelineAgentCustomScript"
+  virtual_machine_id           = azurerm_virtual_machine.app_db_vm[count.index].id
+  publisher                    = "Microsoft.Compute"
+  type                         = "CustomScriptExtension"
+  type_handler_version         = "1.10"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "fileUris": [
+                                 "${azurerm_storage_blob.install_agent_script.url}"
+      ]
+    }
+  EOF
 
-#   protected_settings           = <<EOF
-#     { 
-#       "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.resource_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${var.resource_environment},db\""
-#     } 
-#   EOF
+  protected_settings           = <<EOF
+    { 
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.resource_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${var.resource_environment},db\""
+    } 
+  EOF
 
-#   tags                         = merge(
-#     var.tags,
-#     map(
-#       "dummy-dependency",        var.vm_connectivity_dependency
-#     )
-#   )
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_connectivity_dependency
+    )
+  )
 
-#   count                        = (var.deploy_non_essential_vm_extensions && var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
-#   depends_on                   = [
-#                                   null_resource.start_db_vm,
-#                                   azurerm_virtual_machine_extension.app_db_vm_monitor
-#                                  ]
-# }
+  count                        = (!var.deploy_security_vm_extensions && var.deploy_non_essential_vm_extensions && var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
+  depends_on                   = [
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor
+                                 ]
+}
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   name                         = "BGInfo"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
