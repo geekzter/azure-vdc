@@ -468,10 +468,10 @@ jobs:
           inlineScript: |
             $(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
             #$(scriptDirectory)/wait_for_agents.ps1 -Environment $(pipelineEnvironment) `
-                                                   -Organization $(System.TeamFoundationCollectionUri) `
-                                                   -Project $(System.TeamProject) `
-                                                   -Tag $(tag) `
-                                                   -TimeoutSeconds $(timeOutSeconds)
+            #                                       -OrganizationUrl $(System.TeamFoundationCollectionUri) `
+            #                                       -Project $(System.TeamProject) `
+            #                                       -Tag $(tag) `
+            #                                       -TimeoutSeconds $(timeOutSeconds)
           useGlobalConfig: true
           failOnStandardError: true
           workingDirectory: '$(scriptDirectory)'
