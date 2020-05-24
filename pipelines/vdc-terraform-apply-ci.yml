@@ -324,21 +324,6 @@ jobs:
         env:
           TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
-      # If applications are deployed, wait for environment agents to come online
-      - task: AzureCLI@2
-        name: waitforagents
-        displayName: 'Wait for environment agents to come online'
-        enabled: ${{ parameters.deploy }}
-        inputs:
-          azureSubscription: '$(subscriptionConnection)'
-          scriptType: pscore
-          scriptLocation: inlineScript
-          inlineScript: |
-            $(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(terraform.iaas_app_resource_group) -TimeOut 180
-          useGlobalConfig: true
-          failOnStandardError: true
-          workingDirectory: '$(scriptDirectory)'
-
 - ${{ if eq(parameters.deploy, true) }}:
   # Deploy PaaS application 
   - job: 'Deploy'
@@ -449,10 +434,47 @@ jobs:
           package: '$(appPackage)'
 
 - ${{ if eq(parameters.deploy, true) }}:
+  # First things first, we need to check whether the environment is ready to deploy to
+  - job: 'DeployEnvironmentPrep'
+    dependsOn:
+      - Prepare
+      - Provision
+      - ${{ if eq(parameters.provision, true) }}:
+        - Reprovision
+    displayName: 'Prepare environment'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+    variables:
+      iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
+      timeOutSeconds: 180
+
+    pool:
+      # SqlAzureDacpacDeployment@1 only runs on Windows
+      vmImage: 'ubuntu-latest'
+
+    steps:
+      # If applications are deployed, wait for environment agents to come online
+      - task: AzureCLI@2
+        name: waitforagents
+        displayName: 'Wait for environment agents to come online'
+        enabled: true
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
+          useGlobalConfig: true
+          failOnStandardError: true
+          workingDirectory: '$(scriptDirectory)'
+
+- ${{ if eq(parameters.deploy, true) }}:
   - deployment: 'DeployEnvironment'
     dependsOn:
       - Prepare
       - Provision
+      - DeployEnvironmentPrep
       - ${{ if eq(parameters.provision, true) }}:
         - Reprovision
     displayName: 'Deploy IaaS Application'
@@ -466,9 +488,9 @@ jobs:
 
     environment:
       name: '$(pipelineEnvironment)'
-    # name: vdc-ci
       resourceType: virtualMachine
       tags: 'web'
+
     strategy:
       runOnce:
         deploy:
@@ -499,7 +521,6 @@ jobs:
               downloadType: 'single'
               artifactName: 'aspnet'
               downloadPath: '$(appArtifactDirectory)'
-
           - task: DownloadPipelineArtifact@2
             displayName: 'Download Scripts'
             enabled: true

@@ -6,7 +6,7 @@
 #> 
 param ( 
     [parameter(Mandatory=$true)][string]$ResourceGroup,
-    [parameter(Mandatory=$false)][int]$Timeout=120
+    [parameter(Mandatory=$false)][int]$TimeoutSeconds=120
 ) 
 
 $vmIDs = $(az vm list -g $ResourceGroup --query "[].id" -o tsv)
