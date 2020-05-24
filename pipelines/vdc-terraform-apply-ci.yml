@@ -456,6 +456,7 @@ jobs:
 
     steps:
       # If applications are deployed, wait for environment agents to come online
+      # Requires Project Collection Build Service reader access to Environment
       - task: AzureCLI@2
         name: waitforagents
         displayName: 'Wait for environment agents to come online'

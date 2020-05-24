@@ -46,7 +46,7 @@ if ($Environment) {
     Write-Information "Checking status of environment agents $agents..."
     $offlineAgents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "value[?contains(tags,'$Tag') && agent.enabled && agent.status=='offline'].agent.name" -o tsv)
     $waitUntil = (Get-Date).AddSeconds($TimeoutSeconds)
-    if (!$offlineAgents) {
+    if ($offlineAgents) {
         Write-Host "Waiting for $agents to come online ..." -NoNewline
     }
     while ($offlineAgents -and ((Get-Date) -lt $waitUntil)) {
