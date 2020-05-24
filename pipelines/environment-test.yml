@@ -7,6 +7,10 @@
   
 # Global variables shared by all jobs
 variables:
+- group: 'vdc'
+  # 'vdc-ci' contains build (non-release) settings
+- group: 'vdc-ci'
+  # 'vdc-vanity-domain' contains certificate, domain information
 - name: 'pipelineEnvironment'
   value: 'vdc-test2'
 - name: 'scriptDirectory'
