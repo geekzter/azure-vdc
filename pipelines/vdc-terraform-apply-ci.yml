@@ -168,7 +168,7 @@ jobs:
 - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
   # Creates an environment if it doesn't exist yet
   - deployment: CreateEnvironment
-    displayName: Create environment (if it does not exist yet)
+    displayName: Create Environment (if it does not exist yet)
     pool:
       vmImage: 'ubuntu-latest'
     environment: '$(pipelineEnvironment)'
@@ -441,12 +441,13 @@ jobs:
       - Provision
       - ${{ if eq(parameters.provision, true) }}:
         - Reprovision
-    displayName: 'Prepare environment'
+    displayName: 'Prepare Environment'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
     variables:
       iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
+      tag: 'web'
       timeOutSeconds: 120
 
     pool:
@@ -468,8 +469,8 @@ jobs:
             $(scriptDirectory)/wait_for_agents.ps1 -Environment $(pipelineEnvironment) `
                                                    -Organization $(System.TeamFoundationCollectionUri) `
                                                    -Project $(System.TeamProject) `
-                                                   -TimeoutSeconds $(timeOutSeconds) `
-                                                   -Tags web
+                                                   -Tag $(tag) `
+                                                   -TimeoutSeconds $(timeOutSeconds)
           useGlobalConfig: true
           failOnStandardError: true
           workingDirectory: '$(scriptDirectory)'
