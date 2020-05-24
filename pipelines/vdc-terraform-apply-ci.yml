@@ -316,6 +316,8 @@ jobs:
           # Use Pipeline Service Principal and Service Connection to set up these variables
           inlineScript: |
             $(scriptDirectory)/tf_deploy.ps1 -init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)
+            # Wait for agents to come online
+            Start-Sleep 120
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true

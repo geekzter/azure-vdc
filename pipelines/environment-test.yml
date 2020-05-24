@@ -1,0 +1,167 @@
+# This pipeline perfors a full CI test of the VDC:
+#  - Provision infrastructure
+#  - Deploy application
+#  - Test application
+#  - Destroy infrastructure
+
+
+
+# Global variables shared by all jobs
+variables:
+- group: 'vdc-ci'
+- name: 'jobTimeOutMinutes'
+  value: 180
+- name: 'pipelineEnvironment'
+  value: 'vdc-${{ parameters.workspace }}'
+
+jobs:
+# Creates an environment if it doesn't exist yet
+- deployment: CreateEnvironment
+  displayName: Create environment (if it does not exist yet)
+  pool:
+    vmImage: 'ubuntu-latest'
+  environment: '$(pipelineEnvironment)'
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - task: AzureCLI@2
+          name: startagents
+          displayName: 'Wake up agents'
+          enabled: true
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              #get-azvm -Resourcegroup vdc-tst2-iaasapp-b3943 -Status -Name vdc-tst2-iaasapp-b3943-web-vm1 | select-object -expandproperty Statuses | sort-object -property Time -Descending -Top 1 | select-object -ExpandProperty Time
+              Write-Host "Stopping VM's..."
+              az vm stop --ids $(az vm list -g vdc-tst2-iaasapp-b3943 -o tsv)
+              Start-Sleep 30
+              Write-Host "Starting VM's..."
+              az vm start --ids $(az vm list -g vdc-tst2-iaasapp-b3943 --query "[?powerState!='VM running'].id" -o tsv)
+              Start-Sleep 60
+            addSpnToEnvironment: true
+            useGlobalConfig: true
+            failOnStandardError: true
+            powerShellIgnoreLASTEXITCODE: false
+            workingDirectory: '$(scriptDirectory)'
+
+- deployment: 'DeployEnvironment'
+  dependsOn:
+    - CreateEnvironment
+  displayName: 'Deploy IaaS Application'
+  condition: succeeded()
+  timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+  variables:
+    appArtifactDirectory: '$(Pipeline.Workspace)/aspnet'
+    appScriptsDirectory: '$(Pipeline.Workspace)/aspnetscripts'
+    appPackage: '$(appArtifactDirectory)/SampleIisWebApp.zip'
+
+  environment:
+    name: '$(pipelineEnvironment)'
+  # name: vdc-ci
+    resourceType: virtualMachine
+    tags: 'web'
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        # Download IaaS Application Pipeline artifacts
+        # This consumes artifacts published by this pipeline:
+        # https://github.com/geekzter/azure-vdc/blob/master/pipelines/iis-asp.net-ci.yml
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Download ASP.NET Core App Artifacts'
+          enabled: true
+          inputs:
+            buildType: 'specific'
+            project: '$(appArtifectProject)'
+            definition: '$(appBuildDefinitionIaaS)'
+            specificBuildWithTriggering: true
+            buildVersionToDownload: 'latest'
+            artifactName: 'aspnet'
+            targetPath: '$(appArtifactDirectory)'
+        - task: DownloadBuildArtifacts@0
+          displayName: 'Download ASP.NET Core App Artifacts'
+          enabled: false
+          inputs:
+            buildType: 'specific'
+            project: '$(appArtifectProject)'
+            pipeline: '$(appBuildDefinitionIaaS)'
+            specificBuildWithTriggering: true
+            buildVersionToDownload: 'latest'
+            downloadType: 'single'
+            artifactName: 'aspnet'
+            downloadPath: '$(appArtifactDirectory)'
+
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Download Scripts'
+          enabled: true
+          inputs:
+            buildType: 'specific'
+            project: '$(appArtifectProject)'
+            definition: '$(appBuildDefinitionIaaS)'
+            specificBuildWithTriggering: true
+            buildVersionToDownload: 'latest'
+            artifactName: 'aspnetscripts'
+            targetPath: '$(appScriptsDirectory)'
+        - task: DownloadBuildArtifacts@0
+          displayName: 'Download Scripts'
+          enabled: false
+          inputs:
+            buildType: 'specific'
+            project: '$(appArtifectProject)'
+            pipeline: '$(appBuildDefinitionIaaS)'
+            specificBuildWithTriggering: true
+            buildVersionToDownload: 'latest'
+            downloadType: 'single'
+            artifactName: 'aspnetscripts'
+            downloadPath: '$(appScriptsDirectory)'
+
+        # Configure IIS on VM's
+        - task: IISWebAppManagementOnMachineGroup@0
+          displayName: 'Configure IIS App'
+          enabled: true
+          inputs:
+            EnableIIS: true
+            WebsiteName: 'Default Web Site'
+            AddBinding: true
+            Bindings: '{"bindings":[{"protocol":"http","ipAddress":"All Unassigned","port":"80","hostname":"","sslThumbprint":"","sniFlag":false}]}'
+            CreateOrUpdateAppPoolForWebsite: true
+            AppPoolNameForWebsite: DemoAppPool
+            AppCmdCommands: |
+              start apppool /apppool.name:DemoAppPool
+              set config /section:defaultDocument "/~files" 
+              set config /section:defaultDocument "/+files.[@start,value='default.aspx']"          
+
+        - task: IISWebAppDeploymentOnMachineGroup@0
+          displayName: 'Deploy IIS App'
+          enabled: true
+          inputs:
+            WebSiteName: 'Default Web Site'
+            Package: '$(appPackage)'
+            TakeAppOfflineFlag: true
+
+        - powershell: |
+            # Write your powershell commands here.
+            Invoke-WebRequest -Uri http://127.0.0.1/default.aspx -UseBasicParsing
+            
+            # Use the environment variables input below to pass secret variables to this script.
+            errorActionPreference: continue
+          displayName: 'Initial Warmup'
+          enabled: false
+
+        - task: CopyFiles@2
+          displayName: 'Copy Warmup Scripts'
+          enabled: true
+          inputs:
+            SourceFolder: '$(appScriptsDirectory)'
+            TargetFolder: 'C:\Users\Public\Documents'
+
+        - task: BatchScript@1
+          displayName: 'Schedule Warmup Scripts'
+          enabled: true
+          inputs:
+            filename: '$(appScriptsDirectory)/schedule-warmup.cmd'
+
