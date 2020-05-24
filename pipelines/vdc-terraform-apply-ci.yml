@@ -464,7 +464,12 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            $(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
+            #$(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
+            $(scriptDirectory)/wait_for_agents.ps1 -Environment $(pipelineEnvironment) `
+                                                   -Organization $(System.TeamFoundationCollectionUri) `
+                                                   -Project $(System.TeamProject) `
+                                                   -TimeoutSeconds $(timeOutSeconds) `
+                                                   -Tags web
           useGlobalConfig: true
           failOnStandardError: true
           workingDirectory: '$(scriptDirectory)'
