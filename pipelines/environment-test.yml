@@ -50,5 +50,4 @@ jobs:
         workingDirectory: '$(scriptDirectory)'
       env:
         # Use Pipeline token to access Azure DevOps
-        #AZURE_DEVOPS_EXT_PAT: 'xas7diz52o5yisoqijkf7alux5ulphednzs6nd4tdxi24wfngala'
         AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
