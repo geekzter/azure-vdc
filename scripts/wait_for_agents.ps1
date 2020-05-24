@@ -29,6 +29,7 @@ param (
     #[parameter(Mandatory=$true)][string]$ResourceGroup,
     [parameter(Mandatory=$false)][int]$TimeoutSeconds=300
 ) 
+Write-Host $MyInvocation.line
 
 if ($Environment) {
     $extensionExists = $(az extension list --query "[?name=='azure-devops']" -o tsv) 
@@ -43,11 +44,17 @@ if ($Environment) {
 
     $environmentId = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project resource=environments --resource environments --query "value[?name=='$Environment'].id" -o tsv)
     $agents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "value[?contains(tags,'$Tag') && agent.enabled].agent.name" -o tsv)
-    Write-Information "Checking status of environment agents $agents..."
+    if (!$agents) {
+        Write-Error "No agents found"
+        Write-Warning "This command didn't yield any output:"
+        Write-Warning "az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query `"value[?contains(tags,'$Tag') && agent.enabled].agent.name`" -o tsv"
+        exit
+    }
+    Write-Host "Checking status of environment agents $agents..."
     $offlineAgents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "value[?contains(tags,'$Tag') && agent.enabled && agent.status=='offline'].agent.name" -o tsv)
     $waitUntil = (Get-Date).AddSeconds($TimeoutSeconds)
     if ($offlineAgents) {
-        Write-Host "Waiting for $agents to come online ..." -NoNewline
+        Write-Host "Waiting for $offlineAgents to come online ..." -NoNewline
     }
     while ($offlineAgents -and ((Get-Date) -lt $waitUntil)) {
         Write-Host "." -NoNewLine
