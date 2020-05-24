@@ -447,7 +447,7 @@ jobs:
 
     variables:
       iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
-      timeOutSeconds: 180
+      timeOutSeconds: 300
 
     pool:
       # SqlAzureDacpacDeployment@1 only runs on Windows
