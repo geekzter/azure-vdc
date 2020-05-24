@@ -45,9 +45,9 @@ if ($Environment) {
     $environmentId = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project resource=environments --resource environments --query "value[?name=='$Environment'].id" -o tsv)
     $agents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "value[?contains(tags,'$Tag') && agent.enabled].agent.name" -o tsv)
     if (!$agents) {
-        Write-Error "No agents found"
         Write-Warning "This command didn't yield any output:"
         Write-Warning "az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query `"value[?contains(tags,'$Tag') && agent.enabled].agent.name`" -o tsv"
+        Write-Error "No agents found"
         exit
     }
     Write-Host "Checking status of environment agents $agents..."
