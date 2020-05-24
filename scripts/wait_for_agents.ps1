@@ -31,7 +31,10 @@ param (
 ) 
 
 if ($Environment) {
-    az extension add -y -n azure-devops 2>$null
+    $extensionExists = $(az extension list --query "[?name=='azure-devops']" -o tsv) 
+    if (!$extensionExists) {
+        az extension add -y -n azure-devops
+    }
 
     $apiVersion="6.0-preview"
 
