@@ -474,6 +474,9 @@ jobs:
           useGlobalConfig: true
           failOnStandardError: true
           workingDirectory: '$(scriptDirectory)'
+        env:
+          # Use Pipeline token to access Azure DevOps
+          AZURE_DEVOPS_EXT_PAT: '$(System.AccessToken)'
 
 - ${{ if eq(parameters.deploy, true) }}:
   - deployment: 'DeployEnvironment'
