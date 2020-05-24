@@ -6,7 +6,7 @@
 #> 
 param ( 
     [parameter(Mandatory=$true)][string]$ResourceGroup,
-    [parameter(Mandatory=$false)][int]$TimeoutSeconds=120
+    [parameter(Mandatory=$false)][int]$TimeoutSeconds=300
 ) 
 
 $vmIDs = $(az vm list -g $ResourceGroup --query "[].id" -o tsv)
@@ -20,9 +20,9 @@ $startTimeString = (az vm get-instance-view --ids $vmIDs --query "max([].instanc
 if ($startTimeString) {
     Write-Host "VM's last started $startTimeString"
     $startTime = [datetime]::Parse($startTimeString)
-    $waitUntil = $startTime.AddSeconds($Timeout)
+    $waitUntil = $startTime.AddSeconds($TimeoutSeconds)
 } else {
-    $waitUntil = (Get-Date).AddSeconds($Timeout)
+    $waitUntil = (Get-Date).AddSeconds($TimeoutSeconds)
 }
 
 $sleepTime = ($waitUntil - (Get-Date))

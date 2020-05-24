@@ -447,7 +447,7 @@ jobs:
 
     variables:
       iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
-      timeOutSeconds: 300
+      timeOutSeconds: 120
 
     pool:
       # SqlAzureDacpacDeployment@1 only runs on Windows
@@ -508,17 +508,16 @@ jobs:
               specificBuildWithTriggering: true
               buildVersionToDownload: 'latest'
               artifactName: 'aspnet'
-              targetPath: '$(appArtifactDirectory)'
+              downloadPath: '$(appArtifactDirectory)'
           - task: DownloadBuildArtifacts@0
             displayName: 'Download ASP.NET Core App Artifacts'
             enabled: false
             inputs:
               buildType: 'specific'
               project: '$(appArtifectProject)'
-              pipeline: '$(appBuildDefinitionIaaS)'
+              definition: '$(appBuildDefinitionIaaS)'
               specificBuildWithTriggering: true
               buildVersionToDownload: 'latest'
-              downloadType: 'single'
               artifactName: 'aspnet'
               downloadPath: '$(appArtifactDirectory)'
           - task: DownloadPipelineArtifact@2
@@ -531,17 +530,16 @@ jobs:
               specificBuildWithTriggering: true
               buildVersionToDownload: 'latest'
               artifactName: 'aspnetscripts'
-              targetPath: '$(appScriptsDirectory)'
+              downloadPath: '$(appScriptsDirectory)'
           - task: DownloadBuildArtifacts@0
             displayName: 'Download Scripts'
             enabled: false
             inputs:
               buildType: 'specific'
               project: '$(appArtifectProject)'
-              pipeline: '$(appBuildDefinitionIaaS)'
+              definition: '$(appBuildDefinitionIaaS)'
               specificBuildWithTriggering: true
               buildVersionToDownload: 'latest'
-              downloadType: 'single'
               artifactName: 'aspnetscripts'
               downloadPath: '$(appScriptsDirectory)'
 
