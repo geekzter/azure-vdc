@@ -510,7 +510,7 @@ jobs:
           # https://github.com/geekzter/azure-vdc/blob/master/pipelines/iis-asp.net-ci.yml
           - task: DownloadPipelineArtifact@2
             displayName: 'Download ASP.NET Core App Artifacts'
-            enabled: false
+            enabled: true
             inputs:
               buildType: 'specific'
               project: '$(appArtifectProject)'
@@ -521,7 +521,7 @@ jobs:
               downloadPath: '$(appArtifactDirectory)'
           - task: DownloadBuildArtifacts@0
             displayName: 'Download ASP.NET Core App Artifacts'
-            enabled: true
+            enabled: false
             inputs:
               buildType: 'specific'
               project: '$(appArtifectProject)'
@@ -532,7 +532,7 @@ jobs:
               downloadPath: '$(appArtifactDirectory)'
           - task: DownloadPipelineArtifact@2
             displayName: 'Download Scripts'
-            enabled: false
+            enabled: true
             inputs:
               buildType: 'specific'
               project: '$(appArtifectProject)'
@@ -543,7 +543,7 @@ jobs:
               downloadPath: '$(appScriptsDirectory)'
           - task: DownloadBuildArtifacts@0
             displayName: 'Download Scripts'
-            enabled: true
+            enabled: false
             inputs:
               buildType: 'specific'
               project: '$(appArtifectProject)'
