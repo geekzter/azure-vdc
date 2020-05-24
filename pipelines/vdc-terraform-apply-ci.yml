@@ -325,6 +325,21 @@ jobs:
         env:
           TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
+      # If applications are deployed, wait for environment agents to come online
+      - task: AzureCLI@2
+        name: waitforagents
+        displayName: 'Wait for environment agents to come online'
+        enabled: ${{ parameters.deploy }}
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(terraform.iaas_app_resource_group)
+          useGlobalConfig: true
+          failOnStandardError: true
+          workingDirectory: '$(scriptDirectory)'
+
 - ${{ if eq(parameters.deploy, true) }}:
   # Deploy PaaS application 
   - job: 'Deploy'

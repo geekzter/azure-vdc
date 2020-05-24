@@ -34,7 +34,7 @@ jobs:
             scriptType: pscore
             scriptLocation: inlineScript
             inlineScript: |
-              #get-azvm -Resourcegroup vdc-tst2-iaasapp-b3943 -Status -Name vdc-tst2-iaasapp-b3943-web-vm1 | select-object -expandproperty Statuses | sort-object -property Time -Descending -Top 1 | select-object -ExpandProperty Time
+              az vm get-instance-view --ids $(az vm list -g vdc-tst2-iaasapp-b3943 --query "[].id" -o tsv)  --query "min([].instanceView.statuses[].time)" -o tsv
               Write-Host "Stopping VM's..."
               az vm stop --ids $(az vm list -g vdc-tst2-iaasapp-b3943 -o tsv)
               Start-Sleep 30
