@@ -317,7 +317,6 @@ jobs:
           inlineScript: |
             $(scriptDirectory)/tf_deploy.ps1 -init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)
             # Wait for agents to come online
-            Start-Sleep 120
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
@@ -335,7 +334,7 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            $(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(terraform.iaas_app_resource_group)
+            $(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(terraform.iaas_app_resource_group) -TimeOut 180
           useGlobalConfig: true
           failOnStandardError: true
           workingDirectory: '$(scriptDirectory)'
