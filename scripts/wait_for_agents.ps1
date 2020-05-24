@@ -37,7 +37,8 @@ if ($Environment) {
         az extension add -y -n azure-devops
     }
 
-    $apiVersion="6.0-preview"
+    #$apiVersion="6.0-preview"
+    $apiVersion="5.2-preview"
 
     # Discover appropriate arguments using this information:
     # az devops invoke --org $OrganizationUrl --query "[?area=='environments']"  
