@@ -40,10 +40,16 @@ if ($Environment) {
     #$apiVersion="6.0-preview"
     $apiVersion="5.2-preview"
 
+    
+    #$apiUrl = "${OrganizationUrl}/_apis/pipelines/environments/$environmentId/providers/virtualmachines?api-version=${apiVersion}"
+
     # Discover appropriate arguments using this information:
     # az devops invoke --org $OrganizationUrl --query "[?area=='environments']"  
 
     $environmentId = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project resource=environments --resource environments --query "value[?name=='$Environment'].id" -o tsv)
+
+
+
     $agents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "value[?contains(tags,'$Tag') && agent.enabled].agent.name" -o tsv)
     if (!$agents) {
         Write-Warning "This command didn't yield any output:"

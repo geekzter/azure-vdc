@@ -42,12 +42,12 @@ jobs:
         scriptType: pscore
         scriptLocation: inlineScript
         inlineScript: |
-          Write-Output $(System.AccessToken) | az devops login --organization $(System.TeamFoundationCollectionUri)
+          #Write-Output $(System.AccessToken) | az devops login --organization $(System.TeamFoundationCollectionUri)
           #$(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
           $(scriptDirectory)/wait_for_agents.ps1 -Environment $(pipelineEnvironment) -OrganizationUrl $(System.TeamFoundationCollectionUri) -Project $(System.TeamProject) -Tag $(tag) -TimeoutSeconds $(timeOutSeconds)
         useGlobalConfig: true
         failOnStandardError: true
         workingDirectory: '$(scriptDirectory)'
-      #env:
+      env:
         # Use Pipeline token to access Azure DevOps
-        #AZURE_DEVOPS_EXT_PAT: '$(System.AccessToken)'
+        AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
