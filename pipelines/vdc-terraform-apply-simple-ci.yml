@@ -1,4 +1,4 @@
-# This pipeline perfors a full CI test of the VDC:
+# This pipeline performs a full CI test of the VDC:
 #  - Provision infrastructure
 #  - Destroy infrastructure
 # This CI pieline has as few dependencies as possible
