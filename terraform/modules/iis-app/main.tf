@@ -6,6 +6,7 @@ locals {
   resource_group_name_short    = substr(lower(replace(var.resource_group,"-","")),0,20)
   diagnostics_storage_name     = element(split("/",var.diagnostics_storage_id),length(split("/",var.diagnostics_storage_id))-1)
   vdc_resource_group_name      = element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)
+  pipeline_environment         = "vdc-${terraform.workspace}"
 }
 
 data azurerm_storage_account diagnostics {
@@ -122,16 +123,6 @@ resource "azurerm_virtual_machine" "app_web_vm" {
     caching                    = "ReadWrite"
     create_option              = "FromImage"
     managed_disk_type          = "Premium_LRS"
-  }
-
- # Optional data disks
-  storage_data_disk {
-    name                       = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-datadisk"
-    caching                    = "ReadWrite"
-    managed_disk_type          = "Premium_LRS"
-    create_option              = "Empty"
-    lun                        = 0
-    disk_size_gb               = "255"
   }
 
   os_profile {
@@ -304,7 +295,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.tags["environment"]}-app -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]}\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${terraform.workspace},${var.resource_environment},web\""
     } 
   EOF
 
@@ -385,35 +376,6 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
                                   azurerm_virtual_machine_extension.app_web_vm_monitor
                                  ]
 }
-resource azurerm_virtual_machine_extension app_web_vm_mount_data_disks {
-  name                         = "MountDataDisks"
-  virtual_machine_id           = azurerm_virtual_machine.app_web_vm[count.index].id
-  publisher                    = "Microsoft.Compute"
-  type                         = "CustomScriptExtension"
-  type_handler_version         = "1.10"
-  auto_upgrade_minor_version   = true
-  settings                     = <<EOF
-    {
-      "fileUris": [
-                                 "${azurerm_storage_blob.mount_data_disks_script.url}"
-      ]
-    }
-  EOF
-
-  protected_settings           = <<EOF
-    { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./mount_data_disks.ps1\""
-    } 
-  EOF
-
-  tags                         = var.tags
-
-  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
-  depends_on                   = [
-                                  null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_monitor
-                                 ]
-}
 # Does not work with AutoLogon
 resource azurerm_virtual_machine_extension app_web_vm_disk_encryption {
   # Trigger new resource every run
@@ -446,8 +408,7 @@ SETTINGS
   count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_monitor,
-                                  azurerm_virtual_machine_extension.app_web_vm_mount_data_disks
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor
                                  ]
 }
 
@@ -479,7 +440,6 @@ resource azurerm_monitor_diagnostic_setting app_web_vm {
                                   azurerm_virtual_machine_extension.app_web_vm_diagnostics,
                                   azurerm_virtual_machine_extension.app_web_vm_disk_encryption,
                                   azurerm_virtual_machine_extension.app_web_vm_monitor,
-                                  azurerm_virtual_machine_extension.app_web_vm_mount_data_disks,
                                   azurerm_virtual_machine_extension.app_web_vm_pipeline_deployment_group,
                                   azurerm_virtual_machine_extension.app_web_vm_pipeline_environment,
                                   azurerm_virtual_machine_extension.app_web_vm_watcher
@@ -753,6 +713,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
                                   azurerm_virtual_machine_extension.app_db_vm_monitor
                                  ]
 }
+# We can only have one CustomScriptExtension extension per VM, this is not added if deploy_security_vm_extensions = true
 resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
   name                         = "PipelineAgentCustomScript"
   virtual_machine_id           = azurerm_virtual_machine.app_db_vm[count.index].id
@@ -770,7 +731,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment vdc-${var.tags["environment"]}-app -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]}\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${terraform.workspace},${var.resource_environment},db\""
     } 
   EOF
 
@@ -781,7 +742,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
     )
   )
 
-  count                        = (var.deploy_non_essential_vm_extensions && var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
+  count                        = (!var.deploy_security_vm_extensions && var.deploy_non_essential_vm_extensions && var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
   depends_on                   = [
                                   null_resource.start_db_vm,
                                   azurerm_virtual_machine_extension.app_db_vm_monitor
@@ -875,7 +836,7 @@ resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
 
   tags                         = var.tags
 
-  count                        = var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions ? var.app_web_vm_number : 0
+  count                        = !var.use_pipeline_environment && (var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions) ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_db_vm,
                                   azurerm_virtual_machine_extension.app_db_vm_monitor

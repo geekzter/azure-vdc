@@ -1,4 +1,4 @@
-# This pipeline perfors a full CI test of the VDC:
+# This pipeline performs a full CI test of the VDC:
 #  - Provision infrastructure
 #  - Deploy application
 #  - Test application
@@ -18,7 +18,7 @@ parameters:
   type: boolean
   default: true
 - name: deploy
-  displayName: Deploy PaaS application
+  displayName: Deploy applications
   type: boolean
   default: true
 - name: destroy
@@ -34,9 +34,9 @@ parameters:
   - ci1
   - ci2
   - ci3
-  - tst1
-  - tst2
-  - tst3
+  - test1
+  - test2
+  - test3
 
 trigger:
   batch: true
@@ -103,12 +103,20 @@ variables:
   value: 0
 - name: 'TF_WORKSPACE'
   value: ${{ parameters.workspace }}
+- name: 'TF_VAR_resource_environment'
+  value: ''
+- name: 'TF_VAR_use_pipeline_environment'
+  value: 'true'
 
 # Inline variables shared across jobs
   # This references this pipeline:
   # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
-- name: 'appPipeline'
+- name: 'appArtifectProject'
   value: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
+- name: 'appBuildDefinitionIaaS'
+  value: '41'
+- name: 'appBuildDefinitionPaaS'
+  value: '63'
 - name: 'jobTimeOutMinutes'
   value: 180
 - name: 'scriptDirectory'
@@ -121,6 +129,8 @@ variables:
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-paasapp-$(TF_VAR_resource_suffix)'
 - name: 'vdcResourceGroup' 
   value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
+- name: 'pipelineEnvironment'
+  value: 'vdc-${{ parameters.workspace }}'
 
 jobs:
 - job: 'Prepare'
@@ -156,9 +166,25 @@ jobs:
         workingDirectory: '$(scriptDirectory)'
 
 - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
+  # Creates an environment if it doesn't exist yet
+  - deployment: CreateEnvironment
+    displayName: Create Environment (if it does not exist yet)
+    pool:
+      vmImage: 'ubuntu-latest'
+    environment: '$(pipelineEnvironment)'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo Environment $(pipelineEnvironment) exists
+            displayName: 'Create environment $(pipelineEnvironment)'
+
+- ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
   # Provision on self-hosted agent
   - job: 'Provision'
-    dependsOn: Prepare
+    dependsOn: 
+    - Prepare
+    - CreateEnvironment
     displayName: 'Provision Infrastructure with Terraform'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
@@ -290,6 +316,7 @@ jobs:
           # Use Pipeline Service Principal and Service Connection to set up these variables
           inlineScript: |
             $(scriptDirectory)/tf_deploy.ps1 -init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)
+            # Wait for agents to come online
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
@@ -305,7 +332,7 @@ jobs:
       - Provision
       - ${{ if eq(parameters.provision, true) }}:
         - Reprovision
-    displayName: 'Deploy & Test PaaS Application'
+    displayName: 'Deploy PaaS Application'
     condition: succeeded()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
@@ -315,7 +342,6 @@ jobs:
       appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
       # Get application configuration from Terraform output
       appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
-      appUrl: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
       appMSIName: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_name'] ]
       appMSIClientID: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_client_id'] ]
       appSQLAdmin: 'vdcadmin'
@@ -390,8 +416,8 @@ jobs:
         enabled: true
         inputs:
           buildType: 'specific'
-          project: '$(appPipeline)'
-          definition: '63'
+          project: '$(appArtifectProject)'
+          definition: '$(appBuildDefinitionPaaS)'
           specificBuildWithTriggering: true
           buildVersionToDownload: 'latest'
           artifactName: 'aspnetcoresql'
@@ -407,17 +433,216 @@ jobs:
           appName: '$(appServiceName)'
           package: '$(appPackage)'
 
-      # Test PaaS Application
+- ${{ if eq(parameters.deploy, true) }}:
+  # First things first, we need to check whether the environment is ready to deploy to
+  - job: 'DeployEnvironmentPrep'
+    dependsOn:
+      - Prepare
+      - Provision
+      - ${{ if eq(parameters.provision, true) }}:
+        - Reprovision
+    displayName: 'Prepare Environment'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+    variables:
+      iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
+      tag: 'web'
+      timeOutSeconds: 300
+
+    pool:
+      # SqlAzureDacpacDeployment@1 only runs on Windows
+      vmImage: 'ubuntu-latest'
+
+    steps:
+      # If applications are deployed, wait for environment agents to come online
+      # Requires Project Collection Build Service reader access to Environment
+      - task: AzureCLI@2
+        name: waitforagents
+        displayName: 'Wait for environment agents to come online'
+        enabled: true
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            #$(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
+            $(scriptDirectory)/wait_for_agents.ps1 -Environment $(pipelineEnvironment) `
+                                                   -OrganizationUrl $(System.TeamFoundationCollectionUri) `
+                                                   -Project $(System.TeamProject) `
+                                                   -Tag $(tag) `
+                                                   -TimeoutSeconds $(timeOutSeconds)
+          useGlobalConfig: true
+          failOnStandardError: true
+          workingDirectory: '$(scriptDirectory)'
+        env:
+          # Use Pipeline token to access Azure DevOps
+          AZURE_DEVOPS_EXT_PAT: '$(System.AccessToken)'
+
+- ${{ if eq(parameters.deploy, true) }}:
+  - deployment: 'DeployEnvironment'
+    dependsOn:
+      - Prepare
+      - Provision
+      - DeployEnvironmentPrep
+      - ${{ if eq(parameters.provision, true) }}:
+        - Reprovision
+    displayName: 'Deploy IaaS Application'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+    variables:
+      appArtifactDirectory: '$(Pipeline.Workspace)/aspnet'
+      appScriptsDirectory: '$(Pipeline.Workspace)/aspnetscripts'
+      appPackage: '$(appArtifactDirectory)/SampleIisWebApp.zip'
+
+    environment:
+      name: '$(pipelineEnvironment)'
+      resourceType: virtualMachine
+      tags: 'web'
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Download IaaS Application Pipeline artifacts
+          # This consumes artifacts published by this pipeline:
+          # https://github.com/geekzter/azure-vdc/blob/master/pipelines/iis-asp.net-ci.yml
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download ASP.NET Core App Artifacts'
+            enabled: true
+            inputs:
+              buildType: 'specific'
+              project: '$(appArtifectProject)'
+              definition: '$(appBuildDefinitionIaaS)'
+              specificBuildWithTriggering: true
+              buildVersionToDownload: 'latest'
+              artifactName: 'aspnet'
+              downloadPath: '$(appArtifactDirectory)'
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download ASP.NET Core App Artifacts'
+            enabled: false
+            inputs:
+              buildType: 'specific'
+              project: '$(appArtifectProject)'
+              definition: '$(appBuildDefinitionIaaS)'
+              specificBuildWithTriggering: true
+              buildVersionToDownload: 'latest'
+              artifactName: 'aspnet'
+              downloadPath: '$(appArtifactDirectory)'
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Scripts'
+            enabled: true
+            inputs:
+              buildType: 'specific'
+              project: '$(appArtifectProject)'
+              definition: '$(appBuildDefinitionIaaS)'
+              specificBuildWithTriggering: true
+              buildVersionToDownload: 'latest'
+              artifactName: 'aspnetscripts'
+              downloadPath: '$(appScriptsDirectory)'
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download Scripts'
+            enabled: false
+            inputs:
+              buildType: 'specific'
+              project: '$(appArtifectProject)'
+              definition: '$(appBuildDefinitionIaaS)'
+              specificBuildWithTriggering: true
+              buildVersionToDownload: 'latest'
+              artifactName: 'aspnetscripts'
+              downloadPath: '$(appScriptsDirectory)'
+
+          # Configure IIS on VM's
+          - task: IISWebAppManagementOnMachineGroup@0
+            displayName: 'Configure IIS App'
+            enabled: true
+            inputs:
+              EnableIIS: true
+              WebsiteName: 'Default Web Site'
+              AddBinding: true
+              Bindings: '{"bindings":[{"protocol":"http","ipAddress":"All Unassigned","port":"80","hostname":"","sslThumbprint":"","sniFlag":false}]}'
+              CreateOrUpdateAppPoolForWebsite: true
+              AppPoolNameForWebsite: DemoAppPool
+              AppCmdCommands: |
+                start apppool /apppool.name:DemoAppPool
+                set config /section:defaultDocument "/~files" 
+                set config /section:defaultDocument "/+files.[@start,value='default.aspx']"          
+
+          - task: IISWebAppDeploymentOnMachineGroup@0
+            displayName: 'Deploy IIS App'
+            enabled: true
+            inputs:
+              WebSiteName: 'Default Web Site'
+              Package: '$(appPackage)'
+              TakeAppOfflineFlag: true
+
+          - powershell: |
+              # Write your powershell commands here.
+              Invoke-WebRequest -Uri http://127.0.0.1/default.aspx -UseBasicParsing
+              
+              # Use the environment variables input below to pass secret variables to this script.
+              errorActionPreference: continue
+            displayName: 'Initial Warmup'
+            enabled: false
+
+          - task: CopyFiles@2
+            displayName: 'Copy Warmup Scripts'
+            enabled: true
+            inputs:
+              SourceFolder: '$(appScriptsDirectory)'
+              TargetFolder: 'C:\Users\Public\Documents'
+
+          - task: BatchScript@1
+            displayName: 'Schedule Warmup Scripts'
+            enabled: true
+            inputs:
+              filename: '$(appScriptsDirectory)/schedule-warmup.cmd'
+
+- ${{ if eq(parameters.deploy, true) }}:
+  # Test applications
+  - job: 'Test'
+    dependsOn:
+      - Deploy
+      - DeployEnvironment
+      - Provision
+    displayName: 'Test Applications'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+    variables:
+      iaasAppUrl: $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
+      paasAppUrl: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+      # Test IaaS Application
       - task: PowerShell@2
-        displayName: 'Test ASP.NET Core App'
+        displayName: 'Test IaaS Application'
         inputs:
           targetType: 'inline'
           script: |
             # Wait for the WAF to get ready
-            Start-Sleep -Seconds 30
+            Start-Sleep -Seconds 10
             
             # Request page
-            Invoke-WebRequest -Uri $(appUrl) -MaximumRetryCount 9
+            Invoke-WebRequest -Uri $(iaasAppUrl) -MaximumRetryCount 9
+          failOnStderr: true
+          pwsh: true
+
+      # Test PaaS Application
+      - task: PowerShell@2
+        displayName: 'Test PaaS Application'
+        inputs:
+          targetType: 'inline'
+          script: |
+            # Wait for the WAF to get ready
+            Start-Sleep -Seconds 10
+            
+            # Request page
+            Invoke-WebRequest -Uri $(paasAppUrl) -MaximumRetryCount 9
           failOnStderr: true
           pwsh: true
 
@@ -430,6 +655,8 @@ jobs:
         - Provision
       - ${{ if eq(parameters.deploy, true) }}:
         - Deploy
+        - DeployEnvironment
+        - Test
     displayName: 'Destroy Infrastructure with Terraform'
     condition: succeededOrFailed()
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]

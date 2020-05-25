@@ -224,7 +224,7 @@ resource azurerm_private_dns_zone_virtual_network_link hub_link {
 }
 
 resource azurerm_dns_cname_record vpn_gateway_cname {
-  name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}vpn"
+  name                         = "${lower(var.resource_prefix)}${lower(local.environment)}vpn"
   zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
   resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name
   ttl                          = 300

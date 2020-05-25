@@ -14,7 +14,7 @@ locals {
   )
 
   mgmt_vm_name                 = "${azurerm_resource_group.vdc_rg.name}-mgmt"
-  mgmt_vm_computer_name        = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"-","")),0,16)}mgmt"
+  mgmt_vm_computer_name        = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"/a|e|i|o|u|y|-/","")),0,11)}mgmt"
 }
 
 resource azurerm_network_interface bas_if {

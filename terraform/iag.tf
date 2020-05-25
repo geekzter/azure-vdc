@@ -27,7 +27,7 @@ resource azurerm_public_ip iag_pip {
 }
 
 resource azurerm_dns_cname_record iag_pip_cname {
-  name                         = "${lower(var.resource_prefix)}${lower(var.resource_environment)}iag"
+  name                         = "${lower(var.resource_prefix)}${lower(local.environment)}iag"
   zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
   resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name
   ttl                          = 300
