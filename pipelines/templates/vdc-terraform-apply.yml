@@ -497,9 +497,13 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'      
 
-      environment:
-        name: '$(pipelineEnvironment)'
-        - ${{ if eq(parameters.testMode, false) }}:
+      - ${{ if eq(parameters.testMode, true) }}:
+        environment:
+          name: '$(pipelineEnvironment)'
+
+      - ${{ if eq(parameters.testMode, false) }}:
+        environment:
+          name: '$(pipelineEnvironment)'
           resourceType: virtualMachine
           tags: 'web'
 
