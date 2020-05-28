@@ -493,16 +493,15 @@ stages:
         appScriptsDirectory: '$(Pipeline.Workspace)/aspnetscripts'
         appPackage: '$(appArtifactDirectory)/SampleIisWebApp.zip'
 
-      - ${{ if eq(parameters.testMode, false) }}:
-        environment:
-          name: '$(pipelineEnvironment)'
-          resourceType: virtualMachine
-          tags: 'web'
       - ${{ if eq(parameters.testMode, true) }}:
         pool:
           vmImage: 'ubuntu-latest'      
-        environment:
-          name: '$(pipelineEnvironment)'
+
+      environment:
+        name: '$(pipelineEnvironment)'
+        - ${{ if eq(parameters.testMode, false) }}:
+          resourceType: virtualMachine
+          tags: 'web'
 
       strategy:
         runOnce:
