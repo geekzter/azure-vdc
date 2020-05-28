@@ -431,7 +431,7 @@ stages:
       dependsOn:
         - Prepare
         - Provision
-        - ${{ if eq(reparameters.provision, true) }}:
+        - ${{ if eq(parameters.reprovision, true) }}:
           - Reprovision
       displayName: 'Prepare Environment'
       condition: succeeded()
