@@ -765,9 +765,9 @@ stages:
       displayName: 'Clean Up'
       # Run if Terraform provision or destroy failed, or the whole pipeline was canceled
 
-      - ${{ if eq(parameters.reprovision, true) }}:
+      ${{ if eq(parameters.reprovision, true) }}:
         condition: or(ne(dependencies.Provision.result, 'Succeeded'), ne(dependencies.Reprovision.result, 'Succeeded'), ne(dependencies.Destroy.result, 'Succeeded'), canceled())
-      - ${{ if eq(parameters.reprovision, false) }}:
+      ${{ if eq(parameters.reprovision, false) }}:
         condition: or(ne(dependencies.Provision.result, 'Succeeded'), ne(dependencies.Destroy.result, 'Succeeded'), canceled())
 
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
