@@ -707,6 +707,7 @@ stages:
             
         - task: TerraformInstaller@0
           displayName: 'Use preferred Terraform version'
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
             terraformVersion: '$(terraformVersion)'
 
