@@ -510,12 +510,12 @@ stages:
       strategy:
         runOnce:
           deploy:
-          - pwsh: |
-              Write-Host "Hello Task"
-            displayName: 'Test task'
-            enabled: ${{ parameters.testMode }}
-
             steps:
+            - pwsh: |
+                Write-Host "Hello Task"
+              displayName: 'Test task'
+              enabled: ${{ parameters.testMode }}
+
             # Download IaaS Application Pipeline artifacts
             # This consumes artifacts published by this pipeline:
             # https://github.com/geekzter/azure-vdc/blob/master/pipelines/iis-asp.net-ci.yml
