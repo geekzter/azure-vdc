@@ -42,5 +42,5 @@ stages:
     deploy: true
     destroy: false
     testMode: ${{ parameters.testMode }}
-    vdcArtifactDirectory: '$(Pipeline.Wworkspace)/ci'
+    vdcArtifactDirectory: '$(Pipeline.Workspace)/ci'
     workspace: ${{ parameters.workspace }}
