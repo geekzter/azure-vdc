@@ -100,8 +100,8 @@ stages:
 
     steps:
       - pwsh: |
-          Write-Host "Hello Task"
-          Get-ChildItem ${{parameters.vdcArtifactDirectory}} -Recurse
+          Write-Host "Workspace Contents"
+          Get-ChildItem $(Pipeline.Workspace) -Recurse
         displayName: 'Test task'
         enabled: ${{ parameters.testMode }}
       - task: AzureCLI@2
