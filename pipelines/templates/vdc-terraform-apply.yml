@@ -101,7 +101,7 @@ stages:
     steps:
       - pwsh: |
           Write-Host "Hello Task"
-          Get-ChildItem -Recurse
+          Get-ChildItem ${{parameters.vdcArtifactDirectory}} -Recurse
         displayName: 'Test task'
         enabled: ${{ parameters.testMode }}
       - task: AzureCLI@2
