@@ -61,6 +61,9 @@ parameters:
 #     include:
 #     - master
 
+variables:
+- template: ./templates/vdc-terraform-apply.variables.yml
+
 stages:
 - template: ./templates/vdc-terraform-apply.yml
   parameters:
