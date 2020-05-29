@@ -44,6 +44,9 @@ parameters:
   - ci1
   - ci2
   - ci3
+  - cd1
+  - cd2
+  - cd3
   - test1
   - test2
   - test3
