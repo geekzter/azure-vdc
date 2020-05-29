@@ -1,0 +1,4 @@
+resources:
+  pipelines:
+  - pipeline: ci
+    source: vdc-terraform-apply-ci

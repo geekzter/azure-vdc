@@ -47,6 +47,10 @@ parameters:
   - test1
   - test2
   - test3
+- name: vdcArtifactDirectory
+  displayName: Directory to use ci pipelne artifacts from
+  type: string
+  default: null
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean
@@ -59,10 +63,15 @@ stages:
 
   # Global variables shared by all jobs
   variables:
+  - name: 'vdcArtifactName'
+    value: 'drop'
   - name: 'TF_WORKSPACE'
     value: ${{ parameters.workspace }}
   - name: 'scriptDirectory'
-    value: '$(Build.SourcesDirectory)/scripts'
+    ${{if not(parameters.vdcArtifactDirectory)}}:
+      value: '$(Build.SourcesDirectory)/scripts'
+    ${{if parameters.vdcArtifactDirectory}}:
+      value: '${{if parameters.vdcArtifactDirectory}}/$(vdcArtifactName)/scripts'
   - name: 'system.debug'
     value: ${{ parameters.debug }}
   - name: 'iaasResourceGroup'
@@ -712,7 +721,7 @@ stages:
           displayName: 'Publish Initialized Terraform workspace'
           enabled: ${{ not(parameters.testMode) }}
           inputs:
-            artifact: drop
+            artifact: $(vdcArtifactName)
 
   - ${{ if eq(parameters.destroy, true) }}:
     # Clean up resources, in the event 'terraform destroy' fails   

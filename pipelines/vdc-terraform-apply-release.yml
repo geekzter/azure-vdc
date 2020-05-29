@@ -1,0 +1,42 @@
+name: vdc-terraform-apply-release
+
+parameters:
+- name: workspace
+  displayName: Terraform Workspace
+  type: string
+  default: cd1
+  values:
+  - cd1
+  - cd2
+  - cd3
+- name: testMode
+  displayName: Test Mode (disable most tasks)
+  type: boolean
+  default: true
+
+resources:
+  pipelines:
+  - pipeline: ci
+    source: vdc-terraform-apply-ci
+
+variables:
+- template: ./templates/vdc-terraform-apply.variables.yml
+  # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
+  # The Terraform VDC project requires quite a number of settings
+- group: 'vdc-release'
+- name: 'TF_VAR_resource_suffix'
+  value: 'r$(Build.BuildId)'
+  
+stages:
+- template: ./templates/vdc-terraform-apply.yml
+  parameters:
+    name: 'Release'
+    displayName: 'VDC Release'
+    inherit: true
+    provision: true
+    reprovision: false
+    deploy: true
+    destroy: false
+    testMode: ${{ parameters.testMode }}
+    vdcArtifactDirectory: '$(Pipeline.Wworkspace)/ci'
+    workspace: ${{ parameters.workspace }}

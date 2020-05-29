@@ -3,6 +3,7 @@
 #  - Deploy application
 #  - Test application
 #  - Destroy infrastructure
+name: vdc-terraform-apply-ci
 
 parameters:
 - name: workspace

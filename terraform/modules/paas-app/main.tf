@@ -860,7 +860,6 @@ resource azurerm_sql_active_directory_administrator dba {
   resource_group_name          = azurerm_resource_group.app_rg.name
 # login                        = "Terraform"
   login                        = local.dba_object_id
-  # BUG: Not populated in Azure Cloud Shell  https://github.com/terraform-providers/terraform-provider-azurerm/issues/6310
   object_id                    = local.dba_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 } 
