@@ -68,10 +68,10 @@ stages:
   - name: 'TF_WORKSPACE'
     value: ${{ parameters.workspace }}
   - name: 'scriptDirectory'
-    ${{if not(parameters.vdcArtifactDirectory)}}:
+    ${{ if not(parameters.vdcArtifactDirectory) }}:
       value: '$(Build.SourcesDirectory)/scripts'
-    ${{if parameters.vdcArtifactDirectory}}:
-      value: '${{if parameters.vdcArtifactDirectory}}/$(vdcArtifactName)/scripts'
+    ${{ if parameters.vdcArtifactDirectory }}:
+      value: '${{parameters.vdcArtifactDirectory}}/$(vdcArtifactName)/scripts'
   - name: 'system.debug'
     value: ${{ parameters.debug }}
   - name: 'iaasResourceGroup'
