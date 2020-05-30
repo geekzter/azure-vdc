@@ -742,7 +742,7 @@ resource azurerm_sql_server app_sqlserver {
   tags                         = var.tags
 }
 
-resource "azurerm_sql_firewall_rule" "tfclient" {
+resource azurerm_sql_firewall_rule tfclient {
   name                         = "TerraformClientRule"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
@@ -827,7 +827,7 @@ resource azurerm_private_dns_a_record sql_server_dns_record {
   tags                         = var.tags
 }
 
-resource null_resource sql_server_public_network_access {
+resource null_resource disable_sql_public_network_access {
   triggers                     = {
     always                     = timestamp()
   }
@@ -840,7 +840,8 @@ resource null_resource sql_server_public_network_access {
 
   depends_on                   = [
                                   azurerm_private_dns_a_record.sql_server_dns_record,
-                                  null_resource.sql_database_access
+                                  azurerm_sql_firewall_rule.tfclient,
+                                  null_resource.grant_sql_access
                                  ]
 }
 
@@ -876,7 +877,7 @@ resource azurerm_sql_active_directory_administrator dba {
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 } 
 
-resource null_resource sql_database_access {
+resource null_resource grant_sql_access {
   # Add App Service MSI and DBA to Database
   provisioner "local-exec" {
     command                    = "../scripts/grant_database_access.ps1 -DBAName ${local.admin_login_ps} -DBAObjectId ${local.admin_object_id_ps} -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${azurerm_sql_database.app_sqldb.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"
