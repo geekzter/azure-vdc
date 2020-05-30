@@ -50,6 +50,10 @@ parameters:
   - test1
   - test2
   - test3
+- name: useVdcArtifact
+  displayName: Directory to use ci pipelne artifacts from
+  type: boolean
+  default: false
 - name: vdcArtifactDirectory
   displayName: Directory to use ci pipelne artifacts from
   type: string
@@ -78,7 +82,7 @@ stages:
     ${{ if not(parameters.vdcArtifactDirectory) }}:
       value: '$(Build.SourcesDirectory)/scripts'
     ${{ if parameters.vdcArtifactDirectory }}:
-      value: '${{parameters.vdcArtifactDirectory}}/$(vdcArtifactName)/scripts'
+      value: '${{parameters.vdcArtifactDirectory}}/$(vdcArtifactName)/s/scripts'
   - name: 'system.debug'
     value: ${{ parameters.debug }}
   - name: 'iaasResourceGroup'
@@ -103,7 +107,7 @@ stages:
       clean: all
 
     steps:
-      - ${{ if parameters.vdcArtifactPipeline }}:
+      - ${{ if parameters.useVdcArtifact }}:
         - download: ci
           artifact: $(vdcArtifactName)
   
