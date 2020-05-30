@@ -20,23 +20,7 @@ parameters:
   type: boolean
   default: true
 
-# trigger:
-#   batch: true
-#   branches:
-#     include:
-#     - master
-#   paths:
-#     include:
-#     - 'scripts/*' 
-#     - 'terraform/*' 
-#     exclude:
-#     - '*.md'
-#     - '*.png'  
-#     - '*.svg'  
-#     - '*.vsdx'  
-#     - 'apps/*'
-#     - 'kusto/*'
-#     - 'pipelines/*'
+trigger: none
 
 # pr:
 #   branches:

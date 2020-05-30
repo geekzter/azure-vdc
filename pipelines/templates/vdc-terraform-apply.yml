@@ -54,6 +54,10 @@ parameters:
   displayName: Directory to use ci pipelne artifacts from
   type: string
   default: null
+- name: vdcArtifactPipeline
+  displayName: Pipeline (alias) for artifacts
+  type: string
+  default: null
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean
@@ -99,6 +103,10 @@ stages:
       clean: all
 
     steps:
+      - ${{ if parameters.vdcArtifactPipeline }}:
+        - download: ci
+          artifact: $(vdcArtifactName)
+  
       - pwsh: |
           Write-Host "Workspace Contents"
           Get-ChildItem $(Pipeline.Workspace) -Recurse
