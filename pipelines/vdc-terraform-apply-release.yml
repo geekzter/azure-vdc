@@ -13,13 +13,6 @@ parameters:
   displayName: Test Mode (disable most tasks)
   type: boolean
   default: true
-
-resources:
-  pipelines:
-  - pipeline: ci
-    source: vdc-terraform-apply-ci
-    branch: master
-
 trigger: none 
 
 pr: none
@@ -29,8 +22,16 @@ variables:
   # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
   # The Terraform VDC project requires quite a number of settings
 - group: 'vdc-release'
+- name: 'ciPipelineAlias'
+  value: 'ci'
 - name: 'TF_VAR_resource_suffix'
   value: 'r$(Build.BuildId)'
+
+resources:
+  pipelines:
+  - pipeline: '$(ciPipelineAlias)'
+    source: vdc-terraform-apply-ci
+    branch: master
   
 stages:
 - template: ./templates/vdc-terraform-apply.yml
@@ -43,5 +44,5 @@ stages:
     deploy: true
     destroy: false
     testMode: ${{ parameters.testMode }}
-    vdcArtifactPipeline: 'ci'
+    vdcArtifactPipeline: '$(ciPipelineAlias)'
     workspace: ${{ parameters.workspace }}

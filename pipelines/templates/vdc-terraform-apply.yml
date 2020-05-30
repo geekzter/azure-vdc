@@ -71,9 +71,9 @@ stages:
   - name: 'TF_WORKSPACE'
     value: ${{ parameters.workspace }}
   - name: 'scriptDirectory'
-    ${{ if not(parameters.vdcArtifactPipeline) }}:
+    ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
       value: '$(Build.SourcesDirectory)/scripts'
-    ${{ if parameters.vdcArtifactPipeline }}:
+    ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
       value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/scripts'
   - name: 'system.debug'
     value: ${{ parameters.debug }}
@@ -83,8 +83,6 @@ stages:
     value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-paasapp-$(TF_VAR_resource_suffix)'
   - name: 'vdcResourceGroup' 
     value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
-  - name: 'pipelineEnvironment'
-    value: 'vdc-${{ parameters.workspace }}'
 
   jobs:
   - job: 'Prepare'
@@ -104,7 +102,10 @@ stages:
           artifact: $(vdcArtifactName)
   
       - pwsh: |
-          Write-Host "Workspace Contents"
+          Write-Host "Environment:"
+          Get-ChildItem -Path Env:* | Sort-Object -Property Name
+          Write-Host "Script Directory: $(scriptDirectory)"
+          Write-Host "Workspace Contents:"
           Get-ChildItem $(Pipeline.Workspace) -Recurse
         displayName: 'Test task'
         enabled: ${{ parameters.testMode }}
@@ -135,13 +136,13 @@ stages:
       displayName: Create Environment (if it does not exist yet)
       pool:
         vmImage: 'ubuntu-latest'
-      environment: '$(pipelineEnvironment)'
+      environment: '${{ parameters.workspace }}'
       strategy:
         runOnce:
           deploy:
             steps:
-            - script: echo Environment $(pipelineEnvironment) exists
-              displayName: 'Create environment $(pipelineEnvironment)'
+            - script: echo Environment ${{ parameters.workspace }} exists
+              displayName: 'Create environment ${{ parameters.workspace }}'
 
   - ${{ if or(eq(parameters.provision, true),eq(parameters.reprovision, true),eq(parameters.deploy, true)) }}:
     # Provision on self-hosted agent
@@ -442,11 +443,7 @@ stages:
             scriptLocation: inlineScript
             inlineScript: |
               #$(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
-              $(scriptDirectory)/wait_for_agents.ps1 -Environment $(pipelineEnvironment) `
-                                                      -OrganizationUrl $(System.TeamFoundationCollectionUri) `
-                                                      -Project $(System.TeamProject) `
-                                                      -Tag $(tag) `
-                                                      -TimeoutSeconds $(timeOutSeconds)
+              $(scriptDirectory)/wait_for_agents.ps1 -Environment ${{ parameters.workspace }} -OrganizationUrl $(System.TeamFoundationCollectionUri) -Project $(System.TeamProject) -Tag $(tag) -TimeoutSeconds $(timeOutSeconds)
             useGlobalConfig: true
             failOnStandardError: true
             workingDirectory: '$(scriptDirectory)'
@@ -477,11 +474,11 @@ stages:
 
       ${{ if eq(parameters.testMode, true) }}:
         environment:
-          name: '$(pipelineEnvironment)'
+          name: '${{ parameters.workspace }}'
 
       ${{ if eq(parameters.testMode, false) }}:
         environment:
-          name: '$(pipelineEnvironment)'
+          name: '${{ parameters.workspace }}'
           resourceType: virtualMachine
           tags: 'web'
 
