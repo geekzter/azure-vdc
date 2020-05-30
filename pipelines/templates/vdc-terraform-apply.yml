@@ -193,6 +193,14 @@ stages:
           inputs:
             terraformVersion: '$(terraformVersion)'
 
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - bash: |
+              cd $(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform/.terraform/plugins/linux_amd64
+              chmod +x *_x?
+              ls -al
+            displayName: 'Make Terraform providers executable'
+            enabled: ${{ not(parameters.testMode) }}
+
         - task: AzureCLI@2
           # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
           name: terraform
@@ -281,6 +289,14 @@ stages:
             azureSubscription: '$(subscriptionConnection)'
             action: StopWithDeallocate
             resourceGroupName: '$(iaasResourceGroup)'
+
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - bash: |
+              cd $(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform/.terraform/plugins/linux_amd64
+              chmod +x *_x?
+              ls -al
+            displayName: 'Make Terraform providers executable'
+            enabled: ${{ not(parameters.testMode) }}
 
         # Test for failures that only occur when resources already exist
         - task: AzureCLI@2
