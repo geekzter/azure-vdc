@@ -18,6 +18,7 @@ resources:
   pipelines:
   - pipeline: ci
     source: vdc-terraform-apply-ci
+    branch: master
 
 trigger: none 
 
