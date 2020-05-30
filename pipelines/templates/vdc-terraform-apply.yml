@@ -107,7 +107,7 @@ stages:
       clean: all
 
     steps:
-      - ${{ if parameters.useVdcArtifact }}:
+      - ${{ if gt(length(parameters.vdcArtifactDirectory),0) }}:
         - download: ci
           artifact: $(vdcArtifactName)
   
