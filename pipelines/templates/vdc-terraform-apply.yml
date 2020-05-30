@@ -57,7 +57,7 @@ parameters:
 - name: vdcArtifactDirectory
   displayName: Directory to use ci pipelne artifacts from
   type: string
-  default: null
+  default: ''
 - name: vdcArtifactPipeline
   displayName: Pipeline (alias) for artifacts
   type: string
