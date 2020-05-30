@@ -50,18 +50,10 @@ parameters:
   - test1
   - test2
   - test3
-- name: useVdcArtifact
-  displayName: Directory to use ci pipelne artifacts from
-  type: boolean
-  default: false
-- name: vdcArtifactDirectory
-  displayName: Directory to use ci pipelne artifacts from
-  type: string
-  default: ''
 - name: vdcArtifactPipeline
   displayName: Pipeline (alias) for artifacts
   type: string
-  default: null
+  default: ''
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean
@@ -79,10 +71,10 @@ stages:
   - name: 'TF_WORKSPACE'
     value: ${{ parameters.workspace }}
   - name: 'scriptDirectory'
-    ${{ if not(parameters.vdcArtifactDirectory) }}:
+    ${{ if not(parameters.vdcArtifactPipeline) }}:
       value: '$(Build.SourcesDirectory)/scripts'
-    ${{ if parameters.vdcArtifactDirectory }}:
-      value: '${{parameters.vdcArtifactDirectory}}/$(vdcArtifactName)/s/scripts'
+    ${{ if parameters.vdcArtifactPipeline }}:
+      value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/scripts'
   - name: 'system.debug'
     value: ${{ parameters.debug }}
   - name: 'iaasResourceGroup'
@@ -107,8 +99,8 @@ stages:
       clean: all
 
     steps:
-      - ${{ if gt(length(parameters.vdcArtifactDirectory),0) }}:
-        - download: ci
+      - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+        - download: ${{parameters.vdcArtifactPipeline}}
           artifact: $(vdcArtifactName)
   
       - pwsh: |
