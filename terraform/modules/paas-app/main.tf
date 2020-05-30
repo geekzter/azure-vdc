@@ -148,6 +148,9 @@ resource azurerm_private_endpoint app_table_storage_endpoint {
   }  
 
   tags                         = var.tags
+
+  # Create Private Endpoints one at a time
+  depends_on                   = [azurerm_private_endpoint.app_blob_storage_endpoint]
 }
 resource azurerm_private_dns_a_record app_table_storage_dns_record {
   name                         = azurerm_storage_account.app_storage.name
@@ -231,6 +234,9 @@ resource azurerm_private_endpoint archive_blob_storage_endpoint {
   }  
 
   tags                         = var.tags
+
+  # Create Private Endpoints one at a time
+  depends_on                   = [azurerm_private_endpoint.app_table_storage_endpoint]
 }
 
 resource azurerm_private_dns_a_record archive_blob_storage_dns_record {
@@ -263,6 +269,9 @@ resource azurerm_private_endpoint archive_table_storage_endpoint {
   }  
 
   tags                         = var.tags
+
+  # Create Private Endpoints one at a time
+  depends_on                   = [azurerm_private_endpoint.archive_blob_storage_endpoint]
 }
 
 resource azurerm_private_dns_a_record archive_table_storage_dns_record {
@@ -804,6 +813,9 @@ resource azurerm_private_endpoint sqlserver_endpoint {
   }  
 
   tags                         = var.tags
+
+  # Create Private Endpoints one at a time
+  depends_on                   = [azurerm_private_endpoint.archive_table_storage_endpoint]
 }
 resource azurerm_private_dns_a_record sql_server_dns_record {
   name                         = azurerm_sql_server.app_sqlserver.name
