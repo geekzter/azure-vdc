@@ -1,12 +1,10 @@
 locals {
   app_hostname                 = "${lower(var.resource_environment)}apphost"
-  app_dns_name                 = "${lower(var.resource_environment)}app_web_vm"
   db_hostname                  = "${lower(var.resource_environment)}dbhost"
-  db_dns_name                  = "${lower(var.resource_environment)}db_web_vm"
   resource_group_name_short    = substr(lower(replace(var.resource_group,"-","")),0,20)
   diagnostics_storage_name     = element(split("/",var.diagnostics_storage_id),length(split("/",var.diagnostics_storage_id))-1)
   vdc_resource_group_name      = element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)
-  pipeline_environment         = "vdc-${terraform.workspace}"
+  pipeline_environment         = terraform.workspace
 }
 
 data azurerm_storage_account diagnostics {

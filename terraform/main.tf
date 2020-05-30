@@ -62,10 +62,6 @@ locals {
   iaas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-iaasapp-${lower(local.suffix)}"
   paas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-paasapp-${lower(local.suffix)}"
   paas_app_resource_group_short= substr(lower(replace(local.paas_app_resource_group,"-","")),0,20)
-  app_hostname                 = "${lower(local.environment)}apphost"
-  app_dns_name                 = "${lower(local.environment)}app_web_vm"
-  db_hostname                  = "${lower(local.environment)}dbhost"
-  db_dns_name                  = "${lower(local.environment)}db_web_vm"
   ipprefixdata                 = jsondecode(chomp(data.http.localpublicprefix.body))
   admin_ip                     = [
                                   chomp(data.http.localpublicip.body) 
