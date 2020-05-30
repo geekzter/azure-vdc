@@ -1,8 +1,6 @@
-name: vdc-terraform-apply-release
-
 parameters:
 - name: workspace
-  displayName: Terraform Workspace
+  displayName: Pipeline Environment / Terraform Workspace
   type: string
   default: cd1
   values:

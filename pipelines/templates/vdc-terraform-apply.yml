@@ -36,7 +36,7 @@ parameters:
   type: boolean
   default: true
 - name: workspace
-  displayName: Terraform Workspace
+  displayName: Pipeline Environment / Terraform Workspace
   type: string
   default: ci
   values:
@@ -102,11 +102,11 @@ stages:
           artifact: $(vdcArtifactName)
   
       - pwsh: |
-          Write-Host "Environment:"
-          Get-ChildItem -Path Env:* | Sort-Object -Property Name
           Write-Host "Script Directory: $(scriptDirectory)"
           Write-Host "Workspace Contents:"
           Get-ChildItem $(Pipeline.Workspace) -Recurse
+          Write-Host "Environment:"
+          Get-ChildItem -Path Env:* | Sort-Object -Property Name
         displayName: 'Test task'
         enabled: ${{ parameters.testMode }}
       - task: AzureCLI@2

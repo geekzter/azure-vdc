@@ -3,11 +3,9 @@
 #  - Deploy application
 #  - Test application
 #  - Destroy infrastructure
-name: vdc-terraform-apply-ci
-
 parameters:
 - name: workspace
-  displayName: Terraform Workspace
+  displayName: Pipeline Environment / Terraform Workspace
   type: string
   default: ci
   values:
