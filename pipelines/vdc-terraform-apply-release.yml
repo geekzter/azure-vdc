@@ -2,11 +2,12 @@ parameters:
 - name: workspace
   displayName: Pipeline Environment / Terraform Workspace
   type: string
-  default: cd1
+  default: rel
   values:
-  - cd1
-  - cd2
-  - cd3
+  - rel
+  - rel1
+  - rel2
+  - rel3
 - name: destroy
   displayName: Destroy infrastructure
   type: string
