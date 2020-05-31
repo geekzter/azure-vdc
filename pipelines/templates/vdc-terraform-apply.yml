@@ -78,8 +78,17 @@ stages:
   - name: 'scriptDirectory'
     ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
       value: '$(Build.SourcesDirectory)/scripts'
-    ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+    ${{ if and(gt(length(parameters.vdcArtifactPipeline),0),ne(parameters.vdcArtifactPipeline,'current')) }}:
       value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/scripts'
+    ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
+      value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/scripts'
+  - name: 'terraformDirectory'
+    ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+      value: '$(Build.SourcesDirectory)/terraform'
+    ${{ if and(gt(length(parameters.vdcArtifactPipeline),0),ne(parameters.vdcArtifactPipeline,'current')) }}:
+      value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform'
+    ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
+      value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/terraform'
   - name: 'system.debug'
     value: ${{ parameters.debug }}
   - name: 'iaasResourceGroup'
@@ -198,11 +207,11 @@ stages:
 
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
           - bash: |
-              cd $(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform/.terraform/plugins/linux_amd64
               chmod +x *_x?
               ls -al
             displayName: 'Make Terraform providers executable'
             enabled: ${{ not(parameters.testMode) }}
+            workingDirectory: $(terraformDirectory)/.terraform/plugins/linux_amd64
 
         - task: AzureCLI@2
           # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
