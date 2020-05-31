@@ -778,7 +778,7 @@ stages:
         # That release pipeline will than run with tested versions of Terraform and Terraform providers, without the need for 'terraform init'
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Initialized Terraform workspace'
-          enabled: ${{ not(parameters.testMode) }}
+        # enabled: ${{ not(parameters.testMode) }}
           inputs:
             artifact: $(vdcArtifactName)
 

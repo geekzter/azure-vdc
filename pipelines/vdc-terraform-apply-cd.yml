@@ -7,7 +7,7 @@ parameters:
 - name: buildWorkspace
   displayName: Build Pipeline Environment / Terraform Workspace
   type: string
-  default: ci
+  default: ci1
   values:
   - ci1
   - ci2
