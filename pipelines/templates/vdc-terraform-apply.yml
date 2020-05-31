@@ -52,9 +52,14 @@ parameters:
   - cd1
   - cd2
   - cd3
-  - test1
-  - test2
-  - test3
+  - rel
+  - rel1
+  - rel2
+  - rel3
+  - test
+  - tst1
+  - tst2
+  - tst3
 - name: vdcArtifactPipeline
   displayName: Pipeline (alias) for artifacts
   type: string
@@ -63,7 +68,6 @@ parameters:
   displayName: Test Mode (disable most tasks)
   type: boolean
   default: true
-
 
 stages:
 - stage: ${{ parameters.name }}
@@ -304,11 +308,11 @@ stages:
 
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
           - bash: |
-              cd $(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform/.terraform/plugins/linux_amd64
               chmod +x *_x?
               ls -al
             displayName: 'Make Terraform providers executable'
             enabled: ${{ not(parameters.testMode) }}
+            workingDirectory: $(terraformDirectory)/.terraform/plugins/linux_amd64
 
         # Test for failures that only occur when resources already exist
         - task: AzureCLI@2
@@ -778,7 +782,7 @@ stages:
           inputs:
             targetType: filePath
             filePath: '$(scriptDirectory)/get_tf_version.ps1'
-            arguments: ' -version installed | Out-File $(Build.SourcesDirectory)/terraform/.terraform-version'
+            arguments: ' -version installed | Out-File $(terraformDirectory)/.terraform-version'
             pwsh: true
             workingDirectory: '$(scriptDirectory)'
 
