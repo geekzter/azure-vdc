@@ -8,9 +8,13 @@ parameters:
   - cd2
   - cd3
 - name: destroy
-  displayName: Destroy resources
-  type: boolean
-  default: false
+  displayName: Destroy infrastructure
+  type: string
+  default: Never
+  values:
+  - Never 
+  - OnFailure
+  - OnSuccess
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean

@@ -33,8 +33,13 @@ parameters:
   default: true
 - name: destroy
   displayName: Destroy infrastructure
-  type: boolean
-  default: true
+  type: string
+  default: Always
+  values:
+  - Always
+  - Never 
+  - OnFailure
+  - OnSuccess
 - name: workspace
   displayName: Pipeline Environment / Terraform Workspace
   type: string
@@ -118,10 +123,8 @@ stages:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            # List environment variables (debug)
-            if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
-              Get-ChildItem -Path Env:ARM_* | Sort-Object -Property Name
-            }
+            # List environment variables
+            Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
 
             # This will write version info as output variable
             $(scriptDirectory)/get_tf_version.ps1 -version preferred
@@ -679,7 +682,7 @@ stages:
             failOnStderr: true
             pwsh: true
 
-  - ${{ if eq(parameters.destroy, true) }}:
+  - ${{ if ne(parameters.destroy, 'Never') }}:
     # Destroy infrastructure
     - job: 'Destroy'
       dependsOn:
@@ -691,7 +694,14 @@ stages:
           - DeployEnvironment
           - Test
       displayName: 'Destroy Infrastructure with Terraform'
-      condition: succeededOrFailed()
+
+      ${{ if ne(parameters.destroy, 'Always') }}:
+        condition: succeededOrFailed()
+      ${{ if ne(parameters.destroy, 'OnFailure') }}:
+        condition: failed()
+      ${{ if ne(parameters.destroy, 'OnSuccess') }}:
+        condition: succeeded()
+
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
@@ -772,7 +782,7 @@ stages:
           inputs:
             artifact: $(vdcArtifactName)
 
-  - ${{ if eq(parameters.destroy, true) }}:
+  - ${{ if ne(parameters.destroy, 'Never') }}:
     # Clean up resources, in the event 'terraform destroy' fails   
     - job: 'CleanUp'
       dependsOn:
@@ -786,9 +796,9 @@ stages:
       # Run if Terraform provision or destroy failed, or the whole pipeline was canceled
 
       ${{ if eq(parameters.reprovision, true) }}:
-        condition: or(ne(dependencies.Provision.result, 'Succeeded'), ne(dependencies.Reprovision.result, 'Succeeded'), ne(dependencies.Destroy.result, 'Succeeded'), canceled())
+        condition: or(ne(dependencies.Provision.result, 'Succeeded'), ne(dependencies.Reprovision.result, 'Succeeded'), and(ne(dependencies.Destroy.result, 'None'),ne(dependencies.Destroy.result, 'Succeeded')), canceled())
       ${{ if eq(parameters.reprovision, false) }}:
-        condition: or(ne(dependencies.Provision.result, 'Succeeded'), ne(dependencies.Destroy.result, 'Succeeded'), canceled())
+        condition: or(ne(dependencies.Provision.result, 'Succeeded'), and(ne(dependencies.Destroy.result, 'None'),ne(dependencies.Destroy.result, 'Succeeded')), canceled())
 
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 

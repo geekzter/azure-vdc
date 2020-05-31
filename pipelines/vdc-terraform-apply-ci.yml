@@ -14,9 +14,13 @@ parameters:
   - ci2
   - ci3
 - name: destroy
-  displayName: Destroy resources
-  type: boolean
-  default: true
+  displayName: Destroy infrastructure
+  type: string
+  default: Always
+  values:
+  - Always
+  - OnFailure
+  - OnSuccess
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean
