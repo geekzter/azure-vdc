@@ -47,7 +47,7 @@ variables:
 - template: ./templates/vdc-terraform-apply.variables.yml
   # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
   # The Terraform VDC project requires quite a number of settings
-- group: 'vdc-ci'
+- group: 'vdc-release'
 - name: 'TF_VAR_build_id'
   value: '$(Build.BuildId)'
 - name: 'TF_VAR_release_id'
