@@ -742,12 +742,24 @@ resource azurerm_sql_server app_sqlserver {
   tags                         = var.tags
 }
 
+resource null_resource enable_sql_public_network_access {
+  triggers                     = {
+    always                     = timestamp()
+  }
+  # Enable public access, so Terraform can make changes e.g. from a hosted pipeline
+  provisioner local-exec {
+    command                    = "az sql server update -n ${azurerm_sql_server.app_sqlserver.name} -g ${azurerm_sql_server.app_sqlserver.resource_group_name} --set publicNetworkAccess='Enabled' --query 'publicNetworkAccess' -o tsv"
+  }
+}
+
 resource azurerm_sql_firewall_rule tfclient {
   name                         = "TerraformClientRule"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
   start_ip_address             = chomp(data.http.localpublicip.body)
   end_ip_address               = chomp(data.http.localpublicip.body)
+
+  depends_on                   = [null_resource.enable_sql_public_network_access]
 }
 
 # resource "azurerm_sql_firewall_rule" "adminclient" {
@@ -757,6 +769,7 @@ resource azurerm_sql_firewall_rule tfclient {
 #   start_ip_address             = element(local.admin_ips, count.index)
 #   end_ip_address               = element(local.admin_ips, count.index)
 #   count                        = length(local.admin_ips)
+#   depends_on                   = [null_resource.enable_sql_public_network_access]
 # }
 
 # resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
@@ -771,6 +784,7 @@ resource azurerm_sql_firewall_rule tfclient {
 #     read                       = var.default_read_timeout
 #     delete                     = var.default_delete_timeout
 #   }  
+#   depends_on                   = [null_resource.enable_sql_public_network_access]
 # }
 
 # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#service-endpoints
