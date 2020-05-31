@@ -695,11 +695,11 @@ stages:
           - Test
       displayName: 'Destroy Infrastructure with Terraform'
 
-      ${{ if ne(parameters.destroy, 'Always') }}:
+      ${{ if eq(parameters.destroy, 'Always') }}:
         condition: succeededOrFailed()
-      ${{ if ne(parameters.destroy, 'OnFailure') }}:
+      ${{ if eq(parameters.destroy, 'OnFailure') }}:
         condition: failed()
-      ${{ if ne(parameters.destroy, 'OnSuccess') }}:
+      ${{ if eq(parameters.destroy, 'OnSuccess') }}:
         condition: succeeded()
 
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
