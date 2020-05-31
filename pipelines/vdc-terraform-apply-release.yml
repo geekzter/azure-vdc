@@ -7,6 +7,10 @@ parameters:
   - cd1
   - cd2
   - cd3
+- name: destroy
+  displayName: Destroy resources
+  type: boolean
+  default: false
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean
@@ -29,7 +33,7 @@ resources:
   pipelines:
   - pipeline: '$(ciPipelineAlias)'
     source: vdc-terraform-apply-ci
-    branch: master
+  # branch: master
   
 stages:
 - template: ./templates/vdc-terraform-apply.yml
@@ -40,7 +44,7 @@ stages:
     provision: true
     reprovision: false
     deploy: true
-    destroy: false
+    destroy: ${{ parameters.destroy }}
     testMode: ${{ parameters.testMode }}
     vdcArtifactPipeline: '$(ciPipelineAlias)'
     workspace: ${{ parameters.workspace }}
