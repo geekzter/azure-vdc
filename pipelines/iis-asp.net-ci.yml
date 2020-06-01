@@ -54,13 +54,21 @@ steps:
   continueOnError: true
 
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact'
+  displayName: 'Publish Build Artifact'
   inputs:
     PathtoPublish: '$(build.artifactstagingdirectory)'
-    ArtifactName: aspnet
+    ArtifactName: aspnet1
 
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: scripts'
+  displayName: 'Publish Build Artifact: scripts'
   inputs:
     PathtoPublish: apps/IaaS-ASP.NET/scripts
-    ArtifactName: aspnetscripts
+    ArtifactName: aspnetscripts1
+
+- publish: $(build.artifactstagingdirectory)
+  artifact: aspnet
+  displayName: 'Publish Artifact: .NET'
+
+- publish: apps/IaaS-ASP.NET/scripts
+  artifact: aspnetscripts
+  displayName: 'Publish Artifact: scripts'
