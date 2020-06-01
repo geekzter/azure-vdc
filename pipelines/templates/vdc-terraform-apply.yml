@@ -532,16 +532,17 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'      
 
-      ${{ if eq(parameters.testMode, true) }}:
-        environment:
-          name: '${{ parameters.workspace }}'
+      # ${{ if eq(parameters.testMode, true) }}:
+      #   environment:
+      #     name: '${{ parameters.workspace }}'
 
-      ${{ if eq(parameters.testMode, false) }}:
-        environment:
-          name: '${{ parameters.workspace }}'
-          resourceType: virtualMachine
-          # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema%2Cparameter-schema#environment
-          tags: $(agentTag) $(resourceSuffix)
+      # ${{ if eq(parameters.testMode, false) }}:
+      environment:
+        name: '${{ parameters.workspace }}'
+        resourceType: virtualMachine
+        # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema%2Cparameter-schema#environment
+        # tags: string | [ string ] # tag names to filter the resources in the environment
+        tags: $(agentTag) $(resourceSuffix)
 
       strategy:
         runOnce:
