@@ -25,9 +25,5 @@ variables:
   value: '41'
 - name: 'appBuildDefinitionPaaS'
   value: '63'
-- name: 'agentTag'
-  value: 'web'
 - name: 'jobTimeOutMinutes'
   value: 180
-- name: 'system.debug'
-  value: ${{ parameters.debug }}

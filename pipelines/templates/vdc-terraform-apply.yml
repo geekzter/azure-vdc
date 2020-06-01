@@ -79,6 +79,8 @@ stages:
 
   # Global variables shared by all jobs
   variables:
+  - name: 'agentTag'
+    value: 'web'
   - name: 'vdcArtifactName'
     value: 'drop'
   - name: 'TF_WORKSPACE'
@@ -538,7 +540,7 @@ stages:
         environment:
           name: '${{ parameters.workspace }}'
           resourceType: virtualMachine
-          tags: $(agentTag), $(resourceSuffix)
+          tags: '$(agentTag)' '$(resourceSuffix)'
 
       strategy:
         runOnce:
@@ -550,6 +552,7 @@ stages:
     
             - pwsh: |
                 Write-Host "Hello Task"
+                Write-Host "Tags: $(agentTag), $(resourceSuffix)"
               displayName: 'Test task'
               enabled: ${{ parameters.testMode }}
 
