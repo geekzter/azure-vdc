@@ -540,7 +540,9 @@ stages:
         environment:
           name: '${{ parameters.workspace }}'
           resourceType: virtualMachine
-          tags: '$(agentTag)' '$(resourceSuffix)'
+          tags: 
+            - '$(agentTag)'
+            - '$(resourceSuffix)'
 
       strategy:
         runOnce:
