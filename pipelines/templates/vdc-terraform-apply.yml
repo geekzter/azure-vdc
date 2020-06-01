@@ -540,9 +540,8 @@ stages:
         environment:
           name: '${{ parameters.workspace }}'
           resourceType: virtualMachine
-          tags: 
-            - '$(agentTag)'
-            - '$(resourceSuffix)'
+          # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema%2Cparameter-schema#environment
+          tags: $(agentTag) $(resourceSuffix)
 
       strategy:
         runOnce:
