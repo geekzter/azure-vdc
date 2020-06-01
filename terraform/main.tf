@@ -82,6 +82,7 @@ locals {
     map(
       "deployment-name",         local.deployment_name,
       "environment",             terraform.workspace,
+      "prefix",                  var.resource_prefix,
       "shutdown",                "true",
       "suffix",                  local.suffix,
       "workspace",               terraform.workspace,

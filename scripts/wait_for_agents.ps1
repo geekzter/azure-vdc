@@ -23,13 +23,37 @@ param (
     $Project,
     [Parameter(Mandatory=$false,
     ParameterSetName="Environment")]
-    [String]
-    $Tag="web",
+    [String[]]
+    $Tags,
 
     #[parameter(Mandatory=$true)][string]$ResourceGroup,
     [parameter(Mandatory=$false)][int]$TimeoutSeconds=300
 ) 
 Write-Host $MyInvocation.line
+
+function Build-AgentQuery (
+    [string[]]$Tags,
+    [string]$Attribute,
+    [switch]$Offline
+) {
+    [string]$query = "?"
+    if ($Tags) {
+        foreach ($tag in $Tags) {
+            $query += "contains(tags,'$Tag') && "
+        }
+    }
+    if ($Offline) {
+        $query += " agent.status=='offline' && "
+    }
+    $query += " agent.enabled"
+
+    $jmesPath = "value[$query].agent"
+    if ($Attribute) {
+        $jmesPath += ".$Attribute"
+    }
+    return $jmesPath
+}
+
 
 if ($Environment) {
     $extensionExists = $(az extension list --query "[?name=='azure-devops']" -o tsv) 
@@ -43,22 +67,26 @@ if ($Environment) {
     # Discover appropriate arguments using this information:
     # az devops invoke --org $OrganizationUrl --query "[?area=='environments']"  
     $environmentId = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project resource=environments --resource environments --query "value[?name=='$Environment'].id" -o tsv)
-    $agents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "value[?contains(tags,'$Tag') && agent.enabled].agent.name" -o tsv)
+    #$agentQuery = "value[?contains(tags,'$Tag') && agent.enabled].agent.name"
+    $agentQuery = Build-AgentQuery -Tags $Tags -Attribute "name"
+    $agents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "$agentQuery" -o tsv)
     if (!$agents) {
         Write-Warning "This command didn't yield any output:"
-        Write-Warning "az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query `"value[?contains(tags,'$Tag') && agent.enabled].agent.name`" -o tsv"
+        Write-Warning "az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query `"$agentQuery`" -o tsv"
         Write-Error "No agents found"
         exit
     }
     Write-Host "Checking status of environment agents $agents..."
-    $offlineAgents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "value[?contains(tags,'$Tag') && agent.enabled && agent.status=='offline'].agent.name" -o tsv)
+    #$offlineAgentQuery = "value[?contains(tags,'$Tag') && agent.enabled && agent.status=='offline'].agent.name"
+    $offlineAgentQuery = Build-AgentQuery -Tags $Tags -Attribute "name" -Offline
+    $offlineAgents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "$offlineAgentQuery" -o tsv)
     $waitUntil = (Get-Date).AddSeconds($TimeoutSeconds)
     if ($offlineAgents) {
         Write-Host "Waiting for $offlineAgents to come online ..." -NoNewline
     }
     while ($offlineAgents -and ((Get-Date) -lt $waitUntil)) {
         Write-Host "." -NoNewLine
-        $offlineAgents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "value[?contains(tags,'$Tag') && agent.enabled && agent.status=='offline'].agent.name" -o tsv)
+        $offlineAgents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "$offlineAgentQuery" -o tsv)
         Start-Sleep -Seconds 5
     }
     Write-Host "✓" # Force NewLine

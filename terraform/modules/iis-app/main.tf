@@ -293,7 +293,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${terraform.workspace},${var.deployment_name},web\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${terraform.workspace},${var.deployment_name},${var.tags["suffix"]},web\""
     } 
   EOF
 
@@ -729,7 +729,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${terraform.workspace},${var.deployment_name},db\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${terraform.workspace},${var.deployment_name},${var.tags["suffix"]},db\""
     } 
   EOF
 

@@ -345,7 +345,6 @@ stages:
             # Use Pipeline Service Principal and Service Connection to set up these variables
             inlineScript: |
               $(scriptDirectory)/tf_deploy.ps1 -init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)
-              # Wait for agents to come online
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
@@ -478,7 +477,8 @@ stages:
 
       variables:
         iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
-        tag: 'web'
+        resourceSuffix:  $[ dependencies.Provision.outputs['terraform.resource_suffix'] ]
+        agentTag: 'web'
         timeOutSeconds: 300
 
       pool:
@@ -507,7 +507,7 @@ stages:
             scriptLocation: inlineScript
             inlineScript: |
               #$(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
-              $(scriptDirectory)/wait_for_agents.ps1 -Environment ${{ parameters.workspace }} -OrganizationUrl $(System.TeamFoundationCollectionUri) -Project $(System.TeamProject) -Tag $(tag) -TimeoutSeconds $(timeOutSeconds)
+              $(scriptDirectory)/wait_for_agents.ps1 -Environment ${{ parameters.workspace }} -OrganizationUrl $(System.TeamFoundationCollectionUri) -Project $(System.TeamProject) -Tags $(agentTag),$(resourceSuffix) -TimeoutSeconds $(timeOutSeconds)
             useGlobalConfig: true
             failOnStandardError: true
             workingDirectory: '$(scriptDirectory)'
