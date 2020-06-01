@@ -80,7 +80,7 @@ locals {
   tags                         = merge(
     var.tags,
     map(
-      "deployment",              local.deployment_name,
+      "deployment-name",         local.deployment_name,
       "environment",             terraform.workspace,
       "shutdown",                "true",
       "suffix",                  local.suffix,

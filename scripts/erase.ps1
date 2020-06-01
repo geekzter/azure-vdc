@@ -14,7 +14,7 @@
 
 param (
     [parameter(Mandatory=$false)][string]$Workspace=$env:TF_WORKSPACE,
-    [parameter(Mandatory=$false)][string]$Environment,
+    [parameter(Mandatory=$false)][string]$DeploymentName,
     [parameter(Mandatory=$false)][bool]$ClearTerraformState=$true,
     [parameter(Mandatory=$false)][switch]$Destroy=$false,
     [parameter(Mandatory=$false)][switch]$Force=$false,
@@ -22,18 +22,18 @@ param (
     [parameter(Mandatory=$false)][int]$TimeoutMinutes=50,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
 )
-if (!$Workspace -and !$Environment) { 
-    Write-Warning "You must supply a value for either Environment or Workspace" 
+if (!$Workspace -and !$DeploymentName) { 
+    Write-Warning "You must supply a value for either DeploymentName or Workspace" 
     exit
 }
-if ($Workspace -and $Environment) { 
-    Write-Warning "You must supply a value for either Environment or Workspace (not both)" 
+if ($Workspace -and $DeploymentName) { 
+    Write-Warning "You must supply a value for either DeploymentName or Workspace (not both)" 
 }
-if ($Environment -and $ClearTerraformState) {
-    # Environment provided as argument
+if ($DeploymentName -and $ClearTerraformState) {
+    # DeploymentName provided as argument
     $backendFile = (Join-Path $tfdirectory backend.tf)
     if (Test-Path $backendFile) {
-        Write-Warning "Terraform backend configured at $backendFile, please provide Workspace argument instead of Environment"
+        Write-Warning "Terraform backend configured at $backendFile, please provide Workspace argument instead of DeploymentName"
         exit
     }
 }
@@ -97,8 +97,8 @@ if ($Destroy) {
         $tagQuery = "[?tags.workspace == '${Workspace}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
         Write-Host "Removing resources with tags workspace='${Workspace}' and application='${application}'..." -ForegroundColor Green
     } else {
-        Write-Host "Removing resources with tags environment='${Environment}' and application='${application}'..." -ForegroundColor Green
-        $tagQuery = "[?tags.environment == '${Environment}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
+        Write-Host "Removing resources with tags deployment='${DeploymentName}' and application='${application}'..." -ForegroundColor Green
+        $tagQuery = "[?tags.deployment == '${DeploymentName}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
     }
     Write-Information "JMESPath Tags Query: $tagQuery"
     # Remove resource groups 
