@@ -54,7 +54,7 @@ Write-Host "Creating agent ${AgentName} and adding it to environment ${Environme
              --addvirtualmachineresourcetags --virtualmachineresourcetags "$($Tags -join ',')" `
              --runasservice `
              --work $pipelineWorkDirectory `
-             --url "https://dev.azure.com/${Organization}" `
+             --url "https://dev.azure.com/${Organization}/" `
              --projectname $Project `
              --auth pat --token $PAT `
              --acceptTeeEula `

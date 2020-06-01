@@ -19,7 +19,7 @@ parameters:
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean
-  default: true
+  default: false
 
 trigger: none 
 
