@@ -472,7 +472,6 @@ stages:
       variables:
         iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
         resourceSuffix:  $[ dependencies.Provision.outputs['terraform.resource_suffix'] ]
-        agentTag: 'web'
         timeOutSeconds: 300
 
       pool:
@@ -525,6 +524,7 @@ stages:
         appArtifactDirectory: '$(Pipeline.Workspace)/aspnet'
         appScriptsDirectory: '$(Pipeline.Workspace)/aspnetscripts'
         appPackage: '$(appArtifactDirectory)/SampleIisWebApp.zip'
+        resourceSuffix: $[ dependencies.Provision.outputs['terraform.resource_suffix'] ]
 
       ${{ if eq(parameters.testMode, true) }}:
         pool:
@@ -538,7 +538,7 @@ stages:
         environment:
           name: '${{ parameters.workspace }}'
           resourceType: virtualMachine
-          tags: 'web'
+          tags: $(agentTag), $(resourceSuffix)
 
       strategy:
         runOnce:

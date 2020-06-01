@@ -19,13 +19,14 @@ variables:
   value: '$(Build.RequestedForEmail)'
 - name: 'TF_VAR_use_pipeline_environment'
   value: 'true'
-
 - name: 'appArtifectProject'
   value: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
 - name: 'appBuildDefinitionIaaS'
   value: '41'
 - name: 'appBuildDefinitionPaaS'
   value: '63'
+- name: 'agentTag'
+  value: 'web'
 - name: 'jobTimeOutMinutes'
   value: 180
 - name: 'system.debug'
