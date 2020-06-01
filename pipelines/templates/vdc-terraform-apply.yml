@@ -11,10 +11,6 @@ parameters:
 - name: displayName
   displayName: Stage Display Name
   type: string
-- name: debug
-  displayName: Debug
-  type: boolean
-  default: false
 - name: inherit
   displayName: Inherit state
   type: boolean
@@ -101,8 +97,6 @@ stages:
       value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform'
     ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
       value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/terraform'
-  - name: 'system.debug'
-    value: ${{ parameters.debug }}
   - name: 'TF_VAR_deployment_name'
     ${{ if eq(length(parameters.deploymentName),0) }}:
       value: ${{ parameters.workspace }}
