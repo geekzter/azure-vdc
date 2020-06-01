@@ -21,10 +21,10 @@ parameters:
   - Always
   - 'On failure'
   - 'On success'
-# - name: testMode
-#   displayName: Test Mode (disable most tasks)
-#   type: boolean
-#   default: true
+- name: testMode
+  displayName: Test Mode (disable most tasks)
+  type: boolean
+  default: true
 
 trigger: none
 
