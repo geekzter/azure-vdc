@@ -21,32 +21,32 @@ parameters:
   - Always
   - 'On failure'
   - 'On success'
-- name: testMode
-  displayName: Test Mode (disable most tasks)
-  type: boolean
-  default: true
+# - name: testMode
+#   displayName: Test Mode (disable most tasks)
+#   type: boolean
+#   default: true
 
 trigger: none
 
-# pr:
-#   branches:
-#     include:
-#     - '*'
-#   paths:
-#     exclude:
-#     - '*.md'  
-#     - '*.png'  
-#     - '*.svg'  
-#     - '*.vsdx'  
+pr:
+  branches:
+    include:
+    - '*'
+  paths:
+    exclude:
+    - '*.md'  
+    - '*.png'  
+    - '*.svg'  
+    - '*.vsdx'  
 
-# schedules:
-# - cron: '0 3 * * *'
-#   displayName: 'Daily early morning build (UTC)'
-#   # Run if there are no changes
-#   always: 'true'
-#   branches:
-#     include:
-#     - master
+schedules:
+- cron: '0 3 * * *'
+  displayName: 'Daily early morning build (UTC)'
+  # Run if there are no changes
+  always: 'true'
+  branches:
+    include:
+    - master
 
 variables:
 - template: ./templates/vdc-terraform-apply.variables.yml
