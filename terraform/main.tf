@@ -57,10 +57,10 @@ locals {
   password                     = ".Az9${random_string.password.result}"
 # password                     = ".Az9${random_string.password.override_special}" # Test
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result
-  environment                  = var.resource_environment != "" ? lower(var.resource_environment) : (length(terraform.workspace) <= 4 ? terraform.workspace : substr(lower(replace(terraform.workspace,"/a|e|i|o|u|y/","")),0,4))
-  vdc_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-${lower(local.suffix)}"
-  iaas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-iaasapp-${lower(local.suffix)}"
-  paas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-paasapp-${lower(local.suffix)}"
+  deployment_name              = var.deployment_name != "" ? lower(var.deployment_name) : (length(terraform.workspace) <= 4 ? terraform.workspace : substr(lower(replace(terraform.workspace,"/a|e|i|o|u|y/","")),0,4))
+  vdc_resource_group           = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-${lower(local.suffix)}"
+  iaas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-iaasapp-${lower(local.suffix)}"
+  paas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-paasapp-${lower(local.suffix)}"
   paas_app_resource_group_short= substr(lower(replace(local.paas_app_resource_group,"-","")),0,20)
   ipprefixdata                 = jsondecode(chomp(data.http.localpublicprefix.body))
   admin_ip                     = [
@@ -80,7 +80,8 @@ locals {
   tags                         = merge(
     var.tags,
     map(
-      "environment",             local.environment,
+      "deployment",              local.deployment_name,
+      "environment",             terraform.workspace,
       "shutdown",                "true",
       "suffix",                  local.suffix,
       "workspace",               terraform.workspace,
@@ -112,7 +113,7 @@ resource "azurerm_role_assignment" "demo_admin" {
 }
 
 resource azurerm_key_vault vault {
-  name                         = "${lower(var.resource_prefix)}-${lower(local.environment)}-vault-${lower(local.suffix)}"
+  name                         = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-vault-${lower(local.suffix)}"
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   tenant_id                    = data.azurerm_client_config.current.tenant_id

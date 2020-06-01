@@ -1,6 +1,6 @@
 locals {
-  app_hostname                 = "${lower(var.resource_environment)}apphost"
-  db_hostname                  = "${lower(var.resource_environment)}dbhost"
+  app_hostname                 = "${lower(var.deployment_name)}apphost"
+  db_hostname                  = "${lower(var.deployment_name)}dbhost"
   resource_group_name_short    = substr(lower(replace(var.resource_group,"-","")),0,20)
   diagnostics_storage_name     = element(split("/",var.diagnostics_storage_id),length(split("/",var.diagnostics_storage_id))-1)
   vdc_resource_group_name      = element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)
@@ -253,7 +253,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_gro
       "TeamProject"            : "${var.app_devops["team_project"]}",
       "DeploymentGroup"        : "${var.app_devops["web_deployment_group"]}",
       "AgentName"              : "${local.app_hostname}${count.index+1}",
-      "Tags"                   : "${var.resource_environment}"
+      "Tags"                   : "${var.deployment_name}"
     }
   EOF
 
@@ -293,7 +293,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${terraform.workspace},${var.resource_environment},web\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${terraform.workspace},${var.deployment_name},web\""
     } 
   EOF
 
@@ -688,7 +688,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
       "TeamProject"            : "${var.app_devops["team_project"]}",
       "DeploymentGroup"        : "${var.app_devops["db_deployment_group"]}",
       "AgentName"              : "${local.db_hostname}${count.index+1}",
-      "Tags"                   : "${var.resource_environment}"
+      "Tags"                   : "${var.deployment_name}"
     }
   EOF
 
@@ -729,7 +729,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${terraform.workspace},${var.resource_environment},db\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${terraform.workspace},${var.deployment_name},db\""
     } 
   EOF
 

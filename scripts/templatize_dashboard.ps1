@@ -44,7 +44,7 @@ try {
         $Script:appRGShort     = $(terraform output "paas_app_resource_group_short"  2>$null)
         $Script:prefix         = $(terraform output "resource_prefix"                2>$null)
         $Script:suffix         = $(terraform output "resource_suffix"                2>$null)
-        $Script:environment    = $(terraform output "resource_environment"           2>$null)
+        $Script:environment    = $(terraform output "deployment_name"           2>$null)
         $Script:sharedRegistry = $(terraform output "shared_container_registry_name" 2>$null)
         $Script:sharedRG       = $(terraform output "shared_resources_group"         2>$null)
     }

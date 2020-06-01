@@ -260,13 +260,13 @@ resource azurerm_application_insights vdc_insights {
 }
 
 resource "azurerm_dashboard" "vdc_dashboard" {
-  name                         = "VDC-${local.environment}-${terraform.workspace}"
+  name                         = "VDC-${local.deployment_name}-${terraform.workspace}"
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   location                     = azurerm_resource_group.vdc_rg.location
   tags                         = merge(
     local.tags,
     map(
-      "hidden-title",           "VDC (${local.environment}/${terraform.workspace})",
+      "hidden-title",           "VDC (${local.deployment_name}/${terraform.workspace})",
     )
   )
 
@@ -274,7 +274,7 @@ resource "azurerm_dashboard" "vdc_dashboard" {
     {
       subscription             = data.azurerm_subscription.primary.id
       prefix                   = var.resource_prefix
-      environment              = local.environment
+      environment              = local.deployment_name
       suffix                   = local.suffix
       subscription_guid        = data.azurerm_subscription.primary.subscription_id
       appinsights_id           = azurerm_application_insights.vdc_insights.app_id

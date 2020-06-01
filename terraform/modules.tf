@@ -58,7 +58,7 @@ locals {
 
 module iis_app {
   source                       = "./modules/iis-app"
-  resource_environment         = local.environment
+  deployment_name         = local.deployment_name
   resource_group               = local.iaas_app_resource_group
   vdc_resource_group_id        = azurerm_resource_group.vdc_rg.id
   location                     = azurerm_resource_group.vdc_rg.location

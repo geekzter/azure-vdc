@@ -38,8 +38,8 @@ parameters:
   values:
   - Always
   - Never 
-  - OnFailure
-  - OnSuccess
+  - 'On failure'
+  - 'On success'
 - name: workspace
   displayName: Pipeline Environment / Terraform Workspace
   type: string
@@ -60,6 +60,14 @@ parameters:
   - tst1
   - tst2
   - tst3
+- name: deploymentName
+  displayName: Deployment name (middle part resource names)
+  type: string
+  default: ''
+- name: resourceSuffix
+  displayName: Deployment name (middle part resource names)
+  type: string
+  default: ''
 - name: vdcArtifactPipeline
   displayName: Pipeline (alias) for artifacts
   type: string
@@ -95,12 +103,20 @@ stages:
       value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/terraform'
   - name: 'system.debug'
     value: ${{ parameters.debug }}
+  - name: 'TF_VAR_deployment_name'
+    ${{ if eq(length(parameters.deploymentName),0) }}:
+      value: ${{ parameters.workspace }}
+    ${{ if gt(length(parameters.deploymentName),0) }}:
+      value: ${{ parameters.deploymentName }}
+  - ${{ if gt(length(parameters.resourceSuffix),0) }}:
+    - name: 'TF_VAR_resource_suffix'
+      value: ${{ parameters.resourceSuffix }}
   - name: 'iaasResourceGroup'
-    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-iaasapp-$(TF_VAR_resource_suffix)'
+    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-iaasapp-$(TF_VAR_resource_suffix)'
   - name: 'paasResourceGroup'
-    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-paasapp-$(TF_VAR_resource_suffix)'
+    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-paasapp-$(TF_VAR_resource_suffix)'
   - name: 'vdcResourceGroup' 
-    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_resource_environment)-$(TF_VAR_resource_suffix)'
+    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-$(TF_VAR_resource_suffix)'
 
   jobs:
   - job: 'Prepare'
@@ -710,9 +726,9 @@ stages:
 
       ${{ if eq(parameters.destroy, 'Always') }}:
         condition: succeededOrFailed()
-      ${{ if eq(parameters.destroy, 'OnFailure') }}:
+      ${{ if eq(parameters.destroy, 'On failure') }}:
         condition: failed()
-      ${{ if eq(parameters.destroy, 'OnSuccess') }}:
+      ${{ if eq(parameters.destroy, 'On success') }}:
         condition: succeeded()
 
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]

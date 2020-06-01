@@ -17,8 +17,6 @@ variables:
   value: 0
 - name: 'TF_VAR_alert_email'
   value: '$(Build.RequestedForEmail)'
-- name: 'TF_VAR_resource_environment'
-  value: ''
 - name: 'TF_VAR_use_pipeline_environment'
   value: 'true'
 

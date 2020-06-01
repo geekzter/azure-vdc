@@ -14,8 +14,8 @@ parameters:
   default: Never
   values:
   - Never 
-  - OnFailure
-  - OnSuccess
+  - 'On failure'
+  - 'On success'
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean
@@ -55,6 +55,7 @@ stages:
     provision: true
     reprovision: false
     deploy: true
+    deploymentName: 'demo'
     destroy: ${{ parameters.destroy }}
     testMode: ${{ parameters.testMode }}
     vdcArtifactPipeline: 'ci'

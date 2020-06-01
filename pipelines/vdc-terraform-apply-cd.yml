@@ -26,16 +26,16 @@ parameters:
   default: Always
   values:
   - Always
-  - OnFailure
-  - OnSuccess
+  - 'On failure'
+  - 'On success'
 - name: releaseDestroy
   displayName: Destroy release infrastructure
   type: string
   default: Never
   values:
   - Never
-  - OnFailure
-  - OnSuccess
+  - 'On failure'
+  - 'On success'
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean
@@ -56,8 +56,6 @@ variables:
   value: '$(Build.RequestedForEmail)'
 - name: 'TF_VAR_release_web_url'
   value: '$(System.TeamFoundationCollectionUri)/$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)&view=results'
-- name: 'TF_VAR_resource_suffix'
-  value: '$(Build.BuildId)'
 
 stages:
 - template: ./templates/vdc-terraform-apply.yml
@@ -69,6 +67,7 @@ stages:
     reprovision: true
     deploy: true
     destroy: ${{ parameters.buildDestroy }}
+    resourceSuffix: 'b$(Build.BuildId)'
     testMode: ${{ parameters.testMode }}
     workspace: ${{ parameters.buildWorkspace }}
 
@@ -80,6 +79,7 @@ stages:
     provision: true
     reprovision: false
     deploy: true
+    deploymentName: 'demo'
     destroy: ${{ parameters.releaseDestroy }}
     testMode: ${{ parameters.testMode }}
     vdcArtifactPipeline: current

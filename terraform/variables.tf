@@ -8,8 +8,8 @@ variable resource_suffix {
   default                      = "" # Empty string triggers a random suffix
 }
 
-variable resource_environment {
-  description                  = "The logical environment (tier) resource will be deployed in"
+variable deployment_name {
+  description                  = "The middle part of the of the resource names created"
   default                      = "" # Empty string defaults to workspace name
 }
 

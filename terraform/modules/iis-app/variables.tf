@@ -7,7 +7,7 @@ variable vdc_resource_group_id {
 variable location {
   description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."
 }
-variable resource_environment {
+variable deployment_name {
   description = "The logical environment (tier) resource will be deployed in"
 }
 

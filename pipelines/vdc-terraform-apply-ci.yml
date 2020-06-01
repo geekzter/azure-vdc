@@ -19,8 +19,8 @@ parameters:
   default: Always
   values:
   - Always
-  - OnFailure
-  - OnSuccess
+  - 'On failure'
+  - 'On success'
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean

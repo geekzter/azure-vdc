@@ -250,8 +250,8 @@ output resource_group_ids {
 output resource_prefix {
   value       = var.resource_prefix
 }
-output resource_environment {
-  value       = local.environment
+output deployment_name {
+  value       = local.deployment_name
 }
 output resource_suffix {
   value       = local.suffix
