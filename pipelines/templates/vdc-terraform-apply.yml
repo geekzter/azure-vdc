@@ -540,11 +540,11 @@ stages:
         environment:
           name: '${{ parameters.workspace }}'
           resourceType: virtualMachine
-          # BUG: Though documented, multiple tags don't seem possible
+          # BUG: Only literals are allowed
           # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema%2Cparameter-schema#environment
           # tags: string | [ string ] # tag names to filter the resources in the environment
           # tags: $(agentTag) $(resourceSuffix)
-          tags: $(agentTag)
+          tags: web
 
       strategy:
         runOnce:
