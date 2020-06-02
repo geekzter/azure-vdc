@@ -46,11 +46,11 @@ locals {
                                  [
                                  azurerm_firewall_application_rule_collection.iag_app_rules.id,
                                  azurerm_firewall_network_rule_collection.iag_net_outbound_rules.id,
-                                 azurerm_private_dns_a_record.aut_storage_blob_dns_record.id,
-                                 azurerm_private_dns_a_record.diag_storage_blob_dns_record.id,
-                                 azurerm_private_dns_a_record.diag_storage_table_dns_record.id,
-                                 azurerm_private_dns_a_record.vault_dns_record.id,
-                                 azurerm_storage_account_network_rules.automation_storage_rules.id
+                                 try(azurerm_private_dns_a_record.aut_storage_blob_dns_record.0.id,""),
+                                 try(azurerm_private_dns_a_record.diag_storage_blob_dns_record.0.id,""),
+                                 try(azurerm_private_dns_a_record.diag_storage_table_dns_record.0.id,""),
+                                 try(azurerm_private_dns_a_record.vault_dns_record.0.id,""),
+                                 try(azurerm_storage_account_network_rules.automation_storage_rules.0.id,"")
   ])
   # HACK: This value is dependent on all elements of the list being created
   vm_connectivity_dependency   = join("|",[for dep in local.vm_agent_dependencies : substr(dep,0,1)])
@@ -166,6 +166,7 @@ module paas_app {
   default_delete_timeout       = var.default_delete_timeout
   disable_public_database_access= var.disable_public_database_access
   enable_aad_auth              = var.enable_app_service_aad_auth
+  enable_private_link          = var.enable_private_link
   grant_database_access        = var.grant_database_access
   iag_subnet_id                = azurerm_subnet.iag_subnet.id
   integrated_subnet_id         = lookup(module.paas_spoke_vnet.subnet_ids,"appservice","")

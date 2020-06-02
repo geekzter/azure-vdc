@@ -198,6 +198,7 @@ resource azurerm_private_endpoint vault_endpoint {
 
   tags                         = local.tags
 
+  count                        = var.enable_private_link ? 1 : 0
   depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record vault_dns_record {
@@ -205,7 +206,9 @@ resource azurerm_private_dns_a_record vault_dns_record {
   zone_name                    = azurerm_private_dns_zone.zone["vault"].name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.vault_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.vault_endpoint.0.private_service_connection[0].private_ip_address]
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_monitor_diagnostic_setting key_vault_logs {
   name                         = "${azurerm_key_vault.vault.name}-logs"
@@ -253,6 +256,8 @@ resource azurerm_storage_account_network_rules automation_storage_rules {
   default_action               = "Deny"
   bypass                       = ["AzureServices"]
   ip_rules                     = [local.ipprefixdata.data.prefix]
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_private_endpoint aut_blob_storage_endpoint {
   name                         = "${azurerm_storage_account.vdc_automation_storage.name}-blob-endpoint"
@@ -277,6 +282,7 @@ resource azurerm_private_endpoint aut_blob_storage_endpoint {
 
   tags                         = local.tags
 
+  count                        = var.enable_private_link ? 1 : 0
   depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record aut_storage_blob_dns_record {
@@ -284,8 +290,10 @@ resource azurerm_private_dns_a_record aut_storage_blob_dns_record {
   zone_name                    = azurerm_private_dns_zone.zone["blob"].name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.aut_blob_storage_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.aut_blob_storage_endpoint.0.private_service_connection[0].private_ip_address]
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 
 resource azurerm_advanced_threat_protection vdc_automation_storage {
