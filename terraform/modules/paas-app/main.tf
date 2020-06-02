@@ -826,6 +826,7 @@ resource azurerm_private_endpoint sqlserver_endpoint {
     delete                     = var.default_delete_timeout
   }  
 
+  
   tags                         = var.tags
 
   # Create Private Endpoints one at a time
@@ -837,6 +838,11 @@ resource azurerm_private_dns_a_record sql_server_dns_record {
   resource_group_name          = local.vdc_resource_group_name
   ttl                          = 300
   records                      = [azurerm_private_endpoint.sqlserver_endpoint.private_service_connection[0].private_ip_address]
+
+  provisioner "local-exec" {
+    when                       = destroy
+    command                    = "az sql server update -n ${self.name} -g ${self.resource_group_name} --set publicNetworkAccess='Enabled' --query 'publicNetworkAccess' -o tsv"
+  }
 
   tags                         = var.tags
 }
