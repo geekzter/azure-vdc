@@ -1,11 +1,9 @@
 trigger: none 
 
-
 jobs:
 - template: ./test-template.yml
   parameters:
     agentTag: 'web'
-
 # - deployment: 'DeployEnvironment'
 #   displayName: 'Test Job'
 #   condition: succeeded()
