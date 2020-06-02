@@ -3,7 +3,7 @@ trigger: none
 jobs:
 - template: ./test-template.yml
   parameters:
-    agentTag: 'web'
+    agentTag: '$(Build.BuildId)'
 # - deployment: 'DeployEnvironment'
 #   displayName: 'Test Job'
 #   condition: succeeded()
