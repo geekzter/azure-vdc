@@ -27,7 +27,7 @@ param (
     $Tags,
 
     #[parameter(Mandatory=$true)][string]$ResourceGroup,
-    [parameter(Mandatory=$false)][int]$TimeoutSeconds=300
+    [parameter(Mandatory=$false)][int]$TimeoutSeconds=600
 ) 
 Write-Host $MyInvocation.line
 
