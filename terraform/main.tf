@@ -52,8 +52,8 @@ resource "random_string" "suffix" {
 # These variables will be used throughout the Terraform templates
 locals {
   # Making sure all character classes are represented, as random does not guarantee that  
-  workspace_location           = var.workspace_location != "" ? var.workspace_location : var.location
-  automation_location          = var.automation_location != "" ? var.automation_location : local.workspace_location
+  workspace_location           = var.workspace_location != null && var.workspace_location != "" ? var.workspace_location : var.location
+  automation_location          = var.automation_location != null && var.automation_location != "" ? var.automation_location : local.workspace_location
   password                     = ".Az9${random_string.password.result}"
 # password                     = ".Az9${random_string.password.override_special}" # Test
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result
