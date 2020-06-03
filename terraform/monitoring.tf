@@ -203,51 +203,6 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
   }
 }
 
-# Conflicts with Start/Stop Automation solution
-resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
-  name                         = "Automation_Logs"
-  target_resource_id           = azurerm_automation_account.automation.id
-  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
-  log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
-
-
-  log {
-    category                   = "JobLogs"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-
-  log {
-    category                   = "JobStreams"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  } 
-    
-  log {
-    category                   = "DscNodeStatus"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-  
-  metric {
-    category                   = "AllMetrics"
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
-
 locals {
   #network_watcher_name         = "NetworkWatcher_${var.location}" # Previous(?) naming convention
   network_watcher_name         = "${var.location}-watcher" # Azure CLI naming convention
