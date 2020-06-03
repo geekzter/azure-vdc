@@ -1,11 +1,4 @@
 parameters:
-- name: region
-  displayName: Azure Region
-  type: string
-  default: westeurope
-  values:
-  - eastus
-  - westeurope
 - name: workspace
   displayName: Pipeline Environment / Terraform Workspace
   type: string

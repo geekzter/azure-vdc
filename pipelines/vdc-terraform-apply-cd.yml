@@ -4,13 +4,6 @@
 #  - Test application
 #  - Destroy infrastructure
 parameters:
-- name: region
-  displayName: Azure Region
-  type: string
-  default: westeurope
-  values:
-  - eastus
-  - westeurope
 - name: buildWorkspace
   displayName: Build Pipeline Environment / Terraform Workspace
   type: string

@@ -36,10 +36,6 @@ parameters:
   - Never 
   - 'On failure'
   - 'On success'
-- name: region
-  displayName: Azure Region
-  type: string
-  default: westeurope
 - name: workspace
   displayName: Pipeline Environment / Terraform Workspace
   type: string
@@ -81,48 +77,42 @@ stages:
 - stage: ${{ parameters.name }}
   displayName: ${{ parameters.displayName }}
 
-  # Global variables shared by all jobs
-  variables:
-  - name: 'agentTag'
-    value: 'web'
-  - name: 'vdcArtifactName'
-    value: 'drop'
-  - name: 'TF_WORKSPACE'
+# Global variables shared by all jobs
+variables:
+- name: 'agentTag'
+  value: 'web'
+- name: 'vdcArtifactName'
+  value: 'drop'
+- name: 'TF_WORKSPACE'
+  value: ${{ parameters.workspace }}
+- name: 'scriptDirectory'
+  ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+    value: '$(Build.SourcesDirectory)/scripts'
+  ${{ if and(gt(length(parameters.vdcArtifactPipeline),0),ne(parameters.vdcArtifactPipeline,'current')) }}:
+    value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/scripts'
+  ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
+    value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/scripts'
+- name: 'terraformDirectory'
+  ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+    value: '$(Build.SourcesDirectory)/terraform'
+  ${{ if and(gt(length(parameters.vdcArtifactPipeline),0),ne(parameters.vdcArtifactPipeline,'current')) }}:
+    value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform'
+  ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
+    value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/terraform'
+- name: 'TF_VAR_deployment_name'
+  ${{ if eq(length(parameters.deploymentName),0) }}:
     value: ${{ parameters.workspace }}
-  - name: 'scriptDirectory'
-    ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
-      value: '$(Build.SourcesDirectory)/scripts'
-    ${{ if and(gt(length(parameters.vdcArtifactPipeline),0),ne(parameters.vdcArtifactPipeline,'current')) }}:
-      value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/scripts'
-    ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
-      value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/scripts'
-  - name: 'terraformDirectory'
-    ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
-      value: '$(Build.SourcesDirectory)/terraform'
-    ${{ if and(gt(length(parameters.vdcArtifactPipeline),0),ne(parameters.vdcArtifactPipeline,'current')) }}:
-      value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform'
-    ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
-      value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/terraform'
-  - name: 'TF_VAR_deployment_name'
-    ${{ if eq(length(parameters.deploymentName),0) }}:
-      value: ${{ parameters.workspace }}
-    ${{ if gt(length(parameters.deploymentName),0) }}:
-      value: ${{ parameters.deploymentName }}
-  - ${{ if gt(length(parameters.resourceSuffix),0) }}:
-    - name: 'TF_VAR_resource_suffix'
-      value: ${{ parameters.resourceSuffix }}
-  - name: 'iaasResourceGroup'
-    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-iaasapp-$(TF_VAR_resource_suffix)'
-  - name: 'paasResourceGroup'
-    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-paasapp-$(TF_VAR_resource_suffix)'
-  - name: 'vdcResourceGroup' 
-    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-$(TF_VAR_resource_suffix)'
-  - name: 'TF_VAR_location'
-    value: ${{ parameters.region }}
-  - name: 'TF_VAR_automation_location'
-    value: ${{ parameters.region }}
-  - name: 'TF_VAR_workspace_location'
-    value: ${{ parameters.region }}
+  ${{ if gt(length(parameters.deploymentName),0) }}:
+    value: ${{ parameters.deploymentName }}
+- ${{ if gt(length(parameters.resourceSuffix),0) }}:
+  - name: 'TF_VAR_resource_suffix'
+    value: ${{ parameters.resourceSuffix }}
+- name: 'iaasResourceGroup'
+  value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-iaasapp-$(TF_VAR_resource_suffix)'
+- name: 'paasResourceGroup'
+  value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-paasapp-$(TF_VAR_resource_suffix)'
+- name: 'vdcResourceGroup' 
+  value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-$(TF_VAR_resource_suffix)'
 
   jobs:
   - job: 'Prepare'
