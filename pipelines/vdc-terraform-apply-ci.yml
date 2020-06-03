@@ -13,6 +13,13 @@ parameters:
   - ci1
   - ci2
   - ci3
+- name: region
+  displayName: Azure Region
+  type: string
+  default: westeuope
+  values:
+  - eastus
+  - westeurope
 - name: destroy
   displayName: Destroy infrastructure
   type: string
@@ -68,5 +75,6 @@ stages:
     reprovision: true
     deploy: true
     destroy: ${{ parameters.destroy }}
+    region: ${{ parameters.region }}
     testMode: ${{ parameters.testMode }}
     workspace: ${{ parameters.workspace }}

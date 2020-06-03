@@ -36,6 +36,10 @@ parameters:
   - Never 
   - 'On failure'
   - 'On success'
+- name: region
+  displayName: Azure Region
+  type: string
+  default: westeurope
 - name: workspace
   displayName: Pipeline Environment / Terraform Workspace
   type: string
@@ -113,6 +117,12 @@ stages:
     value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-paasapp-$(TF_VAR_resource_suffix)'
   - name: 'vdcResourceGroup' 
     value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-$(TF_VAR_resource_suffix)'
+  - name: 'TF_VAR_location'
+    value: ${{ parameters.region }}
+  - name: 'TF_VAR_automation_location'
+    value: ${{ parameters.region }}
+  - name: 'TF_VAR_workspace_location'
+    value: ${{ parameters.region }}
 
   jobs:
   - job: 'Prepare'

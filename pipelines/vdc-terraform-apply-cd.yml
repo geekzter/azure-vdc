@@ -4,6 +4,13 @@
 #  - Test application
 #  - Destroy infrastructure
 parameters:
+- name: region
+  displayName: Azure Region
+  type: string
+  default: westeuope
+  values:
+  - eastus
+  - westeurope
 - name: buildWorkspace
   displayName: Build Pipeline Environment / Terraform Workspace
   type: string
@@ -69,6 +76,7 @@ stages:
     reprovision: true
     deploy: true
     destroy: ${{ parameters.buildDestroy }}
+    region: ${{ parameters.region }}
     resourceSuffix: 'b$(Build.BuildId)'
     testMode: ${{ parameters.testMode }}
     workspace: ${{ parameters.buildWorkspace }}
@@ -83,6 +91,7 @@ stages:
     deploy: true
     deploymentName: 'demo'
     destroy: ${{ parameters.releaseDestroy }}
+    region: ${{ parameters.region }}
     testMode: ${{ parameters.testMode }}
     vdcArtifactPipeline: current
     workspace: ${{ parameters.releaseWorkspace }}

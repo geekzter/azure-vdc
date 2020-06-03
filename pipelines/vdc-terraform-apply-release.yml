@@ -1,4 +1,11 @@
 parameters:
+- name: region
+  displayName: Azure Region
+  type: string
+  default: westeuope
+  values:
+  - eastus
+  - westeurope
 - name: workspace
   displayName: Pipeline Environment / Terraform Workspace
   type: string
@@ -58,6 +65,7 @@ stages:
     deploy: true
     deploymentName: 'demo'
     destroy: ${{ parameters.destroy }}
+    region: ${{ parameters.region }}
     testMode: ${{ parameters.testMode }}
     vdcArtifactPipeline: 'ci'
     workspace: ${{ parameters.workspace }}
