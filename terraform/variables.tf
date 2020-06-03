@@ -60,6 +60,7 @@ variable location {
   default                      = "westeurope"
 }
 
+# https://docs.microsoft.com/en-us/azure/automation/how-to/region-mappings
 variable automation_location {
   description                  = "The location/region where the monitoring workspaces will be created."
   default                      = "" # Empty string defaults to workspace_location
