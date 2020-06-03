@@ -68,6 +68,5 @@ stages:
     reprovision: true
     deploy: true
     destroy: ${{ parameters.destroy }}
-    region: ${{ parameters.region }}
     testMode: ${{ parameters.testMode }}
     workspace: ${{ parameters.workspace }}

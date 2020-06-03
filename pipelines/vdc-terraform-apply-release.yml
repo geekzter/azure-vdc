@@ -58,7 +58,6 @@ stages:
     deploy: true
     deploymentName: 'demo'
     destroy: ${{ parameters.destroy }}
-    region: ${{ parameters.region }}
     testMode: ${{ parameters.testMode }}
     vdcArtifactPipeline: 'ci'
     workspace: ${{ parameters.workspace }}
