@@ -2,7 +2,7 @@ parameters:
 - name: region
   displayName: Azure Region
   type: string
-  default: westeuope
+  default: westeurope
   values:
   - eastus
   - westeurope
