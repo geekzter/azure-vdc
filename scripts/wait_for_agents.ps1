@@ -89,7 +89,12 @@ if ($Environment) {
         $offlineAgents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "$offlineAgentQuery" -o tsv)
         Start-Sleep -Seconds 5
     }
-    Write-Host "✓" # Force NewLine
+    if ($offlineAgents) {
+        Write-Host "✘" # Force NewLine
+        Write-Warning "Agent(s) $offlineAgents are still offline after $TimeoutSeconds seconds"
+    } else {
+        Write-Host "✓" # Force NewLine
+    }
 }
 
 if ($ResourceGroup) {
