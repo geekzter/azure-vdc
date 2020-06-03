@@ -54,7 +54,9 @@ variable vso_url {
   default                      = ""
 }
 
-######### Resource Group #########
+# https://azure.microsoft.com/en-us/global-infrastructure/regions/
+# https://azure.microsoft.com/en-us/global-infrastructure/services/?products=monitor,azure-bastion,private-link
+# e.g. westeurope, uksouth, eastus, westus2, southeastasia
 variable location {
   description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."
   default                      = "westeurope"
@@ -151,7 +153,7 @@ variable vdc_oms_solutions {
   # "KeyVaultAnalytics",
   # "LogicAppB2B",
   # "LogicAppsManagement",
-    "LogManagement",
+  # "LogManagement",
   # "Microsoft365Analytics",
     "NetworkMonitoring",
   # "Office365",

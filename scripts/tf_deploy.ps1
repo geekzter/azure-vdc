@@ -54,6 +54,7 @@ Write-Host "Terraform is running as '$identity'"
 Set-PSDebug -trace $Trace
 if ($Trace -gt 0) {
     $env:TF_LOG = "TRACE"
+    $env:TF_LOG_PATH = "terraform.log"
 }
 if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
     # Increase debug information consistent with Azure Pipeline debug setting
