@@ -51,7 +51,7 @@ stages:
 - template: ./templates/vdc-terraform-apply.yml
   parameters:
     name: 'Release'
-    displayName: 'VDC Release'
+    displayName: 'Release'
     inherit: true
     provision: true
     reprovision: false

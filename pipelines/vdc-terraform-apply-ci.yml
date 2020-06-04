@@ -62,7 +62,7 @@ stages:
 - template: ./templates/vdc-terraform-apply.yml
   parameters:
     name: 'CI'
-    displayName: 'VDC CI'
+    displayName: 'Provision, Deploy, Tear down'
     inherit: false
     provision: true
     reprovision: true

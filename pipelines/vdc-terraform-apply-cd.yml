@@ -49,7 +49,7 @@ variables:
 - template: ./templates/vdc-terraform-apply.variables.yml
   # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
   # The Terraform VDC project requires quite a number of settings
-- group: 'vdc-release'
+- group: 'vdc-cd'
 - name: 'TF_VAR_build_id'
   value: '$(Build.BuildId)'
 - name: 'TF_VAR_release_id'
@@ -63,7 +63,7 @@ stages:
 - template: ./templates/vdc-terraform-apply.yml
   parameters:
     name: 'CI'
-    displayName: 'VDC Build'
+    displayName: 'Provision, Deploy, Tear down'
     inherit: false
     provision: true
     reprovision: true
@@ -76,7 +76,7 @@ stages:
 - template: ./templates/vdc-terraform-apply.yml
   parameters:
     name: 'Release'
-    displayName: 'VDC Release'
+    displayName: 'Release'
     inherit: true
     provision: true
     reprovision: false
