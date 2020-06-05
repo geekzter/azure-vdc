@@ -87,10 +87,10 @@ if ($Environment) {
         Write-Host "Waiting for $offlineAgents to come online ..." -NoNewline
     }
     while ($offlineAgents -and ($stopWatch.Elapsed.TotalSeconds -lt $TimeoutSeconds)) {
+        Write-Verbose "Agent(s) $offlineAgents are still offline after $($stopWatch.Elapsed.TotalSeconds) seconds"
         Write-Host "." -NoNewLine
         Write-Debug "az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query `"$offlineAgentQuery`" -o tsv"
         $offlineAgents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "$offlineAgentQuery" -o tsv)
-        Write-Verbose "Agent(s) $offlineAgents are still offline after $($stopWatch.Elapsed.TotalSeconds) seconds"
         Start-Sleep -Seconds 5
     }
     if ($offlineAgents) {
