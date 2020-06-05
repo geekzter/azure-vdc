@@ -501,6 +501,8 @@ stages:
             scriptType: pscore
             scriptLocation: inlineScript
             inlineScript: |
+              $global:InformationPreference = "Continue"
+              $global:VerbosePreference = "Continue"
               #$(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
               $(scriptDirectory)/wait_for_agents.ps1 -Environment ${{ parameters.workspace }} -OrganizationUrl $(System.TeamFoundationCollectionUri) -Project $(System.TeamProject) -Tags $(agentTag),$(resourceSuffix) -TimeoutSeconds $(timeOutSeconds)
             useGlobalConfig: true
