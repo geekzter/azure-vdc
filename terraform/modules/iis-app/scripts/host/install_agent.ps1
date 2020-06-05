@@ -62,3 +62,4 @@ Write-Host "Creating agent ${AgentName} and adding it to environment ${Environme
              --unattended
 # Start Service
 Start-Service $agentService
+Set-Service $agentService -StartupType Automatic
