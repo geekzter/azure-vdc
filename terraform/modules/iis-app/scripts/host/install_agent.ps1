@@ -20,7 +20,7 @@ if (!$IsWindows -and ($PSVersionTable.PSEdition -ine "Desktop")) {
 #$pipelineDirectory = Join-Path $env:HOME pipeline-agent
 $pipelineDirectory = Join-Path $env:ProgramFiles pipeline-agent
 $agentService = "vstsagent.${Organization}..${AgentName}"
-if (Test-Path (Join-Path $pipelineDirectory bin)) {
+if (Test-Path (Join-Path $pipelineDirectory .agent)) {
     Write-Host "Agent $AgentName already installed, removing first..."
     Push-Location $pipelineDirectory 
     Stop-Service $agentService
@@ -62,4 +62,5 @@ Write-Host "Creating agent ${AgentName} and adding it to environment ${Environme
              --unattended
 # Start Service
 Start-Service $agentService
-Set-Service $agentService -StartupType Automatic
+#Set-Service $agentService -StartupType Automatic
+sc.exe config $agentService start=auto
