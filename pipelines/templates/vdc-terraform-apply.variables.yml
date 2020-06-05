@@ -1,0 +1,29 @@
+# Global variables shared by all jobs
+variables:
+  # Variable Groups are referenced, but defined elsewhere (Library)
+
+  # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
+  # The Terraform VDC project requires quite a number of settings
+- group: 'vdc'
+- group: 'vdc-vanity-domain'
+
+- name: 'ARM_PROVIDER_STRICT'
+  value: 'true'
+- name: 'AZURE_DEVOPS_EXT_PAT'
+  value: '$(System.AccessToken)'
+- name: 'TF_IN_AUTOMATION'
+  value: 'true'
+- name: 'TF_INPUT'
+  value: 0
+- name: 'TF_VAR_alert_email'
+  value: '$(Build.RequestedForEmail)'
+- name: 'TF_VAR_use_pipeline_environment'
+  value: 'true'
+- name: 'appArtifectProject'
+  value: '0b7ba88e-1ad0-4782-839e-850e9a4b53c7'
+- name: 'appBuildDefinitionIaaS'
+  value: '41'
+- name: 'appBuildDefinitionPaaS'
+  value: '63'
+- name: 'jobTimeOutMinutes'
+  value: 180

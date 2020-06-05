@@ -3,23 +3,7 @@
 #  - Destroy infrastructure
 # This CI pieline has as few dependencies as possible
 
-trigger:
-  batch: true
-  branches:
-    include:
-    - master
-  paths:
-    include:
-    - 'scripts/*' 
-    - 'terraform/*' 
-    exclude:
-    - '*.md'
-    - '*.png'  
-    - '*.svg'  
-    - '*.vsdx'  
-    - 'apps/*'
-    - 'kusto/*'
-    - 'pipelines/*'
+trigger: none
 
 pr:
   branches:

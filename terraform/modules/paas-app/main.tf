@@ -116,6 +116,7 @@ resource azurerm_private_endpoint app_blob_storage_endpoint {
     delete                     = var.default_delete_timeout
   }  
 
+  count                        = var.enable_private_link ? 1 : 0
   tags                         = var.tags
 }
 
@@ -124,8 +125,10 @@ resource azurerm_private_dns_a_record app_blob_storage_dns_record {
   zone_name                    = "privatelink.blob.core.windows.net"
   resource_group_name          = local.vdc_resource_group_name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.app_blob_storage_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.app_blob_storage_endpoint.0.private_service_connection[0].private_ip_address]
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_private_endpoint app_table_storage_endpoint {
   name                         = "${azurerm_storage_account.app_storage.name}-table-endpoint"
@@ -148,14 +151,20 @@ resource azurerm_private_endpoint app_table_storage_endpoint {
   }  
 
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
+  # Create Private Endpoints one at a time
+  depends_on                   = [azurerm_private_endpoint.app_blob_storage_endpoint]
 }
 resource azurerm_private_dns_a_record app_table_storage_dns_record {
   name                         = azurerm_storage_account.app_storage.name
   zone_name                    = "privatelink.table.core.windows.net"
   resource_group_name          = local.vdc_resource_group_name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.app_table_storage_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.app_table_storage_endpoint.0.private_service_connection[0].private_ip_address]
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_advanced_threat_protection app_storage {
   target_resource_id           = azurerm_storage_account.app_storage.id
@@ -231,6 +240,10 @@ resource azurerm_private_endpoint archive_blob_storage_endpoint {
   }  
 
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
+  # Create Private Endpoints one at a time
+  depends_on                   = [azurerm_private_endpoint.app_table_storage_endpoint]
 }
 
 resource azurerm_private_dns_a_record archive_blob_storage_dns_record {
@@ -238,8 +251,10 @@ resource azurerm_private_dns_a_record archive_blob_storage_dns_record {
   zone_name                    = "privatelink.blob.core.windows.net"
   resource_group_name          = local.vdc_resource_group_name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.archive_blob_storage_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.archive_blob_storage_endpoint.0.private_service_connection[0].private_ip_address]
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 
 resource azurerm_private_endpoint archive_table_storage_endpoint {
@@ -263,6 +278,10 @@ resource azurerm_private_endpoint archive_table_storage_endpoint {
   }  
 
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
+  # Create Private Endpoints one at a time
+  depends_on                   = [azurerm_private_endpoint.archive_blob_storage_endpoint]
 }
 
 resource azurerm_private_dns_a_record archive_table_storage_dns_record {
@@ -270,8 +289,10 @@ resource azurerm_private_dns_a_record archive_table_storage_dns_record {
   zone_name                    = "privatelink.table.core.windows.net"
   resource_group_name          = local.vdc_resource_group_name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.archive_table_storage_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.archive_table_storage_endpoint.0.private_service_connection[0].private_ip_address]
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 
 resource azurerm_advanced_threat_protection archive_storage {
@@ -733,36 +754,53 @@ resource azurerm_sql_server app_sqlserver {
   tags                         = var.tags
 }
 
-resource "azurerm_sql_firewall_rule" "tfclient" {
+resource null_resource enable_sql_public_network_access {
+  triggers                     = {
+    always                     = timestamp()
+  }
+  # Enable public access, so Terraform can make changes e.g. from a hosted pipeline
+  provisioner local-exec {
+    command                    = "az sql server update -n ${azurerm_sql_server.app_sqlserver.name} -g ${azurerm_sql_server.app_sqlserver.resource_group_name} --set publicNetworkAccess='Enabled' --query 'publicNetworkAccess' -o tsv"
+  }
+}
+
+resource azurerm_sql_firewall_rule tfclient {
   name                         = "TerraformClientRule"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
   start_ip_address             = chomp(data.http.localpublicip.body)
   end_ip_address               = chomp(data.http.localpublicip.body)
+
+  depends_on                   = [null_resource.enable_sql_public_network_access]
 }
 
-# resource "azurerm_sql_firewall_rule" "adminclient" {
-#   name                         = "AdminClientRule${count.index}"
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   server_name                  = azurerm_sql_server.app_sqlserver.name
-#   start_ip_address             = element(local.admin_ips, count.index)
-#   end_ip_address               = element(local.admin_ips, count.index)
-#   count                        = length(local.admin_ips)
-# }
+resource azurerm_sql_firewall_rule adminclient {
+  name                         = "AdminClientRule${count.index}"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  start_ip_address             = element(local.admin_ips, count.index)
+  end_ip_address               = element(local.admin_ips, count.index)
+  depends_on                   = [null_resource.enable_sql_public_network_access]
 
-# resource "azurerm_sql_virtual_network_rule" "iag_subnet" {
-#   name                         = "AllowAzureFirewallSubnet"
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   server_name                  = azurerm_sql_server.app_sqlserver.name
-#   subnet_id                    = var.iag_subnet_id
+  count                        = var.enable_private_link ? 0 : length(local.admin_ips)
+}
 
-#   timeouts {
-#     create                     = var.default_create_timeout
-#     update                     = var.default_update_timeout
-#     read                       = var.default_read_timeout
-#     delete                     = var.default_delete_timeout
-#   }  
-# }
+resource azurerm_sql_virtual_network_rule iag_subnet {
+  name                         = "AllowAzureFirewallSubnet"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  subnet_id                    = var.iag_subnet_id
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
+  count                        = var.enable_private_link ? 0 : 1
+  depends_on                   = [null_resource.enable_sql_public_network_access]
+}
 
 # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#service-endpoints
 resource azurerm_sql_virtual_network_rule appservice_subnet {
@@ -778,8 +816,7 @@ resource azurerm_sql_virtual_network_rule appservice_subnet {
     delete                     = var.default_delete_timeout
   }  
 
-  count                        = var.disable_public_database_access ? 0 : 1
-
+  count                        = var.enable_private_link && var.disable_public_database_access ? 0 : 1
   depends_on                   = [azurerm_app_service_virtual_network_swift_connection.network]
 }
 
@@ -803,19 +840,29 @@ resource azurerm_private_endpoint sqlserver_endpoint {
     delete                     = var.default_delete_timeout
   }  
 
+  provisioner "local-exec" {
+    when                       = destroy
+    command                    = "az sql server update -n ${replace(self.name,"-endpoint","")} -g ${self.resource_group_name} --set publicNetworkAccess='Enabled' --query 'publicNetworkAccess' -o tsv"
+  }
+  
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
+  # Create Private Endpoints one at a time
+  depends_on                   = [azurerm_private_endpoint.archive_table_storage_endpoint]
 }
 resource azurerm_private_dns_a_record sql_server_dns_record {
   name                         = azurerm_sql_server.app_sqlserver.name
   zone_name                    = "privatelink.database.windows.net"
   resource_group_name          = local.vdc_resource_group_name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.sqlserver_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.sqlserver_endpoint.0.private_service_connection[0].private_ip_address]
 
+  count                        = var.enable_private_link ? 1 : 0
   tags                         = var.tags
 }
 
-resource null_resource sql_server_public_network_access {
+resource null_resource disable_sql_public_network_access {
   triggers                     = {
     always                     = timestamp()
   }
@@ -824,11 +871,11 @@ resource null_resource sql_server_public_network_access {
     command                    = "az sql server update -n ${azurerm_sql_server.app_sqlserver.name} -g ${azurerm_sql_server.app_sqlserver.resource_group_name} --set publicNetworkAccess='Disabled' --query 'publicNetworkAccess' -o tsv"
   }
 
-  count                        = var.disable_public_database_access ? 1 : 0
-
+  count                        = var.enable_private_link && var.disable_public_database_access ? 1 : 0
   depends_on                   = [
                                   azurerm_private_dns_a_record.sql_server_dns_record,
-                                  null_resource.sql_database_access
+                                  azurerm_sql_firewall_rule.tfclient,
+                                  null_resource.grant_sql_access
                                  ]
 }
 
@@ -860,12 +907,11 @@ resource azurerm_sql_active_directory_administrator dba {
   resource_group_name          = azurerm_resource_group.app_rg.name
 # login                        = "Terraform"
   login                        = local.dba_object_id
-  # BUG: Not populated in Azure Cloud Shell  https://github.com/terraform-providers/terraform-provider-azurerm/issues/6310
   object_id                    = local.dba_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 } 
 
-resource null_resource sql_database_access {
+resource null_resource grant_sql_access {
   # Add App Service MSI and DBA to Database
   provisioner "local-exec" {
     command                    = "../scripts/grant_database_access.ps1 -DBAName ${local.admin_login_ps} -DBAObjectId ${local.admin_object_id_ps} -MSIName ${azurerm_user_assigned_identity.paas_web_app_identity.name} -MSIClientId ${azurerm_user_assigned_identity.paas_web_app_identity.client_id} -SqlDatabaseName ${azurerm_sql_database.app_sqldb.name} -SqlServerFQDN ${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name}"

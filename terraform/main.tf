@@ -52,20 +52,17 @@ resource "random_string" "suffix" {
 # These variables will be used throughout the Terraform templates
 locals {
   # Making sure all character classes are represented, as random does not guarantee that  
-  workspace_location           = var.workspace_location != "" ? var.workspace_location : var.location
-  automation_location          = var.automation_location != "" ? var.automation_location : local.workspace_location
+  workspace_location           = var.workspace_location != null && var.workspace_location != "" ? var.workspace_location : var.location
+  # https://docs.microsoft.com/en-us/azure/automation/how-to/region-mappings
+  automation_location          = var.automation_location != null && var.automation_location != "" ? var.automation_location : replace(local.workspace_location,"/eastus$/","eastus2")
   password                     = ".Az9${random_string.password.result}"
 # password                     = ".Az9${random_string.password.override_special}" # Test
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result
-  environment                  = var.resource_environment != "" ? lower(var.resource_environment) : (length(terraform.workspace) <= 4 ? terraform.workspace : substr(lower(replace(terraform.workspace,"/a|e|i|o|u|y/","")),0,4))
-  vdc_resource_group           = "${lower(var.resource_prefix)}-${lower(local.environment)}-${lower(local.suffix)}"
-  iaas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-iaasapp-${lower(local.suffix)}"
-  paas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.environment)}-paasapp-${lower(local.suffix)}"
+  deployment_name              = var.deployment_name != "" ? lower(var.deployment_name) : (length(terraform.workspace) <= 4 ? terraform.workspace : substr(lower(replace(terraform.workspace,"/a|e|i|o|u|y/","")),0,4))
+  vdc_resource_group           = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-${lower(local.suffix)}"
+  iaas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-iaasapp-${lower(local.suffix)}"
+  paas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-paasapp-${lower(local.suffix)}"
   paas_app_resource_group_short= substr(lower(replace(local.paas_app_resource_group,"-","")),0,20)
-  app_hostname                 = "${lower(local.environment)}apphost"
-  app_dns_name                 = "${lower(local.environment)}app_web_vm"
-  db_hostname                  = "${lower(local.environment)}dbhost"
-  db_dns_name                  = "${lower(local.environment)}db_web_vm"
   ipprefixdata                 = jsondecode(chomp(data.http.localpublicprefix.body))
   admin_ip                     = [
                                   chomp(data.http.localpublicip.body) 
@@ -84,7 +81,9 @@ locals {
   tags                         = merge(
     var.tags,
     map(
-      "environment",             local.environment,
+      "deployment-name",         local.deployment_name,
+      "environment",             terraform.workspace,
+      "prefix",                  var.resource_prefix,
       "shutdown",                "true",
       "suffix",                  local.suffix,
       "workspace",               terraform.workspace,
@@ -116,7 +115,7 @@ resource "azurerm_role_assignment" "demo_admin" {
 }
 
 resource azurerm_key_vault vault {
-  name                         = "${lower(var.resource_prefix)}-${lower(local.environment)}-vault-${lower(local.suffix)}"
+  name                         = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-vault-${lower(local.suffix)}"
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   tenant_id                    = data.azurerm_client_config.current.tenant_id
@@ -200,6 +199,7 @@ resource azurerm_private_endpoint vault_endpoint {
 
   tags                         = local.tags
 
+  count                        = var.enable_private_link ? 1 : 0
   depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record vault_dns_record {
@@ -207,7 +207,9 @@ resource azurerm_private_dns_a_record vault_dns_record {
   zone_name                    = azurerm_private_dns_zone.zone["vault"].name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.vault_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.vault_endpoint.0.private_service_connection[0].private_ip_address]
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_monitor_diagnostic_setting key_vault_logs {
   name                         = "${azurerm_key_vault.vault.name}-logs"
@@ -255,6 +257,8 @@ resource azurerm_storage_account_network_rules automation_storage_rules {
   default_action               = "Deny"
   bypass                       = ["AzureServices"]
   ip_rules                     = [local.ipprefixdata.data.prefix]
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_private_endpoint aut_blob_storage_endpoint {
   name                         = "${azurerm_storage_account.vdc_automation_storage.name}-blob-endpoint"
@@ -279,6 +283,7 @@ resource azurerm_private_endpoint aut_blob_storage_endpoint {
 
   tags                         = local.tags
 
+  count                        = var.enable_private_link ? 1 : 0
   depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record aut_storage_blob_dns_record {
@@ -286,8 +291,10 @@ resource azurerm_private_dns_a_record aut_storage_blob_dns_record {
   zone_name                    = azurerm_private_dns_zone.zone["blob"].name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.aut_blob_storage_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.aut_blob_storage_endpoint.0.private_service_connection[0].private_ip_address]
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 
 resource azurerm_advanced_threat_protection vdc_automation_storage {

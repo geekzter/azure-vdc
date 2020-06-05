@@ -1,6 +1,6 @@
 locals {
   client_config                = map(
-    "environment",               local.environment,
+    "environment",               local.deployment_name,
     "privatelinkfqdns",          join(",",[
       module.paas_app.sql_server_fqdn,
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,

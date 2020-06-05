@@ -1,0 +1,88 @@
+# This pipeline performs a full CI test of the VDC:
+#  - Provision infrastructure
+#  - Deploy application
+#  - Test application
+#  - Destroy infrastructure
+parameters:
+- name: buildWorkspace
+  displayName: Build Pipeline Environment / Terraform Workspace
+  type: string
+  default: ci1
+  values:
+  - ci1
+  - ci2
+  - ci3
+- name: releaseWorkspace
+  displayName: Release Pipeline Environment / Terraform Workspace
+  type: string
+  default: cd1
+  values:
+  - cd1
+  - cd2
+  - cd3
+- name: buildDestroy
+  displayName: Destroy build infrastructure
+  type: string
+  default: Always
+  values:
+  - Always
+  - 'On failure'
+  - 'On success'
+- name: releaseDestroy
+  displayName: Destroy release infrastructure
+  type: string
+  default: Never
+  values:
+  - Never
+  - 'On failure'
+  - 'On success'
+- name: testMode
+  displayName: Test Mode (disable most tasks)
+  type: boolean
+  default: false
+  
+trigger: none 
+
+pr: none
+  
+variables:
+- template: ./templates/vdc-terraform-apply.variables.yml
+  # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
+  # The Terraform VDC project requires quite a number of settings
+- group: 'vdc-cd'
+- name: 'TF_VAR_build_id'
+  value: '$(Build.BuildId)'
+- name: 'TF_VAR_release_id'
+  value: '$(Build.BuildId)'
+- name: 'TF_VAR_release_user_email'
+  value: '$(Build.RequestedForEmail)'
+- name: 'TF_VAR_release_web_url'
+  value: '$(System.TeamFoundationCollectionUri)/$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)&view=results'
+
+stages:
+- template: ./templates/vdc-terraform-apply.yml
+  parameters:
+    name: 'CI'
+    displayName: 'Provision, Deploy, Tear down'
+    inherit: false
+    provision: true
+    reprovision: true
+    deploy: true
+    destroy: ${{ parameters.buildDestroy }}
+    resourceSuffix: 'b$(Build.BuildId)'
+    testMode: ${{ parameters.testMode }}
+    workspace: ${{ parameters.buildWorkspace }}
+
+- template: ./templates/vdc-terraform-apply.yml
+  parameters:
+    name: 'Release'
+    displayName: 'Release'
+    inherit: true
+    provision: true
+    reprovision: false
+    deploy: true
+    deploymentName: 'demo'
+    destroy: ${{ parameters.releaseDestroy }}
+    testMode: ${{ parameters.testMode }}
+    vdcArtifactPipeline: current
+    workspace: ${{ parameters.releaseWorkspace }}

@@ -44,12 +44,12 @@ try {
         $Script:appRGShort     = $(terraform output "paas_app_resource_group_short"  2>$null)
         $Script:prefix         = $(terraform output "resource_prefix"                2>$null)
         $Script:suffix         = $(terraform output "resource_suffix"                2>$null)
-        $Script:environment    = $(terraform output "resource_environment"           2>$null)
+        $Script:deploymentName = $(terraform output "deployment_name"                2>$null)
         $Script:sharedRegistry = $(terraform output "shared_container_registry_name" 2>$null)
         $Script:sharedRG       = $(terraform output "shared_resources_group"         2>$null)
     }
 
-    if ([string]::IsNullOrEmpty($prefix) -or [string]::IsNullOrEmpty($environment) -or [string]::IsNullOrEmpty($suffix)) {
+    if ([string]::IsNullOrEmpty($prefix) -or [string]::IsNullOrEmpty($deploymentName) -or [string]::IsNullOrEmpty($suffix)) {
         Write-Host "Resources have not yet been, or are being created. Nothing to do" -ForegroundColor Yellow
         exit 
     }
@@ -75,9 +75,9 @@ if ($appInsightsID) {
 if ($prefix) {
     $template = $template -Replace "${prefix}-", "`$`{prefix`}-"
 }
-if ($environment) {
-    $template = $template -Replace "-${environment}-", "-`$`{environment`}-"
-    $template = $template -Replace "\`"${environment}\`"", "`"`$`{environment`}`""
+if ($deploymentName) {
+    $template = $template -Replace "-${deploymentName}-", "-`$`{deploymentName`}-"
+    $template = $template -Replace "\`"${deploymentName}\`"", "`"`$`{deploymentName`}`""
 }
 
 if ($env:ARM_SUBSCRIPTION_ID) {
@@ -92,8 +92,8 @@ if ($suffix) {
     $template = $template -Replace "-${suffix}", "-`$`{suffix`}"
     $template = $template -Replace "\`'${suffix}\`'", "'`$`{suffix`}'"
 }
-if ($prefix -and $environment -and $suffix) {
-    $template = $template -Replace "${prefix}${environment}${suffix}", "`$`{prefix`}`$`{environment`}`$`{suffix`}"
+if ($prefix -and $deploymentName -and $suffix) {
+    $template = $template -Replace "${prefix}${deploymentName}${suffix}", "`$`{prefix`}`$`{deploymentName`}`$`{suffix`}"
 }
 if ($appRGShort) {
     $template = $template -Replace "${appRGShort}", "`$`{paas_app_resource_group_short`}"
@@ -109,12 +109,12 @@ $template = $template -Replace "/resourceGroups/${sharedRG}", "/resourceGroups/`
 $template = $template -Replace "/registries/${sharedRegistry}", "/registries/`$`{container_registry_name`}"
 
 # Check for remnants of tokens that should've been caught
-$enviromentMatches = $template -match $environment
+$deploymentNameMatches = $template -match $deploymentName
 $subscriptionMatches = $template -match $subscription
 $suffixMatches = $template -match $suffix
-if ($enviromentMatches) {
-    Write-Host "Environment value '$environment' found in output:" -ForegroundColor Red
-    $enviromentMatches
+if ($deploymentNameMatches) {
+    Write-Host "Deployment name value '$deploymentName' found in output:" -ForegroundColor Red
+    $deploymentNameMatches
 }
 if ($subscriptionMatches) {
     Write-Host "Subscription GUID '$subscription' found in output:" -ForegroundColor Red

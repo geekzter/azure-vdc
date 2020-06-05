@@ -8,8 +8,8 @@ variable resource_suffix {
   default                      = "" # Empty string triggers a random suffix
 }
 
-variable resource_environment {
-  description                  = "The logical environment (tier) resource will be deployed in"
+variable deployment_name {
+  description                  = "The middle part of the of the resource names created"
   default                      = "" # Empty string defaults to workspace name
 }
 
@@ -54,12 +54,15 @@ variable vso_url {
   default                      = ""
 }
 
-######### Resource Group #########
+# https://azure.microsoft.com/en-us/global-infrastructure/regions/
+# https://azure.microsoft.com/en-us/global-infrastructure/services/?products=monitor,azure-bastion,private-link
+# e.g. westeurope, uksouth, eastus, westus2, southeastasia
 variable location {
   description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."
   default                      = "westeurope"
 }
 
+# https://docs.microsoft.com/en-us/azure/automation/how-to/region-mappings
 variable automation_location {
   description                  = "The location/region where the monitoring workspaces will be created."
   default                      = "" # Empty string defaults to workspace_location
@@ -150,7 +153,7 @@ variable vdc_oms_solutions {
   # "KeyVaultAnalytics",
   # "LogicAppB2B",
   # "LogicAppsManagement",
-    "LogManagement",
+  # "LogManagement",
   # "Microsoft365Analytics",
     "NetworkMonitoring",
   # "Office365",
@@ -388,6 +391,11 @@ variable disable_public_database_access {
 variable enable_app_service_aad_auth {
   description                  = "Whether to enable App Service AAD auth"
   default                      = false
+  type                         = bool
+}
+variable enable_private_link {
+  description                  = "Whether to create Private Endpoint for PaaS services where possible"
+  default                      = true
   type                         = bool
 }
 variable grant_database_access {

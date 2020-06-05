@@ -50,6 +50,7 @@ resource azurerm_private_endpoint diag_blob_storage_endpoint {
 
   tags                         = local.tags
 
+  count                        = var.enable_private_link ? 1 : 0
   depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record diag_storage_blob_dns_record {
@@ -57,8 +58,10 @@ resource azurerm_private_dns_a_record diag_storage_blob_dns_record {
   zone_name                    = azurerm_private_dns_zone.zone["blob"].name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.diag_blob_storage_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.diag_blob_storage_endpoint.0.private_service_connection[0].private_ip_address]
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_private_endpoint diag_table_storage_endpoint {
   name                         = "${azurerm_storage_account.vdc_diag_storage.name}-table-endpoint"
@@ -83,6 +86,7 @@ resource azurerm_private_endpoint diag_table_storage_endpoint {
 
   tags                         = local.tags
 
+  count                        = var.enable_private_link ? 1 : 0
   depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
 resource azurerm_private_dns_a_record diag_storage_table_dns_record {
@@ -90,8 +94,10 @@ resource azurerm_private_dns_a_record diag_storage_table_dns_record {
   zone_name                    = azurerm_private_dns_zone.zone["table"].name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
-  records                      = [azurerm_private_endpoint.diag_table_storage_endpoint.private_service_connection[0].private_ip_address]
+  records                      = [azurerm_private_endpoint.diag_table_storage_endpoint.0.private_service_connection[0].private_ip_address]
   tags                         = var.tags
+
+  count                        = var.enable_private_link ? 1 : 0
 }
 
 resource azurerm_advanced_threat_protection vdc_diag_storage {
@@ -99,13 +105,20 @@ resource azurerm_advanced_threat_protection vdc_diag_storage {
   enabled                      = true
 }
 
-resource "azurerm_log_analytics_workspace" "vcd_workspace" {
+resource azurerm_log_analytics_workspace vcd_workspace {
   name                         = "${local.vdc_resource_group}-loganalytics"
   # Doesn't deploy in all regions e.g. South India
   location                     = local.workspace_location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   sku                          = "Standalone"
   retention_in_days            = 90 
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   tags                         = local.tags
 
@@ -190,51 +203,6 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
   }
 }
 
-# Conflicts with Start/Stop Automation solution
-resource "azurerm_monitor_diagnostic_setting" "automation_logs" {
-  name                         = "Automation_Logs"
-  target_resource_id           = azurerm_automation_account.automation.id
-  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
-  log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
-
-
-  log {
-    category                   = "JobLogs"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-
-  log {
-    category                   = "JobStreams"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  } 
-    
-  log {
-    category                   = "DscNodeStatus"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-  
-  metric {
-    category                   = "AllMetrics"
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
-
 locals {
   #network_watcher_name         = "NetworkWatcher_${var.location}" # Previous(?) naming convention
   network_watcher_name         = "${var.location}-watcher" # Azure CLI naming convention
@@ -260,13 +228,13 @@ resource azurerm_application_insights vdc_insights {
 }
 
 resource "azurerm_dashboard" "vdc_dashboard" {
-  name                         = "VDC-${local.environment}-${terraform.workspace}"
+  name                         = "VDC-${local.deployment_name}-${terraform.workspace}"
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   location                     = azurerm_resource_group.vdc_rg.location
   tags                         = merge(
     local.tags,
     map(
-      "hidden-title",           "VDC (${local.environment}/${terraform.workspace})",
+      "hidden-title",           "VDC (${local.deployment_name}/${terraform.workspace})",
     )
   )
 
@@ -274,7 +242,7 @@ resource "azurerm_dashboard" "vdc_dashboard" {
     {
       subscription             = data.azurerm_subscription.primary.id
       prefix                   = var.resource_prefix
-      environment              = local.environment
+      environment              = local.deployment_name
       suffix                   = local.suffix
       subscription_guid        = data.azurerm_subscription.primary.subscription_id
       appinsights_id           = azurerm_application_insights.vdc_insights.app_id

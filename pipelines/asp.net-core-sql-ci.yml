@@ -5,14 +5,6 @@
 
 trigger:
 - master
-
-pr:
-  paths:
-    exclude:
-    - '*.md'  
-    - '*.png'  
-    - '*.svg'  
-    - '*.vsdx' 
     
 pool:
   vmImage: 'ubuntu-latest'
@@ -41,9 +33,7 @@ steps:
     tags: |
       $(Build.BuildId)
       latest
-- task: PublishPipelineArtifact@1
+
+- publish: '$(Pipeline.Workspace)'
+  artifact: aspnetcoresql
   displayName: 'Publish .NET binaries as pipeline artefacts'
-  inputs:
-    targetPath: '$(Pipeline.Workspace)'
-    artifact: 'aspnetcoresql'
-    publishLocation: 'pipeline'

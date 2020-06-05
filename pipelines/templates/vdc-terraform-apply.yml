@@ -1,0 +1,910 @@
+# This pipeline performs a full CI test of the VDC:
+#  - Provision infrastructure
+#  - Deploy application
+#  - Test application
+#  - Destroy infrastructure
+
+parameters:
+- name: name
+  displayName: Stage Name
+  type: string
+- name: displayName
+  displayName: Stage Display Name
+  type: string
+- name: inherit
+  displayName: Inherit state
+  type: boolean
+  default: false
+- name: provision
+  displayName: Provision infrastructure
+  type: boolean
+  default: true
+- name: reprovision
+  displayName: Provision infrastructure
+  type: boolean
+  default: true
+- name: deploy
+  displayName: Deploy applications
+  type: boolean
+  default: true
+- name: destroy
+  displayName: Destroy infrastructure
+  type: string
+  default: Always
+  values:
+  - Always
+  - Never 
+  - 'On failure'
+  - 'On success'
+- name: workspace
+  displayName: Pipeline Environment / Terraform Workspace
+  type: string
+  default: ci
+  values:
+  - ci
+  - ci1
+  - ci2
+  - ci3
+  - cd1
+  - cd2
+  - cd3
+  - rel
+  - rel1
+  - rel2
+  - rel3
+  - test
+  - tst1
+  - tst2
+  - tst3
+- name: deploymentName
+  displayName: Deployment name (middle part resource names)
+  type: string
+  default: ''
+- name: resourceSuffix
+  displayName: Deployment name (middle part resource names)
+  type: string
+  default: ''
+- name: vdcArtifactPipeline
+  displayName: Pipeline (alias) for artifacts
+  type: string
+  default: ''
+- name: testMode
+  displayName: Test Mode (disable most tasks)
+  type: boolean
+  default: false
+
+stages:
+- stage: ${{ parameters.name }}
+  displayName: ${{ parameters.displayName }}
+
+  # Global variables shared by all jobs
+  variables:
+  - name: 'agentTag'
+    value: 'web'
+  - name: 'vdcArtifactName'
+    value: 'drop'
+  - name: 'TF_WORKSPACE'
+    value: ${{ parameters.workspace }}
+  - name: 'scriptDirectory'
+    ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+      value: '$(Build.SourcesDirectory)/scripts'
+    ${{ if and(gt(length(parameters.vdcArtifactPipeline),0),ne(parameters.vdcArtifactPipeline,'current')) }}:
+      value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/scripts'
+    ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
+      value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/scripts'
+  - name: 'terraformDirectory'
+    ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+      value: '$(Build.SourcesDirectory)/terraform'
+    ${{ if and(gt(length(parameters.vdcArtifactPipeline),0),ne(parameters.vdcArtifactPipeline,'current')) }}:
+      value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform'
+    ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
+      value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/terraform'
+  - name: 'TF_VAR_deployment_name'
+    ${{ if eq(length(parameters.deploymentName),0) }}:
+      value: ${{ parameters.workspace }}
+    ${{ if gt(length(parameters.deploymentName),0) }}:
+      value: ${{ parameters.deploymentName }}
+  - ${{ if gt(length(parameters.resourceSuffix),0) }}:
+    - name: 'TF_VAR_resource_suffix'
+      value: ${{ parameters.resourceSuffix }}
+  - name: 'iaasResourceGroup'
+    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-iaasapp-$(TF_VAR_resource_suffix)'
+  - name: 'paasResourceGroup'
+    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-paasapp-$(TF_VAR_resource_suffix)'
+  - name: 'vdcResourceGroup' 
+    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-$(TF_VAR_resource_suffix)'
+
+  jobs:
+  - job: 'Prepare'
+    displayName: 'Prepare'
+    condition: succeeded()
+    timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    workspace:
+      clean: all
+
+    steps:
+      - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+        - download: ${{parameters.vdcArtifactPipeline}}
+          artifact: $(vdcArtifactName)
+  
+      - pwsh: |
+          Write-Host "Script Directory: $(scriptDirectory)"
+          Write-Host "Workspace Contents:"
+          Get-ChildItem $(Pipeline.Workspace) -Recurse
+          Write-Host "Environment:"
+          Get-ChildItem -Path Env:* | Sort-Object -Property Name
+        displayName: 'Test task'
+        enabled: ${{ parameters.testMode }}
+      - task: AzureCLI@2
+        displayName: 'Gather Terraform settings'
+        enabled: ${{ not(parameters.testMode) }}
+        name: terraformConfig
+        inputs:
+          azureSubscription: '$(subscriptionConnection)'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            # List environment variables
+            Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
+
+            # This will write version info as output variable
+            $(scriptDirectory)/get_tf_version.ps1 -version preferred
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          failOnStandardError: true
+          workingDirectory: '$(scriptDirectory)'
+
+  - ${{ if or(eq(parameters.provision, true),eq(parameters.reprovision, true),eq(parameters.deploy, true)) }}:
+    # Creates an environment if it doesn't exist yet
+    - deployment: CreateEnvironment
+      displayName: Create Environment (if it does not exist yet)
+      pool:
+        vmImage: 'ubuntu-latest'
+      environment: '${{ parameters.workspace }}'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - script: echo Environment ${{ parameters.workspace }} exists
+              displayName: 'Create environment ${{ parameters.workspace }}'
+
+  - ${{ if or(eq(parameters.provision, true),eq(parameters.reprovision, true),eq(parameters.deploy, true)) }}:
+    # Provision on self-hosted agent
+    - job: 'Provision'
+      dependsOn: 
+      - Prepare
+      - CreateEnvironment
+      displayName: 'Provision Infrastructure with Terraform'
+      condition: succeeded()
+      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+      variables:
+        # Use earlier prepared Terraform config
+        terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
+
+      pool:
+        vmImage: 'ubuntu-latest'
+
+      workspace:
+        clean: all
+
+      steps:
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - download: ${{parameters.vdcArtifactPipeline}}
+            artifact: $(vdcArtifactName)
+    
+        - pwsh: |
+            Write-Host "Hello Task"
+          displayName: 'Test task'
+          enabled: ${{ parameters.testMode }}
+
+        - task: DownloadSecureFile@1
+          displayName: 'Download SSL certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vanity_certificate_path)'
+
+        - task: DownloadSecureFile@1
+          displayName: 'Download VPN root certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vpn_root_cert_file)'
+
+        # We could do this with tfenv, however there is no task for that
+        - task: TerraformInstaller@0
+          displayName: 'Use preferred Terraform version'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            terraformVersion: '$(terraformVersion)'
+
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - bash: |
+              chmod +x *_x?
+              ls -al
+            displayName: 'Make Terraform providers executable'
+            enabled: ${{ not(parameters.testMode) }}
+            workingDirectory: $(terraformDirectory)/.terraform/plugins/linux_amd64
+
+        - task: AzureCLI@2
+          # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
+          name: terraform
+          displayName: 'Terraform init & apply'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            # ARM_* environment variables are required by Terraform azurerm provider and backend
+            # https://www.terraform.io/docs/providers/azurerm/index.html
+            # https://www.terraform.io/docs/backends/types/azurerm.html
+            # Use Pipeline Service Principal and Service Connection to set up these variables
+            inlineScript: |
+              $(scriptDirectory)/tf_deploy.ps1 -init -clear:$${{ not(parameters.inherit) }} -stickysuffix:$${{ parameters.inherit }} -apply -force -trace $(trace) -parallelism $(parallelism)
+            addSpnToEnvironment: true
+            useGlobalConfig: true
+            failOnStandardError: true
+            powerShellIgnoreLASTEXITCODE: false
+            workingDirectory: '$(scriptDirectory)'
+          env:
+            TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+
+  - ${{ if eq(parameters.reprovision, true) }}:
+    # Provision again to test for issue's that only come up when resources already exist 
+    - job: 'Reprovision'
+      dependsOn:
+      - Prepare
+      - Provision
+      displayName: 'Provision Infrastructure with Terraform (re-entrance test)'
+      condition: succeeded()
+      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+      variables:
+        iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
+        vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
+        # Use earlier prepared Terraform config
+        terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
+
+      pool:
+        vmImage: 'ubuntu-latest'
+
+      steps:
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - download: ${{parameters.vdcArtifactPipeline}}
+            artifact: $(vdcArtifactName)
+    
+        - pwsh: |
+            Write-Host "Hello Task"
+          displayName: 'Test task'
+          enabled: ${{ parameters.testMode }}
+
+        # Assume workspace is empty and re-download secure files
+        - task: DownloadSecureFile@1
+          displayName: 'Download SSL certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vanity_certificate_path)'
+
+        - task: DownloadSecureFile@1
+          displayName: 'Download VPN root certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vpn_root_cert_file)'
+
+        - task: TerraformInstaller@0
+          displayName: 'Use preferred Terraform version'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            terraformVersion: '$(terraformVersion)'
+
+        # Deallocate/Stop MV's to force tf_deploy.ps1 to test for stopped VM's
+        # Stopped VM's do not allow extensions to be installed
+        - task: AzureResourceGroupDeployment@2
+          displayName: 'Stop VM''s in VDC resource group'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            action: Stop
+            resourceGroupName: '$(vdcResourceGroup)'
+
+        - task: AzureResourceGroupDeployment@2
+          displayName: 'Deallocate VM''s in App resource group'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            action: StopWithDeallocate
+            resourceGroupName: '$(iaasResourceGroup)'
+
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - bash: |
+              chmod +x *_x?
+              ls -al
+            displayName: 'Make Terraform providers executable'
+            enabled: ${{ not(parameters.testMode) }}
+            workingDirectory: $(terraformDirectory)/.terraform/plugins/linux_amd64
+
+        # Test for failures that only occur when resources already exist
+        - task: AzureCLI@2
+          name: terraform
+          displayName: 'Terraform init and apply (re-entrance test)'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            # ARM_* environment variables are required by Terraform azurerm provider and backend
+            # https://www.terraform.io/docs/providers/azurerm/index.html
+            # https://www.terraform.io/docs/backends/types/azurerm.html
+            # Use Pipeline Service Principal and Service Connection to set up these variables
+            inlineScript: |
+              $(scriptDirectory)/tf_deploy.ps1 -init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)
+            addSpnToEnvironment: true
+            useGlobalConfig: true
+            failOnStandardError: true
+            workingDirectory: '$(scriptDirectory)'
+          env:
+            TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+
+  - ${{ if eq(parameters.deploy, true) }}:
+    # Deploy PaaS application 
+    - job: 'Deploy'
+      dependsOn:
+        - Prepare
+        - Provision
+        - ${{ if eq(parameters.reprovision, true) }}:
+          - Reprovision
+      displayName: 'Deploy PaaS Application'
+      condition: succeeded()
+      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+      variables:
+        appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
+        appBuild: 'Release'
+        appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
+        # Get application configuration from Terraform output
+        appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
+        appMSIName: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_name'] ]
+        appMSIClientID: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_client_id'] ]
+        appSQLAdmin: 'vdcadmin'
+        appSQLDatabase: $[ dependencies.Provision.outputs['terraform.paas_app_sql_database'] ]
+        appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
+        appSQLServer: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server'] ]
+        appSQLServerFQDN: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server_fqdn'] ]
+        dbaName: $[ dependencies.Provision.outputs['terraform.admin_login'] ]
+        dbaObjectID: $[ dependencies.Provision.outputs['terraform.admin_object_id'] ]
+        paasResourceGroup: $[ dependencies.Provision.outputs['terraform.paas_app_resource_group'] ]
+        storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
+        storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
+        # Use earlier prepared Terraform config
+
+      pool:
+        # SqlAzureDacpacDeployment@1 only runs on Windows
+        vmImage: 'ubuntu-latest'
+
+      steps:
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - download: ${{parameters.vdcArtifactPipeline}}
+            artifact: $(vdcArtifactName)
+    
+        - pwsh: |
+            Write-Host "Hello Task"
+          displayName: 'Test task'
+          enabled: ${{ parameters.testMode }}
+
+        - pwsh: |
+            Invoke-Webrequest -Uri "$(storageUrl)$(storageSAS)" -OutFile $(System.DefaultWorkingDirectory)/database.bacpac
+          displayName: 'Download BACPAC'
+          enabled: false
+
+        - task: SqlAzureDacpacDeployment@1 
+        # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/deploy/sql-azure-dacpac-deployment
+          displayName: 'Import database'
+          enabled: false
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            authenticationType: aadAuthenticationIntegrated
+            serverName: $(appSQLServerFQDN)
+            databaseName: $(appSQLDatabase)
+            deploymentAction: Import
+            bacpacFile: '$(System.DefaultWorkingDirectory)/database.bacpac'
+            ipDetectionMethod: 'AutoDetect'
+            deleteFirewallRule: true
+
+        - task: AzureCLI@2
+          displayName: 'Import database and set permissions (with script)'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              ./deploy_paas_app.ps1 -Database `
+                                    -AppResourceGroup $(paasResourceGroup) `
+                                    -AppAppServiceIdentity $(appMSIName) `
+                                    -AppAppServiceClientID $(appMSIClientID) `
+                                    -DBAName $(dbaName) `
+                                    -DBAObjectId $(dbaObjectId) `
+                                    -SqlServer $(appSQLServer) `
+                                    -SqlServerFQDN $(appSQLServerFQDN) `
+                                    -SqlDatabase $(appSQLDatabase)
+            useGlobalConfig: true
+            workingDirectory: '$(scriptDirectory)'
+            failOnStandardError: true
+
+        # Download PaaS Application Pipeline artifacts
+        # This consumes artifacts published by this pipeline:
+        # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Download ASP.NET Core App Artifacts'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            buildType: 'specific'
+            project: '$(appArtifectProject)'
+            definition: '$(appBuildDefinitionPaaS)'
+            specificBuildWithTriggering: true
+            buildVersionToDownload: 'latest'
+            artifactName: 'aspnetcoresql'
+            targetPath: '$(appArtifactDirectory)'
+
+        # Deploy PaaS Application
+        - task: AzureWebApp@1
+          displayName: 'Deploy ASP.NET Core App'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            appType: webApp
+            appName: '$(appServiceName)'
+            package: '$(appPackage)'
+
+  - ${{ if eq(parameters.deploy, true) }}:
+    # First things first, we need to check whether the environment is ready to deploy to
+    - job: 'DeployEnvironmentPrep'
+      dependsOn:
+        - Prepare
+        - Provision
+        - ${{ if eq(parameters.reprovision, true) }}:
+          - Reprovision
+      displayName: 'Prepare Environment'
+      condition: succeeded()
+      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+      variables:
+        iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
+        resourceSuffix:  $[ dependencies.Provision.outputs['terraform.resource_suffix'] ]
+        timeOutSeconds: 1200
+
+      pool:
+        # SqlAzureDacpacDeployment@1 only runs on Windows
+        vmImage: 'ubuntu-latest'
+
+      steps:
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - download: ${{parameters.vdcArtifactPipeline}}
+            artifact: $(vdcArtifactName)
+    
+        - pwsh: |
+            Write-Host "Hello Task"
+          displayName: 'Test task'
+          enabled: ${{ parameters.testMode }}
+
+        # If applications are deployed, wait for environment agents to come online
+        # Requires Project Collection Build Service reader access to Environment
+        - task: AzureCLI@2
+          name: waitforagents
+          displayName: 'Wait for environment agents to come online'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              #$(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
+              $(scriptDirectory)/wait_for_agents.ps1 -Environment ${{ parameters.workspace }} -OrganizationUrl $(System.TeamFoundationCollectionUri) -Project $(System.TeamProject) -Tags $(agentTag),$(resourceSuffix) -TimeoutSeconds $(timeOutSeconds)
+            useGlobalConfig: true
+            failOnStandardError: true
+            workingDirectory: '$(scriptDirectory)'
+          env:
+            # Use Pipeline token to access Azure DevOps
+            AZURE_DEVOPS_EXT_PAT: '$(System.AccessToken)'
+
+  - ${{ if eq(parameters.deploy, true) }}:
+    - deployment: 'DeployEnvironment'
+      dependsOn:
+        - Prepare
+        - Provision
+        - DeployEnvironmentPrep
+        - ${{ if eq(parameters.reprovision, true) }}:
+          - Reprovision
+      displayName: 'Deploy IaaS Application'
+      condition: succeeded()
+      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+      variables:
+        appArtifactDirectory: '$(Pipeline.Workspace)/aspnet'
+        appScriptsDirectory: '$(Pipeline.Workspace)/aspnetscripts'
+        appPackage: '$(appArtifactDirectory)/SampleIisWebApp.zip'
+        resourceSuffix: $[ dependencies.Provision.outputs['terraform.resource_suffix'] ]
+
+      ${{ if eq(parameters.testMode, true) }}:
+        pool:
+          vmImage: 'ubuntu-latest'      
+
+      ${{ if eq(parameters.testMode, true) }}:
+        environment:
+          name: '${{ parameters.workspace }}'
+
+      ${{ if eq(parameters.testMode, false) }}:
+        environment:
+          name: '${{ parameters.workspace }}'
+          resourceType: virtualMachine
+          # BUG: Only literals are allowed
+          # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema%2Cparameter-schema#environment
+          # tags: string | [ string ] # tag names to filter the resources in the environment
+          # tags: $(agentTag) $(resourceSuffix)
+          tags: web
+
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+              - download: ${{parameters.vdcArtifactPipeline}}
+                artifact: $(vdcArtifactName)
+    
+            - pwsh: |
+                Write-Host "Hello Task"
+                Write-Host "Tags: $(agentTag), $(resourceSuffix)"
+              displayName: 'Test task'
+              enabled: ${{ parameters.testMode }}
+
+            # Download IaaS Application Pipeline artifacts
+            # This consumes artifacts published by this pipeline:
+            # https://github.com/geekzter/azure-vdc/blob/master/pipelines/iis-asp.net-ci.yml
+            - task: DownloadPipelineArtifact@2
+              displayName: 'Download ASP.NET Core App Artifacts'
+              enabled: ${{ not(parameters.testMode) }}
+              inputs:
+                buildType: 'specific'
+                project: '$(appArtifectProject)'
+                definition: '$(appBuildDefinitionIaaS)'
+                specificBuildWithTriggering: true
+                buildVersionToDownload: 'latest'
+                artifactName: 'aspnet'
+                downloadPath: '$(appArtifactDirectory)'
+            - task: DownloadBuildArtifacts@0
+              displayName: 'Download ASP.NET Core App Artifacts'
+              enabled: false
+              inputs:
+                buildType: 'specific'
+                project: '$(appArtifectProject)'
+                definition: '$(appBuildDefinitionIaaS)'
+                specificBuildWithTriggering: true
+                buildVersionToDownload: 'latest'
+                artifactName: 'aspnet'
+                downloadPath: '$(appArtifactDirectory)'
+            - task: DownloadPipelineArtifact@2
+              displayName: 'Download Scripts'
+              enabled: ${{ not(parameters.testMode) }}
+              inputs:
+                buildType: 'specific'
+                project: '$(appArtifectProject)'
+                definition: '$(appBuildDefinitionIaaS)'
+                specificBuildWithTriggering: true
+                buildVersionToDownload: 'latest'
+                artifactName: 'aspnetscripts'
+                downloadPath: '$(appScriptsDirectory)'
+            - task: DownloadBuildArtifacts@0
+              displayName: 'Download Scripts'
+              enabled: false
+              inputs:
+                buildType: 'specific'
+                project: '$(appArtifectProject)'
+                definition: '$(appBuildDefinitionIaaS)'
+                specificBuildWithTriggering: true
+                buildVersionToDownload: 'latest'
+                artifactName: 'aspnetscripts'
+                downloadPath: '$(appScriptsDirectory)'
+
+            # Configure IIS on VM's
+            - task: IISWebAppManagementOnMachineGroup@0
+              displayName: 'Configure IIS App'
+              enabled: ${{ not(parameters.testMode) }}
+              inputs:
+                EnableIIS: true
+                WebsiteName: 'Default Web Site'
+                AddBinding: true
+                Bindings: '{"bindings":[{"protocol":"http","ipAddress":"All Unassigned","port":"80","hostname":"","sslThumbprint":"","sniFlag":false}]}'
+                CreateOrUpdateAppPoolForWebsite: true
+                AppPoolNameForWebsite: DemoAppPool
+                AppCmdCommands: |
+                  start apppool /apppool.name:DemoAppPool
+                  set config /section:defaultDocument "/~files" 
+                  set config /section:defaultDocument "/+files.[@start,value='default.aspx']"          
+
+            - task: IISWebAppDeploymentOnMachineGroup@0
+              displayName: 'Deploy IIS App'
+              enabled: ${{ not(parameters.testMode) }}
+              inputs:
+                WebSiteName: 'Default Web Site'
+                Package: '$(appPackage)'
+                TakeAppOfflineFlag: true
+
+            - powershell: |
+                # Write your powershell commands here.
+                Invoke-WebRequest -Uri http://127.0.0.1/default.aspx -UseBasicParsing
+                
+                # Use the environment variables input below to pass secret variables to this script.
+                errorActionPreference: continue
+              displayName: 'Initial Warmup'
+              enabled: false
+
+            - task: CopyFiles@2
+              displayName: 'Copy Warmup Scripts'
+              enabled: ${{ not(parameters.testMode) }}
+              inputs:
+                SourceFolder: '$(appScriptsDirectory)'
+                TargetFolder: 'C:\Users\Public\Documents'
+
+            - task: BatchScript@1
+              displayName: 'Schedule Warmup Scripts'
+              enabled: ${{ not(parameters.testMode) }}
+              inputs:
+                filename: '$(appScriptsDirectory)/schedule-warmup.cmd'
+
+  - ${{ if eq(parameters.deploy, true) }}:
+    # Test applications
+    - job: 'Test'
+      dependsOn:
+        - Deploy
+        - DeployEnvironment
+        - Provision
+      displayName: 'Test Applications'
+      condition: succeeded()
+      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+      variables:
+        iaasAppUrl: $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
+        paasAppUrl: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+
+      pool:
+        vmImage: 'ubuntu-latest'
+
+      steps:
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - download: ${{parameters.vdcArtifactPipeline}}
+            artifact: $(vdcArtifactName)
+    
+        - pwsh: |
+            Write-Host "Hello Task"
+          displayName: 'Test task'
+          enabled: ${{ parameters.testMode }}
+
+        # Test IaaS Application
+        - task: PowerShell@2
+          displayName: 'Test IaaS Application'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Wait for the WAF to get ready
+              Start-Sleep -Seconds 10
+              
+              # Request page
+              Invoke-WebRequest -Uri $(iaasAppUrl) -MaximumRetryCount 9
+            failOnStderr: true
+            pwsh: true
+
+        # Test PaaS Application
+        - task: PowerShell@2
+          displayName: 'Test PaaS Application'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Wait for the WAF to get ready
+              Start-Sleep -Seconds 10
+              
+              # Request page
+              Invoke-WebRequest -Uri $(paasAppUrl) -MaximumRetryCount 9
+            failOnStderr: true
+            pwsh: true
+
+  - ${{ if ne(parameters.destroy, 'Never') }}:
+    # Destroy infrastructure
+    - job: 'Destroy'
+      dependsOn:
+        - Prepare
+        - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
+          - Provision
+        - ${{ if eq(parameters.deploy, true) }}:
+          - Deploy
+          - DeployEnvironment
+          - Test
+      displayName: 'Destroy Infrastructure with Terraform'
+
+      ${{ if eq(parameters.destroy, 'Always') }}:
+        condition: succeededOrFailed()
+      ${{ if eq(parameters.destroy, 'On failure') }}:
+        condition: failed()
+      ${{ if eq(parameters.destroy, 'On success') }}:
+        condition: succeeded()
+
+      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+      variables:
+        # Use earlier prepared Terraform config
+        terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
+
+      pool:
+        vmImage: 'ubuntu-latest'
+
+      steps:
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - download: ${{parameters.vdcArtifactPipeline}}
+            artifact: $(vdcArtifactName)
+    
+        - pwsh: |
+            Write-Host "Hello Task"
+          displayName: 'Test task'
+          enabled: ${{ parameters.testMode }}
+
+        # Assume workspace is empty and re-download secure files
+        - task: DownloadSecureFile@1
+          displayName: 'Download SSL certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vanity_certificate_path)'
+
+        - task: DownloadSecureFile@1
+          displayName: 'Download VPN root certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vpn_root_cert_file)'
+            
+        - task: TerraformInstaller@0
+          displayName: 'Use preferred Terraform version'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            terraformVersion: '$(terraformVersion)'
+
+        - task: AzureCLI@2
+          name: terraformConfig
+          displayName: 'Terraform destroy'
+          condition: succeededOrFailed()
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            # ARM_* environment variables are required by Terraform azurerm provider and backend
+            # https://www.terraform.io/docs/providers/azurerm/index.html
+            # https://www.terraform.io/docs/backends/types/azurerm.html
+            # Use Pipeline Service Principal and Service Connection to set up these variables
+            inlineScript: |
+              $(scriptDirectory)/tf_deploy.ps1 -init -destroy -force -trace $(trace) -parallelism $(parallelism)
+            addSpnToEnvironment: true
+            useGlobalConfig: true
+            failOnStandardError: true
+            workingDirectory: '$(scriptDirectory)'
+          env:
+            TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+
+        # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
+        - task: PowerShell@2
+          displayName: 'Save used Terraform version number with tfenv'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            targetType: filePath
+            filePath: '$(scriptDirectory)/get_tf_version.ps1'
+            arguments: ' -version installed | Out-File $(terraformDirectory)/.terraform-version'
+            pwsh: true
+            workingDirectory: '$(scriptDirectory)'
+
+        # Publish Initialized Terraform workspace
+        # This workspace can be downloaded as artifacts in a release pipeline. 
+        # That release pipeline will than run with tested versions of Terraform and Terraform providers, without the need for 'terraform init'
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Initialized Terraform workspace'
+        # enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            artifact: $(vdcArtifactName)
+
+  - ${{ if ne(parameters.destroy, 'Never') }}:
+    # Clean up resources, in the event 'terraform destroy' fails   
+    - job: 'CleanUp'
+      dependsOn:
+        - Prepare
+        - Destroy
+        - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
+          - Provision
+        - ${{ if eq(parameters.reprovision, true) }}:
+          - Reprovision
+      displayName: 'Clean Up'
+      # Run if Terraform destroy failed, or the whole pipeline was canceled
+      condition: or(and(ne(dependencies.Destroy.result, 'None'),ne(dependencies.Destroy.result, 'Skipped'),ne(dependencies.Destroy.result, 'Succeeded')), canceled())
+
+      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+
+      variables:
+        # Use earlier prepared Terraform config
+        terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
+
+      pool:
+        vmImage: 'ubuntu-latest'
+
+      workspace:
+        clean: all
+
+      steps:
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - download: ${{parameters.vdcArtifactPipeline}}
+            artifact: $(vdcArtifactName)
+    
+        - pwsh: |
+            Write-Host "Hello Task"
+          displayName: 'Test task'
+          enabled: ${{ parameters.testMode }}
+
+        - task: AzureResourceGroupDeployment@2
+          displayName: 'Tear down IaaS App resource group'
+          enabled: false # rely on erase.ps1
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            action: DeleteRG
+            resourceGroupName: '$(iaasResourceGroup)'
+          continueOnError: true
+          condition: succeededOrFailed()
+
+        - task: AzureResourceGroupDeployment@2
+          displayName: 'Tear down PaaS App resource group'
+          enabled: false # rely on erase.ps1
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            action: DeleteRG
+            resourceGroupName: '$(paasResourceGroup)'
+          continueOnError: true
+          condition: succeededOrFailed()
+
+        - task: AzureResourceGroupDeployment@2
+          displayName: 'Tear down VDC resource group'
+          enabled: false # rely on erase.ps1
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            action: DeleteRG
+            resourceGroupName: '$(vdcResourceGroup)'
+          continueOnError: true
+          condition: succeededOrFailed()
+
+        - task: TerraformInstaller@0
+          displayName: 'Use preferred Terraform version'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            terraformVersion: '$(terraformVersion)'
+          condition: always()
+
+        # Clear Terraform workspace, just in case
+        # As a last resort, this also destroys any resources that may not have deleted before
+        - task: AzureCLI@2
+          name: terraform
+          displayName: 'Clear Terraform workspace'
+          condition: succeededOrFailed()
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            # ARM_* environment variables are required by Terraform azurerm provider and backend
+            # https://www.terraform.io/docs/providers/azurerm/index.html
+            # https://www.terraform.io/docs/backends/types/azurerm.html
+            # Use Pipeline Service Principal and Service Connection to set up these variables
+            inlineScript: |
+              $(scriptDirectory)/tf_deploy.ps1 -init -trace $(trace)
+              $(scriptDirectory)/erase.ps1 -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
+            addSpnToEnvironment: true
+            useGlobalConfig: true
+            failOnStandardError: true
+            workingDirectory: '$(scriptDirectory)'
+            

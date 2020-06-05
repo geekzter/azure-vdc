@@ -83,10 +83,10 @@ output sql_server {
     value = azurerm_sql_server.app_sqlserver.name
 }
 output sql_server_endpoint_id {
-    value = azurerm_private_endpoint.sqlserver_endpoint.id
+    value = try(azurerm_private_endpoint.sqlserver_endpoint.0.id,null)
 }
 output sql_server_endpoint_fqdn {
-    value = replace(azurerm_private_dns_a_record.sql_server_dns_record.fqdn,"/\\W*$/","")
+    value = replace(try(azurerm_private_dns_a_record.sql_server_dns_record.0.fqdn,""),"/\\W*$/","")
 }
 output sql_server_fqdn {
   value       = azurerm_sql_server.app_sqlserver.fully_qualified_domain_name
@@ -95,7 +95,7 @@ output sql_server_id {
     value = azurerm_sql_server.app_sqlserver.id
 }
 output sql_server_private_ip_address {
-    value = azurerm_private_endpoint.sqlserver_endpoint.private_service_connection[0].private_ip_address
+    value = try(azurerm_private_endpoint.sqlserver_endpoint.0.private_service_connection[0].private_ip_address,null)
 }
 output storage_account_name {
     value = azurerm_storage_account.app_storage.name

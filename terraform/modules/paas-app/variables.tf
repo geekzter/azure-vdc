@@ -27,6 +27,9 @@ variable default_delete_timeout {}
 variable disable_public_database_access {
   type                         = bool
 }
+variable enable_private_link {
+  type                         = bool
+}
 variable enable_aad_auth {
   type                         = bool
 }

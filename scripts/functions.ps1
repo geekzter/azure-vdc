@@ -220,9 +220,9 @@ function SetWorkspace (
 }
 
 function SetSuffix () {
-    # Don't change the suffix on paln/apply
-    # BUG: This can cause problems when cycling apply/destroy repeatedly within the same shell lifetime
-    #      TF_VAR_resource_suffix will be used for subsequent apply's, including different workspaces
+    # Don't change the suffix on plan/apply
+    # NOTE: This can cause problems when cycling apply/destroy repeatedly within the same shell lifetime
+    #       Environment variable TF_VAR_resource_suffix will be used for subsequent apply's, including different workspaces
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
         $script:resourceSuffix = $(terraform output "resource_suffix" 2>$null)
