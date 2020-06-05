@@ -20,7 +20,7 @@ if (!$IsWindows -and ($PSVersionTable.PSEdition -ine "Desktop")) {
 #$pipelineDirectory = Join-Path $env:HOME pipeline-agent
 $pipelineDirectory = Join-Path $env:ProgramFiles pipeline-agent
 $agentService = "vstsagent.${Organization}..${AgentName}"
-if (Test-Path (Join-Path $pipelineDirectory .agent)) {
+if (Test-Path (Join-Path $pipelineDirectory bin)) {
     Write-Host "Agent $AgentName already installed, removing first..."
     Push-Location $pipelineDirectory 
     Stop-Service $agentService
