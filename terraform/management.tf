@@ -29,6 +29,13 @@ resource azurerm_network_interface bas_if {
     private_ip_address_allocation = "static"
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   tags                         = local.tags
 }
 
