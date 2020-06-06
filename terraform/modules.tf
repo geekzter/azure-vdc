@@ -147,7 +147,7 @@ module paas_app {
   location                     = azurerm_resource_group.vdc_rg.location
   tags                         = local.tags
   
-  aad_auth_client_id_map        = var.paas_aad_auth_client_id_map
+  aad_auth_client_id_map       = var.paas_aad_auth_client_id_map
   admin_ips                    = local.admin_ips
   admin_ip_ranges              = local.admin_cidr_ranges
   admin_login                  = var.admin_login

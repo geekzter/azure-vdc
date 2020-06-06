@@ -32,6 +32,7 @@ param (
     [parameter(Mandatory=$false)][int]$MaxTests=600,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
 ) 
+Write-Host $MyInvocation.line
 
 function DeployWebApp () {
     if (!$devOpsOrgUrl) {
