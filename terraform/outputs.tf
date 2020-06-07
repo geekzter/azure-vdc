@@ -27,12 +27,10 @@ output app_storage_fqdns {
     ]
 }
 
-# Export Resource ID's of resources created in embedded ARM templates
+# Export Resource ID's of resources created in embedded ARM templates, or other resources Terraform can't destroy
 # This can be used in script to manage (e.g. clean up) these resources as Terraform doesn't know about them
 output arm_resource_ids {
-  value       = concat(module.iis_app.arm_resource_ids,
-                       #azurerm_network_connection_monitor.eventhub_watcher.*.id,azurerm_network_connection_monitor.storage_watcher.*.id
-                       )
+  value       = [for id in concat(module.iis_app.arm_resource_ids,module.paas_app.sql_server_endpoint_id) : id if id != null && id != ""] 
 }
 
 output automation_account {

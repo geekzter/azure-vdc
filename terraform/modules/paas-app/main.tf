@@ -845,16 +845,6 @@ resource azurerm_private_endpoint sqlserver_endpoint {
     command                    = "az sql server update -n ${replace(self.name,"-endpoint","")} -g ${self.resource_group_name} --set publicNetworkAccess='Enabled' --query 'publicNetworkAccess' -o tsv"
   }
 
-  # HACK: Destroy manually instead
-#   provisioner "local-exec" {
-#     when                       = destroy
-#     command                    = <<EOT
-#                                  az sql server update -n ${replace(self.name,"-endpoint","")} -g ${self.resource_group_name} --set publicNetworkAccess='Enabled' --query 'publicNetworkAccess' -o tsv ;
-#                                  az network private-endpoint delete --ids ${self.id} 
-# EOT
-#   }
-
-
   # BUG:
   # 2020-06-06T12:17:25.836+0200 [DEBUG] plugin.terraform-provider-azurerm_v2.13.0_x5: {
   # 2020-06-06T12:17:25.836+0200 [DEBUG] plugin.terraform-provider-azurerm_v2.13.0_x5:   "status": "Failed",
@@ -865,12 +855,6 @@ resource azurerm_private_endpoint sqlserver_endpoint {
   # 2020-06-06T12:17:25.836+0200 [DEBUG] plugin.terraform-provider-azurerm_v2.13.0_x5:     "innerError": "Source: Nrp.Frontend.ClientCommon. Microsoft.WindowsAzure.Networking.Nrp.Frontend.Common.OperationException: Exception of type 'Microsoft.WindowsAzure.Networking.Nrp.Frontend.Common.OperationException' was thrown.\\r\\nCode: \\r\\nInnerError: \\r\\n   at Microsoft.WindowsAzure.Networking.Nrp.Frontend.Client.Common.AsyncOperationController.<GetAzureAsyncOperation>d__1.MoveNext() in X:\\\\bt\\\\1023275\\\\repo\\\\src\\\\sources\\\\Frontend\\\\FrontendClientCommon\\\\AsyncOperationController.cs:line 54\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.WindowsAzure.Networking.Nrp.Common.ArmAuthProviderFacade.PrivateLinkServiceRpFacade.<DeletePrivateEndpointConnectionProxy>d__12.MoveNext() in X:\\\\bt\\\\1023275\\\\repo\\\\src\\\\sources\\\\Common\\\\ArmAuthProviderFacade\\\\PrivateLinkServiceRpFacade.cs:line 147\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.WindowsAzure.Networking.Nrp.Frontend.Operations.Csm.DeletePrivateEndpointOperation.<CallDeleteOnFirstPartyAsync>d__18.MoveNext() in X:\\\\bt\\\\1023275\\\\repo\\\\src\\\\sources\\\\Frontend\\\\FrontEndOperations\\\\Csm\\\\DeletePrivateEndpointOperation.cs:line 441\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.WindowsAzure.Networking.Nrp.Frontend.Operations.Csm.DeletePrivateEndpointOperation.<RunBackgroundTaskAsync>d__14.MoveNext() in X:\\\\bt\\\\1023275\\\\repo\\\\src\\\\sources\\\\Frontend\\\\FrontEndOperations\\\\Csm\\\\DeletePrivateEndpointOperation.cs:line 105\\r\\n--- End of stack trace from previous location where exception was thrown ---\\r\\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()\\r\\n   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)\\r\\n   at Microsoft.WindowsAzure.Networking.Nrp.Frontend.Operations.Operation`1.<StartRunBackgroundTaskAsync>d__130.MoveNext() in X:\\\\bt\\\\1023275\\\\repo\\\\src\\\\sources\\\\Frontend\\\\FrontEndOperations\\\\Operation.cs:line 359"
   # 2020-06-06T12:17:25.836+0200 [DEBUG] plugin.terraform-provider-azurerm_v2.13.0_x5:   }
   # 2020-06-06T12:17:25.836+0200 [DEBUG] plugin.terraform-provider-azurerm_v2.13.0_x5: }
-
-  # HACK: Destroy manually instead
-  # provisioner "local-exec" {
-  #   when                       = destroy
-  #   command                    = "az network private-endpoint delete --ids ${self.id} "
-  # }
 
   tags                         = var.tags
 
