@@ -14,12 +14,13 @@ param (
     [parameter(Mandatory=$false)][string]$NetworkWatcherName="${Location}-watcher",
     [parameter(Mandatory=$false)][string]$ResourceGroupName="NetworkWatcherRG"
 ) 
+#Requires -Version 7
 
 $hostProcess = (Get-Process -id $pid).Parent.ProcessName
 Write-Host "'$($MyInvocation.Line)' invoked from $hostProcess"
 
 # Check if a Network Watcher already exists
-$networkWatcher = $(az network watcher list | ConvertFrom-Json | Where-Object -Property location -eq $Location)
+$networkWatcher = $(az network watcher list --query "[?location=='$Location']" | ConvertFrom-Json | Where-Object -Property location -eq $Location)
 if ($networkWatcher) {
     Write-Host "Network Watcher '$($networkWatcher.name)' already exists in Resource Group '$($networkWatcher.resourceGroup)' and region '$($networkWatcher.location)'" -ForegroundColor Yellow
     if ($networkWatcher.name -ne $NetworkWatcherName) {
@@ -46,5 +47,5 @@ if ($resourceGroup) {
 }
 
 Write-Host "Creating Network Watcher '$NetworkWatcherName' in Resource Group '$ResourceGroupName' and region '$Location'..."
-$networkWatcher = $(az network watcher configure -g $ResourceGroupName -l $Location --enabled true | ConvertFrom-Json)
+$networkWatcher = $(az network watcher configure -g $ResourceGroupName -l $Location --enabled true --query "[?location=='$Location']" | ConvertFrom-Json)
 Write-Host "Network Watcher '$($networkWatcher.name)' created in Resource Group '$($networkWatcher.resourceGroup)' and region '$($networkWatcher.location)'"

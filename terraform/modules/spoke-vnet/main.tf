@@ -39,6 +39,7 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
   }
 }
 
+# https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-peering-gateway-transit#resource-manager-to-resource-manager-peering-with-gateway-transit
 resource "azurerm_virtual_network_peering" "spoke_to_hub" {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-spoke2hub"
   resource_group_name          = local.resource_group_name

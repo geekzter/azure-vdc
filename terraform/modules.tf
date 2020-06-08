@@ -58,7 +58,7 @@ locals {
 
 module iis_app {
   source                       = "./modules/iis-app"
-  deployment_name         = local.deployment_name
+  deployment_name              = local.deployment_name
   resource_group               = local.iaas_app_resource_group
   vdc_resource_group_id        = azurerm_resource_group.vdc_rg.id
   location                     = azurerm_resource_group.vdc_rg.location
@@ -147,7 +147,7 @@ module paas_app {
   location                     = azurerm_resource_group.vdc_rg.location
   tags                         = local.tags
   
-  aad_auth_client_id_map        = var.paas_aad_auth_client_id_map
+  aad_auth_client_id_map       = var.paas_aad_auth_client_id_map
   admin_ips                    = local.admin_ips
   admin_ip_ranges              = local.admin_cidr_ranges
   admin_login                  = var.admin_login

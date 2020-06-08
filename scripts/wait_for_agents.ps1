@@ -3,6 +3,8 @@
 .SYNOPSIS 
     Wait for Pipeline Environment agents to come online
 #> 
+#Requires -Version 7
+
 param ( 
     [Parameter(Mandatory=$true,
     ParameterSetName="ResourceGroup")]
@@ -46,11 +48,14 @@ function Build-AgentQuery (
         $query += " agent.status=='offline' && "
     }
     $query += " agent.enabled"
+    $query = $query  -replace " *&& *"," && "   
 
     $jmesPath = "value[$query].agent"
     if ($Attribute) {
         $jmesPath += ".$Attribute"
     }
+
+    Write-Verbose "JMESPath: `"$jmesPath`""
     return $jmesPath
 }
 
@@ -67,7 +72,6 @@ if ($Environment) {
     # Discover appropriate arguments using this information:
     # az devops invoke --org $OrganizationUrl --query "[?area=='environments']"  
     $environmentId = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project resource=environments --resource environments --query "value[?name=='$Environment'].id" -o tsv)
-    #$agentQuery = "value[?contains(tags,'$Tag') && agent.enabled].agent.name"
     $agentQuery = Build-AgentQuery -Tags $Tags -Attribute "name"
     $agents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "$agentQuery" -o tsv)
     if (!$agents) {
@@ -77,21 +81,23 @@ if ($Environment) {
         exit
     }
     Write-Host "Checking status of environment agents $agents..."
-    #$offlineAgentQuery = "value[?contains(tags,'$Tag') && agent.enabled && agent.status=='offline'].agent.name"
     $offlineAgentQuery = Build-AgentQuery -Tags $Tags -Attribute "name" -Offline
     $offlineAgents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "$offlineAgentQuery" -o tsv)
-    $waitUntil = (Get-Date).AddSeconds($TimeoutSeconds)
+    $stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch     
+    $stopWatch.Start()
     if ($offlineAgents) {
         Write-Host "Waiting for $offlineAgents to come online ..." -NoNewline
     }
-    while ($offlineAgents -and ((Get-Date) -lt $waitUntil)) {
+    while ($offlineAgents -and ($stopWatch.Elapsed.TotalSeconds -lt $TimeoutSeconds)) {
+        Write-Verbose "Agent(s) $offlineAgents are still offline after $($stopWatch.Elapsed.TotalSeconds) seconds"
         Write-Host "." -NoNewLine
+        Write-Debug "az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query `"$offlineAgentQuery`" -o tsv"
         $offlineAgents = $(az devops invoke --org $OrganizationUrl --area environments --api-version $apiVersion --route-parameters project=$Project environmentId=$environmentId --resource vmresource --query "$offlineAgentQuery" -o tsv)
         Start-Sleep -Seconds 5
     }
     if ($offlineAgents) {
         Write-Host "✘" # Force NewLine
-        Write-Warning "Agent(s) $offlineAgents are still offline after $TimeoutSeconds seconds"
+        Write-Warning "Agent(s) $offlineAgents are still offline after $($stopWatch.Elapsed.TotalSeconds) seconds"
     } else {
         Write-Host "✓" # Force NewLine
     }

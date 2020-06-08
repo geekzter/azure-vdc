@@ -29,6 +29,13 @@ resource azurerm_network_interface bas_if {
     private_ip_address_allocation = "static"
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   tags                         = local.tags
 }
 
@@ -430,7 +437,6 @@ resource azurerm_monitor_diagnostic_setting mgmt_vm {
     when                       = destroy
   }
 
-  count                        = var.app_db_vm_number
   depends_on                   = [
 #                                  azurerm_private_dns_a_record.diag_storage_table_dns_record,
 #                                  azurerm_private_dns_a_record.diag_storage_blob_dns_record,

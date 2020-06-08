@@ -7,6 +7,7 @@
     This scripts pulls a pre-created ZipDeploy package from Pipeline artifacts and publishes it to the App Service Web App.
     It eliminates the need for a release pipeline just to test the Web App.
 #> 
+#Requires -Version 7
 param (    
     [parameter(Mandatory=$false)][switch]$Database,
     [parameter(Mandatory=$false)][switch]$Website,
@@ -32,6 +33,7 @@ param (
     [parameter(Mandatory=$false)][int]$MaxTests=600,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
 ) 
+Write-Host $MyInvocation.line
 
 function DeployWebApp () {
     if (!$devOpsOrgUrl) {

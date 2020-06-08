@@ -6,6 +6,8 @@
 .DESCRIPTION 
     Create an Azure Automation Update Management schedule
 #> 
+#Requires -Version 7
+
 param (    
     [parameter(Mandatory=$false)][string]$StartTime=(Get-Date).AddMinutes(6).ToString("HH:mm"), # Must be > 5 minutes
     [parameter(Mandatory=$false)][ValidateSet("Daily", "Once")][string]$Frequency="Once",

@@ -6,6 +6,8 @@
 .DESCRIPTION 
     This script is invoked from other scripts
 #> 
+#Requires -Version 7
+
 param () 
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)

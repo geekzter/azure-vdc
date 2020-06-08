@@ -11,6 +11,7 @@
 .EXAMPLE
     ./erase.ps1 -Workspace test -Destroy
 #> 
+#Requires -Version 7
 
 param (
     [parameter(Mandatory=$false)][string]$Workspace=$env:TF_WORKSPACE,

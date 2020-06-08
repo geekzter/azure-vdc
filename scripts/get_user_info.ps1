@@ -6,6 +6,7 @@
 .DESCRIPTION 
     Returns JSON formated user object, that can be consumer in a Terraform external datasource
 #> 
+#Requires -Version 7
 
 $user = az account show --query "user" | ConvertFrom-Json
 if ($user.type -ieq "user") {

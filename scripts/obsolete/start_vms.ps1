@@ -6,6 +6,8 @@
 .DESCRIPTION 
     Terraform plan may need VM's to be started for certain resources e.g. VM extensions
 #> 
+#Requires -Version 7
+
 param  
 (    
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=$env:TF_WORKSPACE,

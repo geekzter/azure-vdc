@@ -844,12 +844,12 @@ resource azurerm_private_endpoint sqlserver_endpoint {
     when                       = destroy
     command                    = "az sql server update -n ${replace(self.name,"-endpoint","")} -g ${self.resource_group_name} --set publicNetworkAccess='Enabled' --query 'publicNetworkAccess' -o tsv"
   }
-  
+
   tags                         = var.tags
 
   count                        = var.enable_private_link ? 1 : 0
   # Create Private Endpoints one at a time
-  depends_on                   = [azurerm_private_endpoint.archive_table_storage_endpoint]
+  #depends_on                   = [azurerm_private_endpoint.archive_table_storage_endpoint]
 }
 resource azurerm_private_dns_a_record sql_server_dns_record {
   name                         = azurerm_sql_server.app_sqlserver.name

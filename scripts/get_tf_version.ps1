@@ -4,6 +4,8 @@
     Get the terraform version installed, latest available, or used before
 
 #> 
+#Requires -Version 7
+
 param ( 
     [parameter(Mandatory=$false)][ValidateSet('Installed','Latest','Preferred')][string]$Version="Installed",
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
