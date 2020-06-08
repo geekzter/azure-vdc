@@ -4,6 +4,8 @@
     Grants access to given AAD user/service principal name
 
 #> 
+#Requires -Version 7
+
 ### Arguments
 param ( 
     [parameter(Mandatory=$false)][string]$DBAName,

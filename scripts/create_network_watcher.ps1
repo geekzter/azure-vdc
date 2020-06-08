@@ -14,6 +14,7 @@ param (
     [parameter(Mandatory=$false)][string]$NetworkWatcherName="${Location}-watcher",
     [parameter(Mandatory=$false)][string]$ResourceGroupName="NetworkWatcherRG"
 ) 
+#Requires -Version 7
 
 $hostProcess = (Get-Process -id $pid).Parent.ProcessName
 Write-Host "'$($MyInvocation.Line)' invoked from $hostProcess"

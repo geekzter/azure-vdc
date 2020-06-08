@@ -4,6 +4,8 @@
     This creates allow rules for the current connection, start management VM, and displays credentials needed
 
 #> 
+#Requires -Version 7
+
 ### Arguments
 param ( 
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=$env:TF_WORKSPACE,

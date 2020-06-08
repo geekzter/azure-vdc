@@ -3,6 +3,8 @@
 .SYNOPSIS 
     Wait for Pipeline Environment agents to come online
 #> 
+#Requires -Version 7
+
 param ( 
     [Parameter(Mandatory=$true,
     ParameterSetName="ResourceGroup")]

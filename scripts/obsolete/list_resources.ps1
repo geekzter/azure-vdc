@@ -4,6 +4,8 @@
     List resources created
 
 #> 
+#Requires -Version 7
+
 param (    
     [parameter(Mandatory=$false,HelpMessage="The environment tag to filter use")][string] $Environment,
     [parameter(Mandatory=$false,HelpMessage="The workspace tag to filter use")][string]$Workspace,
