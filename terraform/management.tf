@@ -437,7 +437,6 @@ resource azurerm_monitor_diagnostic_setting mgmt_vm {
     when                       = destroy
   }
 
-  count                        = var.app_db_vm_number
   depends_on                   = [
 #                                  azurerm_private_dns_a_record.diag_storage_table_dns_record,
 #                                  azurerm_private_dns_a_record.diag_storage_blob_dns_record,
