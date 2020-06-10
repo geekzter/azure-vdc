@@ -75,7 +75,7 @@ or
 `./tf_deploy.ps1 -apply -workspace default`  
 to provision resources
 8.  Create build pipeline to build IIS application, see `Pipelines/iis-asp.net-ci.yml`
-9.  Create build pipeline to build APp Service application, see `azure-pipelines.yml` located here: [dotnetcore-sqldb-tutorial](https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml)
+9.  Create build pipeline to build App Service application, see `azure-pipelines.yml` located here: [dotnetcore-sqldb-tutorial](https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml)
 10.  Create Terraform CI pipeline using either `vdc-terraform-apply-simple-ci.yml` or `vdc-terraform-apply-ci.yml`
 
 ### Features ###

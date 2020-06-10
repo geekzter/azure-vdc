@@ -1,11 +1,15 @@
 locals {
   client_config                = map(
     "environment",               local.deployment_name,
+    "paasappurl",                "https://${module.paas_app.app_service_fqdn}",
     "privatelinkfqdns",          join(",",[
       module.paas_app.sql_server_fqdn,
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_storage_account.vdc_diag_storage.primary_table_host,
+      module.paas_app.app_service_fqdn,
+      module.paas_app.app_service_scm_fqdn
     ]),
+    "scmurl",                    "https://${module.paas_app.app_service_scm_fqdn}",
     "scripturl",                 azurerm_storage_blob.mgmt_prepare_script.url,
     "sqldatabase",               module.paas_app.sql_database,
     "sqlserver",                 module.paas_app.sql_server_fqdn,

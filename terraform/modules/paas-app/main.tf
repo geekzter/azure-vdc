@@ -518,30 +518,41 @@ resource azurerm_app_service_custom_hostname_binding alias_domain {
   depends_on                   = [azurerm_dns_cname_record.verify_record]
 }
 
-# TODO
-# resource azurerm_private_endpoint app_service_endpoint {
-#   name                         = "${azurerm_app_service.paas_web_app.name}-endpoint"
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   location                     = azurerm_resource_group.app_rg.location
-#   subnet_id                    = var.app_subnet_id
+# https://docs.microsoft.com/en-us/azure/app-service/networking/private-endpoint
+resource azurerm_private_endpoint app_service_endpoint {
+  name                         = "${azurerm_app_service.paas_web_app.name}-endpoint"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  location                     = azurerm_resource_group.app_rg.location
+  subnet_id                    = var.app_subnet_id
 
-#   private_service_connection {
-#     is_manual_connection       = false
-#     name                       = "${azurerm_app_service.paas_web_app.name}-endpoint-connection"
-#     private_connection_resource_id = azurerm_app_service.paas_web_app.id
-#     subresource_names          = ["site"]
-#   }
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_app_service.paas_web_app.name}-endpoint-connection"
+    private_connection_resource_id = azurerm_app_service.paas_web_app.id
+    subresource_names          = ["sites"]
+  }
 
-#   tags                         = var.tags
-# }
-# resource azurerm_private_dns_a_record app_service_dns_record {
-#   name                         = azurerm_app_service.paas_web_app.name
-#   zone_name                    = "privatelink.azurewebsites.net"
-#   resource_group_name          = local.vdc_resource_group_name
-#   ttl                          = 300
-#   records                      = [azurerm_private_endpoint.app_service_endpoint.private_service_connection[0].private_ip_address]
-#   tags                         = var.tags
-# }
+  tags                         = var.tags
+  count                        = var.enable_private_link ? 1 : 0
+}
+resource azurerm_private_dns_a_record app_service_dns_record {
+  name                         = azurerm_app_service.paas_web_app.name
+  zone_name                    = "privatelink.azurewebsites.net"
+  resource_group_name          = local.vdc_resource_group_name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.app_service_endpoint[0].private_service_connection[0].private_ip_address]
+  tags                         = var.tags
+  count                        = var.enable_private_link ? 1 : 0
+}
+resource azurerm_private_dns_a_record app_service_scm_dns_record {
+  name                         = "${azurerm_app_service.paas_web_app.name}.scm"
+  zone_name                    = "privatelink.azurewebsites.net"
+  resource_group_name          = local.vdc_resource_group_name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.app_service_endpoint[0].private_service_connection[0].private_ip_address]
+  tags                         = var.tags
+  count                        = var.enable_private_link ? 1 : 0
+}
 
 resource azurerm_monitor_diagnostic_setting app_service_logs {
   name                         = "AppService_Logs"
