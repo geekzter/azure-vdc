@@ -255,6 +255,9 @@ output resource_suffix {
   value       = local.suffix
 }
 
+output shared_container_registry {
+  value       = var.shared_container_registry
+}
 output shared_resources_group {
   value       = var.shared_resources_group
 }

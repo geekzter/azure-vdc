@@ -47,7 +47,7 @@ try {
         $Script:prefix         = $(terraform output "resource_prefix"                2>$null)
         $Script:suffix         = $(terraform output "resource_suffix"                2>$null)
         $Script:deploymentName = $(terraform output "deployment_name"                2>$null)
-        $Script:sharedRegistry = $(terraform output "shared_container_registry_name" 2>$null)
+        $Script:sharedRegistry = $(terraform output "shared_container_registry     " 2>$null)
         $Script:sharedRG       = $(terraform output "shared_resources_group"         2>$null)
     }
 

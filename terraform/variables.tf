@@ -304,6 +304,10 @@ variable shared_resources_group {
   description                  = "Resource group of shared (data) resources e.g. Container Registry, DNS"
   default                      = "Shared"
 }
+variable shared_container_registry {
+  description                  = "Container Registry"
+  default                      = null
+}
 variable update_management_time {
   description                  = "Time of day when OS updates are scheduled (UTC)"
   default                      = "21:00"

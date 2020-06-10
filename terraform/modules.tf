@@ -158,6 +158,7 @@ module paas_app {
                                  [
                                  azurerm_subnet.mgmt_subnet.id
   ])
+  container_registry           = var.shared_container_registry
   database_template_storage_key= var.app_database_template_storage_key
   data_subnet_id               = lookup(module.paas_spoke_vnet.subnet_ids,"data","")
   default_create_timeout       = var.default_create_timeout
