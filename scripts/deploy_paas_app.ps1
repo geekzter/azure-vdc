@@ -49,7 +49,7 @@ function DeployWebApp () {
     $artifactName = "aspnetcoresql"
     $packageName = "publish.zip" 
     $configuration = "Release"
-    $dotnetVersion = "2.2"
+    $dotnetVersion = "3.1"
 
     # We need this for Azure DevOps
     az extension add --name azure-devops 
