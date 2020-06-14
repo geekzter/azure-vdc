@@ -108,7 +108,7 @@ if ($Destroy) {
     $resourceGroupIDs = $(az group list --query "$tagQuery" -o tsv)
     if ($resourceGroupIDs -and $resourceGroupIDs.Length -gt 0) {
         Write-Verbose "Starting job 'az resource delete --ids $resourceGroupIDs'"
-        $jobs += Start-Job -Name "Remove ResourceGroups" -ScriptBlock {az resource delete --ids $args} -ArgumentList $resourceGroupIDs
+        Start-Job -Name "Remove ResourceGroups" -ScriptBlock {az resource delete --ids $args} -ArgumentList $resourceGroupIDs
     }
 
     # Remove resources in the NetworkWatcher resource group
@@ -116,7 +116,7 @@ if ($Destroy) {
     $resourceIDs = $(az resource list -g NetworkWatcherRG --query "$tagQuery" -o tsv)
     if ($resourceIDs -and $resourceIDs.Length -gt 0) {
         Write-Verbose "Starting job 'az resource delete --ids $resourceIDs'"
-        $jobs += Start-Job -Name "Remove Resources from NetworkWatcherRG" -ScriptBlock {az resource delete --ids $args} -ArgumentList $resourceIDs
+        Start-Job -Name "Remove Resources from NetworkWatcherRG" -ScriptBlock {az resource delete --ids $args} -ArgumentList $resourceIDs
     }
 
     $metadataQuery = $tagQuery -replace "tags\.","metadata."
@@ -134,6 +134,7 @@ if ($Destroy) {
         }
     }
 
+    $jobs = Get-Job -State Running | Where-Object {$_.Command -match "az resource"}
     $jobs | Format-Table -Property Id, Name, State
     if ($Wait -and $jobs) {
         # Waiting for async operations to complete
