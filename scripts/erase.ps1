@@ -23,6 +23,7 @@ param (
     [parameter(Mandatory=$false)][int]$TimeoutMinutes=50,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
 )
+Write-Host $MyInvocation.line -ForegroundColor Green
 if (!$Workspace -and !$DeploymentName) { 
     Write-Warning "You must supply a value for either DeploymentName or Workspace" 
     exit
