@@ -344,6 +344,10 @@ resource azurerm_user_assigned_identity paas_web_app_identity {
   resource_group_name          = azurerm_resource_group.app_rg.name
 }
 
+locals {
+  sql_connection_string        = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
+}
+
 resource azurerm_app_service paas_web_app {
   name                         = "${var.resource_group_name}-appsvc-app"
   location                     = azurerm_resource_group.app_rg.location
@@ -388,7 +392,7 @@ resource azurerm_app_service paas_web_app {
     name                       = "MyDbConnection"
     type                       = "SQLAzure"
   # No secrets in connection string
-    value                      = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
+    value                      = local.sql_connection_string
   }
 
   identity {
@@ -451,11 +455,11 @@ resource azurerm_app_service paas_web_app {
   }
 
   # Ignore container updates, those are deployed independently
-  lifecycle {
-    ignore_changes = [
-      site_config.0.linux_fx_version, # deployments are made outside of Terraform
-    ]
-  }
+  # lifecycle {
+  #   ignore_changes = [
+  #     site_config.0.linux_fx_version, # deployments are made outside of Terraform
+  #   ]
+  # }
 
   tags                         = var.tags
 

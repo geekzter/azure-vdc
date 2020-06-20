@@ -118,7 +118,7 @@ variable vdc_oms_solutions {
   # "ADAssessment",
   # "ADReplication",
   # "AgentHealthAssessment",
-    "AlertManagement",
+  # "AlertManagement",
   # "AntiMalware",
   # "ApplicationInsights", # Depricated
   # "ASRAnalytics",

@@ -82,6 +82,9 @@ output primary_web_host {
 output sql_database {
     value = azurerm_sql_database.app_sqldb.name
 }
+output sql_database_connection_string {
+    value = local.sql_connection_string
+}
 output sql_server {
     value = azurerm_sql_server.app_sqlserver.name
 }
