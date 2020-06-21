@@ -345,6 +345,7 @@ resource azurerm_user_assigned_identity paas_web_app_identity {
 }
 
 locals {
+  # No secrets in connection string
   sql_connection_string        = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
 }
 
@@ -360,13 +361,16 @@ resource azurerm_app_service paas_web_app {
     APP_CLIENT_ID              = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
     APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
+    # TODO
     ASPNETCORE_ENVIRONMENT     = "Production"
+    ASPNETCORE_URLS            = "http://+:80"
 
     # Required for containers
     #       https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication-managed-identity
     DOCKER_REGISTRY_SERVER_USERNAME = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_username : ""
     DOCKER_REGISTRY_SERVER_PASSWORD = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_password : ""
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
+    #WEBSITES_PORT              = "8081"
 
     WEBSITE_DNS_SERVER         = "168.63.129.16" # Private DNS
     WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
@@ -391,10 +395,10 @@ resource azurerm_app_service paas_web_app {
   connection_string {
     name                       = "MyDbConnection"
     type                       = "SQLAzure"
-  # No secrets in connection string
     value                      = local.sql_connection_string
   }
 
+  # TODO
   identity {
     type                       = "UserAssigned"
     identity_ids               = [azurerm_user_assigned_identity.paas_web_app_identity.id]
