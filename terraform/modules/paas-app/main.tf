@@ -36,7 +36,7 @@ locals {
   # Last element of resource id is resource name
   integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
-  linux_fx_version             = var.container_registry != null ? "DOCKER|${data.azurerm_container_registry.vdc_images.0.login_server}/vdc/aspnet-core-sqldb:latest"  : "DOCKER|appsvcsample/python-helloworld:latest"
+  linux_fx_version             = var.container_registry != null ? "DOCKER|${data.azurerm_container_registry.vdc_images.0.login_server}/${var.container}" : "DOCKER|appsvcsample/python-helloworld:latest"
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
   vanity_hostname              = var.vanity_fqdn != null ? element(split(".",var.vanity_fqdn),0) : null

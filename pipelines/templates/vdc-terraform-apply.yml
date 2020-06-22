@@ -462,6 +462,19 @@ stages:
         #     appName: '$(appServiceName)'
         #     package: '$(appPackage)'
 
+        # # TODO
+        # - task: AzureRmWebAppDeployment@4
+        #   displayName: 'Deploy ASP.NET Core App'
+        #   inputs:
+        #     connectionType: 'AzureRM'
+        #     azureSubscription: '$(subscriptionConnection)'
+        #     appType: 'webAppContainer'
+        #     webAppName: '$(appServiceName)'
+        #     dockerNamespace: '$()'
+        #     dockerRepository: '$()'
+        #     dockerImageTag: 'latest'
+        #     appSettings: '-ASPNETCORE_ENVIRONMENT "Online"'        
+
   - ${{ if eq(parameters.deploy, true) }}:
     # First things first, we need to check whether the environment is ready to deploy to
     - job: 'DeployEnvironmentPrep'
