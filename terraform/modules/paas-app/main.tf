@@ -398,7 +398,6 @@ resource azurerm_app_service paas_web_app {
     value                      = local.sql_connection_string
   }
 
-  # TODO
   identity {
     type                       = "UserAssigned"
     identity_ids               = [azurerm_user_assigned_identity.paas_web_app_identity.id]
@@ -458,7 +457,7 @@ resource azurerm_app_service paas_web_app {
     scm_type                   = "None"
   }
 
-  # Ignore container updates, those are deployed independently
+  # TODO: Ignore container updates, those are deployed independently
   # lifecycle {
   #   ignore_changes = [
   #     site_config.0.linux_fx_version, # deployments are made outside of Terraform
@@ -467,6 +466,27 @@ resource azurerm_app_service paas_web_app {
 
   tags                         = var.tags
 
+}
+
+resource azurerm_app_service_slot paas_web_app_offline {
+  name                         = "offline"
+  app_service_name             = azurerm_app_service.paas_web_app.name
+  location                     = azurerm_app_service.paas_web_app.location
+  resource_group_name          = azurerm_app_service.paas_web_app.resource_group_name
+  app_service_plan_id          = azurerm_app_service.paas_web_app.app_service_plan_id
+
+  app_settings = {
+    ASPNETCORE_ENVIRONMENT     = "Offline"
+  }
+
+  auth_settings {
+    enabled                    = false
+  }
+
+  site_config {
+    ip_restriction             = []
+    linux_fx_version           = local.linux_fx_version
+  }
 }
 
 resource azurerm_dns_cname_record verify_record {

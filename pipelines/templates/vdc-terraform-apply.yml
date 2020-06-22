@@ -365,7 +365,7 @@ stages:
       variables:
         appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
         appBuild: 'Release'
-        appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
+        appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp3.1/publish.zip'
         # Get application configuration from Terraform output
         appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
         appMSIName: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_name'] ]
@@ -436,30 +436,31 @@ stages:
             workingDirectory: '$(scriptDirectory)'
             failOnStandardError: true
 
-        # Download PaaS Application Pipeline artifacts
-        # This consumes artifacts published by this pipeline:
-        # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Download ASP.NET Core App Artifacts'
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            buildType: 'specific'
-            project: '$(appArtifectProject)'
-            definition: '$(appBuildDefinitionPaaS)'
-            specificBuildWithTriggering: true
-            buildVersionToDownload: 'latest'
-            artifactName: 'aspnetcoresql'
-            targetPath: '$(appArtifactDirectory)'
+        # App pulled as container, below steps are obsolete
+        # # Download PaaS Application Pipeline artifacts
+        # # This consumes artifacts published by this pipeline:
+        # # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
+        # - task: DownloadPipelineArtifact@2
+        #   displayName: 'Download ASP.NET Core App Artifacts'
+        #   enabled: ${{ not(parameters.testMode) }}
+        #   inputs:
+        #     buildType: 'specific'
+        #     project: '$(appArtifectProject)'
+        #     definition: '$(appBuildDefinitionPaaS)'
+        #     specificBuildWithTriggering: true
+        #     buildVersionToDownload: 'latest'
+        #     artifactName: 'aspnetcoresql'
+        #     targetPath: '$(appArtifactDirectory)'
 
-        # Deploy PaaS Application
-        - task: AzureWebApp@1
-          displayName: 'Deploy ASP.NET Core App'
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            azureSubscription: '$(subscriptionConnection)'
-            appType: webApp
-            appName: '$(appServiceName)'
-            package: '$(appPackage)'
+        # # Deploy PaaS Application
+        # - task: AzureWebApp@1
+        #   displayName: 'Deploy ASP.NET Core App'
+        #   enabled: ${{ not(parameters.testMode) }}
+        #   inputs:
+        #     azureSubscription: '$(subscriptionConnection)'
+        #     appType: webApp
+        #     appName: '$(appServiceName)'
+        #     package: '$(appPackage)'
 
   - ${{ if eq(parameters.deploy, true) }}:
     # First things first, we need to check whether the environment is ready to deploy to
