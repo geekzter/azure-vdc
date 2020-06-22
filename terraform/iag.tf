@@ -273,6 +273,7 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "*.delivery.mp.microsoft.com",
       "*.do.dsp.mp.microsoft.com",
       "*.events.data.microsoft.com",
+      "*.identity.azure.net",
       "*.loganalytics.io",
       "*.monitoring.azure.com",
       "*.msauth.net",
