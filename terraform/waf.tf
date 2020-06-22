@@ -47,23 +47,46 @@ resource "azurerm_dns_cname_record" "waf_paas_app_cname" {
   tags                         = local.tags
 } 
 
+resource "azurerm_dns_cname_record" "waf_paas_scm_cname" {
+  name                         = "${lower(var.resource_prefix)}${lower(terraform.workspace)}scm"
+  zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
+  resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name
+  ttl                          = 300
+  record                       = azurerm_public_ip.waf_pip.fqdn
+  depends_on                   = [azurerm_public_ip.waf_pip]
+
+  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
+  tags                         = local.tags
+} 
+
 locals {
   ssl_range                    = range(var.use_vanity_domain_and_ssl ? 1 : 0) # Contains one item only if var.use_vanity_domain_and_ssl = true
   ssl_range_inverted           = range(var.use_vanity_domain_and_ssl ? 0 : 1) # Contains one item only if var.use_vanity_domain_and_ssl = false
   http80_listener              = "${module.paas_app.app_resource_group}-http-listener"
+  http8080_listener              = "${module.paas_app.app_resource_group}-scm-http-listener"
   http81_listener              = "${module.iis_app.app_resource_group}-http-listener"
+
   iaas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_iaas_app_cname[0].name}.${azurerm_dns_cname_record.waf_iaas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
   iaas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.iaas_app_fqdn}${var.use_vanity_domain_and_ssl ? "" : ":81"}/"
   iaas_app_backend_pool        = "${module.iis_app.app_resource_group}-webservers"
   iaas_app_backend_setting     = "${module.iis_app.app_resource_group}-config"
   iaas_app_https_listener      = "${module.iis_app.app_resource_group}-https-listener"
   iaas_app_redirect_config     = "${module.iis_app.app_resource_group}-http-to-https"
+
   paas_app_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_paas_app_cname[0].name}.${azurerm_dns_cname_record.waf_paas_app_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
   paas_app_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.paas_app_fqdn}/"
   paas_app_backend_pool        = "${module.paas_app.app_resource_group}-appsvc"
   paas_app_backend_setting     = "${module.paas_app.app_resource_group}-config"
   paas_app_https_listener      = "${module.paas_app.app_resource_group}-https-listener"
   paas_app_redirect_config     = "${module.paas_app.app_resource_group}-http-to-https"
+
+  paas_scm_fqdn                = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_paas_scm_cname[0].name}.${azurerm_dns_cname_record.waf_paas_scm_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
+  paas_scm_url                 = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.paas_scm_fqdn}${var.use_vanity_domain_and_ssl ? "" : ":8080"}/"
+  paas_scm_backend_pool        = "${module.paas_app.app_resource_group}-appsvc-scm"
+  paas_scm_backend_setting     = "${module.paas_app.app_resource_group}-scm-config"
+  paas_scm_https_listener      = "${module.paas_app.app_resource_group}-scm-https-listener"
+  paas_scm_redirect_config     = "${module.paas_app.app_resource_group}-scm-http-to-https"
+
   waf_frontend_ip_config       = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
 }
 
@@ -96,6 +119,10 @@ resource "azurerm_application_gateway" "waf" {
   frontend_port {
     name                       = "http81"
     port                       = 81
+  }
+  frontend_port {
+    name                       = "http8080"
+    port                       = 8080
   }
   frontend_port {
     name                       = "https"
@@ -317,6 +344,148 @@ resource "azurerm_application_gateway" "waf" {
     name                       = "paas-app-probe"
     # Used alias when terminating SSL at App Service, as this will actually resolve to App Service (no loop to App Gateway)
     host                       = module.paas_app.app_service_alias_fqdn
+    path                       = "/"
+    # Used when terminating SSL at App Gateway
+    #pick_host_name_from_backend_http_settings = true
+    protocol                   = "Https"
+    interval                   = 3
+    timeout                    = 3
+    unhealthy_threshold        = 3
+    match {
+      body                     = ""
+      status_code              = ["200-399","401"]
+    }
+  }
+
+  #### PaaS App Service SCM
+  backend_address_pool {
+    name                       = local.paas_scm_backend_pool
+    fqdns                      = [module.paas_app.app_service_scm_fqdn]
+  }
+  # Used when not using Private Link
+  dynamic "backend_http_settings" {
+    for_each = range(var.enable_private_link ? 0 : 1) 
+    content {
+      name                     = local.paas_scm_backend_setting
+      cookie_based_affinity    = "Disabled"
+      pick_host_name_from_backend_address = true
+      port                     = 443
+      protocol                 = "Https"
+      request_timeout          = 10
+      probe_name               = "paas-scm-probe"
+    }
+  }
+  # Used when using Private Link
+  dynamic "backend_http_settings" {
+    for_each = range(var.enable_private_link ? 1 : 0) 
+    content {
+      name                     = local.paas_scm_backend_setting
+      cookie_based_affinity    = "Disabled"
+      pick_host_name_from_backend_address = true
+      port                     = 443
+      protocol                 = "Https"
+      request_timeout          = 10
+      probe_name               = "paas-scm-probe"
+    }
+  }
+
+  http_listener {
+    name                       = local.http8080_listener
+    frontend_ip_configuration_name = local.waf_frontend_ip_config
+    frontend_port_name         = "http"
+    host_name                  = local.paas_scm_fqdn
+    protocol                   = "Http"
+  }
+  # This is a way to make HTTPS and SSL optional 
+  dynamic "http_listener" {
+    for_each = local.ssl_range
+    content {
+      name                     = local.paas_scm_https_listener
+      frontend_ip_configuration_name = local.waf_frontend_ip_config
+      frontend_port_name       = "https"
+      protocol                 = "Https"
+      host_name                = local.paas_scm_fqdn
+      ssl_certificate_name     = var.vanity_certificate_name
+    }
+  }
+  dynamic "request_routing_rule" {
+    # Applied when var.use_vanity_domain_and_ssl = false
+    for_each = local.ssl_range_inverted
+    content {
+      name                     = "${module.paas_app.app_resource_group}-scm-http-rule"
+      rule_type                = "Basic"
+      http_listener_name       = local.http8080_listener
+      backend_address_pool_name  = local.paas_scm_backend_pool
+      backend_http_settings_name = local.paas_scm_backend_setting
+    }
+  }
+  dynamic "request_routing_rule" {
+    # Applied when var.use_vanity_domain_and_ssl = true
+    # Redirect HTTP to HTTPS
+    for_each = local.ssl_range
+    content {
+      name                     = "${module.paas_app.app_resource_group}-scm-http-to-https-rule"
+      rule_type                = "Basic"
+      http_listener_name       = local.http8080_listener
+      redirect_configuration_name = local.paas_scm_redirect_config
+    }
+  }
+  # This is a way to make HTTPS and SSL optional 
+  dynamic "request_routing_rule" {
+    for_each = local.ssl_range
+    content {
+      name                     = "${module.paas_app.app_resource_group}-scm-https-rule"
+      rule_type                = "Basic"
+      http_listener_name       = local.paas_scm_https_listener
+      backend_address_pool_name = local.paas_scm_backend_pool
+      backend_http_settings_name = local.paas_scm_backend_setting
+      rewrite_rule_set_name    = "paas-scm-rewrite-rules"
+    }
+  }
+  dynamic "redirect_configuration" {
+    for_each = local.ssl_range
+    content {
+      name                     = local.paas_scm_redirect_config
+      redirect_type            = "Temporary" # HTTP 302
+      target_listener_name     = local.paas_scm_https_listener
+    }
+  }
+  # These rules rewrite the App Service URL with the vanity domain one
+  # This is required when terminating SSL at App Gateway
+  # This is also recommended in general, just to make sure redirects that use the wrong hostname still work
+  rewrite_rule_set {
+    name                       = "paas-scm-rewrite-rules"
+    rewrite_rule {
+      name                     = "paas-scm-rewrite-response-redirect"
+      rule_sequence            = 1
+      condition {
+        variable               = "http_resp_Location"
+        pattern                = "(.*)https%253A%252F%252F${module.paas_app.app_service_scm_fqdn}(.*)$"
+        ignore_case            = true
+      }
+      response_header_configuration {
+        header_name            = "Location"
+        header_value           = "{http_resp_Location_1}https%253A%252F%252F${local.paas_scm_fqdn}{http_resp_Location_2}" 
+      }
+    }
+    rewrite_rule {
+      name                     = "paas-scm-rewrite-response-location"
+      rule_sequence            = 2
+      condition {
+        variable               = "http_resp_Location"
+        pattern                = "(https?):\\/\\/${module.paas_app.app_service_scm_fqdn}(.*)$"
+        ignore_case            = true
+      }
+      response_header_configuration {
+        header_name            = "Location"
+        header_value           = "{http_resp_Location_1}://${local.paas_scm_fqdn}{http_resp_Location_2}" 
+      }
+    }
+  }
+  probe {
+    name                       = "paas-scm-probe"
+    # Used alias when terminating SSL at App Service, as this will actually resolve to App Service (no loop to App Gateway)
+    host                       = module.paas_app.app_service_scm_fqdn
     path                       = "/"
     # Used when terminating SSL at App Gateway
     #pick_host_name_from_backend_http_settings = true

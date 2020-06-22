@@ -455,6 +455,7 @@ resource azurerm_app_service paas_web_app {
     linux_fx_version           = local.linux_fx_version
     # LocalGit removed since using containers for deployment
     scm_type                   = "None"
+    scm_use_main_ip_restriction = true
   }
 
   # TODO: Ignore container updates, those are deployed independently

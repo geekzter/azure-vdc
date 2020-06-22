@@ -227,7 +227,9 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "go.microsoft.com",
       "licensing.mp.microsoft.com",
       "marketplace.visualstudio.com",
+      "sqlopsbuilds.azureedge.net",
       "sqlopsextensions.blob.core.windows.net",
+      "version.pm2.io",
       "visualstudio.microsoft.com",
       "xamarin-downloads.azureedge.net",
       "visualstudio-devdiv-c2s.msedge.net"
@@ -278,14 +280,18 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "*.monitoring.azure.com",
       "*.msauth.net",
       "*.msftauth.net",
+      "*.msauthimages.net",
       "*.ods.opinsights.azure.com",
       "*.oms.opinsights.azure.com",
+      "*.portal.azure.com",
+      "*.portal.azure.net",
       "*.systemcenteradvisor.com",
       "*.telemetry.microsoft.com",
       "*.update.microsoft.com",
       "*.windowsupdate.com",
       "checkappexec.microsoft.com",
       "device.login.microsoftonline.com",
+      "edge.microsoft.com",
       "enterpriseregistration.windows.net",
       "graph.microsoft.com",
       "login.microsoftonline.com",
@@ -294,6 +300,7 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "msft.sts.microsoft.com",
       "opinsightsweuomssa.blob.core.windows.net",
       "pas.windows.net",
+      "portal.azure.com",
       "scadvisor.accesscontrol.windows.net",
       "scadvisorcontent.blob.core.windows.net",
       "scadvisorservice.accesscontrol.windows.net",
@@ -342,30 +349,6 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     }
   }
 } 
-
-# Outbound domain whitelisting
-# resource azurerm_firewall_application_rule_collection iag_debug_app_rules {
-#   name                         = "${azurerm_firewall.iag.name}-debug-app-rules"
-#   azure_firewall_name          = azurerm_firewall.iag.name
-#   resource_group_name          = azurerm_resource_group.vdc_rg.name
-#   priority                     = 999
-#   action                       = "Allow"
-
-#   rule {
-#     name                       = "Allow All from ..."
-
-#     source_addresses           = [
-#       "${var.vdc_config["iaas_spoke_app_subnet"]}",
-#     ]
-
-#     target_fqdns               = ["*"]
-
-#     protocol {
-#         port                   = "443"
-#         type                   = "Https"
-#     }
-#   }
-# } 
 
 # Inbound port forwarding rules
 resource azurerm_firewall_nat_rule_collection iag_nat_rules {
@@ -543,6 +526,28 @@ resource azurerm_firewall_network_rule_collection iag_net_outbound_rules {
     ]
 
     protocols                  = [
+      "UDP",
+    ]
+  }
+
+  rule {
+    name                       = "AllowOwneedIPs"
+
+    source_addresses           = [
+      var.vdc_config["vdc_range"],
+    ]
+
+    destination_ports          = [
+      "*",
+    ]
+    destination_addresses      = [
+      azurerm_public_ip.iag_pip.ip_address,
+      azurerm_public_ip.waf_pip.ip_address,
+      module.p2s_vpn.gateway_ip,
+    ]
+
+    protocols                  = [
+      "TCP",
       "UDP",
     ]
   }

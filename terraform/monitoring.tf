@@ -242,13 +242,14 @@ resource "azurerm_dashboard" "vdc_dashboard" {
     {
       subscription             = data.azurerm_subscription.primary.id
       prefix                   = var.resource_prefix
-      environment              = local.deployment_name
+      deployment_name          = local.deployment_name
       suffix                   = local.suffix
       subscription_guid        = data.azurerm_subscription.primary.subscription_id
       appinsights_id           = azurerm_application_insights.vdc_insights.app_id
       build_web_url            = try(var.build_id != "" ? "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build/results?buildId=${var.build_id}" : "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build","https://dev.azure.com")
       iaas_app_url             = local.iaas_app_url
       paas_app_url             = local.paas_app_url
+      paas_scm_url             = local.paas_scm_url
       paas_app_resource_group_short = local.paas_app_resource_group_short
       release_web_url          = try(var.release_web_url != "" ? var.release_web_url : "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_release","https://dev.azure.com")
       shared_rg                = var.shared_resources_group

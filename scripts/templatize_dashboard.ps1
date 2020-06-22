@@ -47,7 +47,7 @@ try {
         $Script:prefix         = $(terraform output "resource_prefix"                2>$null)
         $Script:suffix         = $(terraform output "resource_suffix"                2>$null)
         $Script:deploymentName = $(terraform output "deployment_name"                2>$null)
-        $Script:sharedRegistry = $(terraform output "shared_container_registry     " 2>$null)
+        $Script:sharedRegistry = $(terraform output "shared_container_registry"      2>$null)
         $Script:sharedRG       = $(terraform output "shared_resources_group"         2>$null)
     }
 
@@ -78,8 +78,8 @@ if ($prefix) {
     $template = $template -Replace "${prefix}-", "`$`{prefix`}-"
 }
 if ($deploymentName) {
-    $template = $template -Replace "-${deploymentName}-", "-`$`{deploymentName`}-"
-    $template = $template -Replace "\`"${deploymentName}\`"", "`"`$`{deploymentName`}`""
+    $template = $template -Replace "-${deploymentName}-", "-`$`{deployment_name`}-"
+    $template = $template -Replace "\`"${deploymentName}\`"", "`"`$`{deployment_name`}`""
 }
 
 if ($env:ARM_SUBSCRIPTION_ID) {
@@ -95,13 +95,14 @@ if ($suffix) {
     $template = $template -Replace "\`'${suffix}\`'", "'`$`{suffix`}'"
 }
 if ($prefix -and $deploymentName -and $suffix) {
-    $template = $template -Replace "${prefix}${deploymentName}${suffix}", "`$`{prefix`}`$`{deploymentName`}`$`{suffix`}"
+    $template = $template -Replace "${prefix}${deploymentName}${suffix}", "`$`{prefix`}`$`{deployment_name`}`$`{suffix`}"
 }
 if ($appRGShort) {
     $template = $template -Replace "${appRGShort}", "`$`{paas_app_resource_group_short`}"
 }
 $template = $template -Replace "http[s?]://[\w\.]*iisapp[\w\.]*/", "`$`{iaas_app_url`}"
 $template = $template -Replace "http[s?]://[\w\.]*webapp[\w\.]*/", "`$`{paas_app_url`}"
+$template = $template -Replace "http[s?]://[\w\.]*scm[\w\.]*/", "`$`{paas_scm_url`}"
 $template = $template -Replace "https://dev.azure.com[^`']*_build[^`']*`'", "`$`{build_web_url`}`'"
 $template = $template -Replace "https://dev.azure.com[^`']*_release[^`']*`'", "`$`{release_web_url`}`'"
 $template = $template -Replace "https://online.visualstudio.com[^`']*`'", "`$`{vso_url`}`'"
