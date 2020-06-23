@@ -361,7 +361,6 @@ resource azurerm_app_service paas_web_app {
     APP_CLIENT_ID              = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
     APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
-    # TODO
     ASPNETCORE_ENVIRONMENT     = "Production"
     ASPNETCORE_URLS            = "http://+:80"
 
@@ -370,7 +369,6 @@ resource azurerm_app_service paas_web_app {
     DOCKER_REGISTRY_SERVER_USERNAME = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_username : ""
     DOCKER_REGISTRY_SERVER_PASSWORD = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_password : ""
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
-    #WEBSITES_PORT              = "8081"
 
     WEBSITE_DNS_SERVER         = "168.63.129.16" # Private DNS
     WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
@@ -458,11 +456,11 @@ resource azurerm_app_service paas_web_app {
   }
 
   # TODO: Ignore container updates, those are deployed independently
-  # lifecycle {
-  #   ignore_changes = [
-  #     site_config.0.linux_fx_version, # deployments are made outside of Terraform
-  #   ]
-  # }
+  lifecycle {
+    ignore_changes = [
+      site_config.0.linux_fx_version, # deployments are made outside of Terraform
+    ]
+  }
 
   tags                         = var.tags
 
