@@ -9,7 +9,7 @@
             "settings": {
               "content": {
                 "settings": {
-                  "content": "\nThis project contains a hub & spoke Virtual Datacenter deployment. \n<br/>\n<br/>\n<a href='https://portal.azure.com/#@/dashboard/arm${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.portal/dashboards/${appinsights_id}-dashboard' target='_blank'>Application Insights Dashboard</a>\n<br/>\n<a href='${paas_scm_url}' target='_blank'>App Service Kudu Console</a>\n<br/>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Codespace</a>\n",
+                  "content": "\nThis project contains a hub & spoke Virtual Datacenter deployment. \n<br/>\n<br/>\n<a href='https://portal.azure.com/#@/dashboard/arm${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.portal/dashboards/${appinsights_id}-dashboard' target='_blank'>Application Insights Dashboard</a>\n<br/>\n<a href='https://${prefix}-${deployment_name}-paasapp-${suffix}-appsvc-app.scm.azurewebsites.net' target='_blank'>App Service Kudu Console</a>\n<br/>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Codespace</a>\n",
                   "subtitle": "",
                   "title": "Automated VDC"
                 }
@@ -1345,12 +1345,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-9cb27f65-c9ae-402c-88e8-fefa55582bc4",
-              "StartboardPart-AnalyticsPart-9cb27f65-c9ae-402c-88e8-fefa55582bca",
-              "StartboardPart-MonitorChartPart-9cb27f65-c9ae-402c-88e8-fefa55582bd0",
-              "StartboardPart-AnalyticsPart-9cb27f65-c9ae-402c-88e8-fefa55582bda",
-              "StartboardPart-AnalyticsPart-9cb27f65-c9ae-402c-88e8-fefa55582be4",
-              "StartboardPart-AnalyticsPart-9cb27f65-c9ae-402c-88e8-fefa55582bea"
+              "StartboardPart-ApplicationMapPart-181f75d8-857a-432d-b295-cf3bd6ce9332",
+              "StartboardPart-AnalyticsPart-181f75d8-857a-432d-b295-cf3bd6ce9338",
+              "StartboardPart-MonitorChartPart-181f75d8-857a-432d-b295-cf3bd6ce933e",
+              "StartboardPart-AnalyticsPart-181f75d8-857a-432d-b295-cf3bd6ce9348",
+              "StartboardPart-AnalyticsPart-181f75d8-857a-432d-b295-cf3bd6ce9352",
+              "StartboardPart-AnalyticsPart-181f75d8-857a-432d-b295-cf3bd6ce9358"
             ],
             "model": {
               "format": "utc",
