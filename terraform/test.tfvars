@@ -2,8 +2,8 @@
 
 resource_prefix                = "vdc"
 deployment_name                = "test"
-location                       = "westeurope"
-workspace_location             = "westeurope"
+location                       = "uksouth"
+workspace_location             = "uksouth"
 
 # deploy_managed_bastion         = false
 # deploy_monitoring_vm_extensions = false

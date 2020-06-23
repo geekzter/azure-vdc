@@ -2,6 +2,7 @@ locals {
   client_config                = map(
     "environment",               local.deployment_name,
     "paasappurl",                "https://${module.paas_app.app_service_fqdn}",
+    "portalurl",                 "https://portal.azure.com/#dashboard/arm${azurerm_dashboard.vdc_dashboard.id}",
     "privatelinkfqdns",          join(",",[
       module.paas_app.sql_server_fqdn,
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,

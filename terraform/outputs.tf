@@ -233,10 +233,6 @@ output paas_app_url {
   value       = local.paas_app_url
 } 
 
-output paas_scm_url {
-  value       = local.paas_app_url
-} 
-
 output paas_vnet_name {
     value     = module.paas_spoke_vnet.spoke_virtual_network_name
 }

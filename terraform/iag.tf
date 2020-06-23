@@ -227,8 +227,8 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "go.microsoft.com",
       "licensing.mp.microsoft.com",
       "marketplace.visualstudio.com",
-      "sqlopsbuilds.azureedge.net",
-      "sqlopsextensions.blob.core.windows.net",
+      "sqlopsbuilds.azureedge.net", # Data Studio
+      "sqlopsextensions.blob.core.windows.net", # Data Studio
       "version.pm2.io",
       "visualstudio.microsoft.com",
       "xamarin-downloads.azureedge.net",
@@ -275,16 +275,16 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "*.delivery.mp.microsoft.com",
       "*.do.dsp.mp.microsoft.com",
       "*.events.data.microsoft.com",
-      "*.identity.azure.net",
+      "*.identity.azure.net", # MSI Sidecar
       "*.loganalytics.io",
       "*.monitoring.azure.com",
-      "*.msauth.net",
-      "*.msftauth.net",
-      "*.msauthimages.net",
+      "*.msauth.net", # AAD Browser login
+      "*.msftauth.net", # AAD Browser login
+      "*.msauthimages.net", # AAD Browser login
       "*.ods.opinsights.azure.com",
       "*.oms.opinsights.azure.com",
       "*.portal.azure.com",
-      "*.portal.azure.net",
+      "*.portal.azure.net", # Portal images, resources
       "*.systemcenteradvisor.com",
       "*.telemetry.microsoft.com",
       "*.update.microsoft.com",

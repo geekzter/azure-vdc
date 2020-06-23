@@ -51,6 +51,10 @@ $paasAppShortcut = $wsh.CreateShortcut("$($env:USERPROFILE)\Desktop\PaaSApp.url"
 $paasAppShortcut.TargetPath = $config.paasappurl
 $paasAppShortcut.Save()
 
+$paasAppShortcut = $wsh.CreateShortcut("$($env:USERPROFILE)\Desktop\Portal Dashboard.url")
+$paasAppShortcut.TargetPath = $config.portalurl
+$paasAppShortcut.Save()
+
 $scmShortcut = $wsh.CreateShortcut("$($env:USERPROFILE)\Desktop\SCM.url")
 $scmShortcut.TargetPath = $config.scmurl
 $scmShortcut.Save() 
