@@ -215,6 +215,7 @@ resource "azurerm_application_gateway" "waf" {
       cookie_based_affinity    = "Disabled"
       pick_host_name_from_backend_address = true
       port                     = 443
+      probe_name               = "paas-app-probe"
       protocol                 = "Https"
       request_timeout          = 10
     }

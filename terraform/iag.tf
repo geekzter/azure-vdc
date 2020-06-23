@@ -281,6 +281,7 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "*.msauth.net", # AAD Browser login
       "*.msftauth.net", # AAD Browser login
       "*.msauthimages.net", # AAD Browser login
+      "*.msftauthimages.net", # AAD Browser login
       "*.ods.opinsights.azure.com",
       "*.oms.opinsights.azure.com",
       "*.portal.azure.com",
