@@ -35,6 +35,25 @@ param (
 ) 
 Write-Host $MyInvocation.line
 
+function DeployContainerWebApp () {
+    $slot = "staging"
+    # This step assumes a container has already been deployed
+    # We merely have to toggle ASPNETCORE_ENVIRONMENT to 'Online' using a deployment slot swap
+
+    $productionMode = $(az webapp config appsettings list -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT'].value" -o tsv)
+    # Create staging deployment slot, if ot does not exist yet
+    if (!(az webapp deployment slot list -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='$slot']" -o tsv)) {
+        az webapp deployment slot create -n $AppAppServiceName --configuration-source $AppAppServiceName -s $slot -g $AppResourceGroup --query "hostNames"
+        $stagingMode = ($productionMode -eq "Offline" ? "Online" : "Offline")
+        az webapp config appsettings set --settings ASPNETCORE_ENVIRONMENT=$stagingMode -s $slot -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT']"
+    }
+
+    if ($productionMode -eq "Offline") {
+        # Swap slots
+        az webapp deployment slot swap -s $slot -n $AppAppServiceName -g $AppResourceGroup
+    }    
+}
+
 function DeployWebApp () {
     if (!$devOpsOrgUrl) {
         Write-Warning "DevOps Organization is not set, quiting"
@@ -334,7 +353,7 @@ if ($All -or $Database) {
 
 if ($All -or $Website) {
     # Deploy Web App
-    DeployWebApp
+    DeployContainerWebApp
 }
 if ($All -or $Restart -or $Website) {
     # Deploy Web App
