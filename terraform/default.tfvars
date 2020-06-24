@@ -5,7 +5,7 @@ deployment_name                = "dev"
 # https://azure.microsoft.com/en-us/global-infrastructure/services/?products=sql-database,monitor,azure-bastion,private-link
 # https://azure.microsoft.com/en-us/global-infrastructure/regions/
 #location                       = "eastus"
-location                       = "westus2"
+location                       = "northeurope"
 #location                       = "southeastasia"
 #location                       = "westeurope"
 #location                       = "uksouth"

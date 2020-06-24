@@ -296,6 +296,9 @@ variable paas_app_storage_import {
   type                         = bool
   default                      = false
 }
+variable paas_app_web_container {
+  default                      = null
+}
 variable management_vm_size {
   description                  = "Specifies the size of the Management virtual machine"
   default                      = "Standard_D2s_v3"

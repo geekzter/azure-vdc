@@ -423,7 +423,7 @@ stages:
             scriptType: pscore
             scriptLocation: inlineScript
             inlineScript: |
-              ./deploy_paas_app.ps1 -Database `
+              ./deploy_paas_app.ps1 -All `
                                     -AppResourceGroup $(paasResourceGroup) `
                                     -AppAppServiceIdentity $(appMSIName) `
                                     -AppAppServiceClientID $(appMSIClientID) `
@@ -435,6 +435,16 @@ stages:
             useGlobalConfig: true
             workingDirectory: '$(scriptDirectory)'
             failOnStandardError: true
+
+        # # App already pulled as container, just switch offline -> online configuration
+        # - task: AzureAppServiceManage@0
+        #   displayName: 'Swap Online and Offline App Service slots'
+        #   inputs:
+        #     azureSubscription: '$(subscriptionConnection)'
+        #     Action: 'Swap Slots'
+        #     WebAppName: '$(appServiceName)'
+        #     ResourceGroupName: '$(paasResourceGroup)'
+        #     SourceSlot: 'staging'            
 
         # App pulled as container, below steps are obsolete
         # # Download PaaS Application Pipeline artifacts

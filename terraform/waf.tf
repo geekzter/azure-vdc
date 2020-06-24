@@ -191,34 +191,15 @@ resource "azurerm_application_gateway" "waf" {
     name                       = local.paas_app_backend_pool
     fqdns                      = [module.paas_app.app_service_fqdn]
   }
-  # Used when not using Private Link
-  dynamic "backend_http_settings" {
-    for_each = range(var.enable_private_link ? 0 : 1) 
-    content {
-      name                     = local.paas_app_backend_setting
-      cookie_based_affinity    = "Disabled"
-      # Used when terminating SSL at App Service
-      host_name                = local.paas_app_fqdn
-      # Used when terminating SSL at App Gateway
-      # pick_host_name_from_backend_address = true
-      port                     = 443
-      probe_name               = "paas-app-probe"
-      protocol                 = "Https"
-      request_timeout          = 10
-    }
-  }
-  # Used when using Private Link
-  dynamic "backend_http_settings" {
-    for_each = range(var.enable_private_link ? 1 : 0) 
-    content {
-      name                     = local.paas_app_backend_setting
-      cookie_based_affinity    = "Disabled"
-      pick_host_name_from_backend_address = true
-      port                     = 443
-      probe_name               = "paas-app-probe"
-      protocol                 = "Https"
-      request_timeout          = 10
-    }
+  backend_http_settings {
+    name                       = local.paas_app_backend_setting
+    cookie_based_affinity      = "Disabled"
+    # Used when terminating SSL at App Service
+    host_name                  = local.paas_app_fqdn
+    port                       = 443
+    probe_name                 = "paas-app-probe"
+    protocol                   = "Https"
+    request_timeout            = 10
   }
 
   http_listener {

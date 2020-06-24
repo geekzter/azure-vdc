@@ -195,9 +195,7 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     description                = "Bootstrap scripts are hosted on GitHub, tools on their own locations"
 
     source_addresses           = [
-      var.vdc_config["iaas_spoke_app_subnet"],
-      var.vdc_config["iaas_spoke_data_subnet"],
-      var.vdc_config["hub_mgmt_subnet"],
+      var.vdc_config["vdc_range"],
       var.vdc_config["vpn_range"]
     ]
 
@@ -271,12 +269,14 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
 
     target_fqdns               = [
       "*.api.cdp.microsoft.com",
+      "*.applicationinsights.io",
       "*.azure-automation.net",
       "*.delivery.mp.microsoft.com",
       "*.do.dsp.mp.microsoft.com",
       "*.events.data.microsoft.com",
       "*.identity.azure.net", # MSI Sidecar
       "*.loganalytics.io",
+      "*.microsoftonline-p.com", # AAD Browser login
       "*.monitoring.azure.com",
       "*.msauth.net", # AAD Browser login
       "*.msftauth.net", # AAD Browser login
@@ -299,6 +299,7 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "management.azure.com",
       "management.core.windows.net",
       "msft.sts.microsoft.com",
+      "nav.smartscreen.microsoft.com",
       "opinsightsweuomssa.blob.core.windows.net",
       "pas.windows.net",
       "portal.azure.com",
@@ -314,6 +315,26 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       azurerm_log_analytics_workspace.vcd_workspace.portal_url,
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_storage_account.vdc_diag_storage.primary_table_host
+    ]
+
+    protocol {
+        port                   = "443"
+        type                   = "Https"
+    }
+  }
+
+  rule {
+    name                       = "Allow Application"
+    description                = "Diagnostics, Management, Windows Update"
+
+    source_addresses           = [
+      var.vdc_config["vdc_range"],
+      var.vdc_config["vpn_range"]
+    ]
+
+    target_fqdns               = [
+        "*.bootstrapcdn.com",
+        "cdnjs.cloudflare.com",
     ]
 
     protocol {

@@ -41,7 +41,7 @@ function DeployContainerWebApp () {
     # We merely have to toggle ASPNETCORE_ENVIRONMENT to 'Online' using a deployment slot swap
 
     $productionMode = $(az webapp config appsettings list -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT'].value" -o tsv)
-    # Create staging deployment slot, if ot does not exist yet
+    # Create staging deployment slot, if it does not exist yet
     if (!(az webapp deployment slot list -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='$slot']" -o tsv)) {
         az webapp deployment slot create -n $AppAppServiceName --configuration-source $AppAppServiceName -s $slot -g $AppResourceGroup --query "hostNames"
         $stagingMode = ($productionMode -eq "Offline" ? "Online" : "Offline")
@@ -49,9 +49,12 @@ function DeployContainerWebApp () {
     }
 
     if ($productionMode -eq "Offline") {
+        Write-Host "Swapping slots..."
         # Swap slots
         az webapp deployment slot swap -s $slot -n $AppAppServiceName -g $AppResourceGroup
-    }    
+    } else {
+        Write-Host "Already online, no swap needed"
+    }
 }
 
 function DeployWebApp () {
