@@ -4,6 +4,9 @@ output app_resource_group {
 output app_service_fqdn {
     value = azurerm_app_service.paas_web_app.default_site_hostname
 }
+output app_service_scm_fqdn {
+    value = replace(azurerm_app_service.paas_web_app.default_site_hostname,"azurewebsites.net","scm.azurewebsites.net")
+}
 output app_service_alias_fqdn {
     value = var.vanity_fqdn != null ? azurerm_app_service_custom_hostname_binding.alias_domain.0.hostname : azurerm_app_service.paas_web_app.default_site_hostname
 }
@@ -78,6 +81,9 @@ output primary_web_host {
 
 output sql_database {
     value = azurerm_sql_database.app_sqldb.name
+}
+output sql_database_connection_string {
+    value = local.sql_connection_string
 }
 output sql_server {
     value = azurerm_sql_server.app_sqlserver.name

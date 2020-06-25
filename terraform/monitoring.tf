@@ -242,7 +242,7 @@ resource "azurerm_dashboard" "vdc_dashboard" {
     {
       subscription             = data.azurerm_subscription.primary.id
       prefix                   = var.resource_prefix
-      environment              = local.deployment_name
+      deployment_name          = local.deployment_name
       suffix                   = local.suffix
       subscription_guid        = data.azurerm_subscription.primary.subscription_id
       appinsights_id           = azurerm_application_insights.vdc_insights.app_id

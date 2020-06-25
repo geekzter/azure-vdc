@@ -35,6 +35,28 @@ param (
 ) 
 Write-Host $MyInvocation.line
 
+function DeployContainerWebApp () {
+    $slot = "staging"
+    # This step assumes a container has already been deployed
+    # We merely have to toggle ASPNETCORE_ENVIRONMENT to 'Online' using a deployment slot swap
+
+    $productionMode = $(az webapp config appsettings list -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT'].value" -o tsv)
+    # Create staging deployment slot, if it does not exist yet
+    if (!(az webapp deployment slot list -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='$slot']" -o tsv)) {
+        az webapp deployment slot create -n $AppAppServiceName --configuration-source $AppAppServiceName -s $slot -g $AppResourceGroup --query "hostNames"
+        $stagingMode = ($productionMode -eq "Offline" ? "Online" : "Offline")
+        az webapp config appsettings set --settings ASPNETCORE_ENVIRONMENT=$stagingMode -s $slot -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT']"
+    }
+
+    if ($productionMode -eq "Offline") {
+        Write-Host "Swapping slots..."
+        # Swap slots
+        az webapp deployment slot swap -s $slot -n $AppAppServiceName -g $AppResourceGroup
+    } else {
+        Write-Host "Already online, no swap needed"
+    }
+}
+
 function DeployWebApp () {
     if (!$devOpsOrgUrl) {
         Write-Warning "DevOps Organization is not set, quiting"
@@ -49,7 +71,7 @@ function DeployWebApp () {
     $artifactName = "aspnetcoresql"
     $packageName = "publish.zip" 
     $configuration = "Release"
-    $dotnetVersion = "2.2"
+    $dotnetVersion = "3.1"
 
     # We need this for Azure DevOps
     az extension add --name azure-devops 
@@ -203,9 +225,9 @@ function ResetDatabasePassword (
 }
 function RestartApp () {
     # HACK: Creating and removing a bogus IP Access Restriction sometime get's rid of 500.79 errors with AAD authentication
-    $ruleName = "Bogusrule"
-    Write-Information "Adding App Service '$appAppServiceName' Access Restriction '$ruleName'..."
-    az webapp config access-restriction add -p 999 -r $ruleName --ip-address 1.2.3.4/32 -g $appResourceGroup -n $appAppServiceName -o none
+    #$ruleName = "Bogusrule"
+    #Write-Information "Adding App Service '$appAppServiceName' Access Restriction '$ruleName'..."
+    #az webapp config access-restriction add -p 999 -r $ruleName --ip-address 1.2.3.4/32 -g $appResourceGroup -n $appAppServiceName -o none
     $authEnabled = $(az webapp auth show -g $appResourceGroup -n $appAppServiceName --query "enabled" -o tsv)
     Write-Information "Authentication for App Service '$appAppServiceName' is set to '$authEnabled'"
     Write-Information "Disabling authentication for App Service '$appAppServiceName'..."
@@ -214,8 +236,8 @@ function RestartApp () {
     Write-Information "Restarting App Service '$appAppServiceName'..."
     az webapp restart -g $appResourceGroup -n $appAppServiceName 
 
-    Write-Information "Removing App Service '$appAppServiceName' Access Restriction '$ruleName'..."
-    az webapp config access-restriction remove -r $ruleName -g $appResourceGroup -n $appAppServiceName -o none
+    #Write-Information "Removing App Service '$appAppServiceName' Access Restriction '$ruleName'..."
+    #az webapp config access-restriction remove -r $ruleName -g $appResourceGroup -n $appAppServiceName -o none
     Write-Information "Setting authentication for App Service '$appAppServiceName' to '$authEnabled'..."
     az webapp auth update --enabled $authEnabled -g $appResourceGroup -n $appAppServiceName -o none
 
@@ -334,7 +356,7 @@ if ($All -or $Database) {
 
 if ($All -or $Website) {
     # Deploy Web App
-    DeployWebApp
+    DeployContainerWebApp
 }
 if ($All -or $Restart -or $Website) {
     # Deploy Web App

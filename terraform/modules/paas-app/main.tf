@@ -21,6 +21,12 @@ data http localpublicprefix {
 
 data azurerm_client_config current {}
 data azurerm_subscription primary {}
+data azurerm_container_registry vdc_images {
+  name                         = var.container_registry
+  resource_group_name          = var.shared_resources_group
+
+  count                        = var.container_registry != null ? 1 : 0
+}
 
 locals {
   aad_auth_client_id           = var.aad_auth_client_id_map != null ? lookup(var.aad_auth_client_id_map, "${terraform.workspace}_client_id", null) : null
@@ -30,9 +36,7 @@ locals {
   # Last element of resource id is resource name
   integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
-# linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/vdc-aspnet-core-sqldb:latest" 
-# linux_fx_version             = "DOCKER|${data.azurerm_container_registry.vdc_images.login_server}/vdc/aspnet-core-sqldb:latest" 
-# linux_fx_version             = "DOCKER|appsvcsample/python-helloworld:latest"
+  linux_fx_version             = var.container_registry != null && var.container != null ? "DOCKER|${data.azurerm_container_registry.vdc_images.0.login_server}/${var.container}" : "DOCKER|appsvcsample/python-helloworld:latest"
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
   vanity_hostname              = var.vanity_fqdn != null ? element(split(".",var.vanity_fqdn),0) : null
@@ -171,7 +175,6 @@ resource azurerm_advanced_threat_protection app_storage {
   enabled                      = true
 }
 
-# BUG: 1.0;2019-11-29T15:10:06.7720881Z;GetContainerProperties;IpAuthorizationError;403;6;6;authenticated;XXXXXXX;XXXXXXX;blob;"https://XXXXXXX.blob.core.windows.net:443/data?restype=container";"/";ad97678d-101e-0016-5ec7-a608d2000000;0;10.139.212.72:44506;2018-11-09;481;0;130;246;0;;;;;;"Go/go1.12.6 (amd64-linux) go-autorest/v13.0.2 tombuildsstuff/giovanni/v0.5.0 storage/2018-11-09";;
 resource azurerm_storage_container app_storage_container {
   name                         = "data"
   storage_account_name         = azurerm_storage_account.app_storage.name
@@ -322,8 +325,8 @@ resource azurerm_app_service_plan paas_plan {
   resource_group_name          = azurerm_resource_group.app_rg.name
 
   # Required for containers
-# kind                         = "Linux"
-# reserved                     = true
+  kind                         = "Linux"
+  reserved                     = true
 
   sku {
     tier                       = "PremiumV2"
@@ -341,6 +344,11 @@ resource azurerm_user_assigned_identity paas_web_app_identity {
   resource_group_name          = azurerm_resource_group.app_rg.name
 }
 
+locals {
+  # No secrets in connection string
+  sql_connection_string        = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
+}
+
 resource azurerm_app_service paas_web_app {
   name                         = "${var.resource_group_name}-appsvc-app"
   location                     = azurerm_resource_group.app_rg.location
@@ -353,16 +361,14 @@ resource azurerm_app_service paas_web_app {
     APP_CLIENT_ID              = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
     APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
-    ASPNETCORE_ENVIRONMENT     = "Production"
+    ASPNETCORE_ENVIRONMENT     = "Offline"
+    ASPNETCORE_URLS            = "http://+:80"
 
     # Required for containers
-  # # DOCKER_REGISTRY_SERVER_URL = "https://index.docker.io"
-  # DOCKER_REGISTRY_SERVER_URL = "https://${data.azurerm_container_registry.vdc_images.login_server}"
-  # # TODO: Use MSI
-  # #       https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication-managed-identity
-  # DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.vdc_images.admin_username}"
-  # DOCKER_REGISTRY_SERVER_PASSWORD = "${data.azurerm_container_registry.vdc_images.admin_password}"
-  # WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
+    #       https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication-managed-identity
+    DOCKER_REGISTRY_SERVER_USERNAME = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_username : ""
+    DOCKER_REGISTRY_SERVER_PASSWORD = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_password : ""
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
     WEBSITE_DNS_SERVER         = "168.63.129.16" # Private DNS
     WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
@@ -387,8 +393,7 @@ resource azurerm_app_service paas_web_app {
   connection_string {
     name                       = "MyDbConnection"
     type                       = "SQLAzure"
-  # No secrets in connection string
-    value                      = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
+    value                      = local.sql_connection_string
   }
 
   identity {
@@ -445,23 +450,20 @@ resource azurerm_app_service paas_web_app {
     }
 
     # Required for containers
-  # linux_fx_version           = local.linux_fx_version
+    linux_fx_version           = local.linux_fx_version
     # LocalGit removed since using containers for deployment
     scm_type                   = "None"
   }
 
-  # Uncomment for container deployment
-  # lifecycle {
-  #   ignore_changes = [
-  #     "site_config.0.linux_fx_version", # deployments are made outside of Terraform
-  #   ]
-  # }
+  # Ignore container updates, those are deployed independently
+  lifecycle {
+    ignore_changes = [
+      app_settings["ASPNETCORE_ENVIRONMENT"], # swap slot outside of Terraform
+      site_config.0.linux_fx_version, # deployments are made outside of Terraform
+    ]
+  }
 
   tags                         = var.tags
-
-# We can't wait for App Service specific rules due to circular dependency.
-# The all rule will be removed after App Service rules and SQL DB have been provisioned
-# depends_on                   = [azurerm_sql_firewall_rule.azureall] 
 }
 
 resource azurerm_dns_cname_record verify_record {
@@ -518,30 +520,41 @@ resource azurerm_app_service_custom_hostname_binding alias_domain {
   depends_on                   = [azurerm_dns_cname_record.verify_record]
 }
 
-# TODO
-# resource azurerm_private_endpoint app_service_endpoint {
-#   name                         = "${azurerm_app_service.paas_web_app.name}-endpoint"
-#   resource_group_name          = azurerm_resource_group.app_rg.name
-#   location                     = azurerm_resource_group.app_rg.location
-#   subnet_id                    = var.app_subnet_id
+# https://docs.microsoft.com/en-us/azure/app-service/networking/private-endpoint
+resource azurerm_private_endpoint app_service_endpoint {
+  name                         = "${azurerm_app_service.paas_web_app.name}-endpoint"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  location                     = azurerm_resource_group.app_rg.location
+  subnet_id                    = var.app_subnet_id
 
-#   private_service_connection {
-#     is_manual_connection       = false
-#     name                       = "${azurerm_app_service.paas_web_app.name}-endpoint-connection"
-#     private_connection_resource_id = azurerm_app_service.paas_web_app.id
-#     subresource_names          = ["site"]
-#   }
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_app_service.paas_web_app.name}-endpoint-connection"
+    private_connection_resource_id = azurerm_app_service.paas_web_app.id
+    subresource_names          = ["sites"]
+  }
 
-#   tags                         = var.tags
-# }
-# resource azurerm_private_dns_a_record app_service_dns_record {
-#   name                         = azurerm_app_service.paas_web_app.name
-#   zone_name                    = "privatelink.azurewebsites.net"
-#   resource_group_name          = local.vdc_resource_group_name
-#   ttl                          = 300
-#   records                      = [azurerm_private_endpoint.app_service_endpoint.private_service_connection[0].private_ip_address]
-#   tags                         = var.tags
-# }
+  tags                         = var.tags
+  count                        = var.enable_private_link ? 1 : 0
+}
+resource azurerm_private_dns_a_record app_service_dns_record {
+  name                         = azurerm_app_service.paas_web_app.name
+  zone_name                    = "privatelink.azurewebsites.net"
+  resource_group_name          = local.vdc_resource_group_name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.app_service_endpoint[0].private_service_connection[0].private_ip_address]
+  tags                         = var.tags
+  count                        = var.enable_private_link ? 1 : 0
+}
+resource azurerm_private_dns_a_record app_service_scm_dns_record {
+  name                         = "${azurerm_app_service.paas_web_app.name}.scm"
+  zone_name                    = "privatelink.azurewebsites.net"
+  resource_group_name          = local.vdc_resource_group_name
+  ttl                          = 300
+  records                      = [azurerm_private_endpoint.app_service_endpoint[0].private_service_connection[0].private_ip_address]
+  tags                         = var.tags
+  count                        = var.enable_private_link ? 1 : 0
+}
 
 resource azurerm_monitor_diagnostic_setting app_service_logs {
   name                         = "AppService_Logs"

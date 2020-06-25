@@ -196,13 +196,12 @@ resource "azurerm_application_gateway" "waf" {
     cookie_based_affinity      = "Disabled"
     # Used when terminating SSL at App Service
     host_name                  = local.paas_app_fqdn
-    # Used when terminating SSL at App Gateway
-    # pick_host_name_from_backend_address = true
     port                       = 443
     probe_name                 = "paas-app-probe"
     protocol                   = "Https"
     request_timeout            = 10
   }
+
   http_listener {
     name                       = local.http80_listener
     frontend_ip_configuration_name = local.waf_frontend_ip_config

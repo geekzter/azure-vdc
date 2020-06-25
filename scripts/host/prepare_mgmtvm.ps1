@@ -42,9 +42,23 @@ choco install TelnetClient --source windowsfeatures -r -y
 
 # Create shortcuts
 $wsh = New-Object -ComObject WScript.Shell
+
 $bootstrapShortcut = $wsh.CreateShortcut("$($env:USERPROFILE)\Desktop\Setup.lnk")
 $bootstrapShortcut.TargetPath = $localBatchScript
 $bootstrapShortcut.Save()
+
+$paasAppShortcut = $wsh.CreateShortcut("$($env:USERPROFILE)\Desktop\PaaSApp.url")
+$paasAppShortcut.TargetPath = $config.paasappurl
+$paasAppShortcut.Save()
+
+$paasAppShortcut = $wsh.CreateShortcut("$($env:USERPROFILE)\Desktop\Portal Dashboard.url")
+$paasAppShortcut.TargetPath = $config.portalurl
+$paasAppShortcut.Save()
+
+$scmShortcut = $wsh.CreateShortcut("$($env:USERPROFILE)\Desktop\SCM.url")
+$scmShortcut.TargetPath = $config.scmurl
+$scmShortcut.Save() 
+
 $ssmsPath = (Get-ItemProperty -Path HKLM:\SOFTWARE\WOW6432Node\Microsoft\AppEnv\15.0\Apps\ssms_15.0 | Select-Object -ExpandProperty StubExePath)
 $ssmsShortcut = $wsh.CreateShortcut("$($env:USERPROFILE)\Desktop\$($config.sqldatabase).lnk")
 $ssmsShortcut.TargetPath = $ssmsPath

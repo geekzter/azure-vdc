@@ -11,6 +11,8 @@ variable admin_object_id {}
 variable admin_username {}
 variable aad_auth_client_id_map {}
 variable app_subnet_id {}
+variable container {}
+variable container_registry {}
 variable management_subnet_ids {
   type                         = list
 }

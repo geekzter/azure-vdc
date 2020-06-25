@@ -118,8 +118,8 @@ variable vdc_oms_solutions {
   # "ADAssessment",
   # "ADReplication",
   # "AgentHealthAssessment",
-    "AlertManagement",
-    "AntiMalware",
+  # "AlertManagement",
+  # "AntiMalware",
   # "ApplicationInsights", # Depricated
   # "ASRAnalytics",
   # "AzureActivity",
@@ -296,6 +296,9 @@ variable paas_app_storage_import {
   type                         = bool
   default                      = false
 }
+variable paas_app_web_container {
+  default                      = null
+}
 variable management_vm_size {
   description                  = "Specifies the size of the Management virtual machine"
   default                      = "Standard_D2s_v3"
@@ -303,6 +306,10 @@ variable management_vm_size {
 variable shared_resources_group {
   description                  = "Resource group of shared (data) resources e.g. Container Registry, DNS"
   default                      = "Shared"
+}
+variable shared_container_registry {
+  description                  = "Container Registry"
+  default                      = null
 }
 variable update_management_time {
   description                  = "Time of day when OS updates are scheduled (UTC)"

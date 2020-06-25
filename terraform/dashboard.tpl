@@ -9,7 +9,7 @@
             "settings": {
               "content": {
                 "settings": {
-                  "content": "\nThis project contains a hub & spoke Virtual Datacenter deployment. \n<br/>\n<br/>\n<a href='https://portal.azure.com/#@/dashboard/arm${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.portal/dashboards/${appinsights_id}-dashboard' target='_blank'>Application Insights Dashboard</a>\n<br/>\n<a href='https://${prefix}-${environment}-paasapp-${suffix}-appsvc-app.scm.azurewebsites.net/' target='_blank'>App Service Kudu Console</a>\n<br/>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Codespace</a>\n",
+                  "content": "\nThis project contains a hub & spoke Virtual Datacenter deployment. \n<br/>\n<br/>\n<a href='https://portal.azure.com/#@/dashboard/arm${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.portal/dashboards/${appinsights_id}-dashboard' target='_blank'>Application Insights Dashboard</a>\n<br/>\n<a href='https://${prefix}-${deployment_name}-paasapp-${suffix}-appsvc-app.scm.azurewebsites.net' target='_blank'>App Service Kudu Console</a>\n<br/>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${release_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Codespace</a>\n",
                   "subtitle": "",
                   "title": "Automated VDC"
                 }
@@ -74,7 +74,7 @@
             "inputs": [
               {
                 "name": "resourceId",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Sql/servers/${paas_app_resource_group_short}sqlserver"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-paasapp-${suffix}/providers/Microsoft.Sql/servers/${paas_app_resource_group_short}sqlserver"
               }
             ],
             "type": "Extension/SqlAzureExtension/PartType/ServerPart"
@@ -96,7 +96,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-iaasapp-${suffix}"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-iaasapp-${suffix}"
               }
             ],
             "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
@@ -117,7 +117,7 @@
             "inputs": [
               {
                 "name": "ComponentId",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/microsoft.insights/components/${prefix}-${environment}-${suffix}-insights"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.insights/components/${prefix}-${deployment_name}-${suffix}-insights"
               },
               {
                 "isOptional": true,
@@ -186,7 +186,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.EventHub/namespaces/${paas_app_resource_group_short}eventhubNamespace"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-paasapp-${suffix}/providers/Microsoft.EventHub/namespaces/${paas_app_resource_group_short}eventhubNamespace"
               }
             ],
             "type": "Extension/Microsoft_Azure_EventHub/PartType/NamespaceOverviewPart"
@@ -207,7 +207,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Storage/storageAccounts/${paas_app_resource_group_short}stor"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-paasapp-${suffix}/providers/Microsoft.Storage/storageAccounts/${paas_app_resource_group_short}stor"
               }
             ],
             "type": "Extension/HubsExtension/PartType/ResourcePart"
@@ -229,9 +229,9 @@
               {
                 "name": "ComponentId",
                 "value": {
-                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
-                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
-                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
+                  "Name": "${prefix}-${deployment_name}-${suffix}-loganalytics",
+                  "ResourceGroup": "${prefix}-${deployment_name}-${suffix}",
+                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics",
                   "SubscriptionId": "${subscription_guid}"
                 }
               },
@@ -257,7 +257,7 @@
               },
               {
                 "name": "PartSubTitle",
-                "value": "${prefix}-${environment}-${suffix}-loganalytics"
+                "value": "${prefix}-${deployment_name}-${suffix}-loganalytics"
               },
               {
                 "name": "resourceTypeMode",
@@ -282,7 +282,7 @@
             ],
             "settings": {
               "content": {
-                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
+                "PartSubTitle": "${prefix}-${deployment_name}-${suffix}-loganalytics",
                 "PartTitle": "Denied outbound HTTP Traffic",
                 "Query": "// Taken from https://docs.microsoft.com/en-us/azure/firewall/log-analytics-samples\nAzureDiagnostics\n| where Category == \"AzureFirewallApplicationRule\" \n| parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePortInt:int \" \" TempDetails\n| parse TempDetails with \"was \" Action1 \". Reason: \" Rule1\n| parse TempDetails with \"to \" FQDN \":\" TargetPortInt:int \". Action: \" Action2 \".\" *\n| parse TempDetails with * \". Rule Collection: \" RuleCollection2a \". Rule:\" Rule2a\n| parse TempDetails with * \"Deny.\" RuleCollection2b \". Proceeding with\" Rule2b\n| extend TargetPort = tostring(TargetPortInt)\n| extend Action1 = case(Action1 == \"Deny\",\"Deny\",\"Unknown Action\")\n| extend Action = case(Action2 == \"\",Action1,Action2),Rule = case(Rule2a == \"\", case(Rule1 == \"\",case(Rule2b == \"\",\"N/A\", Rule2b),Rule1),Rule2a), \nRuleCollection = case(RuleCollection2b == \"\",case(RuleCollection2a == \"\",\"No rule matched\",RuleCollection2a), RuleCollection2b),FQDN = case(FQDN == \"\", \"N/A\", FQDN),Port = case(TargetPort == \"\", \"N/A\", TargetPort)\n| project TimeGenerated, FQDN, SourceIP, Port, Action ,RuleCollection, Rule\n| order by TimeGenerated desc\n| where Action == \"Deny\"\n"
               }
@@ -305,7 +305,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
               }
             ],
             "type": "Extension/Microsoft_Azure_PrivateDNS/PartType/PrivateDnsZonePart"
@@ -326,7 +326,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-hub-network"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${deployment_name}-${suffix}-hub-network"
               },
               {
                 "isOptional": true,
@@ -372,13 +372,13 @@
                         "aggregationType": 7,
                         "metricVisualization": {
                           "color": "#EC008C",
-                          "resourceDisplayName": "${prefix}-${environment}-${suffix}-insights"
+                          "resourceDisplayName": "${prefix}-${deployment_name}-${suffix}-insights"
                         },
                         "name": "requests/failed",
                         "namespace": "microsoft.insights/components",
                         "resourceMetadata": {
-                          "id": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/microsoft.insights/components/${prefix}-${environment}-${suffix}-insights",
-                          "resourceGroup": "${prefix}-${environment}-${suffix}"
+                          "id": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.insights/components/${prefix}-${deployment_name}-${suffix}-insights",
+                          "resourceGroup": "${prefix}-${deployment_name}-${suffix}"
                         }
                       }
                     ],
@@ -389,15 +389,15 @@
                         "metadata": {},
                         "options": {
                           "parameters": {
-                            "id": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/microsoft.insights/components/${prefix}-${environment}-${suffix}-insights",
+                            "id": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.insights/components/${prefix}-${deployment_name}-${suffix}-insights",
                             "menuid": "failures",
-                            "resourceGroup": "${prefix}-${environment}-${suffix}"
+                            "resourceGroup": "${prefix}-${deployment_name}-${suffix}"
                           }
                         },
                         "parameters": {
-                          "id": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/microsoft.insights/components/${prefix}-${environment}-${suffix}-insights",
+                          "id": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.insights/components/${prefix}-${deployment_name}-${suffix}-insights",
                           "menuid": "failures",
-                          "resourceGroup": "${prefix}-${environment}-${suffix}"
+                          "resourceGroup": "${prefix}-${deployment_name}-${suffix}"
                         }
                       },
                       "openBlade": true
@@ -420,13 +420,13 @@
                         "aggregationType": 7,
                         "metricVisualization": {
                           "color": "#EC008C",
-                          "resourceDisplayName": "${prefix}-${environment}-${suffix}-insights"
+                          "resourceDisplayName": "${prefix}-${deployment_name}-${suffix}-insights"
                         },
                         "name": "requests/failed",
                         "namespace": "microsoft.insights/components",
                         "resourceMetadata": {
-                          "id": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/microsoft.insights/components/${prefix}-${environment}-${suffix}-insights",
-                          "resourceGroup": "${prefix}-${environment}-${suffix}"
+                          "id": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.insights/components/${prefix}-${deployment_name}-${suffix}-insights",
+                          "resourceGroup": "${prefix}-${deployment_name}-${suffix}"
                         }
                       }
                     ],
@@ -437,15 +437,15 @@
                         "metadata": {},
                         "options": {
                           "parameters": {
-                            "id": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/microsoft.insights/components/${prefix}-${environment}-${suffix}-insights",
+                            "id": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.insights/components/${prefix}-${deployment_name}-${suffix}-insights",
                             "menuid": "failures",
-                            "resourceGroup": "${prefix}-${environment}-${suffix}"
+                            "resourceGroup": "${prefix}-${deployment_name}-${suffix}"
                           }
                         },
                         "parameters": {
-                          "id": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/microsoft.insights/components/${prefix}-${environment}-${suffix}-insights",
+                          "id": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.insights/components/${prefix}-${deployment_name}-${suffix}-insights",
                           "menuid": "failures",
-                          "resourceGroup": "${prefix}-${environment}-${suffix}"
+                          "resourceGroup": "${prefix}-${deployment_name}-${suffix}"
                         }
                       },
                       "openBlade": true
@@ -478,7 +478,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-iaas-spoke-network"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${deployment_name}-${suffix}-iaas-spoke-network"
               },
               {
                 "isOptional": true,
@@ -507,7 +507,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Compute/virtualMachines/${prefix}${environment}${suffix}mgmt"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Compute/virtualMachines/${prefix}${deployment_name}${suffix}mgmt"
               },
               {
                 "isOptional": true,
@@ -536,7 +536,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${environment}-${suffix}-paas-spoke-network"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${deployment_name}-${suffix}-paas-spoke-network"
               },
               {
                 "isOptional": true,
@@ -561,7 +561,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureAppGatewayAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
+                "value": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics/views/AzureAppGatewayAnalytics(${prefix}-${deployment_name}-${suffix}-loganalytics)"
               },
               {
                 "isOptional": true,
@@ -596,7 +596,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Automation/automationAccounts/${prefix}-${environment}-${suffix}-automation"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Automation/automationAccounts/${prefix}-${deployment_name}-${suffix}-automation"
               }
             ],
             "type": "Extension/Microsoft_Azure_Automation/PartType/AccountDashboardBladePinnedPart"
@@ -618,9 +618,9 @@
               {
                 "name": "ComponentId",
                 "value": {
-                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
-                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
-                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
+                  "Name": "${prefix}-${deployment_name}-${suffix}-loganalytics",
+                  "ResourceGroup": "${prefix}-${deployment_name}-${suffix}",
+                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics",
                   "SubscriptionId": "${subscription_guid}"
                 }
               },
@@ -646,7 +646,7 @@
               },
               {
                 "name": "PartSubTitle",
-                "value": "${prefix}-${environment}-${suffix}-loganalytics"
+                "value": "${prefix}-${deployment_name}-${suffix}-loganalytics"
               },
               {
                 "name": "resourceTypeMode",
@@ -676,7 +676,7 @@
                   "SourceIP": "96px",
                   "TargetIP": "138px"
                 },
-                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
+                "PartSubTitle": "${prefix}-${deployment_name}-${suffix}-loganalytics",
                 "PartTitle": "Denied non-HTTP traffic"
               }
             },
@@ -704,7 +704,7 @@
                 "isOptional": true,
                 "name": "ResourceIds",
                 "value": [
-                  "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.network/applicationgateways/${prefix}-${environment}-${suffix}-waf"
+                  "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.network/applicationgateways/${prefix}-${deployment_name}-${suffix}-waf"
                 ]
               },
               {
@@ -755,7 +755,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${environment}-${suffix}-loganalytics)"
+                "value": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics/views/AzureSQLAnalytics(${prefix}-${deployment_name}-${suffix}-loganalytics)"
               },
               {
                 "isOptional": true,
@@ -802,7 +802,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/ServiceMap(${prefix}-${environment}-${suffix}-loganalytics)"
+                "value": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics/views/ServiceMap(${prefix}-${deployment_name}-${suffix}-loganalytics)"
               },
               {
                 "isOptional": true,
@@ -842,9 +842,9 @@
               {
                 "name": "ComponentId",
                 "value": {
-                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
-                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
-                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
+                  "Name": "${prefix}-${deployment_name}-${suffix}-loganalytics",
+                  "ResourceGroup": "${prefix}-${deployment_name}-${suffix}",
+                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics",
                   "SubscriptionId": "${subscription_guid}"
                 }
               },
@@ -870,7 +870,7 @@
               },
               {
                 "name": "PartSubTitle",
-                "value": "${prefix}-${environment}-${suffix}-loganalytics"
+                "value": "${prefix}-${deployment_name}-${suffix}-loganalytics"
               },
               {
                 "name": "resourceTypeMode",
@@ -895,7 +895,7 @@
             ],
             "settings": {
               "content": {
-                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
+                "PartSubTitle": "${prefix}-${deployment_name}-${suffix}-loganalytics",
                 "PartTitle": "Errors on HTTP inbound traffic (WAF)"
               }
             },
@@ -913,7 +913,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/Updates(${prefix}-${environment}-${suffix}-loganalytics)"
+                "value": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics/views/Updates(${prefix}-${deployment_name}-${suffix}-loganalytics)"
               },
               {
                 "isOptional": true,
@@ -953,7 +953,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-paasapp-${suffix}"
               }
             ],
             "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
@@ -970,7 +970,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics/views/AntiMalware(${prefix}-${environment}-${suffix}-loganalytics)"
+                "value": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.OperationalInsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics/views/AntiMalware(${prefix}-${deployment_name}-${suffix}-loganalytics)"
               },
               {
                 "isOptional": true,
@@ -1010,9 +1010,9 @@
               {
                 "name": "ComponentId",
                 "value": {
-                  "Name": "${prefix}-${environment}-${suffix}-loganalytics",
-                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
-                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics",
+                  "Name": "${prefix}-${deployment_name}-${suffix}-loganalytics",
+                  "ResourceGroup": "${prefix}-${deployment_name}-${suffix}",
+                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics",
                   "SubscriptionId": "${subscription_guid}"
                 }
               },
@@ -1038,7 +1038,7 @@
               },
               {
                 "name": "PartSubTitle",
-                "value": "${prefix}-${environment}-${suffix}-loganalytics"
+                "value": "${prefix}-${deployment_name}-${suffix}-loganalytics"
               },
               {
                 "name": "resourceTypeMode",
@@ -1063,7 +1063,7 @@
             ],
             "settings": {
               "content": {
-                "PartSubTitle": "${prefix}-${environment}-${suffix}-loganalytics",
+                "PartSubTitle": "${prefix}-${deployment_name}-${suffix}-loganalytics",
                 "PartTitle": "SQL Client Queries",
                 "Query": "AzureDiagnostics\n| where Category == 'SQLSecurityAuditEvents'\n| project event_time_t, client_ip_s, statement_s, affected_rows_d\n| order by event_time_t desc\n| take 100"
               }
@@ -1087,7 +1087,7 @@
               {
                 "isOptional": true,
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}"
               }
             ],
             "type": "Extension/HubsExtension/PartType/ResourceGroupMapPinnedPart"
@@ -1108,7 +1108,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourcegroups/${prefix}-${environment}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${environment}-${suffix}-loganalytics"
+                "value": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics"
               }
             ],
             "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/WorkspacePart"
@@ -1129,7 +1129,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/Microsoft.Network/azureFirewalls/${prefix}-${environment}-${suffix}-iag"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Network/azureFirewalls/${prefix}-${deployment_name}-${suffix}-iag"
               }
             ],
             "type": "Extension/Microsoft_Azure_HybridNetworking/PartType/CloudNativeFirewallPart"
@@ -1150,13 +1150,13 @@
             "inputs": [
               {
                 "name": "ResourceId",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-${suffix}/providers/microsoft.insights/components/${prefix}-${environment}-${suffix}-insights"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.insights/components/${prefix}-${deployment_name}-${suffix}-insights"
               },
               {
                 "name": "ComponentId",
                 "value": {
-                  "Name": "${prefix}-${environment}-${suffix}-insights",
-                  "ResourceGroup": "${prefix}-${environment}-${suffix}",
+                  "Name": "${prefix}-${deployment_name}-${suffix}-insights",
+                  "ResourceGroup": "${prefix}-${deployment_name}-${suffix}",
                   "SubscriptionId": "/subscriptions/${subscription_guid}"
                 }
               },
@@ -1274,7 +1274,7 @@
                               "Name": "environment",
                               "Operator": "In",
                               "Values": [
-                                "${environment}"
+                                "${deployment_name}"
                               ]
                             }
                           }
@@ -1317,7 +1317,7 @@
             "inputs": [
               {
                 "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${environment}-paasapp-${suffix}/providers/Microsoft.Web/sites/${prefix}-${environment}-paasapp-${suffix}-appsvc-app"
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-paasapp-${suffix}/providers/Microsoft.Web/sites/${prefix}-${deployment_name}-paasapp-${suffix}-appsvc-app"
               }
             ],
             "type": "Extension/WebsitesExtension/PartType/SingleWebsitePart"
@@ -1345,12 +1345,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-b0bc79ff-ebd1-4955-b971-2e53aeee51eb",
-              "StartboardPart-AnalyticsPart-b0bc79ff-ebd1-4955-b971-2e53aeee51f1",
-              "StartboardPart-MonitorChartPart-b0bc79ff-ebd1-4955-b971-2e53aeee51f7",
-              "StartboardPart-AnalyticsPart-b0bc79ff-ebd1-4955-b971-2e53aeee51ff",
-              "StartboardPart-AnalyticsPart-b0bc79ff-ebd1-4955-b971-2e53aeee5209",
-              "StartboardPart-AnalyticsPart-b0bc79ff-ebd1-4955-b971-2e53aeee520f"
+              "StartboardPart-ApplicationMapPart-181f75d8-857a-432d-b295-cf3bd6ce9332",
+              "StartboardPart-AnalyticsPart-181f75d8-857a-432d-b295-cf3bd6ce9338",
+              "StartboardPart-MonitorChartPart-181f75d8-857a-432d-b295-cf3bd6ce933e",
+              "StartboardPart-AnalyticsPart-181f75d8-857a-432d-b295-cf3bd6ce9348",
+              "StartboardPart-AnalyticsPart-181f75d8-857a-432d-b295-cf3bd6ce9352",
+              "StartboardPart-AnalyticsPart-181f75d8-857a-432d-b295-cf3bd6ce9358"
             ],
             "model": {
               "format": "utc",

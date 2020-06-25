@@ -365,7 +365,7 @@ stages:
       variables:
         appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
         appBuild: 'Release'
-        appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp2.2/publish.zip'
+        appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp3.1/publish.zip'
         # Get application configuration from Terraform output
         appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
         appMSIName: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_name'] ]
@@ -375,6 +375,9 @@ stages:
         appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
         appSQLServer: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server'] ]
         appSQLServerFQDN: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server_fqdn'] ]
+        appURL: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+        devOpsOrgURL: $[ dependencies.Provision.outputs['terraform.devops_org_url'] ]
+        devOpsProject: $[ dependencies.Provision.outputs['terraform.devops_project'] ]
         dbaName: $[ dependencies.Provision.outputs['terraform.admin_login'] ]
         dbaObjectID: $[ dependencies.Provision.outputs['terraform.admin_object_id'] ]
         paasResourceGroup: $[ dependencies.Provision.outputs['terraform.paas_app_resource_group'] ]
@@ -416,19 +419,23 @@ stages:
             deleteFirewallRule: true
 
         - task: AzureCLI@2
-          displayName: 'Import database and set permissions (with script)'
+          displayName: 'Import database, set permissions (with script) & swap App Service slots'
           enabled: ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
             scriptLocation: inlineScript
             inlineScript: |
-              ./deploy_paas_app.ps1 -Database `
+              ./deploy_paas_app.ps1 -All `
                                     -AppResourceGroup $(paasResourceGroup) `
+                                    -AppAppServiceName $(appServiceName) `
                                     -AppAppServiceIdentity $(appMSIName) `
                                     -AppAppServiceClientID $(appMSIClientID) `
                                     -DBAName $(dbaName) `
                                     -DBAObjectId $(dbaObjectId) `
+                                    -AppUrl $(appURL) `
+                                    -DevOpsOrgUrl $(devOpsOrgURL) `
+                                    -DevOpsProject $(devOpsProject) `
                                     -SqlServer $(appSQLServer) `
                                     -SqlServerFQDN $(appSQLServerFQDN) `
                                     -SqlDatabase $(appSQLDatabase)
@@ -436,30 +443,54 @@ stages:
             workingDirectory: '$(scriptDirectory)'
             failOnStandardError: true
 
-        # Download PaaS Application Pipeline artifacts
-        # This consumes artifacts published by this pipeline:
-        # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Download ASP.NET Core App Artifacts'
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            buildType: 'specific'
-            project: '$(appArtifectProject)'
-            definition: '$(appBuildDefinitionPaaS)'
-            specificBuildWithTriggering: true
-            buildVersionToDownload: 'latest'
-            artifactName: 'aspnetcoresql'
-            targetPath: '$(appArtifactDirectory)'
+        # # App already pulled as container, just switch offline -> online configuration
+        # - task: AzureAppServiceManage@0
+        #   displayName: 'Swap Online and Offline App Service slots'
+        #   inputs:
+        #     azureSubscription: '$(subscriptionConnection)'
+        #     Action: 'Swap Slots'
+        #     WebAppName: '$(appServiceName)'
+        #     ResourceGroupName: '$(paasResourceGroup)'
+        #     SourceSlot: 'staging'            
 
-        # Deploy PaaS Application
-        - task: AzureWebApp@1
-          displayName: 'Deploy ASP.NET Core App'
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            azureSubscription: '$(subscriptionConnection)'
-            appType: webApp
-            appName: '$(appServiceName)'
-            package: '$(appPackage)'
+        # App pulled as container, below steps are obsolete
+        # # Download PaaS Application Pipeline artifacts
+        # # This consumes artifacts published by this pipeline:
+        # # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
+        # - task: DownloadPipelineArtifact@2
+        #   displayName: 'Download ASP.NET Core App Artifacts'
+        #   enabled: ${{ not(parameters.testMode) }}
+        #   inputs:
+        #     buildType: 'specific'
+        #     project: '$(appArtifectProject)'
+        #     definition: '$(appBuildDefinitionPaaS)'
+        #     specificBuildWithTriggering: true
+        #     buildVersionToDownload: 'latest'
+        #     artifactName: 'aspnetcoresql'
+        #     targetPath: '$(appArtifactDirectory)'
+
+        # # Deploy PaaS Application
+        # - task: AzureWebApp@1
+        #   displayName: 'Deploy ASP.NET Core App'
+        #   enabled: ${{ not(parameters.testMode) }}
+        #   inputs:
+        #     azureSubscription: '$(subscriptionConnection)'
+        #     appType: webApp
+        #     appName: '$(appServiceName)'
+        #     package: '$(appPackage)'
+
+        # # TODO
+        # - task: AzureRmWebAppDeployment@4
+        #   displayName: 'Deploy ASP.NET Core App'
+        #   inputs:
+        #     connectionType: 'AzureRM'
+        #     azureSubscription: '$(subscriptionConnection)'
+        #     appType: 'webAppContainer'
+        #     webAppName: '$(appServiceName)'
+        #     dockerNamespace: '$()'
+        #     dockerRepository: '$()'
+        #     dockerImageTag: 'latest'
+        #     appSettings: '-ASPNETCORE_ENVIRONMENT "Online"'        
 
   - ${{ if eq(parameters.deploy, true) }}:
     # First things first, we need to check whether the environment is ready to deploy to

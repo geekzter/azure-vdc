@@ -189,6 +189,10 @@ output paas_app_sql_database {
   value       = module.paas_app.sql_database
 }
 
+output paas_app_sql_database_connection_string {
+  value       = module.paas_app.sql_database_connection_string
+}
+
 output paas_app_sql_server {
   value       = module.paas_app.sql_server
 }
@@ -255,6 +259,9 @@ output resource_suffix {
   value       = local.suffix
 }
 
+output shared_container_registry {
+  value       = var.shared_container_registry
+}
 output shared_resources_group {
   value       = var.shared_resources_group
 }
