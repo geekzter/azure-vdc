@@ -31,14 +31,16 @@ This projects contains the following components
 - A hub network with subnets for shared components (dmz, mgmt, etc)
 - Azure Firewall used as Internet Access Gateway (egress, outbound FQDN whitelisting)
 - Application Gateway as Web Application Firewall (WAF, HTTP ingress)
-- A Management VM that is used as jump server to connect to other VM's. 
+- A Management VM that is used as jump server to connect to other VM's
 - A Managed Bastion as well
 - A Point to Site (P2S VPN), with transitive access to PaaS services
 - Infrastructure provisioning through Terraform, PowerShell and Azure Pipelines
 - An IIS VM application deployed in a spoke network, with subnet segregation (app, data)
-  - AppServers auto-joined to Azure Pipelines Deployment Group, application deployment from Azure Pipeline
-- An App Service web application integrated into another spoke network (experimental)
-  - Several PaaS services connected as Service Endpoints into the AzureFirewall subnet, or through PrivateLink
+  - AppServers auto-joined to Azure Pipelines Environment, application deployment from Azure Pipeline (YAML)
+- An App Service web application integrated into another spoke network
+  - Ingress through Private Endpoint
+  - Egress through VNet integration (delegated subnet)
+  - Several PaaS services connected as Private Endpoints
   - Application deployed from Azure DevOps Pipeline
 - Azure Active Directory Authentication
   - User AAD auth to App Service
