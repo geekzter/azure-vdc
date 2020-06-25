@@ -426,7 +426,19 @@ stages:
             scriptType: pscore
             scriptLocation: inlineScript
             inlineScript: |
-              ./deploy_paas_app.ps1 -All -AppResourceGroup $(paasResourceGroup) -AppAppServiceName $(appServiceName) -AppAppServiceIdentity $(appMSIName) -AppAppServiceClientID $(appMSIClientID) -DBAName $(dbaName) -DBAObjectId $(dbaObjectId) -AppUrl $(appURL) -DevOpsOrgUrl $(devOpsOrgURL) -DevOpsProject $(devOpsProject) -SqlServer $(appSQLServer) -SqlServerFQDN $(appSQLServerFQDN) -SqlDatabase $(appSQLDatabase)
+              ./deploy_paas_app.ps1 -All `
+                                    -AppResourceGroup $(paasResourceGroup) `
+                                    -AppAppServiceName $(appServiceName) `
+                                    -AppAppServiceIdentity $(appMSIName) `
+                                    -AppAppServiceClientID $(appMSIClientID) `
+                                    -DBAName $(dbaName) `
+                                    -DBAObjectId $(dbaObjectId) `
+                                    -AppUrl $(appURL) `
+                                    -DevOpsOrgUrl $(devOpsOrgURL) `
+                                    -DevOpsProject $(devOpsProject) `
+                                    -SqlServer $(appSQLServer) `
+                                    -SqlServerFQDN $(appSQLServerFQDN) `
+                                    -SqlDatabase $(appSQLDatabase)
             useGlobalConfig: true
             workingDirectory: '$(scriptDirectory)'
             failOnStandardError: true

@@ -225,9 +225,9 @@ function ResetDatabasePassword (
 }
 function RestartApp () {
     # HACK: Creating and removing a bogus IP Access Restriction sometime get's rid of 500.79 errors with AAD authentication
-    $ruleName = "Bogusrule"
-    Write-Information "Adding App Service '$appAppServiceName' Access Restriction '$ruleName'..."
-    az webapp config access-restriction add -p 999 -r $ruleName --ip-address 1.2.3.4/32 -g $appResourceGroup -n $appAppServiceName -o none
+    #$ruleName = "Bogusrule"
+    #Write-Information "Adding App Service '$appAppServiceName' Access Restriction '$ruleName'..."
+    #az webapp config access-restriction add -p 999 -r $ruleName --ip-address 1.2.3.4/32 -g $appResourceGroup -n $appAppServiceName -o none
     $authEnabled = $(az webapp auth show -g $appResourceGroup -n $appAppServiceName --query "enabled" -o tsv)
     Write-Information "Authentication for App Service '$appAppServiceName' is set to '$authEnabled'"
     Write-Information "Disabling authentication for App Service '$appAppServiceName'..."
@@ -236,8 +236,8 @@ function RestartApp () {
     Write-Information "Restarting App Service '$appAppServiceName'..."
     az webapp restart -g $appResourceGroup -n $appAppServiceName 
 
-    Write-Information "Removing App Service '$appAppServiceName' Access Restriction '$ruleName'..."
-    az webapp config access-restriction remove -r $ruleName -g $appResourceGroup -n $appAppServiceName -o none
+    #Write-Information "Removing App Service '$appAppServiceName' Access Restriction '$ruleName'..."
+    #az webapp config access-restriction remove -r $ruleName -g $appResourceGroup -n $appAppServiceName -o none
     Write-Information "Setting authentication for App Service '$appAppServiceName' to '$authEnabled'..."
     az webapp auth update --enabled $authEnabled -g $appResourceGroup -n $appAppServiceName -o none
 
