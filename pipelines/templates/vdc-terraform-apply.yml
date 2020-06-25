@@ -419,7 +419,7 @@ stages:
             deleteFirewallRule: true
 
         - task: AzureCLI@2
-          displayName: 'Import database and set permissions (with script)'
+          displayName: 'Import database, set permissions (with script) & swap App Service slots'
           enabled: ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
