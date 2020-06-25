@@ -19,7 +19,7 @@ param (
 ) 
 
 if (az webapp deployment slot list -n $AppService -g $ResourceGroup --query "[?name=='$Slot']" -o tsv) {
-    Write-Warning "Deployment slot '$Slot' already exists"
+    Write-Host "Deployment slot '$Slot' exists"
     exit
 }
 
