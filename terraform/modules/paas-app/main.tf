@@ -458,7 +458,7 @@ resource azurerm_app_service paas_web_app {
   # Ignore container updates, those are deployed independently
   lifecycle {
     ignore_changes = [
-      app_settings.ASPNETCORE_ENVIRONMENT, # swap slot outside of Terraform
+      app_settings["ASPNETCORE_ENVIRONMENT"], # swap slot outside of Terraform
       site_config.0.linux_fx_version, # deployments are made outside of Terraform
     ]
   }
