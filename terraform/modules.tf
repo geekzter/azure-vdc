@@ -160,6 +160,8 @@ module paas_app {
   ])
   container                    = var.paas_app_web_container
   container_registry           = var.shared_container_registry
+  container_registry_spn_app_id= var.shared_container_registry_spn_app_id
+  container_registry_spn_secret= var.shared_container_registry_spn_secret
   database_template_storage_key= var.app_database_template_storage_key
   data_subnet_id               = lookup(module.paas_spoke_vnet.subnet_ids,"data","")
   default_create_timeout       = var.default_create_timeout

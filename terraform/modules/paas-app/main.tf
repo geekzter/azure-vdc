@@ -364,16 +364,20 @@ resource azurerm_app_service paas_web_app {
     ASPNETCORE_ENVIRONMENT     = "Offline"
     ASPNETCORE_URLS            = "http://+:80"
 
-    # Required for containers
-    #       https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication-managed-identity
-    DOCKER_REGISTRY_SERVER_USERNAME = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_username : ""
-    DOCKER_REGISTRY_SERVER_PASSWORD = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_password : ""
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
+    # Using ACR admin credentials
+    #DOCKER_REGISTRY_SERVER_USERNAME = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_username : ""
+    #DOCKER_REGISTRY_SERVER_PASSWORD = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_password : ""
+    # Using Service Principal credentials
+    # https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal
+    DOCKER_REGISTRY_SERVER_USERNAME = (var.container_registry != null && var.container_registry_spn_app_id != null) != null ? var.container_registry_spn_app_id : ""
+    DOCKER_REGISTRY_SERVER_PASSWORD = (var.container_registry != null && var.container_registry_spn_secret != null) != null ? var.container_registry_spn_secret : ""
+
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false # Required for containers
 
     WEBSITE_DNS_SERVER         = "168.63.129.16" # Private DNS
     WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
     # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#regional-vnet-integration
-    WEBSITE_VNET_ROUTE_ALL     = "1"
+    WEBSITE_VNET_ROUTE_ALL     = "1" # Egress via Hub VNet
   }
 
   dynamic "auth_settings" {
@@ -455,11 +459,10 @@ resource azurerm_app_service paas_web_app {
     scm_type                   = "None"
   }
 
-  # Ignore container updates, those are deployed independently
   lifecycle {
-    ignore_changes = [
-      app_settings["ASPNETCORE_ENVIRONMENT"], # swap slot outside of Terraform
-      site_config.0.linux_fx_version, # deployments are made outside of Terraform
+    ignore_changes             = [
+                                 app_settings["ASPNETCORE_ENVIRONMENT"], # Swap slot outside of Terraform
+                                 site_config.0.linux_fx_version, # Deploy containers outside of Terraform
     ]
   }
 

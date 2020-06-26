@@ -308,7 +308,13 @@ variable shared_resources_group {
   default                      = "Shared"
 }
 variable shared_container_registry {
-  description                  = "Container Registry"
+  description                  = "Container Registry to deploy App Service web app from"
+  default                      = null
+}
+variable shared_container_registry_spn_app_id {
+  default                      = null
+}
+variable shared_container_registry_spn_secret {
   default                      = null
 }
 variable update_management_time {
