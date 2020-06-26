@@ -292,12 +292,52 @@ resource azurerm_private_dns_a_record aut_storage_blob_dns_record {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
   records                      = [azurerm_private_endpoint.aut_blob_storage_endpoint.0.private_service_connection[0].private_ip_address]
-  tags                         = var.tags
+  tags                         = local.tags
 
   count                        = var.enable_private_link ? 1 : 0
 }
-
 resource azurerm_advanced_threat_protection vdc_automation_storage {
   target_resource_id           = azurerm_storage_account.vdc_automation_storage.id
   enabled                      = true
+}
+
+# Create Private Endpoint for Container Registry (if in the same region)
+data azurerm_container_registry vdc_images {
+  name                         = var.shared_container_registry
+  resource_group_name          = var.shared_resources_group
+
+  count                        = var.shared_container_registry != null ? 1 : 0
+}
+resource azurerm_private_endpoint container_registry_endpoint {
+  name                         = "${data.azurerm_container_registry.vdc_images.0.name}-endpoint"
+  resource_group_name          = data.azurerm_container_registry.vdc_images.0.resource_group_name
+  location                     = data.azurerm_container_registry.vdc_images.0.location
+  
+  subnet_id                    = azurerm_subnet.shared_paas_subnet.id
+
+  private_dns_zone_group {
+    name                       = azurerm_private_dns_zone.zone["registry"].name
+    private_dns_zone_ids       = [
+                                 azurerm_private_dns_zone.zone["registry"].id
+    ]
+  }
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${azurerm_storage_account.vdc_automation_storage.name}-endpoint-connection"
+    private_connection_resource_id = data.azurerm_container_registry.vdc_images.0.id
+    subresource_names          = ["registry"]
+  }
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
+  tags                         = local.tags
+
+  count                        = (var.shared_container_registry != null && data.azurerm_container_registry.vdc_images.0.location == var.location) ? 1 : 0
+  depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }

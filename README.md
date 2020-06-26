@@ -43,6 +43,7 @@ This projects contains the following components
   - Several PaaS services connected as Private Endpoints
   - Application deployed from Azure DevOps Pipeline
 - Azure Active Directory Authentication
+  - App Service uses Service Principal & RBAC to access Container Registry
   - User AAD auth to App Service
   - MSI auth between application tiers
   - User AAD auth to VM's (RDP)

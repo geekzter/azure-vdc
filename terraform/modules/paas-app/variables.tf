@@ -13,6 +13,8 @@ variable aad_auth_client_id_map {}
 variable app_subnet_id {}
 variable container {}
 variable container_registry {}
+variable container_registry_spn_app_id {}
+variable container_registry_spn_secret {}
 variable management_subnet_ids {
   type                         = list
 }

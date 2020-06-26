@@ -205,6 +205,7 @@ resource azurerm_subnet_route_table_association shared_paas_subnet_routes {
 resource azurerm_private_dns_zone zone {
   for_each                     = {
     blob                       = "privatelink.blob.core.windows.net"
+    registry                   = "privatelink.azurecr.io"
   # servicebus                 = "privatelink.servicebus.windows.net"
     sqldb                      = "privatelink.database.windows.net"
     table                      = "privatelink.table.core.windows.net"
