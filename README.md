@@ -1,8 +1,8 @@
 # Automated VDC
-This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology
+This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology:
 
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
-![alt text](diagram.png "Architecture")
+![alt text](diagram.png "Network view")
 
 ## TL;DR: Quickstart
 To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). 
@@ -48,6 +48,10 @@ This projects contains the following components
   - MSI auth between application tiers
   - User AAD auth to VM's (RDP)
   - User AAD auth on Point-to-Site VPN
+
+
+![alt text](identity-diagram.png "Identity View")
+![alt text](deployment-diagram.png "Deployment View")
 
 ### Pre-Requisites
 This project uses Terraform, PowerShell 7, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
