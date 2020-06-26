@@ -192,11 +192,8 @@ data azurerm_container_registry vdc_images {
 
   count                        = var.shared_container_registry != null ? 1 : 0
 }
-locals {
-  container_registry_reference = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-${data.azurerm_container_registry.vdc_images.0.name}-${lower(local.suffix)}-endpoint"
-}
 resource azurerm_private_endpoint container_registry_endpoint {
-  name                         = local.container_registry_reference
+  name                         = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-${data.azurerm_container_registry.vdc_images.0.name}-${lower(local.suffix)}-endpoint"
   resource_group_name          = azurerm_virtual_network.hub_vnet.resource_group_name
   location                     = azurerm_virtual_network.hub_vnet.location
   
@@ -209,7 +206,7 @@ resource azurerm_private_endpoint container_registry_endpoint {
 
   private_service_connection {
     is_manual_connection       = false
-    name                       = "${local.container_registry_reference}-endpoint-connection"
+    name                       = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-${data.azurerm_container_registry.vdc_images.0.name}-${lower(local.suffix)}-endpoint-connection"
     private_connection_resource_id = data.azurerm_container_registry.vdc_images.0.id
     subresource_names          = ["registry"]
   }
