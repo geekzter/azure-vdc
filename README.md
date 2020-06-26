@@ -27,6 +27,8 @@ And then running:
 `terraform apply`
 
 ## VDC
+![alt text](identity-diagram.png "Identity View")
+![alt text](deployment-diagram.png "Deployment View")
 This projects contains the following components
 - A hub network with subnets for shared components (dmz, mgmt, etc)
 - Azure Firewall used as Internet Access Gateway (egress, outbound FQDN whitelisting)
@@ -48,10 +50,6 @@ This projects contains the following components
   - MSI auth between application tiers
   - User AAD auth to VM's (RDP)
   - User AAD auth on Point-to-Site VPN
-
-
-![alt text](identity-diagram.png "Identity View")
-![alt text](deployment-diagram.png "Deployment View")
 
 ### Pre-Requisites
 This project uses Terraform, PowerShell 7, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
@@ -108,12 +106,6 @@ The Automated VDC has a number of features that are turned off by default. This 
 - [Terraform Azure Provider](https://www.terraform.io/docs/providers/azurerm/index.html)
 - [Terraform Learning](https://learn.hashicorp.com/terraform?track=azure#azure)
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
-
-### Limitations & Known Issue's
-- Release Pipelines not yet available in YAML as the Azure DevOps Environments used in multi-staged YAML pipelines do not support automatic provisioning of agents yet. See [issue on GitHub](https://github.com/MicrosoftDocs/vsts-docs/issues/7698)
-
-### Integration
-- Terraform output is exported as ad-hoc Azure Pipeline variables by `tf_deploy.ps1`, so they can be used in subsequent tasks in an Azure Pipeline Job
 
 ## Disclaimer
 This project is provided as-is, and is not intended as a blueprint on how a VDC should be deployed, or Azure components and Terraform should be used. It is merely an example on how you can use the technology. The project creates a number of Azure resources, you are responsible for monitoring and managing cost. You can configure auto shutdown on VM's through the Azure Portal, with the [Start/stop VMs during off-hours solution](https://docs.microsoft.com/en-us/azure/automation/automation-solution-vm-management), or with functions in my [azure-governance](https://github.com/geekzter/azure-governance/tree/master/functions) repo.
