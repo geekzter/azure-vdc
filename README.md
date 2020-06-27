@@ -2,9 +2,8 @@
 This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology:
 
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
-![alt text](diagram.png "Network view")
 
-## TL;DR: Quickstart
+## TL;DR, give me the Quickstart
 To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). 
 
 Make sure you have the latest version of Azure CLI. This requires some extra work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
@@ -26,9 +25,16 @@ You can provision resources by first initializing Terraform:
 And then running:  
 `terraform apply`
 
-## VDC
+## Infrastructure view
+![alt text](diagram.png "Network view")
+
+## Identify flow view
 ![alt text](identity-diagram.png "Identity View")
+
+## Deployment automation view
 ![alt text](deployment-diagram.png "Deployment View")
+
+## Component description
 This projects contains the following components
 - A hub network with subnets for shared components (dmz, mgmt, etc)
 - Azure Firewall used as Internet Access Gateway (egress, outbound FQDN whitelisting)
@@ -51,10 +57,10 @@ This projects contains the following components
   - User AAD auth to VM's (RDP)
   - User AAD auth on Point-to-Site VPN
 
-### Pre-Requisites
+## Pre-Requisites
 This project uses Terraform, PowerShell 7, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
 
-### Getting Started
+## Getting Started
 The quickstart uses defauls settings that disables some features. To use all featues (e.g. VPN, SSL domains, CI/CD), more is involved:
 1.	Clone repository:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
@@ -83,7 +89,7 @@ to provision resources
 9.  Create build pipeline to build App Service application, see `azure-pipelines.yml` located here: [dotnetcore-sqldb-tutorial](https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml)
 10.  Create Terraform CI pipeline using either `vdc-terraform-apply-simple-ci.yml` or `vdc-terraform-apply-ci.yml`
 
-### Features ###
+## Feature toggles ###
 The Automated VDC has a number of features that are turned off by default. This can be because the feature has pre-requisites (e.g. certificates, or you need to own a domain). Another reason is the use of Azure preview features, or features that just simply take a long time to provision. Features are toggled by a corresponding variable in [`variables.tf`](./Terraform/variables.tf).
 |Feature|Toggle|Dependencies and Pre-requisites|
 |---|---|---|
@@ -98,7 +104,7 @@ The Automated VDC has a number of features that are turned off by default. This 
 |Pipeline&nbsp;agent&nbsp;type. By default a [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/) will be used. Setting this to `true` will instead use an [Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments)|`use_pipeline_environment`|Multi-stage YAML Pipelines|
 |SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegate the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and configure its location by setting `vanity_certificate_*` (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample)).
 
-### Resources
+## Resources
 - [Azure CLI](http://aka.ms/azure-cli)
 - [Azure Pipelines](https://azure.microsoft.com/en-us/services/devops/pipelines/)
 - [PowerShell Core](https://github.com/PowerShell/PowerShell)
