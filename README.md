@@ -53,11 +53,12 @@ This repo deploys the following components:
 
 Private networking provides some isolation from uninvited guests. However, a [zero trust](https://www.microsoft.com/security/blog/2019/10/23/perimeter-based-network-defense-transform-zero-trust-model/) 'assume breach' approach uses multiple methodss of isolation. This is why identity is called the the new perimeter. With Azure Active Directory Authentication, mnost application level communication can be locked down and controlled through RBAC. This is done at the following places:
 
-1. App Service uses Service Principal & RBAC to access Container Registry
-1. User AAD auth to App Service
-1. MSI auth between application tiers
-1. User AAD auth to VM's (RDP)
-1. User AAD auth on Point-to-Site VPN
+- App Service uses Service Principal & RBAC to access Container Registry
+- User AAD auth (with MFA) to App Service web app
+- App Service web app uses MSI to access SQL Database (using least privilege database roles)
+- User AAD auth to VM's (RDP)
+- User AAD auth (with MFA) on Point-to-Site VPN
+- SQL Database tools (SSMS, Data Studio) use AAD Autnentication with MFA
 
 ### Deployment automation
 ![alt text](deployment-diagram.png "Deployment View")
