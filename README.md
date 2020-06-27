@@ -29,38 +29,48 @@ And then running:
 
 The default configuration will work with any shell. Additional [features](##feature-toggles) may require PowerShell.
 
-## Architecture views
+## Architecture
 ### Infrastructure
 ![alt text](diagram.png "Network view")
 
-### Identify flow
-![alt text](identity-diagram.png "Identity View")
+This repo deploys the following components:
 
-### Deployment automation
-![alt text](deployment-diagram.png "Deployment View")
-
-## Component description
-This projects contains the following components
 - A hub network with subnets for shared components (dmz, mgmt, etc)
 - Azure Firewall used as Internet Access Gateway (egress, outbound FQDN whitelisting)
 - Application Gateway as Web Application Firewall (WAF, HTTP ingress)
 - A Management VM that is used as jump server to connect to other VM's
 - A Managed Bastion as well
 - A Point to Site (P2S VPN), with transitive access to PaaS services
-- Infrastructure provisioning through Terraform, PowerShell and Azure Pipelines
 - An IIS VM application deployed in a spoke network, with subnet segregation (app, data)
-  - AppServers auto-joined to Azure Pipelines Environment, application deployment from Azure Pipeline (YAML)
 - An App Service web application integrated into another spoke network
   - Ingress through Private Endpoint
   - Egress through VNet integration (delegated subnet)
-  - Several PaaS services connected as Private Endpoints
-  - Application deployed from Azure DevOps Pipeline
-- Azure Active Directory Authentication
-  - App Service uses Service Principal & RBAC to access Container Registry
-  - User AAD auth to App Service
-  - MSI auth between application tiers
-  - User AAD auth to VM's (RDP)
-  - User AAD auth on Point-to-Site VPN
+- Several PaaS services connected as Private Endpoints
+  
+
+### Identify flow
+![alt text](identity-diagram.png "Identity View")   
+
+Private networking provides some isolation from uninvited guests. However, a [zero trust](https://www.microsoft.com/security/blog/2019/10/23/perimeter-based-network-defense-transform-zero-trust-model/) 'assume breach' approach uses multiple methodss of isolation. This is why identity is called the the new perimeter. With Azure Active Directory Authentication, mnost application level communication can be locked down and controlled through RBAC. This is done at the following places:
+
+1. App Service uses Service Principal & RBAC to access Container Registry
+1. User AAD auth to App Service
+1. MSI auth between application tiers
+1. User AAD auth to VM's (RDP)
+1. User AAD auth on Point-to-Site VPN
+
+### Deployment automation
+![alt text](deployment-diagram.png "Deployment View")
+
+The diagram conveys the release pipeline, including:
+
+- End-to-end orchestration in Azure Pipelines (YAML)
+- Infrastructure provisioning through Terraform
+- Provisioned AppServers auto-joined to Azure Pipelines Environment
+- IaaS VM application deployment from Azure Pipeline to this environment
+- Application deployed from Azure DevOps Pipeline
+- Blue/green deployment with App Service deployment slots
+- PowerShell as the glue  that ties things together, where needed
 
 ## Pre-Requisites
 This project uses Terraform, PowerShell 7, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.

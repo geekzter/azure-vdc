@@ -19,7 +19,7 @@
           },
           "position": {
             "colSpan": 4,
-            "rowSpan": 3,
+            "rowSpan": 4,
             "x": 0,
             "y": 0
           }
@@ -60,7 +60,7 @@
           },
           "position": {
             "colSpan": 6,
-            "rowSpan": 3,
+            "rowSpan": 4,
             "x": 4,
             "y": 0
           }
@@ -147,6 +147,35 @@
           }
         },
         "14": {
+          "metadata": {
+            "asset": {
+              "idInputName": "id"
+            },
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${deployment_name}-${suffix}-hub-network"
+              },
+              {
+                "isOptional": true,
+                "name": "resourceId"
+              },
+              {
+                "isOptional": true,
+                "name": "menuid"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 7
+          }
+        },
+        "15": {
           "metadata": {
             "filters": {
               "MsPortalFx_TimeRange": {
@@ -266,10 +295,10 @@
             "colSpan": 4,
             "rowSpan": 2,
             "x": 0,
-            "y": 7
+            "y": 8
           }
         },
-        "15": {
+        "16": {
           "metadata": {
             "asset": {
               "idInputName": "ComponentId",
@@ -343,36 +372,7 @@
             "colSpan": 6,
             "rowSpan": 5,
             "x": 4,
-            "y": 7
-          }
-        },
-        "16": {
-          "metadata": {
-            "asset": {
-              "idInputName": "id"
-            },
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${deployment_name}-${suffix}-hub-network"
-              },
-              {
-                "isOptional": true,
-                "name": "resourceId"
-              },
-              {
-                "isOptional": true,
-                "name": "menuid"
-              }
-            ],
-            "type": "Extension/HubsExtension/PartType/ResourcePart"
-          },
-          "position": {
-            "colSpan": 2,
-            "rowSpan": 1,
-            "x": 10,
-            "y": 7
+            "y": 8
           }
         },
         "17": {
@@ -406,6 +406,35 @@
         },
         "18": {
           "metadata": {
+            "asset": {
+              "idInputName": "id"
+            },
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "id",
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${deployment_name}-${suffix}-paas-spoke-network"
+              },
+              {
+                "isOptional": true,
+                "name": "resourceId"
+              },
+              {
+                "isOptional": true,
+                "name": "menuid"
+              }
+            ],
+            "type": "Extension/HubsExtension/PartType/ResourcePart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 9
+          }
+        },
+        "19": {
+          "metadata": {
             "inputs": [
               {
                 "name": "queryInputs",
@@ -433,36 +462,7 @@
             "colSpan": 4,
             "rowSpan": 3,
             "x": 0,
-            "y": 9
-          }
-        },
-        "19": {
-          "metadata": {
-            "asset": {
-              "idInputName": "id"
-            },
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "id",
-                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-${suffix}/providers/Microsoft.Network/virtualNetworks/${prefix}-${deployment_name}-${suffix}-paas-spoke-network"
-              },
-              {
-                "isOptional": true,
-                "name": "resourceId"
-              },
-              {
-                "isOptional": true,
-                "name": "menuid"
-              }
-            ],
-            "type": "Extension/HubsExtension/PartType/ResourcePart"
-          },
-          "position": {
-            "colSpan": 2,
-            "rowSpan": 1,
-            "x": 10,
-            "y": 9
+            "y": 10
           }
         },
         "2": {
@@ -557,7 +557,7 @@
             "colSpan": 4,
             "rowSpan": 2,
             "x": 0,
-            "y": 12
+            "y": 13
           }
         },
         "23": {
@@ -638,7 +638,7 @@
             "colSpan": 6,
             "rowSpan": 4,
             "x": 4,
-            "y": 12
+            "y": 13
           }
         },
         "24": {
@@ -673,7 +673,7 @@
             "colSpan": 4,
             "rowSpan": 2,
             "x": 0,
-            "y": 14
+            "y": 15
           }
         },
         "25": {
@@ -734,7 +734,7 @@
             "colSpan": 2,
             "rowSpan": 2,
             "x": 0,
-            "y": 16
+            "y": 17
           }
         },
         "26": {
@@ -746,7 +746,7 @@
             "colSpan": 2,
             "rowSpan": 2,
             "x": 2,
-            "y": 16
+            "y": 17
           }
         },
         "27": {
@@ -822,7 +822,7 @@
             "colSpan": 6,
             "rowSpan": 3,
             "x": 4,
-            "y": 16
+            "y": 17
           }
         },
         "28": {
@@ -899,7 +899,7 @@
             "colSpan": 6,
             "rowSpan": 4,
             "x": 4,
-            "y": 19
+            "y": 20
           }
         },
         "3": {
@@ -1018,6 +1018,27 @@
         "7": {
           "metadata": {
             "asset": {
+              "idInputName": "resourceId",
+              "type": "Server"
+            },
+            "inputs": [
+              {
+                "name": "resourceId",
+                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-paasapp-${suffix}/providers/Microsoft.Sql/servers/${paas_app_resource_group_short}sqlserver"
+              }
+            ],
+            "type": "Extension/SqlAzureExtension/PartType/ServerPart"
+          },
+          "position": {
+            "colSpan": 2,
+            "rowSpan": 1,
+            "x": 10,
+            "y": 3
+          }
+        },
+        "8": {
+          "metadata": {
+            "asset": {
               "idInputName": "ComponentId",
               "type": "ApplicationInsights"
             },
@@ -1085,10 +1106,10 @@
             "colSpan": 4,
             "rowSpan": 4,
             "x": 0,
-            "y": 3
+            "y": 4
           }
         },
-        "8": {
+        "9": {
           "metadata": {
             "inputs": [
               {
@@ -1194,28 +1215,7 @@
             "colSpan": 6,
             "rowSpan": 4,
             "x": 4,
-            "y": 3
-          }
-        },
-        "9": {
-          "metadata": {
-            "asset": {
-              "idInputName": "resourceId",
-              "type": "Server"
-            },
-            "inputs": [
-              {
-                "name": "resourceId",
-                "value": "${subscription}/resourceGroups/${prefix}-${deployment_name}-paasapp-${suffix}/providers/Microsoft.Sql/servers/${paas_app_resource_group_short}sqlserver"
-              }
-            ],
-            "type": "Extension/SqlAzureExtension/PartType/ServerPart"
-          },
-          "position": {
-            "colSpan": 2,
-            "rowSpan": 1,
-            "x": 10,
-            "y": 3
+            "y": 4
           }
         }
       }
@@ -1234,12 +1234,12 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-099e22e4-38a0-4ffc-ae7b-48b8333b1dc8",
-              "StartboardPart-MonitorChartPart-099e22e4-38a0-4ffc-ae7b-48b8333b1dd6",
-              "StartboardPart-AnalyticsPart-099e22e4-38a0-4ffc-ae7b-48b8333b1dd8",
-              "StartboardPart-AnalyticsPart-099e22e4-38a0-4ffc-ae7b-48b8333b1de2",
-              "StartboardPart-AnalyticsPart-099e22e4-38a0-4ffc-ae7b-48b8333b1dea",
-              "StartboardPart-AnalyticsPart-099e22e4-38a0-4ffc-ae7b-48b8333b1dee"
+              "StartboardPart-ApplicationMapPart-87b43f3a-d1f0-4e20-9e64-db5c9374f3df",
+              "StartboardPart-MonitorChartPart-87b43f3a-d1f0-4e20-9e64-db5c9374f3ed",
+              "StartboardPart-AnalyticsPart-87b43f3a-d1f0-4e20-9e64-db5c9374f3ef",
+              "StartboardPart-AnalyticsPart-87b43f3a-d1f0-4e20-9e64-db5c9374f3ff",
+              "StartboardPart-AnalyticsPart-87b43f3a-d1f0-4e20-9e64-db5c9374f407",
+              "StartboardPart-AnalyticsPart-87b43f3a-d1f0-4e20-9e64-db5c9374f409"
             ],
             "model": {
               "format": "utc",
