@@ -25,13 +25,14 @@ You can provision resources by first initializing Terraform:
 And then running:  
 `terraform apply`
 
-## Infrastructure view
+## Architecture views
+### Infrastructure
 ![alt text](diagram.png "Network view")
 
-## Identify flow view
+### Identify flow
 ![alt text](identity-diagram.png "Identity View")
 
-## Deployment automation view
+### Deployment automation
 ![alt text](deployment-diagram.png "Deployment View")
 
 ## Component description
@@ -103,6 +104,8 @@ The Automated VDC has a number of features that are turned off by default. This 
 |Grant access to SQL Database for App Service MSI and user/group defined by `admin_object_id`. This is required for database import and therefore application deployment|`grant_database_access`|PowerShell 7|
 |Pipeline&nbsp;agent&nbsp;type. By default a [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/) will be used. Setting this to `true` will instead use an [Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments)|`use_pipeline_environment`|Multi-stage YAML Pipelines|
 |SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegate the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and configure its location by setting `vanity_certificate_*` (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample)).
+
+![alt text](dashboard.png "Portal Dashboard")
 
 ## Resources
 - [Azure CLI](http://aka.ms/azure-cli)
