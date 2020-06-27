@@ -4,7 +4,7 @@ This project contains a sample starter Virtual Datacenter (VDC), which follows a
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
 
 ## TL;DR, give me the Quickstart
-To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). 
+To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli), and a shell of your choice.
 
 Make sure you have the latest version of Azure CLI. This requires some extra work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
 `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
@@ -18,12 +18,16 @@ Login with Azure CLI:
 
 This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider. Optionally, you can select the subscription to target:  
 `az account set --subscription 00000000-0000-0000-0000-000000000000`   
+`ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (bash)   
+`$env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (pwsh)   
 
 You can provision resources by first initializing Terraform:   
 `terraform init`  
 
 And then running:  
 `terraform apply`
+
+The default configuration will work with any shell. Additional [features](##feature-toggles) may require PowerShell.
 
 ## Architecture views
 ### Infrastructure
@@ -75,7 +79,7 @@ or
 `terraform init`  
 or  
 `./tf_deploy.ps1 -init -workspace default`
-5.  Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](###Features) below)
+5.  Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](##feature-toggles) below)
 6.  Run  
 `terraform plan`  
 or  
@@ -105,7 +109,15 @@ The Automated VDC has a number of features that are turned off by default. This 
 |Pipeline&nbsp;agent&nbsp;type. By default a [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/) will be used. Setting this to `true` will instead use an [Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments)|`use_pipeline_environment`|Multi-stage YAML Pipelines|
 |SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegate the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and configure its location by setting `vanity_certificate_*` (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample)).
 
+## Dashboard
+
+A portal dashboard will be generated:   
+
 ![alt text](dashboard.png "Portal Dashboard")
+
+This dashboard can be reverse engineered into the template that creates it by running:   
+`templatize_dashboard.ps1`   
+This generates `dashboard.tpl`, which in turn recreates the dashboard. Hence there is therefore provides full round-trip dashboard editing support.
 
 ## Resources
 - [Azure CLI](http://aka.ms/azure-cli)
