@@ -117,7 +117,7 @@ A portal dashboard will be generated:
 
 This dashboard can be reverse engineered into the template that creates it by running:   
 `templatize_dashboard.ps1`   
-This generates `dashboard.tpl`, which in turn recreates the dashboard. Hence there is therefore provides full round-trip dashboard editing support.
+This recreates `dashboard.tpl`, which in turn generates the dashboard. Hence full round-trip dashboard editing support is provided.
 
 ## Resources
 - [Azure CLI](http://aka.ms/azure-cli)
@@ -125,6 +125,7 @@ This generates `dashboard.tpl`, which in turn recreates the dashboard. Hence the
 - [PowerShell Core](https://github.com/PowerShell/PowerShell)
 - [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html)
 - [Terraform Azure Provider](https://www.terraform.io/docs/providers/azurerm/index.html)
+- [Terraform on Azure documentation](https://docs.microsoft.com/en-us/azure/developer/terraform)
 - [Terraform Learning](https://learn.hashicorp.com/terraform?track=azure#azure)
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
 
