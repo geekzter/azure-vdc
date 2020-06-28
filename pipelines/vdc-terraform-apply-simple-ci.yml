@@ -143,6 +143,7 @@ jobs:
         workingDirectory: '$(terraformDirectory)'
       env:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+        TF_VAR_default_update_timeout: '$(jobTimeOutMinutes)m'
   
     - task: AzureCLI@2
       name: terraformDestroy
@@ -163,7 +164,7 @@ jobs:
         failOnStandardError: true
         workingDirectory: '$(terraformDirectory)'
       env:
-        TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+        TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
 
 # Clean up resources, in the event 'terraform destroy' fails   
 - job: 'CleanUp'
