@@ -98,32 +98,53 @@ jobs:
         terraformVersion: '$(terraformVersion)'
 
     - task: AzureCLI@2
-      name: terraformApply
-      displayName: 'Terraform init & apply'
-      enabled: true
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        scriptType: bash
-        scriptLocation: inlineScript
-        # ARM_* environment variables are required by Terraform azurerm provider and backend
-        # https://www.terraform.io/docs/providers/azurerm/index.html
-        # https://www.terraform.io/docs/backends/types/azurerm.html
-        # Use Pipeline Service Principal and Service Connection to set up these variables
-        inlineScript: |
-          export ARM_CLIENT_ID=$servicePrincipalId
-          export ARM_CLIENT_SECRET=$servicePrincipalKey
-          export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-          export ARM_TENANT_ID=$tenantId
-          terraform init
-          terraform apply -auto-approve
-        addSpnToEnvironment: true
-        useGlobalConfig: true
-        failOnStandardError: true
-        workingDirectory: '$(terraformDirectory)'
-      env:
-        TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
-  
+    name: terraformApply
+    displayName: 'Terraform init & apply'
+    enabled: true
+    inputs:
+      azureSubscription: '$(subscriptionConnection)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      # ARM_* environment variables are required by Terraform azurerm provider and backend
+      # https://www.terraform.io/docs/providers/azurerm/index.html
+      # https://www.terraform.io/docs/backends/types/azurerm.html
+      # Use Pipeline Service Principal and Service Connection to set up these variables
+      inlineScript: |
+        export ARM_CLIENT_ID=$servicePrincipalId
+        export ARM_CLIENT_SECRET=$servicePrincipalKey
+        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        export ARM_TENANT_ID=$tenantId
+        terraform init
+        terraform apply -auto-approve
+      addSpnToEnvironment: true
+      useGlobalConfig: true
+      failOnStandardError: true
+      workingDirectory: '$(terraformDirectory)'
+    env:
+      TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+
     - task: AzureCLI@2
+    name: terraformApply
+    displayName: 'Terraform apply (check re-entrance)'
+    enabled: true
+    inputs:
+      azureSubscription: '$(subscriptionConnection)'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        export ARM_CLIENT_ID=$servicePrincipalId
+        export ARM_CLIENT_SECRET=$servicePrincipalKey
+        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        export ARM_TENANT_ID=$tenantId
+        terraform apply -auto-approve
+      addSpnToEnvironment: true
+      useGlobalConfig: true
+      failOnStandardError: true
+      workingDirectory: '$(terraformDirectory)'
+    env:
+      TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+  
+      - task: AzureCLI@2
       name: terraformDestroy
       displayName: 'Terraform destroy'
       enabled: true
@@ -131,10 +152,6 @@ jobs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: bash
         scriptLocation: inlineScript
-        # ARM_* environment variables are required by Terraform azurerm provider and backend
-        # https://www.terraform.io/docs/providers/azurerm/index.html
-        # https://www.terraform.io/docs/backends/types/azurerm.html
-        # Use Pipeline Service Principal and Service Connection to set up these variables
         inlineScript: |
           export ARM_CLIENT_ID=$servicePrincipalId
           export ARM_CLIENT_SECRET=$servicePrincipalKey
