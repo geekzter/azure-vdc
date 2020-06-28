@@ -56,22 +56,34 @@ Private networking provides some isolation from uninvited guests. However, a [ze
 1. App Service uses Service Principal & RBAC to access Container Registry
 1. User AAD auth (SSO with MFA) to App Service web app
 1. App Service web app uses MSI to access SQL Database (using least privilege database roles)
-1. User AAD auth to VM's (RDP, VM MSI & AADLoginForWindows extension)
 1. User AAD auth (SSO with MFA) on Point-to-Site VPN
+1. User AAD auth to VM's (RDP, VM MSI & AADLoginForWindows extension)
 1. SQL Database tools (SSMS, Data Studio) use AAD Autnentication with MFA
 1. Azure DevOps (inc. Terraform) access to ARM using Service Principal
 
 ### Deployment automation
 ![alt text](deployment-diagram.png "Deployment View")
 
-The diagram conveys the release pipeline, with end-to-end orchestration in Azure Pipelines (YAML):
+The diagram conveys the release pipeline, with end-to-end orchestration in Azure Pipelines (YAML). The pipeline provisiones infrastructure, and deploys 2 applications:
 
-- Infrastructure provisioning through Terraform
-- Provisioned AppServers auto-joined to Azure Pipelines Environment
-- IaaS VM application deployment from Azure Pipeline to this environment
-- Application deployed from Azure DevOps Pipeline
-- Blue/green deployment with App Service deployment slots
-- PowerShell as the glue  that ties things together, where needed
+- An [ASP.NET Core app](https://github.com/geekzter/dotnetcore-sqldb-tutorial) deployed on PaaS App Service, SQl Database & more
+- An [ASP.NET Framework application](https://github.com/geekzter/azure-vdc/tree/master/apps/IaaS-ASP.NET) deployed on IaaS VM's 
+
+The high-level pipeline steps are:
+
+1. Create [environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments) using multi-stage YAML pipeline
+1. Infrastructure provisioning with Terraform   
+This diagram shows App Service, SQL Database & VM's only as they participate in downstream  deployments. Many more resources are created that are not displayed.
+1. Provision SQL Database
+1. Provision App Service (with SQL DB connection string)
+1. App Service pulls configured container 
+[ASP.NET Core app](https://github.com/geekzter/dotnetcore-sqldb-tutorial) running offline from database
+1. Provision virtual machines 
+1. Import database (PowerShell with Azure CLI)
+1. SQL Database pulls bacpac image
+1. Swap deployment slots (PowerShell with Azure CLI)   
+[ASP.NET Core app](https://github.com/geekzter/dotnetcore-sqldb-tutorial) now uses live database
+1. Deploy [ASP.NET Framework application](https://github.com/geekzter/azure-vdc/tree/master/apps/IaaS-ASP.NET)
 
 ## Pre-Requisites
 This project uses Terraform, PowerShell 7, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
