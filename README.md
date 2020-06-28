@@ -1,11 +1,10 @@
 # Automated VDC
-This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology:
+This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology. Two demo applications (one IaaS, one PaaS) are deployed into it.
 
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
-![alt text](diagram.png "Network view")
 
-## TL;DR: Quickstart
-To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli). 
+## TL;DR, give me the Quickstart
+To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli), you can a shell of your choice.
 
 Make sure you have the latest version of Azure CLI. This requires some extra work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
 `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
@@ -19,6 +18,8 @@ Login with Azure CLI:
 
 This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider. Optionally, you can select the subscription to target:  
 `az account set --subscription 00000000-0000-0000-0000-000000000000`   
+`ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (bash)   
+`$env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (pwsh)   
 
 You can provision resources by first initializing Terraform:   
 `terraform init`  
@@ -26,35 +27,68 @@ You can provision resources by first initializing Terraform:
 And then running:  
 `terraform apply`
 
-## VDC
-![alt text](identity-diagram.png "Identity View")
-![alt text](deployment-diagram.png "Deployment View")
-This projects contains the following components
+The default configuration will work with any shell. Additional [features](##feature-toggles) may require PowerShell.
+
+## Architecture
+### Infrastructure
+![alt text](diagram.png "Network view")
+
+This repo deploys the following components:
+
 - A hub network with subnets for shared components (dmz, mgmt, etc)
 - Azure Firewall used as Internet Access Gateway (egress, outbound FQDN whitelisting)
 - Application Gateway as Web Application Firewall (WAF, HTTP ingress)
 - A Management VM that is used as jump server to connect to other VM's
 - A Managed Bastion as well
 - A Point to Site (P2S VPN), with transitive access to PaaS services
-- Infrastructure provisioning through Terraform, PowerShell and Azure Pipelines
 - An IIS VM application deployed in a spoke network, with subnet segregation (app, data)
-  - AppServers auto-joined to Azure Pipelines Environment, application deployment from Azure Pipeline (YAML)
 - An App Service web application integrated into another spoke network
   - Ingress through Private Endpoint
   - Egress through VNet integration (delegated subnet)
-  - Several PaaS services connected as Private Endpoints
-  - Application deployed from Azure DevOps Pipeline
-- Azure Active Directory Authentication
-  - App Service uses Service Principal & RBAC to access Container Registry
-  - User AAD auth to App Service
-  - MSI auth between application tiers
-  - User AAD auth to VM's (RDP)
-  - User AAD auth on Point-to-Site VPN
+- Several PaaS services connected as Private Endpoints
+  
 
-### Pre-Requisites
+### Identify flow
+![alt text](identity-diagram.png "Identity View")   
+
+Private networking provides some isolation from uninvited guests. However, a [zero trust](https://www.microsoft.com/security/blog/2019/10/23/perimeter-based-network-defense-transform-zero-trust-model/) 'assume breach' approach uses multiple methods of isolation. This is why identity is called the the new perimeter. With Azure Active Directory Authentication, most application level communication can be locked down and access controlled through RBAC. This is done in the following places:
+
+1. App Service uses Service Principal & RBAC to access Container Registry
+1. User AAD auth (SSO with MFA) to App Service web app
+1. App Service web app uses MSI to access SQL Database (using least privilege database roles, see `grant_database_access.ps1`)
+1. User AAD auth (SSO with MFA) on Point-to-Site VPN
+1. User AAD auth to VM's (RDP, VM MSI & AADLoginForWindows extension)
+1. SQL Database tools (Azure Data Studio, SQL Server Management Studio) use AAD Autnentication with MFA
+1. Azure DevOps (inc. Terraform) access to ARM using Service Principal
+
+### Deployment automation
+![alt text](deployment-diagram.png "Deployment View")
+
+The diagram conveys the release pipeline, with end-to-end orchestration by Azure Pipelines (YAML). The pipeline provisions infrastructure, and deploys 2 applications:
+
+- An [ASP.NET Core app](https://github.com/geekzter/dotnetcore-sqldb-tutorial) deployed on PaaS App Service, SQl Database & more
+- An [ASP.NET Framework application](https://github.com/geekzter/azure-vdc/tree/master/apps/IaaS-ASP.NET) deployed on IaaS VM's 
+
+The high-level pipeline steps are:
+
+1. Create [environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments) using multi-stage YAML pipeline
+1. Infrastructure provisioning with Terraform   
+This diagram only shows resources (App Service, SQL Database & VM's) that participate in downstream  deployments. Many more resources are created that are not displayed.
+1. Provision SQL Database
+1. Provision App Service (with SQL DB connection string)
+1. App Service pulls configured 
+[ASP.NET Core app](https://github.com/geekzter/dotnetcore-sqldb-tutorial) container running offline from database
+1. Provision Virtual Machines 
+1. Import database (PowerShell with Azure CLI)
+1. SQL Database pulls bacpac image
+1. Swap deployment slots (PowerShell with Azure CLI)   
+[ASP.NET Core app](https://github.com/geekzter/dotnetcore-sqldb-tutorial) now uses live database
+1. Deploy [ASP.NET Framework application](https://github.com/geekzter/azure-vdc/tree/master/apps/IaaS-ASP.NET)
+
+## Pre-Requisites
 This project uses Terraform, PowerShell 7, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
 
-### Getting Started
+## Getting Started
 The quickstart uses defauls settings that disables some features. To use all featues (e.g. VPN, SSL domains, CI/CD), more is involved:
 1.	Clone repository:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
@@ -68,7 +102,7 @@ or
 `terraform init`  
 or  
 `./tf_deploy.ps1 -init -workspace default`
-5.  Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](###Features) below)
+5.  Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](##feature-toggles) below)
 6.  Run  
 `terraform plan`  
 or  
@@ -83,7 +117,7 @@ to provision resources
 9.  Create build pipeline to build App Service application, see `azure-pipelines.yml` located here: [dotnetcore-sqldb-tutorial](https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml)
 10.  Create Terraform CI pipeline using either `vdc-terraform-apply-simple-ci.yml` or `vdc-terraform-apply-ci.yml`
 
-### Features ###
+## Feature toggles ###
 The Automated VDC has a number of features that are turned off by default. This can be because the feature has pre-requisites (e.g. certificates, or you need to own a domain). Another reason is the use of Azure preview features, or features that just simply take a long time to provision. Features are toggled by a corresponding variable in [`variables.tf`](./Terraform/variables.tf).
 |Feature|Toggle|Dependencies and Pre-requisites|
 |---|---|---|
@@ -98,12 +132,23 @@ The Automated VDC has a number of features that are turned off by default. This 
 |Pipeline&nbsp;agent&nbsp;type. By default a [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/) will be used. Setting this to `true` will instead use an [Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments)|`use_pipeline_environment`|Multi-stage YAML Pipelines|
 |SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegate the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and configure its location by setting `vanity_certificate_*` (see example in [`config.auto.tfvars.sample`](./Terraform/config.auto.tfvars.sample)).
 
-### Resources
+## Dashboard
+
+A portal dashboard will be generated:   
+
+![alt text](dashboard.png "Portal Dashboard")
+
+This dashboard can be reverse engineered into the template that creates it by running:   
+`templatize_dashboard.ps1`   
+This recreates `dashboard.tpl`, which in turn generates the dashboard. Hence full round-trip dashboard editing support is provided.
+
+## Resources
 - [Azure CLI](http://aka.ms/azure-cli)
 - [Azure Pipelines](https://azure.microsoft.com/en-us/services/devops/pipelines/)
 - [PowerShell Core](https://github.com/PowerShell/PowerShell)
 - [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html)
 - [Terraform Azure Provider](https://www.terraform.io/docs/providers/azurerm/index.html)
+- [Terraform on Azure documentation](https://docs.microsoft.com/en-us/azure/developer/terraform)
 - [Terraform Learning](https://learn.hashicorp.com/terraform?track=azure#azure)
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
 
