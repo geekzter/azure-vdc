@@ -408,7 +408,7 @@ variable enable_app_service_aad_auth {
 }
 variable enable_private_link {
   description                  = "Whether to create Private Endpoint for PaaS services where possible"
-  default                      = true
+  default                      = false
   type                         = bool
 }
 variable grant_database_access {
