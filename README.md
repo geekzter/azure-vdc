@@ -53,19 +53,19 @@ This repo deploys the following components:
 
 Private networking provides some isolation from uninvited guests. However, a [zero trust](https://www.microsoft.com/security/blog/2019/10/23/perimeter-based-network-defense-transform-zero-trust-model/) 'assume breach' approach uses multiple methodss of isolation. This is why identity is called the the new perimeter. With Azure Active Directory Authentication, mnost application level communication can be locked down and controlled through RBAC. This is done at the following places:
 
-- App Service uses Service Principal & RBAC to access Container Registry
-- User AAD auth (with MFA) to App Service web app
-- App Service web app uses MSI to access SQL Database (using least privilege database roles)
-- User AAD auth to VM's (RDP)
-- User AAD auth (with MFA) on Point-to-Site VPN
-- SQL Database tools (SSMS, Data Studio) use AAD Autnentication with MFA
+1. App Service uses Service Principal & RBAC to access Container Registry
+1. User AAD auth (SSO with MFA) to App Service web app
+1. App Service web app uses MSI to access SQL Database (using least privilege database roles)
+1. User AAD auth to VM's (RDP, VM MSI & AADLoginForWindows extension)
+1. User AAD auth (SSO with MFA) on Point-to-Site VPN
+1. SQL Database tools (SSMS, Data Studio) use AAD Autnentication with MFA
+1. Azure DevOps (inc. Terraform) access to ARM using Service Principal
 
 ### Deployment automation
 ![alt text](deployment-diagram.png "Deployment View")
 
-The diagram conveys the release pipeline, including:
+The diagram conveys the release pipeline, with end-to-end orchestration in Azure Pipelines (YAML):
 
-- End-to-end orchestration in Azure Pipelines (YAML)
 - Infrastructure provisioning through Terraform
 - Provisioned AppServers auto-joined to Azure Pipelines Environment
 - IaaS VM application deployment from Azure Pipeline to this environment
