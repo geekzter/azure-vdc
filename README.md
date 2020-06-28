@@ -4,19 +4,19 @@ This project contains a sample starter Virtual Datacenter (VDC), which follows a
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
 
 ## TL;DR, give me the Quickstart
-To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli), you can a shell of your choice.
+To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli), you can use a shell of your choice.
 
-Make sure you have the latest version of Azure CLI. This requires some extra work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
+Make sure you have the latest version of Azure CLI. This requires some tailored work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
 `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
 
-Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to.  
+Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to. Clone this repo:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
 `cd azure-vdc/terraform`  
 
 Login with Azure CLI:  
 `az login`   
 
-This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider. Optionally, you can select the subscription to target:  
+This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider when working interactively. Optionally, you can select the subscription to target:  
 `az account set --subscription 00000000-0000-0000-0000-000000000000`   
 `ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (bash)   
 `$env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (pwsh)   
@@ -27,7 +27,7 @@ You can provision resources by first initializing Terraform:
 And then running:  
 `terraform apply`
 
-The default configuration will work with any shell. Additional [features](##feature-toggles) may require PowerShell.
+The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. Make sure you clean up, these are quite a number of resources (see [disclaimer](#disclaimer)).
 
 ## Architecture
 ### Infrastructure
@@ -71,7 +71,7 @@ The diagram conveys the release pipeline, with end-to-end orchestration by Azure
 
 The high-level pipeline steps are:
 
-1. Create [environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments) using multi-stage YAML pipeline
+1. Create [Pipeline environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments) using multi-stage YAML pipeline
 1. Infrastructure provisioning with Terraform   
 This diagram only shows resources (App Service, SQL Database & VM's) that participate in downstream  deployments. Many more resources are created that are not displayed.
 1. Provision SQL Database
@@ -102,7 +102,7 @@ or
 `terraform init`  
 or  
 `./tf_deploy.ps1 -init -workspace default`
-5.  Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](##feature-toggles) below)
+5.  Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](#feature-toggles) below)
 6.  Run  
 `terraform plan`  
 or  
