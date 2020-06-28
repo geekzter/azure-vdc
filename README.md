@@ -1,10 +1,10 @@
 # Automated VDC
-This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology:
+This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology. Two demo applications (one IaaS, one PaaS) are deployed into it.
 
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
 
 ## TL;DR, give me the Quickstart
-To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli), and a shell of your choice.
+To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) and [Azure CLI](http://aka.ms/azure-cli), you can a shell of your choice.
 
 Make sure you have the latest version of Azure CLI. This requires some extra work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
 `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
@@ -51,20 +51,20 @@ This repo deploys the following components:
 ### Identify flow
 ![alt text](identity-diagram.png "Identity View")   
 
-Private networking provides some isolation from uninvited guests. However, a [zero trust](https://www.microsoft.com/security/blog/2019/10/23/perimeter-based-network-defense-transform-zero-trust-model/) 'assume breach' approach uses multiple methodss of isolation. This is why identity is called the the new perimeter. With Azure Active Directory Authentication, mnost application level communication can be locked down and controlled through RBAC. This is done at the following places:
+Private networking provides some isolation from uninvited guests. However, a [zero trust](https://www.microsoft.com/security/blog/2019/10/23/perimeter-based-network-defense-transform-zero-trust-model/) 'assume breach' approach uses multiple methods of isolation. This is why identity is called the the new perimeter. With Azure Active Directory Authentication, most application level communication can be locked down and access controlled through RBAC. This is done in the following places:
 
 1. App Service uses Service Principal & RBAC to access Container Registry
 1. User AAD auth (SSO with MFA) to App Service web app
-1. App Service web app uses MSI to access SQL Database (using least privilege database roles)
+1. App Service web app uses MSI to access SQL Database (using least privilege database roles, see `grant_database_access.ps1`)
 1. User AAD auth (SSO with MFA) on Point-to-Site VPN
 1. User AAD auth to VM's (RDP, VM MSI & AADLoginForWindows extension)
-1. SQL Database tools (SSMS, Data Studio) use AAD Autnentication with MFA
+1. SQL Database tools (Azure Data Studio, SQL Server Management Studio) use AAD Autnentication with MFA
 1. Azure DevOps (inc. Terraform) access to ARM using Service Principal
 
 ### Deployment automation
 ![alt text](deployment-diagram.png "Deployment View")
 
-The diagram conveys the release pipeline, with end-to-end orchestration in Azure Pipelines (YAML). The pipeline provisiones infrastructure, and deploys 2 applications:
+The diagram conveys the release pipeline, with end-to-end orchestration by Azure Pipelines (YAML). The pipeline provisions infrastructure, and deploys 2 applications:
 
 - An [ASP.NET Core app](https://github.com/geekzter/dotnetcore-sqldb-tutorial) deployed on PaaS App Service, SQl Database & more
 - An [ASP.NET Framework application](https://github.com/geekzter/azure-vdc/tree/master/apps/IaaS-ASP.NET) deployed on IaaS VM's 
@@ -73,12 +73,12 @@ The high-level pipeline steps are:
 
 1. Create [environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments) using multi-stage YAML pipeline
 1. Infrastructure provisioning with Terraform   
-This diagram shows App Service, SQL Database & VM's only as they participate in downstream  deployments. Many more resources are created that are not displayed.
+This diagram only shows resources (App Service, SQL Database & VM's) that participate in downstream  deployments. Many more resources are created that are not displayed.
 1. Provision SQL Database
 1. Provision App Service (with SQL DB connection string)
-1. App Service pulls configured container 
-[ASP.NET Core app](https://github.com/geekzter/dotnetcore-sqldb-tutorial) running offline from database
-1. Provision virtual machines 
+1. App Service pulls configured 
+[ASP.NET Core app](https://github.com/geekzter/dotnetcore-sqldb-tutorial) container running offline from database
+1. Provision Virtual Machines 
 1. Import database (PowerShell with Azure CLI)
 1. SQL Database pulls bacpac image
 1. Swap deployment slots (PowerShell with Azure CLI)   
