@@ -124,7 +124,7 @@ jobs:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
 
     - task: AzureCLI@2
-      name: terraformApply
+      name: terraformReApply
       displayName: 'Terraform apply (check re-entrance)'
       enabled: true
       inputs:
@@ -144,7 +144,7 @@ jobs:
       env:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
   
-      - task: AzureCLI@2
+    - task: AzureCLI@2
       name: terraformDestroy
       displayName: 'Terraform destroy'
       enabled: true
