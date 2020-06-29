@@ -169,6 +169,7 @@ module paas_app {
   default_read_timeout         = var.default_read_timeout
   default_delete_timeout       = var.default_delete_timeout
   disable_public_database_access= var.disable_public_database_access
+  restrict_public_storage_access= var.restrict_public_storage_access
   enable_aad_auth              = var.enable_app_service_aad_auth
   enable_private_link          = var.enable_private_link
   grant_database_access        = var.grant_database_access

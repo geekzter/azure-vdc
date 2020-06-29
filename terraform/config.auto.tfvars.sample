@@ -5,10 +5,13 @@ deploy_network_watcher         = false
 deploy_non_essential_vm_extensions = false
 deploy_security_vm_extensions  = false
 deploy_vpn                     = false
-enable_app_service_aad_auth    = false
-grant_database_access          = false
+disable_public_database_access = false
+enable_private_link            = true
+enable_app_service_aad_auth    = true
+grant_database_access          = true
 paas_app_storage_import        = false
-use_pipeline_environment       = false
+restrict_public_storage_access = false
+use_pipeline_environment       = true
 use_server_side_disk_encryption = false
 use_vanity_domain_and_ssl      = false
 

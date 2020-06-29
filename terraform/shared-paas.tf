@@ -142,7 +142,7 @@ resource azurerm_storage_account_network_rules automation_storage_rules {
   bypass                       = ["AzureServices"]
   ip_rules                     = [local.ipprefixdata.data.prefix]
 
-  count                        = var.enable_private_link ? 1 : 0
+  count                        = var.restrict_public_storage_access ? 1 : 0
 }
 resource azurerm_private_endpoint aut_blob_storage_endpoint {
   name                         = "${azurerm_storage_account.vdc_automation_storage.name}-blob-endpoint"

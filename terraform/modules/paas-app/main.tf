@@ -202,6 +202,8 @@ resource azurerm_storage_account_network_rules app_storage_rules {
   storage_account_name         = azurerm_storage_account.app_storage.name
   default_action               = "Deny"
 
+  count                        = var.restrict_public_storage_access ? 1 : 0
+
   depends_on                   = [azurerm_storage_container.app_storage_container,azurerm_storage_blob.app_storage_blob_sample]
 }
 
@@ -315,6 +317,8 @@ resource azurerm_storage_account_network_rules archive_storage_rules {
   default_action               = "Deny"
   bypass                       = ["AzureServices"] # Event Hub needs access
   ip_rules                     = [jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix]
+
+  count                        = var.restrict_public_storage_access ? 1 : 0
 
   depends_on                   = [azurerm_storage_container.archive_storage_container]
 }
