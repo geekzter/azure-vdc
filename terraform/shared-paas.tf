@@ -48,14 +48,25 @@ resource azurerm_key_vault vault {
     }
   }
 
-  network_acls {
-    default_action             = var.restrict_public_access ? "Deny" : "Allow"
-    # When enabled_for_disk_encryption is true, network_acls.bypass must include "AzureServices"
-    bypass                     = "AzureServices"
-    ip_rules                   = local.admin_cidr_ranges
-    virtual_network_subnet_ids = [
-                                  azurerm_subnet.iag_subnet.id
-    ]
+  dynamic "network_acls" {
+    for_each = range(var.restrict_public_access ? 1 : 0) 
+    content {
+      default_action           = "Deny"
+      # When enabled_for_disk_encryption is true, network_acls.bypass must include "AzureServices"
+      bypass                   = "AzureServices"
+      ip_rules                 = local.admin_cidr_ranges
+      virtual_network_subnet_ids = [
+                                 azurerm_subnet.iag_subnet.id
+      ]
+    }
+  }
+
+  dynamic "network_acls" {
+    for_each = range(var.restrict_public_access ? 0 : 1) 
+    content {
+      default_action           = "Allow"
+      bypass                   = "AzureServices"
+    }
   }
 
   tags                         = local.tags
@@ -138,8 +149,11 @@ resource azurerm_storage_account vdc_automation_storage {
 resource azurerm_storage_account_network_rules automation_storage_rules {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
-  default_action               = var.restrict_public_access ? "Deny" : "Allow"
+  default_action               = "Deny"
   bypass                       = ["AzureServices"]
+
+  count                        = var.restrict_public_access ? 1 : 0
+
   ip_rules                     = [local.ipprefixdata.data.prefix]
 }
 resource azurerm_private_endpoint aut_blob_storage_endpoint {

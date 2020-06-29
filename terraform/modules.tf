@@ -50,7 +50,7 @@ locals {
                                  try(azurerm_private_dns_a_record.diag_storage_blob_dns_record.0.id,""),
                                  try(azurerm_private_dns_a_record.diag_storage_table_dns_record.0.id,""),
                                  try(azurerm_private_dns_a_record.vault_dns_record.0.id,""),
-                                 try(azurerm_storage_account_network_rules.automation_storage_rules.id,"")
+                                 try(azurerm_storage_account_network_rules.automation_storage_rules.0.id,"")
   ])
   # HACK: This value is dependent on all elements of the list being created
   vm_connectivity_dependency   = join("|",[for dep in local.vm_agent_dependencies : substr(dep,0,1)])

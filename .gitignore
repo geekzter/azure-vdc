@@ -101,6 +101,7 @@ terraform.log
 *.DS_Store
 
 # Ignore temp files
+*.*_
 tmp*.*
 *.tmp
 err.out

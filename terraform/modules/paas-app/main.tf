@@ -188,7 +188,9 @@ resource azurerm_storage_blob app_storage_blob_sample {
 resource azurerm_storage_account_network_rules app_storage_rules {
   resource_group_name          = azurerm_resource_group.app_rg.name
   storage_account_name         = azurerm_storage_account.app_storage.name
-  default_action               = var.restrict_public_access ? "Deny" : "Allow"
+  default_action               = "Deny"
+
+  count                        = var.restrict_public_access ? 1 : 0
 
   depends_on                   = [azurerm_storage_container.app_storage_container,azurerm_storage_blob.app_storage_blob_sample]
 }
@@ -300,9 +302,11 @@ resource azurerm_storage_container archive_storage_container {
 resource azurerm_storage_account_network_rules archive_storage_rules {
   resource_group_name          = azurerm_resource_group.app_rg.name
   storage_account_name         = azurerm_storage_account.archive_storage.name
-  default_action               = var.restrict_public_access ? "Deny" : "Allow"
+  default_action               = "Deny"
   bypass                       = ["AzureServices"] # Event Hub needs access
   ip_rules                     = [jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix]
+
+  count                        = var.restrict_public_access ? 1 : 0
 
   depends_on                   = [azurerm_storage_container.archive_storage_container]
 }
@@ -624,34 +628,45 @@ resource azurerm_eventhub_namespace app_eventhub {
   #zone_redundant               = true
 
   # Service Endpoint support
-  network_rulesets {
-    default_action             = var.restrict_public_access ? "Deny" : "Allow"
-    # Without this hole we can't make (automated) changes. Disable it later in the interactive demo                 
-    ip_rule {
-      action                   = "Allow"
-      ip_mask                  = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix # We need this to make changes
-    }
+  dynamic "network_rulesets" {
+    for_each = range(var.restrict_public_access ? 1 : 0) 
+    content {
+      default_action           = "Deny"
+      # Without this hole we can't make (automated) changes. Disable it later in the interactive demo                 
+      ip_rule {
+        action                 = "Allow"
+        ip_mask                = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix # We need this to make changes
+      }
 
-    # BUG: There is no variable named "var".
-    # https://github.com/hashicorp/terraform/issues/22340
-    # https://github.com/hashicorp/terraform/issues/24544
-    # https://github.com/terraform-providers/terraform-provider-azurerm/issues/6338
-    # https://github.com/terraform-providers/terraform-provider-azurerm/issues/7014
-    # dynamic "ip_rule" {
-    #   for_each                 = var.admin_ip_ranges
-    #   content {
-    #     action                 = "Allow"
-    #     ip_mask                = ip_rule.value
-    #   }
-    # }
-    virtual_network_rule {
-      # Allow the Firewall subnet
-      subnet_id                = var.iag_subnet_id
+      # BUG: There is no variable named "var".
+      # https://github.com/hashicorp/terraform/issues/22340
+      # https://github.com/hashicorp/terraform/issues/24544
+      # https://github.com/terraform-providers/terraform-provider-azurerm/issues/6338
+      # https://github.com/terraform-providers/terraform-provider-azurerm/issues/7014
+      # dynamic "ip_rule" {
+      #   for_each               = var.admin_ip_ranges
+      #   content {
+      #     action               = "Allow"
+      #     ip_mask              = ip_rule.value
+      #   }
+      # }
+      virtual_network_rule {
+        # Allow the Firewall subnet
+        subnet_id              = var.iag_subnet_id
+      }
+      virtual_network_rule {
+        subnet_id              = var.integrated_subnet_id
+      }
     }
-    virtual_network_rule {
-      subnet_id                = var.integrated_subnet_id
+  }
+
+  # Service Endpoint support
+  dynamic "network_rulesets" {
+    for_each = range(var.restrict_public_access ? 0 : 1) 
+    content {
+      default_action           = "Allow"
     }
-  } 
+  }
 
   tags                         = var.tags
 
