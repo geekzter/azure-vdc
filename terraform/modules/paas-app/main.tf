@@ -67,18 +67,6 @@ resource azurerm_storage_account app_storage {
   account_replication_type     = var.storage_replication_type
   enable_https_traffic_only    = true
  
-  # managed with azurerm_storage_account_network_rules
-  # network_rules {
-  #   default_action             = "Deny"
-  #   bypass                     = ["AzureServices","Logging","Metrics"] # Logging, Metrics, AzureServices, or None.
-  #   ip_rules                   = var.admin_ip_ranges
-  #   # Allow the Firewall subnet
-  #   virtual_network_subnet_ids = [
-  #                               var.iag_subnet_id,
-  #                               var.integrated_subnet_id
-  #   ]
-  # } 
-
   provisioner "local-exec" {
     # TODO: Add --auth-mode login once supported
     command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
@@ -200,9 +188,7 @@ resource azurerm_storage_blob app_storage_blob_sample {
 resource azurerm_storage_account_network_rules app_storage_rules {
   resource_group_name          = azurerm_resource_group.app_rg.name
   storage_account_name         = azurerm_storage_account.app_storage.name
-  default_action               = "Deny"
-
-  count                        = var.restrict_public_storage_access ? 1 : 0
+  default_action               = var.restrict_public_access ? "Deny" : "Allow"
 
   depends_on                   = [azurerm_storage_container.app_storage_container,azurerm_storage_blob.app_storage_blob_sample]
 }
@@ -314,11 +300,9 @@ resource azurerm_storage_container archive_storage_container {
 resource azurerm_storage_account_network_rules archive_storage_rules {
   resource_group_name          = azurerm_resource_group.app_rg.name
   storage_account_name         = azurerm_storage_account.archive_storage.name
-  default_action               = "Deny"
+  default_action               = var.restrict_public_access ? "Deny" : "Allow"
   bypass                       = ["AzureServices"] # Event Hub needs access
   ip_rules                     = [jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix]
-
-  count                        = var.restrict_public_storage_access ? 1 : 0
 
   depends_on                   = [azurerm_storage_container.archive_storage_container]
 }
@@ -641,14 +625,19 @@ resource azurerm_eventhub_namespace app_eventhub {
 
   # Service Endpoint support
   network_rulesets {
-    default_action             = "Deny"
+    default_action             = var.restrict_public_access ? "Deny" : "Allow"
     # Without this hole we can't make (automated) changes. Disable it later in the interactive demo                 
     ip_rule {
       action                   = "Allow"
       ip_mask                  = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix # We need this to make changes
     }
-    # # BUG: There is no variable named "var".
-    # dynamic ip_rule {
+
+    # BUG: There is no variable named "var".
+    # https://github.com/hashicorp/terraform/issues/22340
+    # https://github.com/hashicorp/terraform/issues/24544
+    # https://github.com/terraform-providers/terraform-provider-azurerm/issues/6338
+    # https://github.com/terraform-providers/terraform-provider-azurerm/issues/7014
+    # dynamic "ip_rule" {
     #   for_each                 = var.admin_ip_ranges
     #   content {
     #     action                 = "Allow"

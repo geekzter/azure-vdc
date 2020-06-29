@@ -419,8 +419,9 @@ variable grant_database_access {
 }
 # Workaround for BUG when used from some hosts (e.g. VS Codespaces): Access fails with access logged from _private_ IP address (not used in VDC)
 # 1.0;2020-05-17T13:22:59.2714021Z;GetContainerProperties;IpAuthorizationError;403;4;4;authenticated;xxxxxx;xxxxxx;blob;"https://xxxxxx.blob.core.windows.net:443/paasappscripts?restype=container";"/";75343457-f01e-005c-674e-2c705c000000;0;172.16.5.4:59722;2018-11-09;453;0;130;246;0;;;;;;"Go/go1.14.2 (amd64-linux) go-autorest/v14.0.0 tombuildsstuff/giovanni/v0.10.0 storage/2018-11-09";;
-variable restrict_public_storage_access {
-  description                  = "Implements network rules on storage Firewall"
+# This also enables you to run terraform repeatedly using changing outbound IP addresses withouth dependency on PowerShell (punch_hole.ps1)
+variable restrict_public_access {
+  description                  = "Implements network rules on PaaS Firewalls"
   default                      = false
   type                         = bool
 }

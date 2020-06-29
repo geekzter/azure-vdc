@@ -49,7 +49,7 @@ resource azurerm_key_vault vault {
   }
 
   network_acls {
-    default_action             = "Deny"
+    default_action             = var.restrict_public_access ? "Deny" : "Allow"
     # When enabled_for_disk_encryption is true, network_acls.bypass must include "AzureServices"
     bypass                     = "AzureServices"
     ip_rules                   = local.admin_cidr_ranges
@@ -138,11 +138,9 @@ resource azurerm_storage_account vdc_automation_storage {
 resource azurerm_storage_account_network_rules automation_storage_rules {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
-  default_action               = "Deny"
+  default_action               = var.restrict_public_access ? "Deny" : "Allow"
   bypass                       = ["AzureServices"]
   ip_rules                     = [local.ipprefixdata.data.prefix]
-
-  count                        = var.restrict_public_storage_access ? 1 : 0
 }
 resource azurerm_private_endpoint aut_blob_storage_endpoint {
   name                         = "${azurerm_storage_account.vdc_automation_storage.name}-blob-endpoint"
