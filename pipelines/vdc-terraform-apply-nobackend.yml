@@ -100,19 +100,19 @@ jobs:
     - task: AzureCLI@2
       displayName: 'Terraform init, apply & destroy'
       name: terraformConfig
-        inputs:
-          azureSubscription: '$(subscriptionConnection)'
-          scriptType: 'pscore'
-          scriptLocation: 'inlineScript'
-          inlineScript: |
-            $(scriptDirectory)/tf_deploy.ps1 -init -nobackend -apply -destroy -force
-          addSpnToEnvironment: true
-          useGlobalConfig: true
-          workingDirectory: '$(scriptDirectory)'
-          failOnStandardError: true
-          env:
-            TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
-            TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        scriptType: 'pscore'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          $(scriptDirectory)/tf_deploy.ps1 -init -nobackend -apply -destroy -force
+        addSpnToEnvironment: true
+        useGlobalConfig: true
+        workingDirectory: '$(scriptDirectory)'
+        failOnStandardError: true
+        env:
+          TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+          TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
     
 # Clean up resources, in the event 'terraform destroy' fails   
 - job: 'CleanUp'
