@@ -25,7 +25,7 @@ param (
     [parameter(Mandatory=$false,HelpMessage="Initialize Terraform backend, upgrade modules & provider")][switch]$Upgrade=$false,
     [parameter(Mandatory=$false,HelpMessage="Don't try to set up a Terraform backend if it does not exist")][switch]$NoBackend=$false,
     [parameter(Mandatory=$false,HelpMessage="Clears Terraform worksoace before starting")][switch]$Clear=$false,
-    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=$env:TF_WORKSPACE,
+    [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=($env:TF_WORKSPACE ?? "default"),
     [parameter(Mandatory=$false,HelpMessage="Don't use Terraform resource_suffix variable if output exists")][switch]$StickySuffix=$false,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform"),
     [parameter(Mandatory=$false)][int]$Parallelism=10, # Lower this to 10 if you run into rate limits
@@ -37,14 +37,16 @@ param (
 
 ### Validation
 if (!($Workspace)) { Throw "You must supply a value for Workspace" }
+if (!(Get-Command terraform -ErrorAction SilentlyContinue)) {
+    throw "Terraform now found"
+}
 
 Write-Host $MyInvocation.line -ForegroundColor Green
 PrintCurrentBranch
 
-AzLogin
+AzLogin -DisplayMessages
 
-Write-Host "Using subscription '$(az account show --query "name" -o tsv)'"
-$identity = $env:ARM_CLIENT_ID ? $env:ARM_CLIENT_ID : $(az account show --query "user.name" -o tsv)
+$identity = $env:ARM_CLIENT_ID ?? $(az account show --query "user.name" -o tsv)
 Write-Host "Terraform is running as '$identity'"
 
 ### Main routine
@@ -79,6 +81,9 @@ try {
     {
         Copy-Item $file.Value $tfdirectory
     }
+
+    # Some features that require PowerShell can run from PowerShell, override defaults from variables.tf
+    . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) defaults.ps1)
 
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
     foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
@@ -153,7 +158,7 @@ try {
 
     if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_backend_*) -and (Test-Path $varsFile)) {
         # Load variables from file, if it exists and environment variables have not been set
-        $varArgs = "-var-file='$varsFile'"
+        $varArgs = " -var-file='$varsFile'"
     }
 
     if ($Clear) {

@@ -39,6 +39,7 @@ locals {
   linux_fx_version             = var.container_registry != null && var.container != null ? "DOCKER|${data.azurerm_container_registry.vdc_images.0.login_server}/${var.container}" : "DOCKER|appsvcsample/python-helloworld:latest"
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
+  publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   vanity_hostname              = var.vanity_fqdn != null ? element(split(".",var.vanity_fqdn),0) : null
   vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
 }
@@ -304,7 +305,7 @@ resource azurerm_storage_account_network_rules archive_storage_rules {
   storage_account_name         = azurerm_storage_account.archive_storage.name
   default_action               = "Deny"
   bypass                       = ["AzureServices"] # Event Hub needs access
-  ip_rules                     = [jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix]
+  ip_rules                     = [local.publicprefix]
 
   count                        = var.restrict_public_access ? 1 : 0
 
@@ -635,7 +636,7 @@ resource azurerm_eventhub_namespace app_eventhub {
       # Without this hole we can't make (automated) changes. Disable it later in the interactive demo                 
       ip_rule {
         action                 = "Allow"
-        ip_mask                = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix # We need this to make changes
+        ip_mask                = local.publicprefix # We need this to make changes
       }
 
       # BUG: There is no variable named "var".
@@ -792,8 +793,8 @@ resource azurerm_sql_firewall_rule tfclient {
   name                         = "TerraformClientRule"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
-  start_ip_address             = chomp(data.http.localpublicip.body)
-  end_ip_address               = chomp(data.http.localpublicip.body)
+  start_ip_address             = cidrhost(local.publicprefix,0)
+  end_ip_address               = cidrhost(local.publicprefix,pow(2,32-split("/",local.publicprefix)[1])-1)
 
   depends_on                   = [null_resource.enable_sql_public_network_access]
 }
