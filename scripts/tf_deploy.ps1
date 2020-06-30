@@ -23,6 +23,7 @@ param (
     [parameter(Mandatory=$false,HelpMessage="Show Terraform output variables")][switch]$Output=$false,
     [parameter(Mandatory=$false,HelpMessage="Don't show prompts")][switch]$Force=$false,
     [parameter(Mandatory=$false,HelpMessage="Initialize Terraform backend, upgrade modules & provider")][switch]$Upgrade=$false,
+    [parameter(Mandatory=$false,HelpMessage="Don't try to set up a Terraform backend if it does not exist")][switch]$NoBackend=$false,
     [parameter(Mandatory=$false,HelpMessage="Clears Terraform worksoace before starting")][switch]$Clear=$false,
     [parameter(Mandatory=$false,HelpMessage="The Terraform workspace to use")][string]$Workspace=$env:TF_WORKSPACE,
     [parameter(Mandatory=$false,HelpMessage="Don't use Terraform resource_suffix variable if output exists")][switch]$StickySuffix=$false,
@@ -92,41 +93,43 @@ try {
     terraform -version
 
     if ($Init -or $Upgrade) {
-        $backendFile = (Join-Path $tfdirectory backend.tf)
-        $backendTemplate = "${backendFile}.sample"
-        $newBackend = (!(Test-Path $backendFile))
-        $tfbackendArgs = ""
-        if ($newBackend) {
-            if (!$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container) {
-                Write-Warning "Environment variables TF_VAR_backend_storage_account and TF_VAR_backend_storage_container must be set when creating a new backend from $backendTemplate"
-                $fail = $true
-            }
-            if (!($env:TF_VAR_backend_resource_group -or $env:ARM_ACCESS_KEY -or $env:ARM_SAS_TOKEN)) {
-                Write-Warning "Environment variables ARM_ACCESS_KEY or ARM_SAS_TOKEN or TF_VAR_backend_resource_group (with $identity granted 'Storage Blob Data Contributor' role) must be set when creating a new backend from $backendTemplate"
-                $fail = $true
-            }
-            if ($fail) {
-                Write-Warning "This script assumes Terraform backend exists at ${backendFile}, but is does not exist"
-                Write-Host "You can copy ${backendTemplate} -> ${backendFile} and configure a storage account manually"
-                Write-Host "See documentation at https://www.terraform.io/docs/backends/types/azurerm.html"
-                exit
+        if (!$NoBackend) {
+            $backendFile = (Join-Path $tfdirectory backend.tf)
+            $backendTemplate = "${backendFile}.sample"
+            $newBackend = (!(Test-Path $backendFile))
+            $tfbackendArgs = ""
+            if ($newBackend) {
+                if (!$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container) {
+                    Write-Warning "Environment variables TF_VAR_backend_storage_account and TF_VAR_backend_storage_container must be set when creating a new backend from $backendTemplate"
+                    $fail = $true
+                }
+                if (!($env:TF_VAR_backend_resource_group -or $env:ARM_ACCESS_KEY -or $env:ARM_SAS_TOKEN)) {
+                    Write-Warning "Environment variables ARM_ACCESS_KEY or ARM_SAS_TOKEN or TF_VAR_backend_resource_group (with $identity granted 'Storage Blob Data Contributor' role) must be set when creating a new backend from $backendTemplate"
+                    $fail = $true
+                }
+                if ($fail) {
+                    Write-Warning "This script assumes Terraform backend exists at ${backendFile}, but is does not exist"
+                    Write-Host "You can copy ${backendTemplate} -> ${backendFile} and configure a storage account manually"
+                    Write-Host "See documentation at https://www.terraform.io/docs/backends/types/azurerm.html"
+                    exit
+                }
+
+                # Terraform azurerm backend does not exist, create one
+                Write-Host "Creating '$backendFile'"
+                Copy-Item -Path $backendTemplate -Destination $backendFile
+                
+                $tfbackendArgs += " -reconfigure"
             }
 
-            # Terraform azurerm backend does not exist, create one
-            Write-Host "Creating '$backendFile'"
-            Copy-Item -Path $backendTemplate -Destination $backendFile
-            
-            $tfbackendArgs += " -reconfigure"
-        }
-
-        if ($env:TF_VAR_backend_resource_group) {
-            $tfbackendArgs += " -backend-config=`"resource_group_name=${env:TF_VAR_backend_resource_group}`""
-        }
-        if ($env:TF_VAR_backend_storage_account) {
-            $tfbackendArgs += " -backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
-        }
-        if ($env:TF_VAR_backend_storage_container) {
-            $tfbackendArgs += " -backend-config=`"container_name=${env:TF_VAR_backend_storage_container}`""
+            if ($env:TF_VAR_backend_resource_group) {
+                $tfbackendArgs += " -backend-config=`"resource_group_name=${env:TF_VAR_backend_resource_group}`""
+            }
+            if ($env:TF_VAR_backend_storage_account) {
+                $tfbackendArgs += " -backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
+            }
+            if ($env:TF_VAR_backend_storage_container) {
+                $tfbackendArgs += " -backend-config=`"container_name=${env:TF_VAR_backend_storage_container}`""
+            }
         }
 
         $initCmd = "terraform init $tfbackendArgs"
