@@ -31,6 +31,8 @@ variables:
   value: 'true'
 - name: 'TF_INPUT'
   value: 0
+- name: 'TF_VAR_resource_suffix'
+  value: 'b$(Build.BuildId)'
 
 # Inline variables shared across jobs
 - name: 'jobTimeOutMinutes'
