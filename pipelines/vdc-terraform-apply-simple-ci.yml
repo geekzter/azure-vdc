@@ -201,7 +201,7 @@ jobs:
         scriptType: pscore
         scriptLocation: inlineScript
         inlineScript: |
-          $(scriptDirectory)/erase.ps1 -DeploymentName dflt -clear $false -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
+          $(scriptDirectory)/erase.ps1 -suffix $(TF_VAR_resource_suffix) -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
         addSpnToEnvironment: false
         useGlobalConfig: true
         failOnStandardError: true

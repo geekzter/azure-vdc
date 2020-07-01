@@ -14,9 +14,10 @@
 #Requires -Version 7
 
 param (
-    [parameter(Mandatory=$false)][string]$Workspace=$env:TF_WORKSPACE,
-    [parameter(Mandatory=$false)][string]$DeploymentName,
-    [parameter(Mandatory=$false)][bool]$ClearTerraformState=$true,
+    [parameter(Mandatory=$false,ParameterSetName="Workspace")][string]$Workspace=$env:TF_WORKSPACE,
+    [parameter(Mandatory=$false,ParameterSetName="DeploymentName")][string]$DeploymentName,
+    [parameter(Mandatory=$false,ParameterSetName="Suffix")][string]$Suffix,
+    [parameter(Mandatory=$false,ParameterSetName="Workspace")][bool]$ClearTerraformState=$true,
     [parameter(Mandatory=$false)][switch]$Destroy=$false,
     [parameter(Mandatory=$false)][switch]$Force=$false,
     [parameter(Mandatory=$false)][switch]$Wait=$false,
@@ -24,26 +25,26 @@ param (
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
 )
 Write-Host $MyInvocation.line -ForegroundColor Green
-if (!$Workspace -and !$DeploymentName) { 
-    Write-Warning "You must supply a value for either DeploymentName or Workspace" 
-    exit
-}
-if ($Workspace -and $DeploymentName) { 
-    Write-Warning "You must supply a value for either DeploymentName or Workspace (not both)" 
-}
-if ($DeploymentName -and $ClearTerraformState) {
-    # DeploymentName provided as argument
-    $backendFile = (Join-Path $tfdirectory backend.tf)
-    if (Test-Path $backendFile) {
-        Write-Warning "Terraform backend configured at $backendFile, please provide Workspace argument instead of DeploymentName"
-        exit
-    }
-}
+# if (!$Workspace -and !$DeploymentName) { 
+#     Write-Warning "You must supply a value for either DeploymentName or Workspace" 
+#     exit
+# }
+# if ($Workspace -and $DeploymentName) { 
+#     Write-Warning "You must supply a value for either DeploymentName or Workspace (not both)" 
+# }
+# if ($DeploymentName -and $ClearTerraformState) {
+#     # DeploymentName provided as argument
+#     $backendFile = (Join-Path $tfdirectory backend.tf)
+#     if (Test-Path $backendFile) {
+#         Write-Warning "Terraform backend configured at $backendFile, please provide Workspace argument instead of DeploymentName"
+#         exit
+#     }
+# }
 $application = "Automated VDC"
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
-if ($ClearTerraformState) {
+if ($ClearTerraformState -and $PSBoundParameters.ContainsKey('Workspace')) {
     try {
         # Local backend, prompt the user to clear
         if (!$Force) {
@@ -94,13 +95,18 @@ if ($Destroy) {
             exit
         }
     }
-    $jobs = @()
-    if ($Workspace) {
-        $tagQuery = "[?tags.workspace == '${Workspace}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
-        Write-Host "Removing resources with tags workspace='${Workspace}' and application='${application}'..." -ForegroundColor Green
+    if ($Suffix) {
+        $tagQuery = "[?tags.suffix == '${Suffix}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
+        Write-Host "Removing resources with tags suffix='${Suffix}' and application='${application}'..." -ForegroundColor Green
     } else {
-        Write-Host "Removing resources with tags deployment='${DeploymentName}' and application='${application}'..." -ForegroundColor Green
-        $tagQuery = "[?tags.deployment == '${DeploymentName}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
+        if ($DeploymentName) {
+            Write-Host "Removing resources with tags deployment='${DeploymentName}' and application='${application}'..." -ForegroundColor Green
+            $tagQuery = "[?tags.deployment == '${DeploymentName}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
+        } else {
+            # Must be workspace (which has a default value and therefore we can't test on)
+            $tagQuery = "[?tags.workspace == '${Workspace}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
+            Write-Host "Removing resources with tags workspace='${Workspace}' and application='${application}'..." -ForegroundColor Green
+        }
     }
     Write-Information "JMESPath Tags Query: $tagQuery"
     # Remove resource groups 
