@@ -4,28 +4,7 @@ This project contains a sample starter Virtual Datacenter (VDC), which follows a
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
 
 ## TL;DR, give me the Quickstart
-To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS and [chocolatey](https://chocolatey.org/packages/terraform) on Windows) and [Azure CLI](http://aka.ms/azure-cli), you can use a shell of your choice. Make sure you have the latest version of Azure CLI. This requires some tailored work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
-`curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
-
-Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to. Clone this repo:  
-`git clone https://github.com/geekzter/azure-vdc.git`  
-`cd azure-vdc/terraform`  
-
-Login with Azure CLI:  
-`az login`   
-
-This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider when working interactively. Optionally, you can select the subscription to target:  
-`az account set --subscription 00000000-0000-0000-0000-000000000000`   
-`ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (bash)   
-`$env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (pwsh)   
-
-You can provision resources by first initializing Terraform:   
-`terraform init`  
-
-And then running:  
-`terraform apply`
-
-The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. Make sure you clean up, these are quite a number of resources (see [disclaimer](#disclaimer)).
+Go to [setup option 1](##option-1) is the fastest way to provision infrastructure, and with the least pre-requisties.
 
 ## Architecture
 ### Infrastructure
@@ -83,37 +62,49 @@ This diagram only shows resources (App Service, SQL Database & VM's) that partic
 [ASP.NET Core app](https://github.com/geekzter/dotnetcore-sqldb-tutorial) now uses live database
 1. Deploy [ASP.NET Framework application](https://github.com/geekzter/azure-vdc/tree/master/apps/IaaS-ASP.NET)
 
-## Pre-Requisites
-This project uses Terraform, PowerShell 7, Azure CLI, ASP.NET Framework (IIS app), ASP.NET Core (App Service app), and Azure Pipelines. You will need an Azure subscription for created resources and Terraform Backend. Use the links below and/or a package manager of your choice (e.g. apt, brew, chocolatey, scoop) to install required components.
+## Provisioning
 
-## Getting Started
-The quickstart uses defauls settings that disables some features. To use all featues (e.g. VPN, SSL domains, CI/CD), more is involved:
+### Option 1: Vanilla Terraform (you're using bash and/or don't have PowerShell Core)
+To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS and [chocolatey](https://chocolatey.org/packages/terraform) on Windows) and [Azure CLI](http://aka.ms/azure-cli), you can use a shell of your choice. Make sure you have the latest version of Azure CLI. This requires some tailored work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
+`curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
+
+Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to. Clone this repo:  
+`git clone https://github.com/geekzter/azure-vdc.git`  
+`cd azure-vdc/terraform`  
+
+Login with Azure CLI:  
+`az login`   
+
+This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider when working interactively. Optionally, you can select the subscription to target:  
+`az account set --subscription 00000000-0000-0000-0000-000000000000`   
+`ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (bash)   
+`$env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (pwsh)   
+
+You can provision resources by first initializing Terraform:   
+`terraform init`  
+
+And then running:  
+`terraform apply`
+
+The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. Make sure you clean up, this creates quite a number of resources (see [disclaimer](#disclaimer)).
+
+### Option 1: Terraform with optional Azure backend state
+The quickstart uses defauls settings that disables some features. Some features are dependent on using PowerShell:
 1.	Clone repository:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
 2.  Change to the `terraform` directrory  
 `cd terraform`
-3.  Set up storage account for [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), configure `backend.tf` (copy `backend.tf.sample`) with the details of the storage account created. Make sure the user used for Azure CLI is in the `Storage Blob Data Contributor` or `Storage Blob Data Owner`role (It is not enough to have Owner/Contributor rights, as this is Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
+3.  Optional: Set up storage account for [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), configure `backend.tf` (copy `backend.tf.sample`) with the details of the storage account created. Make sure the user used for Azure CLI is in the `Storage Blob Data Contributor` or `Storage Blob Data Owner`role (It is not enough to have Owner/Contributor rights, as this is Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
 `$env:ARM_ACCESS_KEY=$(az storage account keys list -n STORAGE_ACCOUNT --query "[0].value" -o tsv)`   
 or   
 `$env:ARM_SAS_TOKEN=$(az storage container generate-sas -n STORAGE_CONTAINER --permissions acdlrw --expiry 202Y-MM-DD --account-name STORAGE_ACCOUNT -o tsv)`   
 4.	Initialize Terraform backend by running  
-`terraform init`  
-or  
-`./tf_deploy.ps1 -init -workspace default`
-5.  Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](#feature-toggles) below)
+`./tf_deploy.ps1 -init` (Terraform Azure backend state)   
+`./tf_deploy.ps1 -init -nobackend` (local Azure state)   
+5.  Optional: Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](#feature-toggles) below)
 6.  Run  
-`terraform plan`  
-or  
-`./tf_deploy.ps1 -plan -workspace default`  
-to simmulate what happens if terraform would provision resources. 
-7.  Run  
-`terraform apply`  
-or  
-`./tf_deploy.ps1 -apply -workspace default`  
-to provision resources
-8.  Create build pipeline to build IIS application, see `Pipelines/iis-asp.net-ci.yml`
-9.  Create build pipeline to build App Service application, see `azure-pipelines.yml` located here: [dotnetcore-sqldb-tutorial](https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml)
-10.  Create Terraform CI pipeline using either `vdc-terraform-apply-simple-ci.yml` or `vdc-terraform-apply-ci.yml`
+`./tf_deploy.ps1 -apply`  
+to provision resources (this will first create a plan that you will be prompted to apply)
 
 ## Feature toggles ###
 The Automated VDC has a number of features that are turned off by default. This can be because the feature has pre-requisites (e.g. certificates, or you need to own a domain). Another reason is the use of Azure preview features, or features that just simply take a long time to provision. Features are toggled by a corresponding variable in [`variables.tf`](./terraform/variables.tf).
