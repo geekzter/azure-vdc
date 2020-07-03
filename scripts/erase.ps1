@@ -10,36 +10,51 @@
 
 .EXAMPLE
     ./erase.ps1 -Workspace test -Destroy
+
+.EXAMPLE
+    ./erase.ps1 -Suffix b1234 -Destroy
 #> 
 #Requires -Version 7
 
+[CmdletBinding(DefaultParameterSetName="Workspace")]
 param (
-    [parameter(Mandatory=$false,ParameterSetName="Workspace")][string]$Workspace=$env:TF_WORKSPACE,
-    [parameter(Mandatory=$false,ParameterSetName="DeploymentName")][string]$DeploymentName,
-    [parameter(Mandatory=$false,ParameterSetName="Suffix")][string]$Suffix,
-    [parameter(Mandatory=$false,ParameterSetName="Workspace")][bool]$ClearTerraformState=$true,
-    [parameter(Mandatory=$false)][switch]$Destroy=$false,
-    [parameter(Mandatory=$false)][switch]$Force=$false,
-    [parameter(Mandatory=$false)][switch]$Wait=$false,
-    [parameter(Mandatory=$false)][int]$TimeoutMinutes=50,
-    [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
+    [parameter(Mandatory=$false,ParameterSetName="Workspace")]
+    [string]
+    $Workspace=$env:TF_WORKSPACE,
+    
+    [parameter(Mandatory=$false,ParameterSetName="DeploymentName")]
+    [string]
+    $DeploymentName,
+    
+    [parameter(Mandatory=$false,ParameterSetName="Suffix")]
+    [string]
+    $Suffix,
+    
+    [parameter(Mandatory=$false,ParameterSetName="Workspace")]
+    [bool]
+    $ClearTerraformState=$true,
+    
+    [switch]
+    $Destroy=$false,
+    
+    [parameter(Mandatory=$false)]
+    [switch]
+    $Force=$false,
+
+    [parameter(Mandatory=$false)]
+    [switch]
+    $Wait=$false,
+
+    [parameter(Mandatory=$false)]
+    [int]
+    $TimeoutMinutes=50,
+
+    [parameter(Mandatory=$false)]
+    [string]
+    $tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
 )
 Write-Host $MyInvocation.line -ForegroundColor Green
-# if (!$Workspace -and !$DeploymentName) { 
-#     Write-Warning "You must supply a value for either DeploymentName or Workspace" 
-#     exit
-# }
-# if ($Workspace -and $DeploymentName) { 
-#     Write-Warning "You must supply a value for either DeploymentName or Workspace (not both)" 
-# }
-# if ($DeploymentName -and $ClearTerraformState) {
-#     # DeploymentName provided as argument
-#     $backendFile = (Join-Path $tfdirectory backend.tf)
-#     if (Test-Path $backendFile) {
-#         Write-Warning "Terraform backend configured at $backendFile, please provide Workspace argument instead of DeploymentName"
-#         exit
-#     }
-# }
+
 $application = "Automated VDC"
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
@@ -95,20 +110,20 @@ if ($Destroy) {
             exit
         }
     }
-    if ($Suffix) {
-        $tagQuery = "[?tags.suffix == '${Suffix}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
-        Write-Host "Removing resources with tags suffix='${Suffix}' and application='${application}'..." -ForegroundColor Green
-    } else {
-        if ($DeploymentName) {
-            Write-Host "Removing resources with tags deployment='${DeploymentName}' and application='${application}'..." -ForegroundColor Green
-            $tagQuery = "[?tags.deployment == '${DeploymentName}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
-        } else {
-            # Must be workspace (which has a default value and therefore we can't test on)
-            $tagQuery = "[?tags.workspace == '${Workspace}' && tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
-            Write-Host "Removing resources with tags workspace='${Workspace}' and application='${application}'..." -ForegroundColor Green
+    $tagQuery = "[?tags.application == '${application}' && properties.provisioningState != 'Deleting'].id"
+    switch ($PSCmdlet.ParameterSetName) {
+        "DeploymentName" {
+            $tagQuery = $tagQuery -replace "\]", " && tags.deployment == '${DeploymentName}']"
+        }
+        "Suffix" {
+            $tagQuery = $tagQuery -replace "\]", " && tags.suffix == '${Suffix}']"
+        }
+        "Workspace" {
+            $tagQuery = $tagQuery -replace "\]", " && tags.workspace == '${Workspace}']"
         }
     }
-    Write-Information "JMESPath Tags Query: $tagQuery"
+    Write-Host "Removing resources which match JMESPath `"$tagQuery`"" -ForegroundColor Green
+
     # Remove resource groups 
     # Async operation, as they have unique suffixes that won't clash with new deployments
     Write-Host "Removing VDC resource groups (async)..."
