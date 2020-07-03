@@ -625,8 +625,7 @@ resource azurerm_eventhub_namespace app_eventhub {
   resource_group_name          = azurerm_resource_group.app_rg.name
   sku                          = "Standard"
   capacity                     = 1
-  # TODO: Zone Redundant
-  #zone_redundant               = true
+  zone_redundant               = true
 
   # Service Endpoint support
   dynamic "network_rulesets" {
