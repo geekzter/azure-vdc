@@ -3,8 +3,8 @@ This project contains a sample starter Virtual Datacenter (VDC), which follows a
 
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
 
-## TL;DR, give me the Quickstart
-Setup [option 1](##option-1-vanilla-terraform) is the fastest way to provision infrastructure, and with the least pre-requisties.
+## TL;DR, give me the Quickstart!
+Setup [option A](#option-a-vanilla-terraform) is the fastest way to provision infrastructure, with just Azure CLI & Terraform as p-re-requisites. You can use any shell.
 
 ## Architecture description
 ### Infrastructure
@@ -64,7 +64,7 @@ This diagram only shows resources (App Service, SQL Database & VM's) that partic
 
 ## Provisioning
 
-### Option 1: Vanilla Terraform 
+### Option A: Vanilla Terraform 
 Use this option if you're using bash and/or don't have PowerShell Core. To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS and [chocolatey](https://chocolatey.org/packages/terraform) on Windows) and [Azure CLI](http://aka.ms/azure-cli), you can use a shell of your choice. Make sure you have the latest version of Azure CLI. This requires some tailored work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
 `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
 
@@ -76,7 +76,7 @@ Use this option if you're using bash and/or don't have PowerShell Core. To get s
 
 1. This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider when working interactively. Optionally, you can select the subscription to target:  
 `az account set --subscription 00000000-0000-0000-0000-000000000000`   
-`ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (bash)   
+`ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (bash, zsh)   
 `$env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (pwsh)   
 
 1. You can provision resources by first initializing Terraform:   
@@ -87,7 +87,7 @@ Use this option if you're using bash and/or don't have PowerShell Core. To get s
 
 The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. Make sure you clean up, this creates quite a number of resources (see [disclaimer](#disclaimer)).
 
-### Option 2: Scripted
+### Option B: Scripted
 This will use Terraform with optional Azure backend state, and unlocks all [features](#feature-toggles), as some features are dependent on using PowerShell:
 1. Clone repository:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
@@ -95,7 +95,7 @@ This will use Terraform with optional Azure backend state, and unlocks all [feat
 1. Change to the `terraform` directrory  
 `cd terraform`
 
-1. (Optional) Set up storage account for [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), configure `backend.tf` (copy `backend.tf.sample`) with the details of the storage account created. Make sure the user used for Azure CLI is in the `Storage Blob Data Contributor` or `Storage Blob Data Owner`role (It is not enough to have Owner/Contributor rights, as this is Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
+1. (Optional) A [Terraform Backend](https://www.terraform.io/docs/backends/index.html) allows multi-host, multi-user collaboration on the same Terraform configuration. To set up a [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), create a storage account and configure `backend.tf` (copy `backend.tf.sample`) with the details of the storage account set up. Make sure the user used for Azure CLI is in the `Storage Blob Data Contributor` or `Storage Blob Data Owner`role (it is not enough to have Owner/Contributor rights, as this is Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
 `$env:ARM_ACCESS_KEY=$(az storage account keys list -n STORAGE_ACCOUNT --query "[0].value" -o tsv)`   
 or   
 `$env:ARM_SAS_TOKEN=$(az storage container generate-sas -n STORAGE_CONTAINER --permissions acdlrw --expiry 202Y-MM-DD --account-name STORAGE_ACCOUNT -o tsv)`   
@@ -104,8 +104,8 @@ or
 `$env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)`
 
 1. Initialize Terraform backend by running  
-`./tf_deploy.ps1 -init` (Terraform Azure backend state)   
-`./tf_deploy.ps1 -init -nobackend` (local Azure state)   
+`./tf_deploy.ps1 -init` (if you set up Terraform backend state in `backend.tf`)   
+`./tf_deploy.ps1 -init -nobackend` (local Terraform state)   
 
 1. (Optional) Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](#feature-toggles) below)
 
@@ -132,7 +132,6 @@ The Automated VDC has a number of features that are turned off by default. This 
 |SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegate the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and configure its location by setting `vanity_certificate_*` (see example in [`config.auto.tfvars.sample`](./terraform/config.auto.tfvars.sample)).
 
 ## Dashboard
-
 A portal dashboard will be generated:   
 
 ![alt text](dashboard.png "Portal Dashboard")
