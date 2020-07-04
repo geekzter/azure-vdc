@@ -3,8 +3,8 @@ This project contains a sample starter Virtual Datacenter (VDC), which follows a
 
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
 
-## TL;DR, give me the Quickstart!
-Setup [option A](#option-a-vanilla-terraform) is the fastest way to provision infrastructure, with just Azure CLI & Terraform as p-re-requisites. You can use any shell.
+## TL;DR, give me the Quickstart
+Setup [option A](#option-a-vanilla-terraform) is the fastest way to provision infrastructure, with just Azure CLI & Terraform as pre-requisites. You can use any shell.
 
 ## Architecture description
 ### Infrastructure
@@ -32,7 +32,7 @@ Private networking provides some isolation from uninvited guests. However, a [ze
 
 1. App Service uses Service Principal & RBAC to access Container Registry
 1. User AAD auth (SSO with MFA) to App Service web app
-1. App Service web app uses MSI to access SQL Database (using least privilege database roles, see `grant_database_access.ps1`)
+1. App Service web app uses MSI to access SQL Database (using least privilege database roles, see [grant_database_access.ps1](./scripts/grant_database_access.ps1))
 1. User AAD auth (SSO with MFA) on Point-to-Site VPN
 1. User AAD auth to VM's (RDP, VM MSI & AADLoginForWindows extension)
 1. SQL Database tools (Azure Data Studio, SQL Server Management Studio) use AAD Autnentication with MFA
@@ -63,10 +63,11 @@ This diagram only shows resources (App Service, SQL Database & VM's) that partic
 1. Deploy [ASP.NET Framework application](https://github.com/geekzter/azure-vdc/tree/master/apps/IaaS-ASP.NET)
 
 ## Provisioning
+To get started you need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS and [chocolatey](https://chocolatey.org/packages/terraform) on Windows) and [Azure CLI](http://aka.ms/azure-cli). Make sure you have the latest version of Azure CLI. This requires some tailored work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
+`curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
 
 ### Option A: Vanilla Terraform 
-Use this option if you're using bash and/or don't have PowerShell Core. To get started you just need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS and [chocolatey](https://chocolatey.org/packages/terraform) on Windows) and [Azure CLI](http://aka.ms/azure-cli), you can use a shell of your choice. Make sure you have the latest version of Azure CLI. This requires some tailored work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
-`curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
+Use this option if you're using bash, zsh and/or don't have PowerShell Core. 
 
 1. Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to. Clone this repo:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
@@ -88,23 +89,24 @@ Use this option if you're using bash and/or don't have PowerShell Core. To get s
 The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. Make sure you clean up, this creates quite a number of resources (see [disclaimer](#disclaimer)).
 
 ### Option B: Scripted
-This will use Terraform with optional Azure backend state, and unlocks all [features](#feature-toggles), as some features are dependent on using PowerShell:
+This will use Terraform with optional Azure backend state, Terraform invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks all [features](#feature-toggles), as some features are dependent on using PowerShell run from Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html).
+
 1. Clone repository:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
 
 1. Change to the `terraform` directrory  
-`cd terraform`
+`cd azure-vdc/terraform`
 
-1. (Optional) A [Terraform Backend](https://www.terraform.io/docs/backends/index.html) allows multi-host, multi-user collaboration on the same Terraform configuration. To set up a [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), create a storage account and configure `backend.tf` (copy `backend.tf.sample`) with the details of the storage account set up. Make sure the user used for Azure CLI is in the `Storage Blob Data Contributor` or `Storage Blob Data Owner`role (it is not enough to have Owner/Contributor rights, as this is Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
+1. (Optional) A [Terraform Backend](https://www.terraform.io/docs/backends/index.html) allows multi-host, multi-user collaboration on the same Terraform configuration. To set up a [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), create a storage account and configure `backend.tf` (copy [`backend.tf.sample`](./terraform/backend.tf.sample)) with the details of the storage account you created. Make sure the user used for Azure CLI has the [Storage Blob Data Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) or [Storage Blob Data Owner](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-owner) role (it is not enough to have Owner/Contributor rights, as this doesn't grant Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
 `$env:ARM_ACCESS_KEY=$(az storage account keys list -n STORAGE_ACCOUNT --query "[0].value" -o tsv)`   
 or   
 `$env:ARM_SAS_TOKEN=$(az storage container generate-sas -n STORAGE_CONTAINER --permissions acdlrw --expiry 202Y-MM-DD --account-name STORAGE_ACCOUNT -o tsv)`   
 
-1. Configure Azure subscription to use
+1. Configure Azure subscription to use e.g.   
 `$env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)`
 
 1. Initialize Terraform backend by running  
-`./tf_deploy.ps1 -init` (if you set up Terraform backend state in `backend.tf`)   
+`./tf_deploy.ps1 -init` (if you set up Terraform backend state and configured `backend.tf`)   
 `./tf_deploy.ps1 -init -nobackend` (local Terraform state)   
 
 1. (Optional) Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](#feature-toggles) below)
@@ -112,6 +114,18 @@ or
 1. Run  
 `./tf_deploy.ps1 -apply`  
 to provision resources (this will first create a plan that you will be prompted to apply)
+
+### Option C: Azure Pipelines
+Aforementioned options only provision infrastructure, and does so interactively. There are a number of [pipelines](./pipelines) that do this end-to-end and also deploy 2 demo applications:
+
+- [vdc-terraform-apply-ci.yml](./pipelines/vdc-terraform-apply-ci.yml)   
+CI pipeline that does a full provisioning, deployment and tear down
+- [vdc-terraform-apply-release.yml](./pipelines/vdc-terraform-apply-release.yml)   
+Release pipeline that takes artifacts published by CI pipeline
+- [vdc-terraform-apply-cd.yml](./pipelines/vdc-terraform-apply-cd.yml)   
+Multi-stage CD pipeline that combines both CI & release in a single pipeline
+
+All these pipelines share the same [template](./pipelines/templates/vdc-terraform-apply.yml).
 
 ## Feature toggles ###
 The Automated VDC has a number of features that are turned off by default. This can be because the feature has pre-requisites (e.g. certificates, or you need to own a domain). Another reason is the use of Azure preview features, or features that just simply take a long time to provision. Features are toggled by a corresponding variable in [`variables.tf`](./terraform/variables.tf).
@@ -124,12 +138,12 @@ The Automated VDC has a number of features that are turned off by default. This 
 |Security&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `AADLoginForWindows`, `AzureDiskEncryption`|`deploy_security_vm_extensions`|None|
 |VPN, provisions [Point-to-Site (P2S) VPN](https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-rm-ps)|`deploy_vpn`|You need to have the [Azure VPN application](https://go.microsoft.com/fwlink/?linkid=2117554) [provisioned](https://docs.microsoft.com/en-us/azure/vpn-gateway/openvpn-azure-ad-tenant) in your Azure Active Directory tenant.|
 |Disable all access public ip address of SQL Database, regardless of SQL Firewall settings|`disable_public_database_access`|`enable_private_link` also needs to be set|
-|AAD&nbsp;Authentication. [Configure](https://docs.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad) App Service to authenticate using Azure Active Directory|`enable_app_service_aad_auth`|SSL and a vanity domain needs to have been set up. You also need to create an Azure AD App registration and configure the `paas_aad_auth_client_id_map` map for at least the `default` workspace (see example in [`config.auto.tfvars.sample`](./terraform/config.auto.tfvars.sample))). (Note: Terraform could provision this pre-requiste as well, but I'm assuming you don't have suffiient AAD permissions as this requires a Service Principal to create Service Principals in automation)|
+|AAD&nbsp;Authentication. [Configure](https://docs.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad) App Service to authenticate using Azure Active Directory|`enable_app_service_aad_auth`|SSL and a vanity domain needs to have been set up. You also need to create an Azure AD App registration and configure the `paas_aad_auth_client_id_map` map for at least the `default` workspace (see example in [config.auto.tfvars.sample](./terraform/config.auto.tfvars.sample))). (Note: Terraform could provision this pre-requiste as well, but I'm assuming you don't have suffiient AAD permissions as this requires a Service Principal to create Service Principals in automation)|
 |[Private Link](https://azure.microsoft.com/en-us/services/private-link/)|`enable_private_link`|None|
 |Grant access to SQL Database for App Service MSI and user/group defined by `admin_object_id`. This is required for database import and therefore application deployment|`grant_database_access`|PowerShell 7|
 |Limits access to PaaS services to essential admin IPs, Virtual Networks|`restrict_public_access`|PowerShell 7.     Scripting is required to create a hole for Terraform to access services (as the Terraform IP may have changed).|
 |Pipeline&nbsp;agent&nbsp;type. By default a [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/) will be used. Setting this to `true` will instead use an [Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments)|`use_pipeline_environment`|Multi-stage YAML Pipelines|
-|SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegate the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and configure its location by setting `vanity_certificate_*` (see example in [`config.auto.tfvars.sample`](./terraform/config.auto.tfvars.sample)).
+|SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegate the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and configure its location by setting `vanity_certificate_*` (see example in [config.auto.tfvars.sample](./terraform/config.auto.tfvars.sample)).
 
 ## Dashboard
 A portal dashboard will be generated:   
