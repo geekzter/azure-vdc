@@ -39,6 +39,7 @@ locals {
   linux_fx_version             = var.container_registry != null && var.container != null ? "DOCKER|${data.azurerm_container_registry.vdc_images.0.login_server}/${var.container}" : "DOCKER|appsvcsample/python-helloworld:latest"
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
+  publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   vanity_hostname              = var.vanity_fqdn != null ? element(split(".",var.vanity_fqdn),0) : null
   vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
 }
@@ -67,18 +68,6 @@ resource azurerm_storage_account app_storage {
   account_replication_type     = var.storage_replication_type
   enable_https_traffic_only    = true
  
-  # managed with azurerm_storage_account_network_rules
-  # network_rules {
-  #   default_action             = "Deny"
-  #   bypass                     = ["AzureServices","Logging","Metrics"] # Logging, Metrics, AzureServices, or None.
-  #   ip_rules                   = var.admin_ip_ranges
-  #   # Allow the Firewall subnet
-  #   virtual_network_subnet_ids = [
-  #                               var.iag_subnet_id,
-  #                               var.integrated_subnet_id
-  #   ]
-  # } 
-
   provisioner "local-exec" {
     # TODO: Add --auth-mode login once supported
     command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
@@ -202,6 +191,8 @@ resource azurerm_storage_account_network_rules app_storage_rules {
   storage_account_name         = azurerm_storage_account.app_storage.name
   default_action               = "Deny"
 
+  count                        = var.restrict_public_access ? 1 : 0
+
   depends_on                   = [azurerm_storage_container.app_storage_container,azurerm_storage_blob.app_storage_blob_sample]
 }
 
@@ -314,7 +305,9 @@ resource azurerm_storage_account_network_rules archive_storage_rules {
   storage_account_name         = azurerm_storage_account.archive_storage.name
   default_action               = "Deny"
   bypass                       = ["AzureServices"] # Event Hub needs access
-  ip_rules                     = [jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix]
+  ip_rules                     = [local.publicprefix]
+
+  count                        = var.restrict_public_access ? 1 : 0
 
   depends_on                   = [azurerm_storage_container.archive_storage_container]
 }
@@ -632,33 +625,48 @@ resource azurerm_eventhub_namespace app_eventhub {
   resource_group_name          = azurerm_resource_group.app_rg.name
   sku                          = "Standard"
   capacity                     = 1
-  # TODO: Zone Redundant
-  #zone_redundant               = true
+  zone_redundant               = true
 
   # Service Endpoint support
-  network_rulesets {
-    default_action             = "Deny"
-    # Without this hole we can't make (automated) changes. Disable it later in the interactive demo                 
-    ip_rule {
-      action                   = "Allow"
-      ip_mask                  = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix # We need this to make changes
+  dynamic "network_rulesets" {
+    for_each = range(var.restrict_public_access ? 1 : 0) 
+    content {
+      default_action           = "Deny"
+      # Without this hole we can't make (automated) changes. Disable it later in the interactive demo                 
+      ip_rule {
+        action                 = "Allow"
+        ip_mask                = local.publicprefix # We need this to make changes
+      }
+
+      # BUG: There is no variable named "var".
+      # https://github.com/hashicorp/terraform/issues/22340
+      # https://github.com/hashicorp/terraform/issues/24544
+      # https://github.com/terraform-providers/terraform-provider-azurerm/issues/6338
+      # https://github.com/terraform-providers/terraform-provider-azurerm/issues/7014
+      # dynamic "ip_rule" {
+      #   for_each               = var.admin_ip_ranges
+      #   content {
+      #     action               = "Allow"
+      #     ip_mask              = ip_rule.value
+      #   }
+      # }
+      virtual_network_rule {
+        # Allow the Firewall subnet
+        subnet_id              = var.iag_subnet_id
+      }
+      virtual_network_rule {
+        subnet_id              = var.integrated_subnet_id
+      }
     }
-    # # BUG: There is no variable named "var".
-    # dynamic ip_rule {
-    #   for_each                 = var.admin_ip_ranges
-    #   content {
-    #     action                 = "Allow"
-    #     ip_mask                = ip_rule.value
-    #   }
-    # }
-    virtual_network_rule {
-      # Allow the Firewall subnet
-      subnet_id                = var.iag_subnet_id
+  }
+
+  # Service Endpoint support
+  dynamic "network_rulesets" {
+    for_each = range(var.restrict_public_access ? 0 : 1) 
+    content {
+      default_action           = "Allow"
     }
-    virtual_network_rule {
-      subnet_id                = var.integrated_subnet_id
-    }
-  } 
+  }
 
   tags                         = var.tags
 
@@ -784,8 +792,8 @@ resource azurerm_sql_firewall_rule tfclient {
   name                         = "TerraformClientRule"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
-  start_ip_address             = chomp(data.http.localpublicip.body)
-  end_ip_address               = chomp(data.http.localpublicip.body)
+  start_ip_address             = cidrhost(local.publicprefix,0)
+  end_ip_address               = cidrhost(local.publicprefix,pow(2,32-split("/",local.publicprefix)[1])-1)
 
   depends_on                   = [null_resource.enable_sql_public_network_access]
 }

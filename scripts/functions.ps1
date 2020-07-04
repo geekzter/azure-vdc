@@ -1,5 +1,5 @@
 function AzLogin (
-    [parameter(Mandatory=$false)][switch]$AsUser
+    [parameter(Mandatory=$false)][switch]$DisplayMessages=$false
 ) {
     # Azure CLI
     Invoke-Command -ScriptBlock {
@@ -14,8 +14,9 @@ function AzLogin (
             } 
         }
     }
+    $login = ($loginError -or $userError)
     # Set Azure CLI context
-    if ($loginError -or $userError) {
+    if ($login) {
         if ($env:ARM_TENANT_ID) {
             az login -t $env:ARM_TENANT_ID -o none
         } else {
@@ -24,6 +25,15 @@ function AzLogin (
     }
     if ($env:ARM_SUBSCRIPTION_ID) {
         az account set -s $env:ARM_SUBSCRIPTION_ID -o none
+    }
+
+    if ($DisplayMessages) {
+        if ($env:ARM_SUBSCRIPTION_ID -or ($(az account list --query "length([])" -o tsv) -eq 1)) {
+            Write-Host "Using subscription '$(az account show --query "name" -o tsv)'"
+        } else {
+            # Active subscription may not be the desired one
+            Write-Warning "Using subscription '$(az account show --query "name" -o tsv)', set `$env:ARM_SUBSCRIPTION_ID if you want another one"
+        }
     }
 
     # Populate Terraform azurerm variables where possible

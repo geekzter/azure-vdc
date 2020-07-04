@@ -1,3 +1,77 @@
+#  Feature Toggles
+variable deploy_managed_bastion {
+  description                  = "Whether to deploy the Managed Bastion"
+  default                      = false
+  type                         = bool
+}
+
+variable deploy_monitoring_vm_extensions {
+  description                  = "Whether to deploy optional monitoring VM extensions"
+  default                      = false
+  type                         = bool
+}
+variable deploy_network_watcher {
+  description                  = "Whether to deploy connection monitors"
+  default                      = false
+  type                         = bool
+}
+variable deploy_non_essential_vm_extensions {
+  description                  = "Whether to deploy optional VM extensions"
+  default                      = false
+  type                         = bool
+}
+variable deploy_security_vm_extensions {
+  description                  = "Whether to deploy optional security VM extensions"
+  default                      = false
+  type                         = bool
+}
+variable deploy_vpn {
+  description                  = "Whether to deploy the point to Site VPN"
+  default                      = false
+  type                         = bool
+}
+variable disable_public_database_access {
+  description                  = "Disables the public IP address of SQL Database, regardless of any SQL Firewall rules"
+  default                      = true
+  type                         = bool
+}
+variable enable_app_service_aad_auth {
+  description                  = "Whether to enable App Service AAD auth"
+  default                      = false
+  type                         = bool
+}
+variable enable_private_link {
+  description                  = "Whether to create Private Endpoint for PaaS services where possible"
+  default                      = true
+  type                         = bool
+}
+variable grant_database_access {
+  description                  = "App Service MSI access to SQL Database (required for application deployment)"
+  default                      = false
+  type                         = bool
+}
+variable restrict_public_access {
+  description                  = "Implements network rules on PaaS Firewalls"
+  default                      = false
+  type                         = bool
+}
+variable use_pipeline_environment {
+  description                  = "Use environment rather than deployment group for Pipeline Agent"
+  default                      = true
+  type                         = bool
+}
+variable use_server_side_disk_encryption {
+  description                  = "Use server-side disk encryption (false = client side encryption)"
+  default                      = false
+  type                         = bool
+}
+variable use_vanity_domain_and_ssl {
+  description                  = "Whether to use SSL (HTTPS) for demo application"
+  default                      = false
+  type                         = bool
+}
+
+## Regular variables
 variable resource_prefix {
   description                  = "The prefix to put in front of resource names created"
   default                      = "vdc"
@@ -363,73 +437,4 @@ variable default_read_timeout {
 
 variable default_delete_timeout {
   default                      = "60m"
-}
-
-#  Feature Toggles
-variable deploy_managed_bastion {
-  description                  = "Whether to deploy the Managed Bastion"
-  default                      = false
-  type                         = bool
-}
-
-variable deploy_monitoring_vm_extensions {
-  description                  = "Whether to deploy optional monitoring VM extensions"
-  default                      = false
-  type                         = bool
-}
-variable deploy_network_watcher {
-  description                  = "Whether to deploy connection monitors"
-  default                      = false
-  type                         = bool
-}
-variable deploy_non_essential_vm_extensions {
-  description                  = "Whether to deploy optional VM extensions"
-  default                      = false
-  type                         = bool
-}
-variable deploy_security_vm_extensions {
-  description                  = "Whether to deploy optional security VM extensions"
-  default                      = false
-  type                         = bool
-}
-variable deploy_vpn {
-  description                  = "Whether to deploy the point to Site VPN"
-  default                      = false
-  type                         = bool
-}
-variable disable_public_database_access {
-  default                      = true
-  type                         = bool
-}
-variable enable_app_service_aad_auth {
-  description                  = "Whether to enable App Service AAD auth"
-  default                      = false
-  type                         = bool
-}
-variable enable_private_link {
-  description                  = "Whether to create Private Endpoint for PaaS services where possible"
-  default                      = true
-  type                         = bool
-}
-variable grant_database_access {
-  description                  = "App Service MSI access to SQL Database (required for application deployment)"
-  default                      = false
-  type                         = bool
-}
-variable use_pipeline_environment {
-  description                  = "Use environment rather than deployment group for Pipeline Agent"
-  default                      = false
-  type                         = bool
-}
-
-variable use_server_side_disk_encryption {
-  description                  = "Use server-side disk encryption (false = client side encryption)"
-  default                      = false
-  type                         = bool
-}
-
-variable use_vanity_domain_and_ssl {
-  description                  = "Whether to use SSL (HTTPS) for demo application"
-  default                      = false
-  type                         = bool
 }
