@@ -66,13 +66,18 @@ This diagram only shows resources (App Service, SQL Database & VM's) that partic
 To get started you need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS and [chocolatey](https://chocolatey.org/packages/terraform) on Windows) and [Azure CLI](http://aka.ms/azure-cli). Make sure you have the latest version of Azure CLI. This requires some tailored work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
 `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
 
+Make sure you clean up, this creates quite a number of resources (see [disclaimer](#disclaimer)).
+
 ### Option A: Vanilla Terraform 
 Use this option if you're using bash, zsh and/or don't have PowerShell Core. 
 
-1. Of course you'll need an [Azure subscription](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade) to deploy to. Clone this repo:  
+1. Clone repository:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
-`cd azure-vdc/terraform`  
-1. Login with Azure CLI:  
+
+1. Change to the [`terraform`](./terraform) directrory  
+`cd azure-vdc/terraform`
+
+1. Login into Azure with Azure CLI:  
 `az login`   
 
 1. This also authenticates the Terraform [azurerm](https://www.terraform.io/docs/providers/azurerm/guides/azure_cli.html) provider when working interactively. Optionally, you can select the subscription to target:  
@@ -80,22 +85,25 @@ Use this option if you're using bash, zsh and/or don't have PowerShell Core.
 `ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (bash, zsh)   
 `$env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)` (pwsh)   
 
-1. You can provision resources by first initializing Terraform:   
+1. You can then provision resources by first initializing Terraform:   
 `terraform init`  
 
 1. And then running:  
 `terraform apply`
 
-The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. Make sure you clean up, this creates quite a number of resources (see [disclaimer](#disclaimer)).
+1. When you want to destroy resources, run:   
+`terraform destroy`
+
+The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. 
 
 ### Option B: Scripted
-This will use Terraform with optional Azure backend state, Terraform invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks all [features](#feature-toggles), as some features are dependent on using PowerShell run from Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html).
+This will use Terraform with optional Azure backend state, Terraform invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks all [features](#feature-toggles), as some features are dependent on using [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) run from Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html).
 
 1. Clone repository:  
 `git clone https://github.com/geekzter/azure-vdc.git`  
 
-1. Change to the `terraform` directrory  
-`cd azure-vdc/terraform`
+1. Change to the [`scripts`](./scripts) directrory  
+`cd azure-vdc/scripts`
 
 1. (Optional) A [Terraform Backend](https://www.terraform.io/docs/backends/index.html) allows multi-host, multi-user collaboration on the same Terraform configuration. To set up a [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), create a storage account and configure `backend.tf` (copy [`backend.tf.sample`](./terraform/backend.tf.sample)) with the details of the storage account you created. Make sure the user used for Azure CLI has the [Storage Blob Data Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) or [Storage Blob Data Owner](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-owner) role (it is not enough to have Owner/Contributor rights, as this doesn't grant Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
 `$env:ARM_ACCESS_KEY=$(az storage account keys list -n STORAGE_ACCOUNT --query "[0].value" -o tsv)`   
@@ -115,6 +123,12 @@ or
 `./tf_deploy.ps1 -apply`  
 to provision resources (this will first create a plan that you will be prompted to apply)
 
+1. When you want to destroy resources, run:   
+`./tf_deploy.ps1 -destroy` (with Terraform, recommended)   
+or    
+`./erase.ps1 -destroy` (with Azure CLI, as a last resort)   
+
+
 ### Option C: Azure Pipelines
 Aforementioned options only provision infrastructure, and does so interactively. There are a number of [pipelines](./pipelines) that do this end-to-end and also deploy 2 demo applications:
 
@@ -123,7 +137,7 @@ CI pipeline that does a full provisioning, deployment and tear down
 - [vdc-terraform-apply-release.yml](./pipelines/vdc-terraform-apply-release.yml)   
 Release pipeline that takes artifacts published by CI pipeline
 - [vdc-terraform-apply-cd.yml](./pipelines/vdc-terraform-apply-cd.yml)   
-Multi-stage CD pipeline that combines both CI & release in a single pipeline
+CD pipeline that combines both CI & release in a single multi-stage pipeline
 
 All these pipelines share the same [template](./pipelines/templates/vdc-terraform-apply.yml).
 
@@ -138,10 +152,10 @@ The Automated VDC has a number of features that are turned off by default. This 
 |Security&nbsp;VM&nbsp;Extensions. Controls whether these extensions are provisioned: `AADLoginForWindows`, `AzureDiskEncryption`|`deploy_security_vm_extensions`|None|
 |VPN, provisions [Point-to-Site (P2S) VPN](https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-rm-ps)|`deploy_vpn`|You need to have the [Azure VPN application](https://go.microsoft.com/fwlink/?linkid=2117554) [provisioned](https://docs.microsoft.com/en-us/azure/vpn-gateway/openvpn-azure-ad-tenant) in your Azure Active Directory tenant.|
 |Disable all access public ip address of SQL Database, regardless of SQL Firewall settings|`disable_public_database_access`|`enable_private_link` also needs to be set|
-|AAD&nbsp;Authentication. [Configure](https://docs.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad) App Service to authenticate using Azure Active Directory|`enable_app_service_aad_auth`|SSL and a vanity domain needs to have been set up. You also need to create an Azure AD App registration and configure the `paas_aad_auth_client_id_map` map for at least the `default` workspace (see example in [config.auto.tfvars.sample](./terraform/config.auto.tfvars.sample))). (Note: Terraform could provision this pre-requiste as well, but I'm assuming you don't have suffiient AAD permissions as this requires a Service Principal to create Service Principals in automation)|
+|AAD&nbsp;Authentication. [Configure](https://docs.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad) App Service to authenticate using Azure Active Directory|`enable_app_service_aad_auth`|SSL and a vanity domain needs to have been set up. You also need to [create](https://docs.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad) an Azure AD App registration and configure the `paas_aad_auth_client_id_map` map for at least the `default` workspace (see example in [config.auto.tfvars.sample](./terraform/config.auto.tfvars.sample))). (Note: Terraform could provision this pre-requiste as well, but I'm assuming you don't have suffiient AAD permissions as this requires a Service Principal to create Service Principals in automation)|
 |[Private Link](https://azure.microsoft.com/en-us/services/private-link/)|`enable_private_link`|None|
 |Grant access to SQL Database for App Service MSI and user/group defined by `admin_object_id`. This is required for database import and therefore application deployment|`grant_database_access`|PowerShell 7|
-|Limits access to PaaS services to essential admin IPs, Virtual Networks|`restrict_public_access`|PowerShell 7.     Scripting is required to create a hole for Terraform to access services (as the Terraform IP may have changed).|
+|Limits access to PaaS services to essential admin IPs, Virtual Networks|`restrict_public_access`|PowerShell 7.     Scripting is required for reentrancy. The Terraform IP can change as multiple users collaborate, you simply execute from a different location, or your ISP gave you a dynamic IP address.|
 |Pipeline&nbsp;agent&nbsp;type. By default a [Deployment Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/) will be used. Setting this to `true` will instead use an [Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments)|`use_pipeline_environment`|Multi-stage YAML Pipelines|
 |SSL&nbsp;&&nbsp;Vanity&nbsp;domain. Use HTTPS and Vanity domains (e.g. yourdomain.com)|`use_vanity_domain_and_ssl`|You need to own a domain, and delegate the management of the domain to [Azure DNS](https://azure.microsoft.com/en-us/services/dns/). The domain name and resource group holding the Azure DNS for it need to be configured using `vanity_domainname` and `shared_resources_group` respectively. You need a wildcard SSL certificate and configure its location by setting `vanity_certificate_*` (see example in [config.auto.tfvars.sample](./terraform/config.auto.tfvars.sample)).
 
