@@ -59,7 +59,7 @@ $application = "Automated VDC"
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
-if ($ClearTerraformState -and $PSBoundParameters.ContainsKey('Workspace')) {
+if ($ClearTerraformState -and ($PSCmdlet.ParameterSetName -ieq "Workspace")) {
     try {
         # Local backend, prompt the user to clear
         if (!$Force) {
