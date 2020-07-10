@@ -91,7 +91,7 @@ try {
         Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
     } 
     if (($Trace -gt 0) -or (${env:system.debug} -eq "true")) {
-        Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_VAR_* | Sort-Object -Property Name
+        Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
     }
 
     # Print version info
