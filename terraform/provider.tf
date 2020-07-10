@@ -5,6 +5,8 @@
 # ARM_SUBSCRIPTION_ID, ARM_CLIENT_ID, ARM_CLIENT_SECRET and ARM_TENANT_ID
 #
 provider "azurerm" {
+    # Freeze version until this issue is fixed:
+    # https://github.com/terraform-providers/terraform-provider-azurerm/issues/7691
     version = "= 2.17"
     features {
         virtual_machine {
