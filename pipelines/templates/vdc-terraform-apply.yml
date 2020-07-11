@@ -832,7 +832,7 @@ stages:
             enabled: ${{ not(parameters.testMode) }}
             workingDirectory: '$(terraformDirectory)'
 
-            - task: AzureCLI@2
+        - task: AzureCLI@2
           name: terraformConfig
           displayName: 'Terraform destroy'
           condition: succeededOrFailed()
