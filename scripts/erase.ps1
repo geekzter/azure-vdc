@@ -27,7 +27,7 @@ param (
     $DeploymentName,
     
     [parameter(Mandatory=$false,ParameterSetName="Suffix")]
-    [string]
+    [string[]]
     $Suffix,
     
     [parameter(Mandatory=$false,ParameterSetName="Workspace")]
@@ -116,7 +116,15 @@ if ($Destroy) {
             $tagQuery = $tagQuery -replace "\]", " && tags.deployment == '${DeploymentName}']"
         }
         "Suffix" {
-            $tagQuery = $tagQuery -replace "\]", " && tags.suffix == '${Suffix}']"
+            $suffixQuery = "("
+            foreach ($suff in $Suffix) {
+                if ($suffixQuery -ne "(") {
+                    $suffixQuery += " || "
+                }
+                $suffixQuery += "tags.suffix == '${suff}'"
+            }
+            $suffixQuery += ")"
+            $tagQuery = $tagQuery -replace "\]", " && $suffixQuery]"
         }
         "Workspace" {
             $tagQuery = $tagQuery -replace "\]", " && tags.workspace == '${Workspace}']"
