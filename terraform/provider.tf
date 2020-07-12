@@ -15,3 +15,23 @@ provider azurerm {
         }
     }
 }
+
+provider dns {
+    version = "~> 2.2"
+}
+
+provider external {
+    version = "~> 1.2"
+}
+
+provider http {
+    version = "~> 1.2"
+}
+
+provider null {
+    version = "~> 2.1"
+}
+
+provider random {
+    version = "~> 2.3"
+}
