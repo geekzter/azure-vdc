@@ -63,10 +63,8 @@ jobs:
         scriptType: 'pscore'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          # List environment variables (debug)
-          if ((${env:system.debug} -eq "true") -or ($env:system_debug -eq "true") -or ($env:SYSTEM_DEBUG -eq "true")) {
-            Get-ChildItem -Path Env:ARM_* | Sort-Object -Property Name
-          }
+          # List environment variables
+          Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
           
           # This will write version info as output variable
           $(scriptDirectory)/get_tf_version.ps1 -version preferred
@@ -124,6 +122,7 @@ jobs:
         workingDirectory: '$(terraformDirectory)'
       env:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+        TF_VAR_resource_suffix: $(TF_VAR_resource_suffix) # Fix case
 
     - task: AzureCLI@2
       name: terraformReApply
@@ -146,6 +145,7 @@ jobs:
       env:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
         TF_VAR_default_update_timeout: '$(jobTimeOutMinutes)m'
+        TF_VAR_resource_suffix: $(TF_VAR_resource_suffix) # Fix case
   
     - task: AzureCLI@2
       name: terraformDestroy
@@ -167,6 +167,7 @@ jobs:
         workingDirectory: '$(terraformDirectory)'
       env:
         TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
+        TF_VAR_resource_suffix: $(TF_VAR_resource_suffix) # Fix case
 
 # Clean up resources, in the event 'terraform destroy' fails   
 - job: 'CleanUp'

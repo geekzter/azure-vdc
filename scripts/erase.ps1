@@ -27,7 +27,7 @@ param (
     $DeploymentName,
     
     [parameter(Mandatory=$false,ParameterSetName="Suffix")]
-    [string]
+    [string[]]
     $Suffix,
     
     [parameter(Mandatory=$false,ParameterSetName="Workspace")]
@@ -59,7 +59,7 @@ $application = "Automated VDC"
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
-if ($ClearTerraformState -and $PSBoundParameters.ContainsKey('Workspace')) {
+if ($ClearTerraformState -and ($PSCmdlet.ParameterSetName -ieq "Workspace")) {
     try {
         # Local backend, prompt the user to clear
         if (!$Force) {
@@ -116,7 +116,15 @@ if ($Destroy) {
             $tagQuery = $tagQuery -replace "\]", " && tags.deployment == '${DeploymentName}']"
         }
         "Suffix" {
-            $tagQuery = $tagQuery -replace "\]", " && tags.suffix == '${Suffix}']"
+            $suffixQuery = "("
+            foreach ($suff in $Suffix) {
+                if ($suffixQuery -ne "(") {
+                    $suffixQuery += " || "
+                }
+                $suffixQuery += "tags.suffix == '${suff}'"
+            }
+            $suffixQuery += ")"
+            $tagQuery = $tagQuery -replace "\]", " && $suffixQuery]"
         }
         "Workspace" {
             $tagQuery = $tagQuery -replace "\]", " && tags.workspace == '${Workspace}']"

@@ -16,7 +16,7 @@ data http localpublicip {
 }
 data http localpublicprefix {
 # Get public IP prefix of the machine running this terraform template
-  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${chomp(data.http.localpublicip.body)}"
+  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${local.publicip}"
 }
 
 data azurerm_client_config current {}
@@ -39,6 +39,7 @@ locals {
   linux_fx_version             = var.container_registry != null && var.container != null ? "DOCKER|${data.azurerm_container_registry.vdc_images.0.login_server}/${var.container}" : "DOCKER|appsvcsample/python-helloworld:latest"
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
+  publicip                     = chomp(data.http.localpublicip.body)
   publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   vanity_hostname              = var.vanity_fqdn != null ? element(split(".",var.vanity_fqdn),0) : null
   vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
@@ -788,8 +789,18 @@ resource null_resource enable_sql_public_network_access {
   }
 }
 
-resource azurerm_sql_firewall_rule tfclient {
-  name                         = "TerraformClientRule"
+resource azurerm_sql_firewall_rule tfclientip {
+  name                         = "TerraformClientIpRule"
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  start_ip_address             = local.publicip
+  end_ip_address               = local.publicip
+
+  depends_on                   = [null_resource.enable_sql_public_network_access]
+}
+
+resource azurerm_sql_firewall_rule tfclientipprefix {
+  name                         = "TerraformClientIpPrefixRule"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
   start_ip_address             = cidrhost(local.publicprefix,0)
@@ -898,7 +909,8 @@ resource null_resource disable_sql_public_network_access {
   count                        = var.enable_private_link && var.disable_public_database_access ? 1 : 0
   depends_on                   = [
                                   azurerm_private_dns_a_record.sql_server_dns_record,
-                                  azurerm_sql_firewall_rule.tfclient,
+                                  azurerm_sql_firewall_rule.tfclientip,
+                                  azurerm_sql_firewall_rule.tfclientipprefix,
                                   null_resource.grant_sql_access
                                  ]
 }
