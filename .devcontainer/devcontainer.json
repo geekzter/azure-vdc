@@ -7,7 +7,7 @@
     ],
 
     "settings": {
-      "terminal.integrated.cwd": "~/workspace/scripts",
+      "terminal.integrated.cwd": "/home/codespace/workspace/scripts",
       "terminal.integrated.shell.linux": "/usr/bin/pwsh"
     },
   
