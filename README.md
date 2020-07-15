@@ -7,7 +7,7 @@ This project contains a sample starter Virtual Datacenter (VDC), which follows a
 ## TL;DR, give me the Quickstart
 
 - Setup [option A](#option-a-local-terraform) is the fastest way to provision infrastructure if you already have Azure CLI and Terraform set up. You can use any shell.   
-- Setup [option B](#option-b-visual-studio-codespace) is the fastest if you have nothing set up yet. All you need is a browser (Chrome or Edge) and an Azure account (which you need anyway).
+- Setup [option B](#option-b-visual-studio-codespace) is the fastest if you have nothing set up yet. All you need is a browser (Chrome or Edge) and an Azure account.
 
 ## Architecture description
 ### Infrastructure
@@ -106,7 +106,7 @@ This will use [Visual Studio Codespaces](https://online.visualstudio.com/) as th
 
 In this option, Terraform can use optional Azure backend state, and invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks [features](#feature-toggles) dependent on using [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) (run from Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html)).
 
-1. Create a Codespace by following this [link](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc). This should prompt you to clone this repo when creating the Codepace.
+1. Create a Codespace by following this [link](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc). You will need to create a Codespace [plan](https://docs.microsoft.com/en-us/visualstudio/online/how-to/browser#create-an-environment) if you don't have one yet. This should prompt you to clone this repo when creating the Codespace.
 
 1. Once the Codespace has been created, open a terminal by typing Ctrl-` (backquote)
 
