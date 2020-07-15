@@ -27,5 +27,6 @@ Pop-Location
 
 # Profile
 if (!(Test-Path $Profile)) {
-    New-Item -ItemType symboliclink -Path $Profile -Target $profileTemplate -Force
+    $profileLink = (New-Item -ItemType symboliclink -Path $Profile -Target $profileTemplate -Force)
+    $profileLink.Name
 }
