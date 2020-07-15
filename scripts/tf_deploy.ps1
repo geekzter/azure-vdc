@@ -38,7 +38,13 @@ param (
 ### Validation
 if (!($Workspace)) { Throw "You must supply a value for Workspace" }
 if (!(Get-Command terraform -ErrorAction SilentlyContinue)) {
-    throw "Terraform now found"
+    $tfMissingMessage = "Terraform not found"
+    if ($IsWindows) {
+        $tfMissingMessage += "`nInstall Terraform e.g. from Chocolatey (https://chocolatey.org/packages/terraform) 'choco install terraform'"
+    } else {
+        $tfMissingMessage += "`nInstall Terraform e.g. using tfenv (https://github.com/tfutils/tfenv)"
+    }
+    throw $tfMissingMessage
 }
 
 Write-Host $MyInvocation.line -ForegroundColor Green

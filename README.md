@@ -5,7 +5,9 @@ This project contains a sample starter Virtual Datacenter (VDC), which follows a
 [![VScodespaces](https://img.shields.io/endpoint?url=https%3A%2F%2Faka.ms%2Fvso-badge)](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc)
 
 ## TL;DR, give me the Quickstart
-Setup [option A](#option-a-vanilla-terraform) is the fastest way to provision infrastructure, with just Azure CLI & Terraform as pre-requisites. You can use any shell.
+
+- Setup [option A](#option-a-local-terraform) is the fastest way to provision infrastructure if you already have Azure CLI and Terraform set up. You can use any shell.   
+- Setup [option B](#option-b-visual-studio-codespace) is the fastest if you have nothing set up yet. All you need is a browser (Chrome or Edge) and an Azure account (which you need anyway).
 
 ## Architecture description
 ### Infrastructure
@@ -67,9 +69,11 @@ This diagram only shows resources (App Service, SQL Database & VM's) that partic
 To get started you need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS and [chocolatey](https://chocolatey.org/packages/terraform) on Windows) and [Azure CLI](http://aka.ms/azure-cli). Make sure you have the latest version of Azure CLI. This requires some tailored work on Linux (see http://aka.ms/azure-cli) e.g. for Debian/Ubuntu:   
 `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`    
 
+Alternatively, you can create a Visual Studio Codespace with this repo, using this [link](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc)
+
 Make sure you clean up, this creates quite a number of resources (see [disclaimer](#disclaimer)).
 
-### Option A: Vanilla Terraform 
+### Option A: Local Terraform
 Use this option if you're using bash, zsh and/or don't have PowerShell Core. 
 
 1. Clone repository:  
@@ -97,14 +101,22 @@ Use this option if you're using bash, zsh and/or don't have PowerShell Core.
 
 The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. 
 
-### Option B: Scripted
+### Option B: Visual Studio Codespace
 This will use Terraform with optional Azure backend state, Terraform invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks all [features](#feature-toggles), as some features are dependent on using [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) run from Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html).
 
-1. Clone repository:  
-`git clone https://github.com/geekzter/azure-vdc.git`  
+1. Create Codespace by following this [link](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc)
 
-1. Change to the [`scripts`](./scripts) directrory  
-`cd azure-vdc/scripts`
+1. Open a terminal by typing Ctrl-` (backquote)
+
+1. Install Terraform using [tfenv](https://github.com/tfutils/tfenv):   
+`git clone https://github.com/tfutils/tfenv.git ~/.tfenv`   
+`sudo ln -s ~/.tfenv/bin/* /usr/local/bin`   
+`tfenv install`
+
+1. Change to the [`scripts`](./scripts) directory and start powershell:   
+`cd ~/workspace/azure-vdc/scripts`   
+`pwsh`   
+(you can also change the default shell to pwsh)
 
 1. (Optional) A [Terraform Backend](https://www.terraform.io/docs/backends/index.html) allows multi-host, multi-user collaboration on the same Terraform configuration. To set up a [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), create a storage account and configure `backend.tf` (copy [`backend.tf.sample`](./terraform/backend.tf.sample)) with the details of the storage account you created. Make sure the user used for Azure CLI has the [Storage Blob Data Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) or [Storage Blob Data Owner](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-owner) role (it is not enough to have Owner/Contributor rights, as this doesn't grant Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
 `$env:ARM_ACCESS_KEY=$(az storage account keys list -n STORAGE_ACCOUNT --query "[0].value" -o tsv)`   
