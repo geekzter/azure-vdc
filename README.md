@@ -110,10 +110,8 @@ In this option, Terraform can use optional Azure backend state, and invocation i
 
 1. Once the Codespace has been created, open a terminal by typing Ctrl-` (backquote)
 
-1. Install Terraform using [tfenv](https://github.com/tfutils/tfenv):   
-`git clone https://github.com/tfutils/tfenv.git ~/.tfenv`   
-`sudo ln -s ~/.tfenv/bin/* /usr/local/bin`   
-`tfenv install`
+1. [tfenv](https://github.com/tfutils/tfenv) (which in turn installs Terraform) should automatically be installed, if this does not happen, re-run this command:   
+`~/workspace/azure-vdc/.devcontainer/createorupdate.sh`
 
 1. Change to the [`scripts`](./scripts) directory and start powershell:   
 `cd ~/workspace/azure-vdc/scripts`   

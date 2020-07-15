@@ -5,6 +5,11 @@
       "ms-azure-devops.azure-pipelines",
       "ms-vscode.azurecli"
     ],
+
+    "settings": {
+      "terminal.integrated.shell.linux": "/usr/bin/pwsh",
+      "powershell.integratedConsole.showOnStartup": true
+    },
   
     // Run bash script in .devcontainer directory
     "postCreateCommand": "/bin/bash ./.devcontainer/createorupdate.sh"
