@@ -1,7 +1,7 @@
 # Runs ppst create commands to prep Codespace for project
 
 # Update relevant packages
-sudo apt-get upgrade -y azure-cli powershell
+#sudo apt-get update && sudo apt-get install --only-upgrade -y azure-cli powershell
 
 # Set up terraform with tfenv
 if [ ! -d ~/.tfenv ]; then

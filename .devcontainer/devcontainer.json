@@ -12,5 +12,5 @@
     },
   
     // Run bash script in .devcontainer directory
-    "postCreateCommand": "/bin/bash ./.devcontainer/createorupdate.sh"
+    "postCreateCommand": "/bin/bash ./.devcontainer/createorupdate.sh > ~/post-create.log"
   }
