@@ -12,8 +12,8 @@ else
     echo $'\nUpdating tfenv...'
     git -C ~/.tfenv pull
 fi
-tfenv install $(cat ~/workspace/azure-vdc/terraform/.terraform-version)
+tfenv install $(cat ~/workspace/terraform/.terraform-version)
 
-pushd ~/workspace/azure-vdc/terraform
+pushd ~/workspace/terraform
 terraform init
 popd
