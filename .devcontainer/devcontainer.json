@@ -1,0 +1,20 @@
+{
+  // Install extensions
+  "extensions": [
+    "4ops.terraform",
+    "ms-azuretools.vscode-azureterraform",
+    "ms-azure-devops.azure-pipelines",
+    "ms-mssql.mssql",
+    "ms-vscode.azurecli",
+    "ms-vscode.PowerShell"
+  ],
+
+  // VSCode settings
+  "settings": {
+    "terminal.integrated.cwd": "/home/codespace/workspace/scripts",
+    "terminal.integrated.shell.linux": "/usr/bin/pwsh"
+  },
+
+  // Run bash script in .devcontainer directory
+  "postCreateCommand": "/bin/bash ./.devcontainer/createorupdate.sh > ~/post-create.log"
+}

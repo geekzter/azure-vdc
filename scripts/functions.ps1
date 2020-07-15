@@ -33,6 +33,7 @@ function AzLogin (
         } else {
             # Active subscription may not be the desired one
             Write-Warning "Using subscription '$(az account show --query "name" -o tsv)', set `$env:ARM_SUBSCRIPTION_ID if you want another one"
+            Start-Sleep -Seconds 1
         }
     }
 
