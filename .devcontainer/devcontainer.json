@@ -7,9 +7,8 @@
     ],
 
     "settings": {
-      "terminal.integrated.cwd": "~/workspace/azure-vdc/scripts",
-      "terminal.integrated.shell.linux": "/usr/bin/pwsh",
-      "powershell.integratedConsole.showOnStartup": true
+      "terminal.integrated.cwd": "/home/codespace/workspace/azure-vdc/scripts",
+      "terminal.integrated.shell.linux": "/usr/bin/pwsh"
     },
   
     // Run bash script in .devcontainer directory
