@@ -22,10 +22,10 @@ tfenv install $terraformVersion
 tfenv use $terraformVersion
 
 Push-Location $terraformDirectory
-terraform init
+terraform init -upgrade
 Pop-Location
 
 # Profile
 if (!(Test-Path $Profile)) {
-    New-Item -ItemType symboliclink -Path $Profile -Value $profileTemplate
+    New-Item -ItemType symboliclink -Path $Profile -Target $profileTemplate -Force
 }
