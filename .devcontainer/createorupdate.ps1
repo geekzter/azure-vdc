@@ -4,7 +4,7 @@
 # Update relevant packages
 #sudo apt-get update && sudo apt-get install --only-upgrade -y azure-cli powershell
 
-$repoDirectory = (Split-Path (get-childitem main.tf -Path ~ -Recurse).FullName -Parent)
+$repoDirectory = (Split-Path (get-childitem README.md -Path ~ -Recurse).FullName -Parent)
 $terraformDirectory = Join-Path $repoDirectory "terraform"
 $terraformVersion = $(Get-Content $terraformDirectory/.terraform-version)
 
