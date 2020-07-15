@@ -6,10 +6,10 @@
 
 $repoDirectory = (Split-Path (get-childitem README.md -Path ~ -Recurse).FullName -Parent)
 $terraformDirectory = Join-Path $repoDirectory "terraform"
-$terraformVersion = $(Get-Content $terraformDirectory/.terraform-version)
+$terraformVersion = (Get-Content $terraformDirectory/.terraform-version)
+$profileTemplate = (Join-Path (Split-Path -Parent -Path $MyInvocation.MyCommand.Path) profile.ps1)
 
-
-if (Get-Command tfenv -ErrorAction SilentlyContinue) {
+if (!(Get-Command tfenv -ErrorAction SilentlyContinue)) {
     Write-Host 'Installing tfenv...'
     git clone https://github.com/tfutils/tfenv.git ~/.tfenv
     sudo ln -s ~/.tfenv/bin/* /usr/local/bin
@@ -24,3 +24,8 @@ tfenv use $terraformVersion
 Push-Location $terraformDirectory
 terraform init
 Pop-Location
+
+# Profile
+if (!(Test-Path $Profile)) {
+    New-Item -ItemType symboliclink -Path $Profile -Value $profileTemplate
+}
