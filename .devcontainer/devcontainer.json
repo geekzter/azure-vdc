@@ -7,7 +7,6 @@
     ],
 
     "settings": {
-      "terminal.integrated.cwd": "/home/codespace/workspace/azure-vdc/scripts",
       "terminal.integrated.shell.linux": "/usr/bin/pwsh"
     },
   
