@@ -106,21 +106,21 @@ This will use [Visual Studio Codespaces](https://online.visualstudio.com/) as th
 
 In this option, Terraform can use optional Azure backend state, and invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks [features](#feature-toggles) dependent on using [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) (run from Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html)).
 
-1. Create a Codespace by following this [link](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc). You will need to create a Codespace [plan](https://docs.microsoft.com/en-us/visualstudio/online/how-to/browser#create-an-environment) if you don't have one yet. This should prompt you to clone this repo when creating the Codespace.
+1. Create a Codespace [plan](https://docs.microsoft.com/en-us/visualstudio/online/how-to/browser#create-an-environment) if you don't have one yet.
 
-1. Once the Codespace has been created, open a terminal by typing Ctrl-` (backquote)
+1. Create a Codespace by following this [link](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc). This should prompt you to clone this repo when creating the Codespace.
+
+1. Once the Codespace has been created, open a terminal by typing Ctrl-` (backquote). This opens a PowerShell session.
 
 1. (Optional) A [Terraform Backend](https://www.terraform.io/docs/backends/index.html) allows multi-host, multi-user collaboration on the same Terraform configuration. To set up a [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), create a storage account and configure `backend.tf` (copy [`backend.tf.sample`](./terraform/backend.tf.sample)) with the details of the storage account you created. Make sure the user used for Azure CLI has the [Storage Blob Data Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) or [Storage Blob Data Owner](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-owner) role (it is not enough to have Owner/Contributor rights, as this doesn't grant Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
 `$env:ARM_ACCESS_KEY=$(az storage account keys list -n <STORAGE_ACCOUNT> --query "[0].value" -o tsv)`   
 or   
 `$env:ARM_SAS_TOKEN=$(az storage container generate-sas -n <STORAGE_CONTAINER> --permissions acdlrw --expiry 202Y-MM-DD --account-name <STORAGE_ACCOUNT> -o tsv)`   
+Initialize Terraform azurerm backend by running   
+`tf_deploy.ps1 -init` 
 
 1. Configure Azure subscription to use e.g.    
 `$env:ARM_SUBSCRIPTION_ID="00000000-0000-0000-0000-000000000000"`    
-
-1. Initialize Terraform backend by running  
-`tf_deploy.ps1 -init` (if you set up Terraform backend state and configured `backend.tf`)   
-`tf_deploy.ps1 -init -nobackend` (local Terraform state)   
 
 1. (Optional) Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](#feature-toggles) below)
 

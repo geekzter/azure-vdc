@@ -10,4 +10,7 @@ if (!$pathList.Contains($scriptDirectory)) {
 }
 $env:PATH = $pathList -Join ":"
 
+# Let Terraform know which Codespace is running it
+$env:TF_VAR_vso_url="https://online.visualstudio.com/environment/$env:CLOUDENV_ENVIRONMENT_ID"
+
 Set-Location $repoDirectory

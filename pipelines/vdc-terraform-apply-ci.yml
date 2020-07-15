@@ -34,6 +34,7 @@ pr:
     - '*'
   paths:
     exclude:
+    - '.devcontainer/*'  
     - '*.md'  
     - '*.png'  
     - '*.svg'  
