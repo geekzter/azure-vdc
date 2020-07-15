@@ -1,12 +1,13 @@
 {
     // Install extensions
     "extensions": [
-      "HashiCorp.terraform",
       "ms-azure-devops.azure-pipelines",
+      "ms-azuretools.vscode-azureterraform",
       "ms-vscode.azurecli"
     ],
 
     "settings": {
+      "terminal.integrated.cwd": "~/workspace/azure-vdc/scripts",
       "terminal.integrated.shell.linux": "/usr/bin/pwsh",
       "powershell.integratedConsole.showOnStartup": true
     },
