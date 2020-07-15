@@ -1,0 +1,11 @@
+{
+    // Install extensions
+    "extensions": [
+      "HashiCorp.terraform",
+      "ms-azure-devops.azure-pipelines",
+      "ms-vscode.azurecli"
+    ],
+  
+    // Run bash script in .devcontainer directory
+    "postCreateCommand": "/bin/bash ./.devcontainer/createorupdate.sh"
+  }

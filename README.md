@@ -102,11 +102,13 @@ Use this option if you're using bash, zsh and/or don't have PowerShell Core.
 The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. 
 
 ### Option B: Visual Studio Codespace
-This will use Terraform with optional Azure backend state, Terraform invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks all [features](#feature-toggles), as some features are dependent on using [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) run from Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html).
+This will use [Visual Studio Codespaces](https://online.visualstudio.com/) as the environment to provision from. A Codespace is an online version of Visual Studio Code, with a repository cloned into it.   
 
-1. Create Codespace by following this [link](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc)
+In this option, Terraform can use optional Azure backend state, and invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks all [features](#feature-toggles), as some features are dependent on using [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) (run from Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html)).
 
-1. Open a terminal by typing Ctrl-` (backquote)
+1. Create a Codespace by following this [link](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc). This should prompt you to clone this repo when creating the Codepace.
+
+1. Once the Codespace has been created, open a terminal by typing Ctrl-` (backquote)
 
 1. Install Terraform using [tfenv](https://github.com/tfutils/tfenv):   
 `git clone https://github.com/tfutils/tfenv.git ~/.tfenv`   
