@@ -119,19 +119,19 @@ or
 `$env:ARM_SUBSCRIPTION_ID="00000000-0000-0000-0000-000000000000"`    
 
 1. Initialize Terraform backend by running  
-`./tf_deploy.ps1 -init` (if you set up Terraform backend state and configured `backend.tf`)   
-`./tf_deploy.ps1 -init -nobackend` (local Terraform state)   
+`tf_deploy.ps1 -init` (if you set up Terraform backend state and configured `backend.tf`)   
+`tf_deploy.ps1 -init -nobackend` (local Terraform state)   
 
 1. (Optional) Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](#feature-toggles) below)
 
 1. Run  
-`./tf_deploy.ps1 -apply`  
+`tf_deploy.ps1 -apply`  
 to provision resources (this will create a plan that you will be prompted to apply)
 
 1. When you want to destroy resources, run:   
-`./tf_deploy.ps1 -destroy` (with Terraform, recommended)   
+`tf_deploy.ps1 -destroy` (with Terraform, recommended)   
 or    
-`./erase.ps1 -destroy` (with Azure CLI, as a last resort)   
+`erase.ps1 -destroy` (with Azure CLI, as a last resort)   
 
 
 ### Option C: Azure Pipelines
