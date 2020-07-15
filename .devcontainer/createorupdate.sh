@@ -12,7 +12,9 @@ else
     echo $'\nUpdating tfenv...'
     git -C ~/.tfenv pull
 fi
-tfenv install $(cat ~/workspace/terraform/.terraform-version)
+TF_VERSION=$(cat ~/workspace/terraform/.terraform-version)
+tfenv install $TF_VERSION
+tfenv use $TF_VERSION
 
 pushd ~/workspace/terraform
 terraform init
