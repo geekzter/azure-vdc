@@ -1,4 +1,5 @@
-# Runs ppst create commands to prep Codespace for project
+#!/bin/bash
+# Runs post create commands to prep Codespace for project
 
 # Update relevant packages
 #sudo apt-get update && sudo apt-get install --only-upgrade -y azure-cli powershell
