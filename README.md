@@ -119,14 +119,12 @@ or
 Initialize Terraform azurerm backend by running   
 `tf_deploy.ps1 -init` 
 
-1. Configure Azure subscription to use e.g.    
-`$env:ARM_SUBSCRIPTION_ID="00000000-0000-0000-0000-000000000000"`    
-
 1. (Optional) Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](#feature-toggles) below)
 
 1. Run  
 `tf_deploy.ps1 -apply`  
-to provision resources (this will create a plan that you will be prompted to apply)
+to provision resources (this will create a plan that you will be prompted to apply).    
+You will be prompted to choose a subscription if `$env:ARM_SUBSCRIPTION_ID` is not set.
 
 1. When you want to destroy resources, run:   
 `tf_deploy.ps1 -destroy` (with Terraform, recommended)   
