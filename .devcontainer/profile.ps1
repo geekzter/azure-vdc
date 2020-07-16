@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 
-$repoDirectory = (Split-Path (get-childitem README.md -Path ~ -Recurse).FullName -Parent)
+$repoDirectory = (Split-Path (get-childitem diagram.vsdx -Path ~ -Recurse).FullName -Parent)
 $scriptDirectory = Join-Path $repoDirectory "scripts"
 
 # Manage PATH environment variable

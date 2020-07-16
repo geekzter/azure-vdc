@@ -35,7 +35,7 @@ if (!(Test-Path ~/bootstrap-os)) {
 } else {
     git -C ~/bootstrap-os pull
 }
-& ~/bootstrap-os/common/common_setup.ps1 -NoPackages
+. ~/bootstrap-os/common/common_setup.ps1 -NoPackages
 AddorUpdateModule Posh-Git
 
 # PowerShell Profile
