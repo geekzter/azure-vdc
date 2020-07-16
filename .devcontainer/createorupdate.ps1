@@ -25,6 +25,14 @@ Push-Location $terraformDirectory
 terraform init -upgrade
 Pop-Location
 
+# PowerShell setup
+if (!(Test-Path ~/bootstrap-os)) {
+    git clone https://github.com/geekzter/bootstrap-os.git ~/bootstrap-os
+} else {
+    git -C ~/bootstrap-os pull
+}
+& ~/bootstrap-os/common/common_setup.ps1 -NoPackages
+
 # Profile
 if (!(Test-Path $Profile)) {
     $profileLink = (New-Item -ItemType symboliclink -Path $Profile -Target $profileTemplate -Force)
