@@ -55,9 +55,11 @@ resource azurerm_key_vault_key disk_encryption_key {
 
 
 resource azurerm_storage_container scripts {
-  name                         = "paasappscripts"
+  name                         = "iaasappscripts"
   storage_account_name         = var.automation_storage_name
   container_access_type        = "container"
+
+  depends_on                   = [var.vm_connectivity_dependency]
 }
 
 resource azurerm_storage_blob install_agent_script {
