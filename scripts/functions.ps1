@@ -32,6 +32,7 @@ function AzLogin (
             Write-Host "Using subscription '$(az account show --query "name" -o tsv)'"
         } else {
             # Active subscription may not be the desired one
+            az account list -o tsv --query "sort_by([].{id:id, name:name},&name)" 
             Write-Warning "Using subscription '$(az account show --query "name" -o tsv)', set `$env:ARM_SUBSCRIPTION_ID if you want another one"
             Start-Sleep -Seconds 1
         }
