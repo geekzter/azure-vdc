@@ -2,7 +2,11 @@
 # Runs post create commands to prep Codespace for project
 
 # Update relevant packages
-#sudo apt-get update && sudo apt-get install --only-upgrade -y azure-cli powershell
+sudo apt-get update
+#sudo apt-get install --only-upgrade -y azure-cli powershell
+if (!(Get-Command tmux -ErrorAction SilentlyContinue)) {
+    sudo apt-get install -y tmux
+}
 
 $repoDirectory = (Split-Path (get-childitem README.md -Path ~ -Recurse).FullName -Parent)
 $terraformDirectory = Join-Path $repoDirectory "terraform"
@@ -32,9 +36,9 @@ if (!(Test-Path ~/bootstrap-os)) {
     git -C ~/bootstrap-os pull
 }
 & ~/bootstrap-os/common/common_setup.ps1 -NoPackages
+AddorUpdateModule Posh-Git
 
-# Profile
+# PowerShell Profile
 if (!(Test-Path $Profile)) {
-    $profileLink = (New-Item -ItemType symboliclink -Path $Profile -Target $profileTemplate -Force)
-    $profileLink.Name
+    New-Item -ItemType symboliclink -Path $Profile -Target $profileTemplate -Force | Select-Object -ExpandProperty Name
 }
