@@ -119,7 +119,7 @@ try {
                     $fail = $true
                 }
                 if ($fail) {
-                    Write-Warning "This script assumes Terraform backend exists at ${backendFile}, but is does not exist"
+                    Write-Warning "This script assumes Terraform backend exists at ${backendFile}, but it does not exist"
                     Write-Host "You can copy ${backendTemplate} -> ${backendFile} and configure a storage account manually"
                     Write-Host "See documentation at https://www.terraform.io/docs/backends/types/azurerm.html"
                     exit

@@ -1,13 +1,13 @@
 # Automated VDC
-This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology. Two demo applications (one IaaS, one PaaS) are deployed into it.
+This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology and includes PaaS services with private networking. Two demo applications (one IaaS, one PaaS) are deployed into it.
 
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
 [![VScodespaces](https://img.shields.io/endpoint?url=https%3A%2F%2Faka.ms%2Fvso-badge)](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc)
 
-## TL;DR, give me the Quickstart
-
-- Setup [option A](#option-a-local-terraform) is the fastest way to provision infrastructure if you already have Azure CLI and Terraform set up. You can use any shell.   
-- Setup [option B](#option-b-visual-studio-codespace) is the fastest if you have nothing set up yet. All you need is a browser (Chrome or Edge) and an Azure account.
+## TL;DR - Quickstart
+If you want to get going without reading what's below, choose either:
+- Setup [option A](#option-a-local-terraform), the fastest way to provision infrastructure if you already have Azure CLI and Terraform set up. You can use any shell.   
+- Setup [option B](#option-b-visual-studio-codespace), the fastest if you have nothing set up yet. All you need is a browser (Chrome or Edge) and an Azure subscription.
 
 ## Architecture description
 ### Infrastructure
@@ -99,16 +99,18 @@ Use this option if you're using bash, zsh and/or don't have PowerShell Core.
 1. When you want to destroy resources, run:   
 `terraform destroy`
 
-The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. 
+The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell and one of the options below.
 
 ### Option B: Visual Studio Codespace
-This will use [Visual Studio Codespaces](https://online.visualstudio.com/) as the environment to provision from. A Codespace is an online version of Visual Studio Code, with a repository cloned into it and required tools [configured](https://docs.microsoft.com/en-us/visualstudio/online/reference/configuring).   
+This will use [Visual Studio Codespaces](https://online.visualstudio.com/) as the environment to provision from. A Codespace is an online version of Visual Studio Code, with a repository cloned into a Linux container and required tools configured. This repo can create a [customized](https://docs.microsoft.com/en-us/visualstudio/online/reference/configuring) Codespace with the resources in the [.devcontainer](./.devcontainer) directory. This will install pre-requisites needed on the Codespace.   
 
-In this option, Terraform can use optional Azure backend state, and invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks [features](#feature-toggles) dependent on using [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) (run from Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html)).
+Terraform can use optional Azure backend state, and invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks [features](#feature-toggles) dependent on using [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) (e.g. which use the Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html)).
 
 1. Create a Codespace [plan](https://docs.microsoft.com/en-us/visualstudio/online/how-to/browser#create-an-environment) if you don't have one yet.
 
-1. Create a Codespace by following this [link](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc). This should prompt you to clone this repo when creating the Codespace.
+1. Create a Codespace by following this link:    
+[https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc)    
+This should prompt you to clone this repo when creating the Codespace.
 
 1. Once the Codespace has been created, open a terminal by typing Ctrl-` (backquote). This opens a PowerShell session.
 
