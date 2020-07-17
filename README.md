@@ -124,7 +124,7 @@ Initialize Terraform azurerm backend by running
 1. Run  
 `tf_deploy.ps1 -apply`  
 to provision resources (this will create a plan that you will be prompted to apply).    
-You will be prompted to choose a subscription if `$env:ARM_SUBSCRIPTION_ID` is not set.
+You will be prompted to select a subscription if `$env:ARM_SUBSCRIPTION_ID` is not set.
 
 1. When you want to destroy resources, run:   
 `tf_deploy.ps1 -destroy` (with Terraform, recommended)   

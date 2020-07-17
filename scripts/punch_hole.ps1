@@ -61,7 +61,7 @@ foreach ($storageAccount in @($appStorageAccount,$appEventHubStorageAccount)) {
         az storage account network-rule add -g $appResourceGroup --account-name $storageAccount --ip-address $ipAddress -o none
         Write-Host "Adding rule for Storage Account $storageAccount to allow prefix $ipPrefix..."
         az storage account network-rule add -g $appResourceGroup --account-name $storageAccount --ip-address $ipPrefix -o none
-        # BUG: Access fails in private IP address (not used in VDC) ?!?
+        # BUG: If a pipeline agent or VS Codespace is located in the same region as a storage account the request will be routed over Microsoft’s internal IPv6 network. As a result the source IP of the request is not the same as the one added to the Storage Account firewall.
         # 1.0;2020-05-17T13:22:59.2714021Z;GetContainerProperties;IpAuthorizationError;403;4;4;authenticated;xxxxxx;xxxxxx;blob;"https://xxxxxx.blob.core.windows.net:443/paasappscripts?restype=container";"/";75343457-f01e-005c-674e-2c705c000000;0;172.16.5.4:59722;2018-11-09;453;0;130;246;0;;;;;;"Go/go1.14.2 (amd64-linux) go-autorest/v14.0.0 tombuildsstuff/giovanni/v0.10.0 storage/2018-11-09";;
         # HACK: Open the door, Terraform will close it again
         az storage account update -g $appResourceGroup -n $storageAccount --default-action Allow -o none
@@ -72,7 +72,7 @@ if ($automationStorageAccount) {
     az storage account network-rule add -g $vdcResourceGroup --account-name $automationStorageAccount --ip-address $ipAddress -o none
     Write-Host "Adding rule for Storage Account $automationStorageAccount to allow prefix $ipPrefix..."
     az storage account network-rule add -g $vdcResourceGroup --account-name $automationStorageAccount --ip-address $ipPrefix -o none
-    # BUG: Access fails in private IP address (not used in VDC) ?!?
+    # BUG: If a pipeline agent or VS Codespace is located in the same region as a storage account the request will be routed over Microsoft’s internal IPv6 network. As a result the source IP of the request is not the same as the one added to the Storage Account firewall.
     # 1.0;2020-05-17T13:22:59.2714021Z;GetContainerProperties;IpAuthorizationError;403;4;4;authenticated;xxxxxx;xxxxxx;blob;"https://xxxxxx.blob.core.windows.net:443/paasappscripts?restype=container";"/";75343457-f01e-005c-674e-2c705c000000;0;172.16.5.4:59722;2018-11-09;453;0;130;246;0;;;;;;"Go/go1.14.2 (amd64-linux) go-autorest/v14.0.0 tombuildsstuff/giovanni/v0.10.0 storage/2018-11-09";;
     # HACK: Open the door, Terraform will close it again
     az storage account update -g $vdcResourceGroup -n $automationStorageAccount --default-action Allow -o none

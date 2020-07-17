@@ -36,7 +36,7 @@ function AzLogin (
                 Write-Host "Set `$env:ARM_SUBSCRIPTION_ID to the id of the subscription you want to use to prevent this prompt" -NoNewline
 
                 do {
-                    Write-Host "`nEnter the index # of the subscription you Terraform to use: " -ForegroundColor Cyan -NoNewline
+                    Write-Host "`nEnter the index # of the subscription you want Terraform to use: " -ForegroundColor Cyan -NoNewline
                     $occurrence = Read-Host
                 } while (($occurrence -notmatch "^\d+$") -or ($occurrence -lt 1) -or ($occurrence -gt $subscriptions.Length))
                 $env:ARM_SUBSCRIPTION_ID = $subscriptions[$occurrence-1].id

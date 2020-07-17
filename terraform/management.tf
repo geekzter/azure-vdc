@@ -48,6 +48,8 @@ resource azurerm_storage_container scripts {
   name                         = "scripts"
   storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
   container_access_type        = "container"
+
+  depends_on                   = [azurerm_storage_account_network_rules.automation_storage_rules]
 }
 
 resource azurerm_storage_blob mgmt_prepare_script {
