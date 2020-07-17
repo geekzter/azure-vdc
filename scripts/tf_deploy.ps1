@@ -119,7 +119,7 @@ try {
                     $fail = $true
                 }
                 if ($fail) {
-                    Write-Warning "This script assumes Terraform backend exists at ${backendFile}, but is does not exist"
+                    Write-Warning "This script assumes Terraform backend exists at ${backendFile}, but it does not exist"
                     Write-Host "You can copy ${backendTemplate} -> ${backendFile} and configure a storage account manually"
                     Write-Host "See documentation at https://www.terraform.io/docs/backends/types/azurerm.html"
                     exit
@@ -172,15 +172,13 @@ try {
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "erase.ps1") -Workspace $Workspace -Destroy:$false -Force
     }
 
-    if ($Plan -or $Apply -or $Destroy) {
-        Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform may fail" -ForegroundColor Green 
-        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1")
-    }
-
     if ($Plan -or $Apply) {
         if ($StickySuffix) {
             SetSuffix
         }
+
+        Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform may fail" -ForegroundColor Green 
+        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1")
 
         # Create plan
         Invoke "terraform plan $varArgs -parallelism=$Parallelism -out='$planFile'" 
@@ -212,6 +210,9 @@ try {
     }
 
     if ($Destroy) {
+        Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform may fail" -ForegroundColor Green 
+        & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1")
+
         # Now let Terraform do it's work
         Invoke "terraform destroy $ForceArgs -parallelism=$Parallelism"
     }

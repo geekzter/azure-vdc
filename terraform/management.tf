@@ -48,6 +48,8 @@ resource azurerm_storage_container scripts {
   name                         = "scripts"
   storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
   container_access_type        = "container"
+
+  depends_on                   = [azurerm_storage_account_network_rules.automation_storage_rules]
 }
 
 resource azurerm_storage_blob mgmt_prepare_script {
@@ -57,6 +59,8 @@ resource azurerm_storage_blob mgmt_prepare_script {
 
   type                         = "Block"
   source                       = "../scripts/host/prepare_mgmtvm.ps1"
+
+  depends_on                   = [azurerm_storage_account_network_rules.automation_storage_rules]
 }
 
 resource azurerm_storage_blob configure_mgmtvm_roles {
@@ -66,6 +70,8 @@ resource azurerm_storage_blob configure_mgmtvm_roles {
 
   type                         = "Block"
   source                       = "../scripts/host/configure_mgmtvm_roles.ps1"
+
+  depends_on                   = [azurerm_storage_account_network_rules.automation_storage_rules]
 }
 
 # Adapted from https://github.com/Azure/terraform-azurerm-diskencrypt/blob/master/main.tf

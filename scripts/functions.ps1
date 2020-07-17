@@ -23,18 +23,34 @@ function AzLogin (
             az login -o none
         }
     }
-    if ($env:ARM_SUBSCRIPTION_ID) {
-        az account set -s $env:ARM_SUBSCRIPTION_ID -o none
-    }
 
     if ($DisplayMessages) {
         if ($env:ARM_SUBSCRIPTION_ID -or ($(az account list --query "length([])" -o tsv) -eq 1)) {
             Write-Host "Using subscription '$(az account show --query "name" -o tsv)'"
         } else {
-            # Active subscription may not be the desired one
-            Write-Warning "Using subscription '$(az account show --query "name" -o tsv)', set `$env:ARM_SUBSCRIPTION_ID if you want another one"
-            Start-Sleep -Seconds 1
+            if ($env:TF_IN_AUTOMATION -ine "true") {
+                # Active subscription may not be the desired one, prompt the user to select one
+                $subscriptions = (az account list --query "sort_by([].{id:id, name:name},&name)" -o json | ConvertFrom-Json) 
+                $index = 0
+                $subscriptions | Format-Table -Property @{name="index";expression={$script:index;$script:index+=1}}, id, name
+                Write-Host "Set `$env:ARM_SUBSCRIPTION_ID to the id of the subscription you want to use to prevent this prompt" -NoNewline
+
+                do {
+                    Write-Host "`nEnter the index # of the subscription you want Terraform to use: " -ForegroundColor Cyan -NoNewline
+                    $occurrence = Read-Host
+                } while (($occurrence -notmatch "^\d+$") -or ($occurrence -lt 1) -or ($occurrence -gt $subscriptions.Length))
+                $env:ARM_SUBSCRIPTION_ID = $subscriptions[$occurrence-1].id
+            
+                Write-Host "Using subscription '$($subscriptions[$occurrence-1].name)'" -ForegroundColor Yellow
+                Start-Sleep -Seconds 1
+            } else {
+                Write-Host "Using subscription '$(az account show --query "name" -o tsv)', set `$env:ARM_SUBSCRIPTION_ID if you want to use another one"
+            }
         }
+    }
+
+    if ($env:ARM_SUBSCRIPTION_ID) {
+        az account set -s $env:ARM_SUBSCRIPTION_ID -o none
     }
 
     # Populate Terraform azurerm variables where possible

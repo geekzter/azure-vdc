@@ -1,13 +1,13 @@
 # Automated VDC
-This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology. Two demo applications (one IaaS, one PaaS) are deployed into it.
+This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology and includes PaaS services with private networking. Two demo applications (one IaaS, one PaaS) are deployed into it.
 
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
 [![VScodespaces](https://img.shields.io/endpoint?url=https%3A%2F%2Faka.ms%2Fvso-badge)](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc)
 
-## TL;DR, give me the Quickstart
-
-- Setup [option A](#option-a-local-terraform) is the fastest way to provision infrastructure if you already have Azure CLI and Terraform set up. You can use any shell.   
-- Setup [option B](#option-b-visual-studio-codespace) is the fastest if you have nothing set up yet. All you need is a browser (Chrome or Edge) and an Azure account.
+## TL;DR - Quickstart
+If you want to get going without reading what's below, choose either:
+- Setup [option A](#option-a-local-terraform), the fastest way to provision infrastructure if you already have Azure CLI and Terraform set up. You can use any shell.   
+- Setup [option B](#option-b-visual-studio-codespace), the fastest if you have nothing set up yet. All you need is a browser (Chrome or Edge) and an Azure subscription.
 
 ## Architecture description
 ### Infrastructure
@@ -99,39 +99,39 @@ Use this option if you're using bash, zsh and/or don't have PowerShell Core.
 1. When you want to destroy resources, run:   
 `terraform destroy`
 
-The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell. 
+The default configuration will work with any shell. Additional [features](#feature-toggles) may require PowerShell and one of the options below.
 
 ### Option B: Visual Studio Codespace
-This will use [Visual Studio Codespaces](https://online.visualstudio.com/) as the environment to provision from. A Codespace is an online version of Visual Studio Code, with a repository cloned into it and required tools [configured](https://docs.microsoft.com/en-us/visualstudio/online/reference/configuring).   
+This will use [Visual Studio Codespaces](https://online.visualstudio.com/) as the environment to provision from. A Codespace is an online version of Visual Studio Code, with a repository cloned into a Linux container and required tools configured. This repo can create a [customized](https://docs.microsoft.com/en-us/visualstudio/online/reference/configuring) Codespace with the resources in the [.devcontainer](./.devcontainer) directory. This will install pre-requisites needed on the Codespace.   
 
-In this option, Terraform can use optional Azure backend state, and invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks [features](#feature-toggles) dependent on using [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) (run from Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html)).
+Terraform can use optional Azure backend state, and invocation is wrapped by [tf_deploy.ps1](./scripts/tf_deploy.ps1). This unlocks [features](#feature-toggles) dependent on using [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) (e.g. which use the Terraform [local-exec provisioner](https://www.terraform.io/docs/provisioners/local-exec.html)).
 
-1. Create a Codespace by following this [link](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc). You will need to create a Codespace [plan](https://docs.microsoft.com/en-us/visualstudio/online/how-to/browser#create-an-environment) if you don't have one yet. This should prompt you to clone this repo when creating the Codespace.
+1. Create a Codespace [plan](https://docs.microsoft.com/en-us/visualstudio/online/how-to/browser#create-an-environment) if you don't have one yet.
 
-1. Once the Codespace has been created, open a terminal by typing Ctrl-` (backquote)
+1. Create a Codespace by following this link:    
+[https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc)    
+This should prompt you to clone this repo when creating the Codespace.
+
+1. Once the Codespace has been created, open a terminal by typing Ctrl-` (backquote). This opens a PowerShell session.
 
 1. (Optional) A [Terraform Backend](https://www.terraform.io/docs/backends/index.html) allows multi-host, multi-user collaboration on the same Terraform configuration. To set up a [Terraform Azure Backend](https://www.terraform.io/docs/backends/types/azurerm.html), create a storage account and configure `backend.tf` (copy [`backend.tf.sample`](./terraform/backend.tf.sample)) with the details of the storage account you created. Make sure the user used for Azure CLI has the [Storage Blob Data Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) or [Storage Blob Data Owner](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-owner) role (it is not enough to have Owner/Contributor rights, as this doesn't grant Data Plane access). Alternatively, you can set `ARM_ACCESS_KEY` or `ARM_SAS_TOKEN` environment variables e.g.  
 `$env:ARM_ACCESS_KEY=$(az storage account keys list -n <STORAGE_ACCOUNT> --query "[0].value" -o tsv)`   
 or   
 `$env:ARM_SAS_TOKEN=$(az storage container generate-sas -n <STORAGE_CONTAINER> --permissions acdlrw --expiry 202Y-MM-DD --account-name <STORAGE_ACCOUNT> -o tsv)`   
-
-1. Configure Azure subscription to use e.g.    
-`$env:ARM_SUBSCRIPTION_ID="00000000-0000-0000-0000-000000000000"`    
-
-1. Initialize Terraform backend by running  
-`./tf_deploy.ps1 -init` (if you set up Terraform backend state and configured `backend.tf`)   
-`./tf_deploy.ps1 -init -nobackend` (local Terraform state)   
+Initialize Terraform azurerm backend by running   
+`tf_deploy.ps1 -init` 
 
 1. (Optional) Customize `variables.tf` or create a `.auto.tfvars` file that contains your customized configuration (see [Features](#feature-toggles) below)
 
 1. Run  
-`./tf_deploy.ps1 -apply`  
-to provision resources (this will create a plan that you will be prompted to apply)
+`tf_deploy.ps1 -apply`  
+to provision resources (this will create a plan that you will be prompted to apply).    
+You will be prompted to select a subscription if `$env:ARM_SUBSCRIPTION_ID` is not set.
 
 1. When you want to destroy resources, run:   
-`./tf_deploy.ps1 -destroy` (with Terraform, recommended)   
+`tf_deploy.ps1 -destroy` (with Terraform, recommended)   
 or    
-`./erase.ps1 -destroy` (with Azure CLI, as a last resort)   
+`erase.ps1 -destroy` (with Azure CLI, as a last resort)   
 
 
 ### Option C: Azure Pipelines

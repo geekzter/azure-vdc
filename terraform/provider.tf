@@ -7,7 +7,7 @@
 provider azurerm {
     # Freeze version until this issue is fixed:
     # https://github.com/terraform-providers/terraform-provider-azurerm/issues/7691
-    version = "~> 2.17, != 2.18"
+    version = "~> 2.17, != 2.18, != 2.19"
     features {
         virtual_machine {
             # Don't do this in production
