@@ -2,7 +2,7 @@
 This project contains a sample starter Virtual Datacenter (VDC), which follows a Hub & Spoke network topology and includes PaaS services with private networking. Two demo applications (one IaaS, one PaaS) are deployed into it.
 
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/vdc-terraform-apply-simple-ci?branchName=master)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=72&branchName=master)
-[![VScodespaces](https://img.shields.io/endpoint?url=https%3A%2F%2Faka.ms%2Fvso-badge)](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc)
+[![VScodespaces](./.devcontainer/vscodespacebutton.svg)](https://online.visualstudio.com/environments/new?name=azure-vdc&repo=geekzter/azure-vdc)
 
 ## TL;DR - Quickstart
 If you want to get going without reading what's below, choose either:
