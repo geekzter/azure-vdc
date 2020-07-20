@@ -8,11 +8,15 @@ if (!(Get-Command tmux -ErrorAction SilentlyContinue)) {
     sudo apt-get install -y tmux
 }
 
+# Determine directory locations (may vary based on what branch has been cloned initially)
 $repoDirectory = (Split-Path (get-childitem README.md -Path ~ -Recurse).FullName -Parent)
 $terraformDirectory = Join-Path $repoDirectory "terraform"
+# Get Terraform version as saved in the repo
 $terraformVersion = (Get-Content $terraformDirectory/.terraform-version)
+# This will be the location where we save a PowerShell profile
 $profileTemplate = (Join-Path (Split-Path -Parent -Path $MyInvocation.MyCommand.Path) profile.ps1)
 
+# Get/update tfenv, for Terraform versioning
 if (!(Get-Command tfenv -ErrorAction SilentlyContinue)) {
     Write-Host 'Installing tfenv...'
     git clone https://github.com/tfutils/tfenv.git ~/.tfenv
@@ -21,15 +25,16 @@ if (!(Get-Command tfenv -ErrorAction SilentlyContinue)) {
     Write-Host 'Installing tfenv...'
     git -C ~/.tfenv pull
 }
-
+# Get the desired version of Terraform
 tfenv install $terraformVersion
 tfenv use $terraformVersion
 
+# We may as well initialize Terraform
 Push-Location $terraformDirectory
 terraform init -upgrade
 Pop-Location
 
-# PowerShell setup
+# Use geekzter/bootstrap-os for PowerShell setup
 if (!(Test-Path ~/bootstrap-os)) {
     git clone https://github.com/geekzter/bootstrap-os.git ~/bootstrap-os
 } else {
@@ -39,7 +44,7 @@ if (!(Test-Path ~/bootstrap-os)) {
 . ~/bootstrap-os/common/functions/functions.ps1
 AddorUpdateModule Posh-Git
 
-# PowerShell Profile
+# Link PowerShell Profile
 if (!(Test-Path $Profile)) {
     New-Item -ItemType symboliclink -Path $Profile -Target $profileTemplate -Force | Select-Object -ExpandProperty Name
 }
