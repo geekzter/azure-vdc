@@ -21,6 +21,10 @@ parameters:
   - Always
   - 'On failure'
   - 'On success'
+- name: unpinTerraformProviders
+  displayName: Unpin Terraform providers ('=' -> '~>')
+  type: boolean
+  default: false
 - name: testMode
   displayName: Test Mode (disable most tasks)
   type: boolean
@@ -70,4 +74,5 @@ stages:
     deploy: true
     destroy: ${{ parameters.destroy }}
     testMode: ${{ parameters.testMode }}
+    unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
     workspace: ${{ parameters.workspace }}

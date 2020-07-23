@@ -64,6 +64,10 @@ parameters:
   displayName: Deployment name (middle part resource names)
   type: string
   default: ''
+- name: unpinTerraformProviders
+  displayName: Unpin Terraform providers ('=' -> '~>')
+  type: boolean
+  default: false
 - name: vdcArtifactPipeline
   displayName: Pipeline (alias) for artifacts
   type: string
@@ -228,7 +232,7 @@ stages:
               (Get-Content ./provider.tf) -replace "version *= `" *= +",'version = "~> ' | Out-File provider.tf
               Get-Content ./provider.tf
             displayName: 'Unpin Terraform provider version'
-            enabled: ${{ not(parameters.testMode) }}
+            enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
             workingDirectory: '$(terraformDirectory)'
 
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
@@ -318,7 +322,7 @@ stages:
               (Get-Content ./provider.tf) -replace "version *= `" *= +",'version = "~> ' | Out-File provider.tf
               Get-Content ./provider.tf
             displayName: 'Unpin Terraform provider version'
-            enabled: ${{ not(parameters.testMode) }}
+            enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
             workingDirectory: '$(terraformDirectory)'
 
         # Deallocate/Stop MV's to force tf_deploy.ps1 to test for stopped VM's
@@ -830,7 +834,7 @@ stages:
               (Get-Content ./provider.tf) -replace "version *= `" *= +(?<eol>[^,]+$)",'version = "~> ${eol}' | Out-File provider.tf
               Get-Content ./provider.tf
             displayName: 'Unpin Terraform provider version'
-            enabled: ${{ not(parameters.testMode) }}
+            enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
             workingDirectory: '$(terraformDirectory)'
 
         - task: AzureCLI@2
