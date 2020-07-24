@@ -38,6 +38,8 @@ variables:
 # Inline variables shared across jobs
 - name: 'jobTimeOutMinutes'
   value: 120
+- name: 'reentranceTimeOutSeconds'
+  value: 300
 - name: 'scriptDirectory'
   value: '$(Build.SourcesDirectory)/scripts'
 - name: 'terraformDirectory'
@@ -124,6 +126,11 @@ jobs:
       env:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
         TF_VAR_resource_suffix: $(TF_VAR_resource_suffix) # Fix case
+
+    - bash: |
+        echo "Waiting $(reentranceTimeOutSeconds) seconds..."
+        sleep $(reentranceTimeOutSeconds)
+      displayName: 'Wait'
 
     - task: AzureCLI@2
       name: terraformReApply
