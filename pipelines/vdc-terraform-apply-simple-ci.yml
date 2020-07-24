@@ -3,6 +3,12 @@
 #  - Destroy infrastructure
 # This CI pieline has as few dependencies as possible
 
+parameters:
+  - name: testReEntrance
+    displayName: Test re-entrance
+    type: boolean
+    default: false
+
 trigger: none
 
 pr:
@@ -39,7 +45,7 @@ variables:
 - name: 'jobTimeOutMinutes'
   value: 120
 - name: 'reentranceTimeOutSeconds'
-  value: 300
+  value: 30
 - name: 'scriptDirectory'
   value: '$(Build.SourcesDirectory)/scripts'
 - name: 'terraformDirectory'
@@ -117,6 +123,7 @@ jobs:
           export ARM_CLIENT_SECRET=$servicePrincipalKey
           export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
           export ARM_TENANT_ID=$tenantId
+          terraform version
           terraform init
           terraform apply -auto-approve
         addSpnToEnvironment: true
@@ -131,11 +138,12 @@ jobs:
         echo "Waiting $(reentranceTimeOutSeconds) seconds..."
         sleep $(reentranceTimeOutSeconds)
       displayName: 'Wait'
+      enabled: ${{ parameters.testReEntrance }}
 
     - task: AzureCLI@2
       name: terraformReApply
       displayName: 'Terraform apply (check re-entrance)'
-      enabled: true
+      enabled: ${{ parameters.testReEntrance }}
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: bash
@@ -145,6 +153,7 @@ jobs:
           export ARM_CLIENT_SECRET=$servicePrincipalKey
           export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
           export ARM_TENANT_ID=$tenantId
+          terraform version
           terraform apply -auto-approve
         addSpnToEnvironment: true
         useGlobalConfig: true
@@ -168,6 +177,7 @@ jobs:
           export ARM_CLIENT_SECRET=$servicePrincipalKey
           export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
           export ARM_TENANT_ID=$tenantId
+          terraform version
           terraform destroy -auto-approve
         addSpnToEnvironment: true
         useGlobalConfig: true
