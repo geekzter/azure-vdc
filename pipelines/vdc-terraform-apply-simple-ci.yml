@@ -3,6 +3,12 @@
 #  - Destroy infrastructure
 # This CI pieline has as few dependencies as possible
 
+parameters:
+  - name: testReEntrance
+    displayName: Re-entrance test
+    type: boolean
+    default: false
+
 trigger: none
 
 pr:
@@ -39,7 +45,7 @@ variables:
 - name: 'jobTimeOutMinutes'
   value: 120
 - name: 'reentranceTimeOutSeconds'
-  value: 1800
+  value: 30
 - name: 'scriptDirectory'
   value: '$(Build.SourcesDirectory)/scripts'
 - name: 'terraformDirectory'
@@ -131,11 +137,12 @@ jobs:
         echo "Waiting $(reentranceTimeOutSeconds) seconds..."
         sleep $(reentranceTimeOutSeconds)
       displayName: 'Wait'
+      enabled: ${{ parameters.testReEntrance }}
 
     - task: AzureCLI@2
       name: terraformReApply
       displayName: 'Terraform apply (check re-entrance)'
-      enabled: true
+      enabled: ${{ parameters.testReEntrance }}
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: bash
