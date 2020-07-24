@@ -123,6 +123,7 @@ jobs:
           export ARM_CLIENT_SECRET=$servicePrincipalKey
           export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
           export ARM_TENANT_ID=$tenantId
+          terraform version
           terraform init
           terraform apply -auto-approve
         addSpnToEnvironment: true
@@ -152,6 +153,7 @@ jobs:
           export ARM_CLIENT_SECRET=$servicePrincipalKey
           export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
           export ARM_TENANT_ID=$tenantId
+          terraform version
           terraform apply -auto-approve
         addSpnToEnvironment: true
         useGlobalConfig: true
@@ -175,6 +177,7 @@ jobs:
           export ARM_CLIENT_SECRET=$servicePrincipalKey
           export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
           export ARM_TENANT_ID=$tenantId
+          terraform version
           terraform destroy -auto-approve
         addSpnToEnvironment: true
         useGlobalConfig: true
