@@ -5,7 +5,7 @@
 
 parameters:
   - name: testReEntrance
-    displayName: Re-entrance test
+    displayName: Test re-entrance
     type: boolean
     default: false
 
