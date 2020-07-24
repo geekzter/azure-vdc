@@ -39,7 +39,7 @@ variables:
 - name: 'jobTimeOutMinutes'
   value: 120
 - name: 'reentranceTimeOutSeconds'
-  value: 1000
+  value: 1800
 - name: 'scriptDirectory'
   value: '$(Build.SourcesDirectory)/scripts'
 - name: 'terraformDirectory'
