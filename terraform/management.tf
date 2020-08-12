@@ -190,7 +190,8 @@ resource azurerm_windows_virtual_machine mgmt {
   depends_on                   = [
                                   azurerm_firewall_application_rule_collection.iag_app_rules,
                                   azurerm_key_vault_access_policy.mgmt_disk_encryption_access,
-                                  azurerm_role_assignment.mgmt_disk_encryption_access
+                                  azurerm_role_assignment.mgmt_disk_encryption_access,
+                                  azurerm_private_dns_a_record.aut_storage_blob_dns_record
                                  ]
 
   tags                         = local.tags
