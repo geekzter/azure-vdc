@@ -74,6 +74,17 @@ resource azurerm_storage_blob configure_mgmtvm_roles {
   depends_on                   = [azurerm_storage_account_network_rules.automation_storage_rules]
 }
 
+resource azurerm_storage_blob private_link_zones {
+  name                         = "private_link_zones.conf"
+  storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
+  storage_container_name       = azurerm_storage_container.scripts.name
+
+  type                         = "Block"
+  source                       = "../scripts/host/private_link_zones.conf"
+
+  depends_on                   = [azurerm_storage_account_network_rules.automation_storage_rules]
+}
+
 # Adapted from https://github.com/Azure/terraform-azurerm-diskencrypt/blob/master/main.tf
 resource azurerm_key_vault_key disk_encryption_key {
   name                         = "${local.mgmt_vm_name}-disk-key"
@@ -219,7 +230,8 @@ resource azurerm_virtual_machine_extension mgmt_roles {
   settings                     = <<EOF
     {
       "fileUris": [
-                                 "${azurerm_storage_blob.configure_mgmtvm_roles.url}"
+                                 "${azurerm_storage_blob.configure_mgmtvm_roles.url}",
+                                 "${azurerm_storage_blob.private_link_zones.url}"
       ]
     }
   EOF

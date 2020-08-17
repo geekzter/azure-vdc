@@ -191,7 +191,7 @@ try {
                 Write-Host "Use the Azure VPN app (https://go.microsoft.com/fwlink/?linkid=2117554) to import this profile:`n${vpnProfileTempFile}"
             }
         } else {
-            Write-Host "Virtual network gateway, required for VPN, does not exist" -ForegroundColor Yellow
+            Write-Host "VPN is not enabled, did set deploy_vpn = true?" -ForegroundColor Yellow
         }
     }
 
