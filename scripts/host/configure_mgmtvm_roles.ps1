@@ -15,9 +15,7 @@ if (!$dnsFeature) {
     Install-WindowsFeature DNS -IncludeManagementTools
 }
 
-# Use conditional zone level forwarders instead
 Add-DnsServerForwarder -IPAddress $publicDNS
-# Set-DnsServerForwarder -IPAddress $publicDNS
 
 # Configure conditional zone forwarders
 # For a full and up to date list of zones see:
@@ -38,6 +36,9 @@ foreach ($zone in (Get-Content $zoneListFile)) {
         }
     }
 }
+
+# Clear cache, so we start using new configuration immediately
+Clear-DnsServerCache -Force
 
 # Show configuration
 Get-DnsServerZone | Select-Object ZoneName, ZoneType, MasterServers
