@@ -238,7 +238,7 @@ resource azurerm_virtual_machine_extension mgmt_roles {
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./configure_mgmtvm_roles.ps1\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./configure_mgmtvm_roles.ps1 *> configure_mgmtvm_roles.log \""
     } 
   EOF
 

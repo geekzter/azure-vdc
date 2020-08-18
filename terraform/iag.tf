@@ -432,19 +432,17 @@ resource azurerm_firewall_network_rule_collection iag_net_outbound_rules {
   action                       = "Allow"
 
   rule {
-    name                       = "AllowDNStoGoogleFromAppSubnet"
+    name                       = "AllowOutboundDNS"
 
     source_addresses           = [
-      var.vdc_config["iaas_spoke_app_subnet"],
-      var.vdc_config["iaas_spoke_data_subnet"],
+      var.vdc_config["vdc_range"],
     ]
 
     destination_ports          = [
       "53",
     ]
     destination_addresses      = [
-      "8.8.8.8",
-      "8.8.4.4",
+      "*",
     ]
 
     protocols                  = [
