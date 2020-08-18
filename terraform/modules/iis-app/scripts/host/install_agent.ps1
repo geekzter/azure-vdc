@@ -11,6 +11,7 @@ param (
     [parameter(Mandatory=$true)][string]$Project,
     [parameter(Mandatory=$true)][string]$PAT
 ) 
+$ErrorActionPreference = "Stop"
 Write-Host $MyInvocation.line
 if (!$IsWindows -and ($PSVersionTable.PSEdition -ine "Desktop")) {
     Write-Error "This only runs on Windows..."
@@ -28,14 +29,14 @@ if (Test-Path (Join-Path $pipelineDirectory .agent)) {
 }
 
 # Get latest released version from GitHub
-$agentVersion = $(Invoke-Webrequest -Uri https://api.github.com/repos/microsoft/azure-pipelines-agent/releases/latest -UseBasicParsing -MaximumRetryCount 9 | ConvertFrom-Json | Select-Object -ExpandProperty name) -replace "v",""
+$agentVersion = $(Invoke-Webrequest -Uri https://api.github.com/repos/microsoft/azure-pipelines-agent/releases/latest -UseBasicParsing | ConvertFrom-Json | Select-Object -ExpandProperty name) -replace "v",""
 $agentPackage = "vsts-agent-win-x64-${agentVersion}.zip"
 $agentUrl = "https://vstsagentpackage.azureedge.net/agent/${agentVersion}/${agentPackage}"
 
 $null = New-Item -ItemType directory -Path $pipelineDirectory -Force
 Push-Location $pipelineDirectory 
 Write-Host "Retrieving agent from ${agentUrl}..."
-Invoke-Webrequest -Uri $agentUrl -UseBasicParsing -OutFile $agentPackage -MaximumRetryCount 9
+Invoke-Webrequest -Uri $agentUrl -UseBasicParsing -OutFile $agentPackage #-MaximumRetryCount 9
 Write-Host "Extracting ${agentPackage} in ${pipelineDirectory}..."
 Expand-Archive -Path $agentPackage -DestinationPath $pipelineDirectory -Force
 Write-Host "Extracted ${agentPackage}"
