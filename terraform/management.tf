@@ -74,6 +74,17 @@ resource azurerm_storage_blob configure_mgmtvm_roles {
   depends_on                   = [azurerm_storage_account_network_rules.automation_storage_rules]
 }
 
+resource azurerm_storage_blob private_link_zones {
+  name                         = "private_link_zones.conf"
+  storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
+  storage_container_name       = azurerm_storage_container.scripts.name
+
+  type                         = "Block"
+  source                       = "../scripts/host/private_link_zones.conf"
+
+  depends_on                   = [azurerm_storage_account_network_rules.automation_storage_rules]
+}
+
 # Adapted from https://github.com/Azure/terraform-azurerm-diskencrypt/blob/master/main.tf
 resource azurerm_key_vault_key disk_encryption_key {
   name                         = "${local.mgmt_vm_name}-disk-key"
@@ -190,7 +201,8 @@ resource azurerm_windows_virtual_machine mgmt {
   depends_on                   = [
                                   azurerm_firewall_application_rule_collection.iag_app_rules,
                                   azurerm_key_vault_access_policy.mgmt_disk_encryption_access,
-                                  azurerm_role_assignment.mgmt_disk_encryption_access
+                                  azurerm_role_assignment.mgmt_disk_encryption_access,
+                                  azurerm_private_dns_a_record.aut_storage_blob_dns_record
                                  ]
 
   tags                         = local.tags
@@ -218,14 +230,15 @@ resource azurerm_virtual_machine_extension mgmt_roles {
   settings                     = <<EOF
     {
       "fileUris": [
-                                 "${azurerm_storage_blob.configure_mgmtvm_roles.url}"
+                                 "${azurerm_storage_blob.configure_mgmtvm_roles.url}",
+                                 "${azurerm_storage_blob.private_link_zones.url}"
       ]
     }
   EOF
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./configure_mgmtvm_roles.ps1\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./configure_mgmtvm_roles.ps1 *> configure_mgmtvm_roles.log \""
     } 
   EOF
 

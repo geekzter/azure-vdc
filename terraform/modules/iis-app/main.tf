@@ -295,7 +295,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
 
   protected_settings           = <<EOF
     { 
-      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${var.tags["suffix"]},web\""
+      "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${var.tags["suffix"]},web *> install_agent.log \""
     } 
   EOF
 
