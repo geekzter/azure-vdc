@@ -64,13 +64,14 @@ locals {
   paas_app_resource_group      = "${lower(var.resource_prefix)}-${lower(local.deployment_name)}-paasapp-${lower(local.suffix)}"
   paas_app_resource_group_short= substr(lower(replace(local.paas_app_resource_group,"-","")),0,20)
   ipprefixdata                 = jsondecode(chomp(data.http.localpublicprefix.body))
+  ipprefix                     = local.ipprefixdata.data.prefix
   admin_ip                     = [
                                   chomp(data.http.localpublicip.body) 
   ]
   admin_ip_cidr                = [
                                   "${chomp(data.http.localpublicip.body)}/30", # /32 not allowed in network_rules
                                   # HACK: Complete prefix required when run from an environment where public ip changes e.g. Azure Pipeline Hosted Agents
-                                  local.ipprefixdata.data.prefix 
+                                  local.ipprefix
   ] 
   admin_ips                    = setunion(local.admin_ip,var.admin_ips)
   admin_ip_ranges              = setunion([for ip in local.admin_ips : format("%s/30", ip)],var.admin_ip_ranges) # /32 not allowed in network_rules

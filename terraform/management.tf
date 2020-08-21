@@ -495,7 +495,7 @@ resource azurerm_automation_schedule daily {
   frequency                    = "Day"
   interval                     = 1
   # https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms912391(v=winembedded.11)?redirectedfrom=MSDN
-  timezone                     = "W. Europe Standard Time"
+  timezone                     = "Europe/Amsterdam"
   start_time                   = timeadd(timestamp(), "1h30m")
   description                  = "Daily schedule"
 }
