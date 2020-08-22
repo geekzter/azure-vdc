@@ -137,6 +137,7 @@ resource azurerm_storage_account vdc_automation_storage {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
+  allow_blob_public_access     = true # No secrets to hide, just scripts that are also on GitHub
   enable_https_traffic_only    = true
 
   provisioner "local-exec" {
@@ -152,9 +153,9 @@ resource azurerm_storage_account_network_rules automation_storage_rules {
   default_action               = "Deny"
   bypass                       = ["AzureServices"]
 
-  count                        = var.restrict_public_access ? 1 : 0
-
   ip_rules                     = [local.ipprefixdata.data.prefix]
+
+  count                        = var.restrict_public_access ? 1 : 0
 }
 resource azurerm_private_endpoint aut_blob_storage_endpoint {
   name                         = "${azurerm_storage_account.vdc_automation_storage.name}-blob-endpoint"
