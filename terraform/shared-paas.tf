@@ -197,6 +197,25 @@ resource azurerm_advanced_threat_protection vdc_automation_storage {
   target_resource_id           = azurerm_storage_account.vdc_automation_storage.id
   enabled                      = true
 }
+# Requires access to private preview of diagnostic log settings for Azure resource type 'microsoft.storage/storageaccounts', feature flag: 'microsoft.insights/diagnosticsettingpreview':
+# https://docs.microsoft.com/en-us/azure/storage/common/monitor-storage
+resource azurerm_monitor_diagnostic_setting automation_storage {
+  name                         = "${azurerm_storage_account.vdc_automation_storage.name}-logs"
+  target_resource_id           = azurerm_storage_account.vdc_automation_storage.id
+  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
+  log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
+
+  log {
+    category                   = "StorageBlobLogs"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  count                        = var.enable_storage_diagnostic_setting ? 1 : 0
+}
 
 # Create Private Endpoint for Container Registry (if in the same region)
 data azurerm_container_registry vdc_images {
