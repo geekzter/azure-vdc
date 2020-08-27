@@ -206,7 +206,7 @@ resource azurerm_monitor_diagnostic_setting automation_storage {
   log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
 
   log {
-    category                   = "StorageBlobLogs"
+    category                   = "StorageRead"
     enabled                    = true
 
     retention_policy {

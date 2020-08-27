@@ -198,7 +198,7 @@ resource azurerm_monitor_diagnostic_setting app_storage {
   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
   log {
-    category                   = "StorageBlobLogs"
+    category                   = "StorageRead"
     enabled                    = true
 
     retention_policy {
@@ -324,7 +324,7 @@ resource azurerm_monitor_diagnostic_setting archive_storage {
   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
   log {
-    category                   = "StorageBlobLogs"
+    category                   = "StorageRead"
     enabled                    = true
 
     retention_policy {
