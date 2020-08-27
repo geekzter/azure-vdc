@@ -199,6 +199,7 @@ resource azurerm_advanced_threat_protection vdc_automation_storage {
 }
 # Requires access to private preview of diagnostic log settings for Azure resource type 'microsoft.storage/storageaccounts', feature flag: 'microsoft.insights/diagnosticsettingpreview':
 # https://docs.microsoft.com/en-us/azure/storage/common/monitor-storage
+# BUG: https://github.com/terraform-providers/terraform-provider-azurerm/issues/8275
 resource azurerm_monitor_diagnostic_setting automation_storage {
   name                         = "${azurerm_storage_account.vdc_automation_storage.name}-logs"
   target_resource_id           = azurerm_storage_account.vdc_automation_storage.id
