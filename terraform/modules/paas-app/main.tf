@@ -191,21 +191,28 @@ resource azurerm_storage_account_network_rules app_storage_rules {
 
   depends_on                   = [azurerm_storage_container.app_storage_container,azurerm_storage_blob.app_storage_blob_sample]
 }
-resource azurerm_monitor_diagnostic_setting app_storage {
-  name                         = "${azurerm_storage_account.app_storage.name}-logs"
-  target_resource_id           = azurerm_storage_account.app_storage.id
-  storage_account_id           = var.diagnostics_storage_id
-  log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
+# resource azurerm_monitor_diagnostic_setting app_storage {
+#   name                         = "${azurerm_storage_account.app_storage.name}-logs"
+#   target_resource_id           = azurerm_storage_account.app_storage.id
+#   storage_account_id           = var.diagnostics_storage_id
+#   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
-  log {
-    category                   = "StorageRead"
-    enabled                    = true
+#   log {
+#     category                   = "StorageRead"
+#     enabled                    = true
 
-    retention_policy {
-      enabled                  = false
-    }
+#     retention_policy {
+#       enabled                  = false
+#     }
+#   }
+
+#   count                        = var.enable_storage_diagnostic_setting ? 1 : 0
+# }
+# HACK: workaround for issue https://github.com/terraform-providers/terraform-provider-azurerm/issues/8275
+resource null_resource app_storage_diagnostic_setting {
+  provisioner "local-exec" {
+    command                    = "az monitor diagnostic-settings create --resource ${azurerm_storage_account.app_storage.id}/blobServices/default --name logsbytfaz --storage-account ${var.diagnostics_storage_id} --workspace ${var.diagnostics_workspace_resource_id} --logs '[{\"category\": \"StorageRead\",\"enabled\": true}]' "
   }
-
   count                        = var.enable_storage_diagnostic_setting ? 1 : 0
 }
 
@@ -317,21 +324,28 @@ resource azurerm_storage_account_network_rules archive_storage_rules {
 
   depends_on                   = [azurerm_storage_container.archive_storage_container]
 }
-resource azurerm_monitor_diagnostic_setting archive_storage {
-  name                         = "${azurerm_storage_account.archive_storage.name}-logs"
-  target_resource_id           = azurerm_storage_account.archive_storage.id
-  storage_account_id           = var.diagnostics_storage_id
-  log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
+# resource azurerm_monitor_diagnostic_setting archive_storage {
+#   name                         = "${azurerm_storage_account.archive_storage.name}-logs"
+#   target_resource_id           = azurerm_storage_account.archive_storage.id
+#   storage_account_id           = var.diagnostics_storage_id
+#   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
-  log {
-    category                   = "StorageRead"
-    enabled                    = true
+#   log {
+#     category                   = "StorageRead"
+#     enabled                    = true
 
-    retention_policy {
-      enabled                  = false
-    }
+#     retention_policy {
+#       enabled                  = false
+#     }
+#   }
+
+#   count                        = var.enable_storage_diagnostic_setting ? 1 : 0
+# }
+# HACK: workaround for issue https://github.com/terraform-providers/terraform-provider-azurerm/issues/8275
+resource null_resource archive_storage_diagnostic_setting {
+  provisioner "local-exec" {
+    command                    = "az monitor diagnostic-settings create --resource ${azurerm_storage_account.archive_storage.id}/blobServices/default --name logsbytfaz --storage-account ${var.diagnostics_storage_id} --workspace ${var.diagnostics_workspace_resource_id} --logs '[{\"category\": \"StorageRead\",\"enabled\": true}]' "
   }
-
   count                        = var.enable_storage_diagnostic_setting ? 1 : 0
 }
 
