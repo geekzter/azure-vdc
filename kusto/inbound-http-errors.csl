@@ -1,4 +1,0 @@
-AzureDiagnostics 
-| where Category == "ApplicationGatewayAccessLog" and httpStatus_d >= 500
-| project TimeGenerated, httpStatus_d, listenerName_s, backendPoolName_s, ruleName_s
-| order by TimeGenerated desc

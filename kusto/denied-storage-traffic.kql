@@ -1,0 +1,4 @@
+StorageBlobLogs
+| where TimeGenerated > ago(3d) and StatusCode == 403
+| project TimeGenerated, CallerIpAddress, OperationName, AuthenticationType, AccountName
+| order by TimeGenerated desc
