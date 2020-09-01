@@ -827,6 +827,86 @@
         },
         "28": {
           "metadata": {
+            "inputs": [
+              {
+                "isOptional": true,
+                "name": "ComponentId",
+                "value": {
+                  "Name": "${prefix}-${deployment_name}-${suffix}-loganalytics",
+                  "ResourceGroup": "${prefix}-${deployment_name}-${suffix}",
+                  "ResourceId": "${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.operationalinsights/workspaces/${prefix}-${deployment_name}-${suffix}-loganalytics",
+                  "SubscriptionId": "${subscription_guid}"
+                }
+              },
+              {
+                "isOptional": true,
+                "name": "Dimensions"
+              },
+              {
+                "isOptional": true,
+                "name": "Query",
+                "value": "// Show failed requests\nStorageBlobLogs\n| where TimeGenerated > ago(3d) and StatusCode == 403\n| extend Client=replace(':.*$', ' ', CallerIpAddress)\n| project TimeGenerated, Client, Operation=OperationName, AuthN=AuthenticationType, Account=AccountName\n| order by TimeGenerated desc\n"
+              },
+              {
+                "isOptional": true,
+                "name": "PartTitle",
+                "value": "Analytics"
+              },
+              {
+                "isOptional": true,
+                "name": "PartSubTitle",
+                "value": "${prefix}-${deployment_name}-${suffix}-loganalytics"
+              },
+              {
+                "isOptional": true,
+                "name": "PartId",
+                "value": "70930db6-4e03-40d1-ba88-09f1e8786630"
+              },
+              {
+                "isOptional": true,
+                "name": "Version",
+                "value": "1.0"
+              },
+              {
+                "isOptional": true,
+                "name": "resourceTypeMode",
+                "value": "workspace"
+              },
+              {
+                "isOptional": true,
+                "name": "TimeRange"
+              },
+              {
+                "isOptional": true,
+                "name": "DashboardId"
+              },
+              {
+                "isOptional": true,
+                "name": "ControlType",
+                "value": "AnalyticsGrid"
+              },
+              {
+                "isOptional": true,
+                "name": "SpecificChart"
+              }
+            ],
+            "settings": {
+              "content": {
+                "PartSubTitle": "${prefix}-${deployment_name}-${suffix}-loganalytics",
+                "PartTitle": "Denied Storage Requests"
+              }
+            },
+            "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart"
+          },
+          "position": {
+            "colSpan": 6,
+            "rowSpan": 4,
+            "x": 4,
+            "y": 20
+          }
+        },
+        "29": {
+          "metadata": {
             "asset": {
               "idInputName": "ComponentId",
               "type": "ApplicationInsights"
@@ -899,7 +979,7 @@
             "colSpan": 6,
             "rowSpan": 4,
             "x": 4,
-            "y": 20
+            "y": 24
           }
         },
         "3": {
@@ -940,6 +1020,42 @@
               {
                 "name": "resourceGroup",
                 "value": null
+              },
+              {
+                "isOptional": true,
+                "name": "healthStatusFilter"
+              },
+              {
+                "isOptional": true,
+                "name": "isNetworkResourceTiles"
+              },
+              {
+                "isOptional": true,
+                "name": "sourceType"
+              },
+              {
+                "isOptional": true,
+                "name": "destinationType"
+              },
+              {
+                "isOptional": true,
+                "name": "rttValue"
+              },
+              {
+                "isOptional": true,
+                "name": "checksFailedPercent"
+              },
+              {
+                "isOptional": true,
+                "name": "filteredSourceTypes"
+              },
+              {
+                "isOptional": true,
+                "name": "filteredDestinationTypes"
+              },
+              {
+                "isOptional": true,
+                "name": "isConnectionMonitorTiles"
               }
             ],
             "type": "Extension/Microsoft_Azure_FlowLog/PartType/HealthTilePinnedPart"
@@ -1234,12 +1350,13 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-87b43f3a-d1f0-4e20-9e64-db5c9374f3df",
-              "StartboardPart-MonitorChartPart-87b43f3a-d1f0-4e20-9e64-db5c9374f3ed",
-              "StartboardPart-AnalyticsPart-87b43f3a-d1f0-4e20-9e64-db5c9374f3ef",
-              "StartboardPart-AnalyticsPart-87b43f3a-d1f0-4e20-9e64-db5c9374f3ff",
-              "StartboardPart-AnalyticsPart-87b43f3a-d1f0-4e20-9e64-db5c9374f407",
-              "StartboardPart-AnalyticsPart-87b43f3a-d1f0-4e20-9e64-db5c9374f409"
+              "StartboardPart-ApplicationMapPart-06b511d5-5472-49d8-903a-5ec12c9e6381",
+              "StartboardPart-MonitorChartPart-06b511d5-5472-49d8-903a-5ec12c9e638f",
+              "StartboardPart-AnalyticsPart-06b511d5-5472-49d8-903a-5ec12c9e6391",
+              "StartboardPart-AnalyticsPart-06b511d5-5472-49d8-903a-5ec12c9e639f",
+              "StartboardPart-AnalyticsPart-06b511d5-5472-49d8-903a-5ec12c9e63a7",
+              "StartboardPart-AnalyticsPart-06b511d5-5472-49d8-903a-5ec12c9e63a9",
+              "StartboardPart-AnalyticsPart-06b511d5-5472-49d8-903a-5ec12c9e63ab"
             ],
             "model": {
               "format": "utc",

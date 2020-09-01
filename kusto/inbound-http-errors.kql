@@ -1,0 +1,6 @@
+// Show failed requests
+StorageBlobLogs
+| where TimeGenerated > ago(3d) and StatusCode == 403
+| extend Client=replace(':.*$', ' ', CallerIpAddress)
+| project TimeGenerated, Client, Operation=OperationName, AuthN=AuthenticationType, Account=AccountName
+| order by TimeGenerated desc

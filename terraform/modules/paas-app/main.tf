@@ -89,7 +89,6 @@ resource azurerm_storage_account app_storage {
                                   azurerm_storage_container.archive_storage_container
   ]
 }
-
 resource azurerm_private_endpoint app_blob_storage_endpoint {
   name                         = "${azurerm_storage_account.app_storage.name}-blob-endpoint"
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -113,7 +112,6 @@ resource azurerm_private_endpoint app_blob_storage_endpoint {
   count                        = var.enable_private_link ? 1 : 0
   tags                         = var.tags
 }
-
 resource azurerm_private_dns_a_record app_blob_storage_dns_record {
   name                         = azurerm_storage_account.app_storage.name
   zone_name                    = "privatelink.blob.core.windows.net"
@@ -164,7 +162,6 @@ resource azurerm_advanced_threat_protection app_storage {
   target_resource_id           = azurerm_storage_account.app_storage.id
   enabled                      = true
 }
-
 resource azurerm_storage_container app_storage_container {
   name                         = "data"
   storage_account_name         = azurerm_storage_account.app_storage.name
@@ -174,7 +171,6 @@ resource azurerm_storage_container app_storage_container {
 
 # depends_on                   = [azurerm_storage_account_network_rules.app_storage]
 }
-
 resource azurerm_storage_blob app_storage_blob_sample {
   name                         = "sample.txt"
   storage_account_name         = azurerm_storage_account.app_storage.name
@@ -185,7 +181,6 @@ resource azurerm_storage_blob app_storage_blob_sample {
 
   count                        = var.storage_import ? 1 : 0
 }
-
 # Remove all rules once storage account has been populated
 resource azurerm_storage_account_network_rules app_storage_rules {
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -195,6 +190,30 @@ resource azurerm_storage_account_network_rules app_storage_rules {
   count                        = var.restrict_public_access ? 1 : 0
 
   depends_on                   = [azurerm_storage_container.app_storage_container,azurerm_storage_blob.app_storage_blob_sample]
+}
+# resource azurerm_monitor_diagnostic_setting app_storage {
+#   name                         = "${azurerm_storage_account.app_storage.name}-logs"
+#   target_resource_id           = azurerm_storage_account.app_storage.id
+#   storage_account_id           = var.diagnostics_storage_id
+#   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
+
+#   log {
+#     category                   = "StorageRead"
+#     enabled                    = true
+
+#     retention_policy {
+#       enabled                  = false
+#     }
+#   }
+
+#   count                        = var.enable_storage_diagnostic_setting ? 1 : 0
+# }
+# HACK: workaround for issue https://github.com/terraform-providers/terraform-provider-azurerm/issues/8275
+resource null_resource app_storage_diagnostic_setting {
+  provisioner "local-exec" {
+    command                    = "az monitor diagnostic-settings create --resource ${azurerm_storage_account.app_storage.id}/blobServices/default --name logsbytfaz --storage-account ${var.diagnostics_storage_id} --workspace ${var.diagnostics_workspace_resource_id} --logs '[{\"category\": \"StorageRead\",\"enabled\": true}]' "
+  }
+  count                        = var.enable_storage_diagnostic_setting ? 1 : 0
 }
 
 resource azurerm_storage_account archive_storage {
@@ -213,7 +232,6 @@ resource azurerm_storage_account archive_storage {
 
   tags                         = var.tags
 }
-
 resource azurerm_private_endpoint archive_blob_storage_endpoint {
   name                         = "${azurerm_storage_account.archive_storage.name}-blob-endpoint"
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -240,7 +258,6 @@ resource azurerm_private_endpoint archive_blob_storage_endpoint {
   # Create Private Endpoints one at a time
   depends_on                   = [azurerm_private_endpoint.app_table_storage_endpoint]
 }
-
 resource azurerm_private_dns_a_record archive_blob_storage_dns_record {
   name                         = azurerm_storage_account.archive_storage.name
   zone_name                    = "privatelink.blob.core.windows.net"
@@ -251,7 +268,6 @@ resource azurerm_private_dns_a_record archive_blob_storage_dns_record {
 
   count                        = var.enable_private_link ? 1 : 0
 }
-
 resource azurerm_private_endpoint archive_table_storage_endpoint {
   name                         = "${azurerm_storage_account.archive_storage.name}-table-endpoint"
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -278,7 +294,6 @@ resource azurerm_private_endpoint archive_table_storage_endpoint {
   # Create Private Endpoints one at a time
   depends_on                   = [azurerm_private_endpoint.archive_blob_storage_endpoint]
 }
-
 resource azurerm_private_dns_a_record archive_table_storage_dns_record {
   name                         = azurerm_storage_account.archive_storage.name
   zone_name                    = "privatelink.table.core.windows.net"
@@ -289,18 +304,15 @@ resource azurerm_private_dns_a_record archive_table_storage_dns_record {
 
   count                        = var.enable_private_link ? 1 : 0
 }
-
 resource azurerm_advanced_threat_protection archive_storage {
   target_resource_id           = azurerm_storage_account.archive_storage.id
   enabled                      = true
 }
-
 resource azurerm_storage_container archive_storage_container {
   name                         = "eventarchive"
   storage_account_name         = azurerm_storage_account.archive_storage.name
   container_access_type        = "private"
 }
-
 resource azurerm_storage_account_network_rules archive_storage_rules {
   resource_group_name          = azurerm_resource_group.app_rg.name
   storage_account_name         = azurerm_storage_account.archive_storage.name
@@ -311,6 +323,30 @@ resource azurerm_storage_account_network_rules archive_storage_rules {
   count                        = var.restrict_public_access ? 1 : 0
 
   depends_on                   = [azurerm_storage_container.archive_storage_container]
+}
+# resource azurerm_monitor_diagnostic_setting archive_storage {
+#   name                         = "${azurerm_storage_account.archive_storage.name}-logs"
+#   target_resource_id           = azurerm_storage_account.archive_storage.id
+#   storage_account_id           = var.diagnostics_storage_id
+#   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
+
+#   log {
+#     category                   = "StorageRead"
+#     enabled                    = true
+
+#     retention_policy {
+#       enabled                  = false
+#     }
+#   }
+
+#   count                        = var.enable_storage_diagnostic_setting ? 1 : 0
+# }
+# HACK: workaround for issue https://github.com/terraform-providers/terraform-provider-azurerm/issues/8275
+resource null_resource archive_storage_diagnostic_setting {
+  provisioner "local-exec" {
+    command                    = "az monitor diagnostic-settings create --resource ${azurerm_storage_account.archive_storage.id}/blobServices/default --name logsbytfaz --storage-account ${var.diagnostics_storage_id} --workspace ${var.diagnostics_workspace_resource_id} --logs '[{\"category\": \"StorageRead\",\"enabled\": true}]' "
+  }
+  count                        = var.enable_storage_diagnostic_setting ? 1 : 0
 }
 
 resource azurerm_app_service_plan paas_plan {

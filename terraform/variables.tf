@@ -40,6 +40,11 @@ variable enable_app_service_aad_auth {
   default                      = false
   type                         = bool
 }
+variable enable_storage_diagnostic_setting {
+  description                  = "Whether to enable Log Analytics diagnostics settings for storage accounts"
+  default                      = false
+  type                         = bool
+}
 variable enable_private_link {
   description                  = "Whether to create Private Endpoint for PaaS services where possible"
   default                      = true

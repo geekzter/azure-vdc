@@ -172,6 +172,7 @@ module paas_app {
   restrict_public_access= var.restrict_public_access
   enable_aad_auth              = var.enable_app_service_aad_auth
   enable_private_link          = var.enable_private_link
+  enable_storage_diagnostic_setting = var.enable_storage_diagnostic_setting
   grant_database_access        = var.grant_database_access
   iag_subnet_id                = azurerm_subnet.iag_subnet.id
   integrated_subnet_id         = lookup(module.paas_spoke_vnet.subnet_ids,"appservice","")

@@ -8,6 +8,7 @@ deploy_vpn                     = false
 disable_public_database_access = false
 enable_private_link            = true
 enable_app_service_aad_auth    = true
+enable_storage_diagnostic_setting = false # Requires access to private preview of diagnostic log settings for Azure resource type 'microsoft.storage/storageaccounts', feature flag: 'microsoft.insights/diagnosticsettingpreview': https://docs.microsoft.com/en-us/azure/storage/common/monitor-storage
 grant_database_access          = true
 paas_app_storage_import        = false
 restrict_public_access         = true
