@@ -17,6 +17,18 @@ output admin_password {
   value       = local.password
 }
 
+# output apim_internal_gateway_url {
+#   value       = azurerm_api_management.api_gateway.gateway_url
+# }
+
+# output apim_internal_developer_portal_url {
+#   value       = azurerm_api_management.api_gateway.developer_portal_url 
+# }
+
+# output apim_internal_management_api_url{
+#   value       = azurerm_api_management.api_gateway.management_api_url
+# }
+
 output application_insights_id {
   value       = azurerm_application_insights.vdc_insights.app_id
 }

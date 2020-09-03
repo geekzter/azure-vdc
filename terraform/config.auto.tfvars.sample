@@ -1,4 +1,5 @@
 # Feature toggles
+deploy_api_gateway             = true
 deploy_managed_bastion         = false
 deploy_monitoring_vm_extensions = false
 deploy_network_watcher         = false

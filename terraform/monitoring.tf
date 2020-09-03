@@ -155,30 +155,6 @@ resource "azurerm_log_analytics_solution" "oms_solutions" {
 
 } 
 
-resource "azurerm_monitor_diagnostic_setting" "mgmt_nsg_logs" {
-  name                         = "${azurerm_network_security_group.mgmt_nsg.name}-logs"
-  target_resource_id           = azurerm_network_security_group.mgmt_nsg.id
-  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
-  log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
-
-  log {
-    category                   = "NetworkSecurityGroupEvent"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "NetworkSecurityGroupRuleCounter"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
 resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
   name                         = "${azurerm_virtual_network.hub_vnet.name}-logs"
   target_resource_id           = azurerm_virtual_network.hub_vnet.id
