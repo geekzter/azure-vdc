@@ -98,6 +98,15 @@ variable deployment_name {
   default                      = "" # Empty string defaults to workspace name
 }
 
+# https://azure.microsoft.com/en-us/global-infrastructure/regions/
+# https://azure.microsoft.com/en-us/global-infrastructure/services/?products=monitor,azure-bastion,private-link
+variable location {
+  description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."
+  # These are examples of regions that support all features:
+  # eastus, northeurope, southeastasia, uksouth, westeurope, westus2
+  default                      = "uksouth"
+}
+
 variable tags {
   description                  = "A map of the tags to use for the resources that are deployed"
   type                         = map
@@ -122,6 +131,7 @@ variable build_id {
   description                  = "The ID of the Build Pipeline that deployed this resource, or created the artefacts"
   default                      = "" 
 }
+
 variable release_web_url {
   description                  = "The url of the Release Pipeline that deployed this resource"
   default                      = "" 
@@ -204,13 +214,8 @@ variable apim_control_plane_ip_addresses {
   ]
 }
 
-# https://azure.microsoft.com/en-us/global-infrastructure/regions/
-# https://azure.microsoft.com/en-us/global-infrastructure/services/?products=monitor,azure-bastion,private-link
-variable location {
-  description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."
-  # These are examples of regions that support all features:
-  # eastus, northeurope, southeastasia, uksouth, westeurope, westus2
-  default                      = "uksouth"
+variable apim_publisher_email {
+  default                      = "nobody@nowhere.com"
 }
 
 # https://docs.microsoft.com/en-us/azure/automation/how-to/region-mappings

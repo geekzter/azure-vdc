@@ -412,13 +412,13 @@ resource azurerm_api_management api_gateway {
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   publisher_name               = "Automated VDC"
-  publisher_email              = var.alert_email
+  publisher_email              = var.apim_publisher_email
   sku_name                     = "Developer_1"
 
   identity {
       type                     = "SystemAssigned"
   }
-  notification_sender_email    = var.alert_email
+  notification_sender_email    = var.apim_publisher_email
   virtual_network_type         = "Internal"
   virtual_network_configuration {
       subnet_id                = azurerm_subnet.apim_subnet.id

@@ -661,7 +661,7 @@ resource azurerm_firewall_network_rule_collection iag_net_outbound_apim_rules {
   name                         = "${azurerm_firewall.iag.name}-apim-out-rules"
   azure_firewall_name          = azurerm_firewall.iag.name
   resource_group_name          = azurerm_resource_group.vdc_rg.name
-  priority                     = 102
+  priority                     = 103
   action                       = "Allow"
 
   rule {
