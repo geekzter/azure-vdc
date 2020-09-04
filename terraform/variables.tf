@@ -492,6 +492,11 @@ variable vanity_certificate_path {
   default                      = null
 }
 
+variable vanity_root_certificate_cer_path {
+  description                  = "The relative path to the root SSL certificate CER file used for AppGW client auth to APIM"
+  default                      = null
+}
+
 variable vanity_certificate_password {
   description                  = "The password of the SSL certificate PFX file used for vanity url"
   default                      = null

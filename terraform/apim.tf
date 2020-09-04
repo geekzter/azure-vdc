@@ -13,14 +13,6 @@ resource azurerm_subnet apim_subnet {
                                   "Microsoft.Storage",
   ]
 
-#   delegation {
-#     name                       = "apim"
-
-#     service_delegation {
-#       name                     = "Microsoft.ApiManagement/service"
-#     }
-#   }
-
   timeouts {
     create                     = var.default_create_timeout
     update                     = var.default_update_timeout
@@ -48,7 +40,6 @@ resource azurerm_route_table apim_route_table {
       next_hop_type            = "Internet"
     }
   }
-
 }
 
 resource azurerm_subnet_route_table_association apim_subnet_routes {
@@ -415,13 +406,29 @@ resource azurerm_api_management api_gateway {
   publisher_email              = var.apim_publisher_email
   sku_name                     = "Developer_1"
 
+  hostname_configuration {
+    portal {
+      certificate              = filebase64(var.vanity_certificate_path) # load pfx from file
+      certificate_password     = var.vanity_certificate_password
+      host_name                = local.apim_portal_fqdn
+      #negotiate_client_certificate =
+    }
+    proxy {
+      certificate              = filebase64(var.vanity_certificate_path) # load pfx from file
+      certificate_password     = var.vanity_certificate_password
+      #default_ssl_binding     = true
+      host_name                = local.apim_proxy_fqdn
+      #negotiate_client_certificate =
+    }
+  }
+
   identity {
-      type                     = "SystemAssigned"
+    type                       = "SystemAssigned"
   }
   notification_sender_email    = var.apim_publisher_email
   virtual_network_type         = "Internal"
   virtual_network_configuration {
-      subnet_id                = azurerm_subnet.apim_subnet.id
+    subnet_id                  = azurerm_subnet.apim_subnet.id
   }
 
   timeouts {
@@ -433,7 +440,7 @@ resource azurerm_api_management api_gateway {
     delete                     = var.default_delete_timeout
   }  
 
-  count                        = var.deploy_api_gateway ? 1 : 0
+  count                        = (var.deploy_api_gateway && var.use_vanity_domain_and_ssl) ? 1 : 0
 
   depends_on                   = [azurerm_subnet_route_table_association.apim_subnet_routes,
                                   azurerm_subnet_network_security_group_association.apim_subnet_nsg,
@@ -456,5 +463,5 @@ resource azurerm_monitor_diagnostic_setting apim_logs {
     }
   }
 
-  count                        = var.deploy_api_gateway ? 1 : 0
+  count                        = (var.deploy_api_gateway && var.use_vanity_domain_and_ssl) ? 1 : 0
 }

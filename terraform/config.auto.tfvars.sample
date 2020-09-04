@@ -40,6 +40,7 @@ shared_resources_group         = "Shared"
 resource_prefix                = "demo"
 vanity_certificate_name        = "mydomain-com"
 vanity_certificate_path        = "STAR_mydoman_com.pfx"
+vanity_root_certificate_cer_path = "RootCA.cer"
 vanity_certificate_password    = "XXXXXXXXXX"
 vanity_domainname              = "mydomain.com"
 
