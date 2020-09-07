@@ -213,6 +213,12 @@ stages:
             secureFile: '$(TF_VAR_vanity_certificate_path)'
 
         - task: DownloadSecureFile@1
+          displayName: 'Download SSL root certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vanity_root_certificate_cer_path)'
+  
+        - task: DownloadSecureFile@1
           displayName: 'Download VPN root certificate'
           enabled: ${{ not(parameters.testMode) }}
           inputs:
@@ -304,6 +310,12 @@ stages:
           inputs:
             secureFile: '$(TF_VAR_vanity_certificate_path)'
 
+        - task: DownloadSecureFile@1
+          displayName: 'Download SSL root certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vanity_root_certificate_cer_path)'
+  
         - task: DownloadSecureFile@1
           displayName: 'Download VPN root certificate'
           enabled: ${{ not(parameters.testMode) }}
@@ -816,6 +828,12 @@ stages:
           inputs:
             secureFile: '$(TF_VAR_vanity_certificate_path)'
 
+        - task: DownloadSecureFile@1
+          displayName: 'Download SSL root certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vanity_root_certificate_cer_path)'
+  
         - task: DownloadSecureFile@1
           displayName: 'Download VPN root certificate'
           enabled: ${{ not(parameters.testMode) }}
