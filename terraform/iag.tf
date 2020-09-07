@@ -357,9 +357,12 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     # "adl.windows.com",
       "chocolatey.org",
       "crl.microsoft.com",
+      "crl.usertrust.com",
       "go.microsoft.com",
       "mscrl.microsoft.com",
       "ocsp.msocsp.com",
+      "ocsp.sectigo.com",
+      "ocsp.usertrust.com",
       "dl.delivery.mp.microsoft.com", # "Microsoft Edge"
     # "www.microsoft.com",
       "www.msftconnecttest.com"

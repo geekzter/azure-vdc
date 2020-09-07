@@ -411,14 +411,13 @@ resource azurerm_api_management api_gateway {
       certificate              = filebase64(var.vanity_certificate_path) # load pfx from file
       certificate_password     = var.vanity_certificate_password
       host_name                = local.apim_portal_fqdn
-      #negotiate_client_certificate =
+      #negotiate_client_certificate = true # Trust AppGW only
     }
     proxy {
       certificate              = filebase64(var.vanity_certificate_path) # load pfx from file
       certificate_password     = var.vanity_certificate_password
-      #default_ssl_binding     = true
-      host_name                = local.apim_proxy_fqdn
-      #negotiate_client_certificate =
+      host_name                = local.apim_gw_fqdn
+      negotiate_client_certificate = true # Trust AppGW only
     }
   }
 

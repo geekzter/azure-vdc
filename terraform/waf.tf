@@ -43,7 +43,7 @@ resource azurerm_dns_cname_record waf_paas_app_cname {
   count                        = var.use_vanity_domain_and_ssl ? 1 : 0
   tags                         = local.tags
 } 
-resource azurerm_dns_cname_record waf_apim_proxy_cname {
+resource azurerm_dns_cname_record waf_apim_gw_cname {
   name                         = "${lower(var.resource_prefix)}${lower(terraform.workspace)}apiproxy"
   zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
   resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name
@@ -85,13 +85,17 @@ locals {
   paas_app_https_listener      = "${module.paas_app.app_resource_group}-https-listener"
   paas_app_redirect_config     = "${module.paas_app.app_resource_group}-http-to-https"
 
-  apim_proxy_fqdn              = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_apim_proxy_cname[0].name}.${azurerm_dns_cname_record.waf_apim_proxy_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
-  apim_proxy_url               = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.apim_proxy_fqdn}/"
-  apim_proxy_backend_pool      = "${azurerm_resource_group.vdc_rg.name}-apiproxy-backend-pool"
-  apim_proxy_backend_setting   = "${azurerm_resource_group.vdc_rg.name}-apiproxy-backend-setting"
-  apim_proxy_https_listener    = "${azurerm_resource_group.vdc_rg.name}-apiproxy-listener"
+  apim_gw_fqdn                 = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_apim_gw_cname[0].name}.${azurerm_dns_cname_record.waf_apim_gw_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
+  apim_gw_url                  = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.apim_gw_fqdn}/"
+  apim_gw_backend_pool         = "${azurerm_resource_group.vdc_rg.name}-apigw-backend-pool"
+  apim_gw_backend_setting      = "${azurerm_resource_group.vdc_rg.name}-apigw-backend-setting"
+  apim_gw_https_listener       = "${azurerm_resource_group.vdc_rg.name}-apigw-listener"
 
   apim_portal_fqdn             = var.use_vanity_domain_and_ssl ? "${azurerm_dns_cname_record.waf_apim_portal_cname[0].name}.${azurerm_dns_cname_record.waf_apim_portal_cname[0].zone_name}" : azurerm_public_ip.waf_pip.fqdn
+  apim_portal_url              = "${var.use_vanity_domain_and_ssl ? "https" : "http"}://${local.apim_portal_fqdn}/"
+  apim_portal_backend_pool     = "${azurerm_resource_group.vdc_rg.name}-apiportal-backend-pool"
+  apim_portal_backend_setting  = "${azurerm_resource_group.vdc_rg.name}-apiportal-backend-setting"
+  apim_portal_https_listener   = "${azurerm_resource_group.vdc_rg.name}-apiportal-listener"
 
   waf_frontend_ip_config       = "${azurerm_resource_group.vdc_rg.name}-waf-ip-configuration"
 }
@@ -343,21 +347,21 @@ resource azurerm_application_gateway waf {
     }
   }
 
-  # API Management
+  # API Management Proxy
   dynamic "backend_address_pool" {
     for_each = range(var.deploy_api_gateway != null ? 1 : 0)
     content {
-      name                     = local.apim_proxy_backend_pool
+      name                     = local.apim_gw_backend_pool
       ip_addresses             = azurerm_api_management.api_gateway.0.private_ip_addresses
     }
   }
   backend_http_settings {
-    name                       = local.apim_proxy_backend_setting
+    name                       = local.apim_gw_backend_setting
     cookie_based_affinity      = "Disabled"
     # Used when terminating SSL at App Service
-    host_name                  = local.apim_proxy_fqdn
+    host_name                  = local.apim_gw_fqdn
     port                       = 443
-    probe_name                 = "apim-proxy-probe"
+    probe_name                 = "apim-gw-probe"
     protocol                   = "Https"
     request_timeout            = 180
     trusted_root_certificate_names = [var.vanity_certificate_name]
@@ -365,28 +369,28 @@ resource azurerm_application_gateway waf {
   dynamic "http_listener" {
     for_each = local.ssl_range
     content {
-      name                     = local.apim_proxy_https_listener
+      name                     = local.apim_gw_https_listener
       frontend_ip_configuration_name = local.waf_frontend_ip_config
       frontend_port_name       = "https"
       protocol                 = "Https"
-      host_name                = local.apim_proxy_fqdn
+      host_name                = local.apim_gw_fqdn
       ssl_certificate_name     = var.vanity_certificate_name
     }
   }
   dynamic "request_routing_rule" {
     for_each = range(var.deploy_api_gateway != null ? 1 : 0)
     content {
-      name                     = "${azurerm_resource_group.vdc_rg.name}-apiproxy-https-rule"
+      name                     = "${azurerm_resource_group.vdc_rg.name}-apigw-https-rule"
       rule_type                = "Basic"
-      http_listener_name       = local.apim_proxy_https_listener
-      backend_address_pool_name = local.apim_proxy_backend_pool
-      backend_http_settings_name = local.apim_proxy_backend_setting
+      http_listener_name       = local.apim_gw_https_listener
+      backend_address_pool_name = local.apim_gw_backend_pool
+      backend_http_settings_name = local.apim_gw_backend_setting
     }
   }
   probe {
-    name                       = "apim-proxy-probe"
+    name                       = "apim-gw-probe"
     # Used alias when terminating SSL at App Service, as this will actually resolve to App Service (no loop to App Gateway)
-    host                       = local.apim_proxy_fqdn
+    host                       = local.apim_gw_fqdn
     path                       = "/status-0123456789abcdef"
     # Used when terminating SSL at App Gateway
     #pick_host_name_from_backend_http_settings = true
@@ -394,15 +398,66 @@ resource azurerm_application_gateway waf {
     interval                   = 30
     timeout                    = 120
     unhealthy_threshold        = 8
-    match {
-      body                     = ""
-      status_code              = ["200-399","401"]
-    }
+    # match {
+    #   body                     = ""
+    #   status_code              = ["200-399","401"]
+    # }
   }
   trusted_root_certificate {
     name                       = var.vanity_certificate_name
     data                       = filebase64(var.vanity_root_certificate_cer_path)
   }
+
+  # API Management Portal
+  backend_http_settings {
+    name                       = local.apim_portal_backend_setting
+    cookie_based_affinity      = "Disabled"
+    # Used when terminating SSL at App Service
+    host_name                  = local.apim_portal_fqdn
+    port                       = 443
+    probe_name                 = "apim-portal-probe"
+    protocol                   = "Https"
+    request_timeout            = 180
+    trusted_root_certificate_names = [var.vanity_certificate_name]
+  }
+  dynamic "http_listener" {
+    for_each = local.ssl_range
+    content {
+      name                     = local.apim_portal_https_listener
+      frontend_ip_configuration_name = local.waf_frontend_ip_config
+      frontend_port_name       = "https"
+      protocol                 = "Https"
+      host_name                = local.apim_portal_fqdn
+      ssl_certificate_name     = var.vanity_certificate_name
+    }
+  }
+  dynamic "request_routing_rule" {
+    for_each = range(var.deploy_api_gateway != null ? 1 : 0)
+    content {
+      name                     = "${azurerm_resource_group.vdc_rg.name}-apiportal-https-rule"
+      rule_type                = "Basic"
+      http_listener_name       = local.apim_portal_https_listener
+      backend_address_pool_name = local.apim_gw_backend_pool
+      backend_http_settings_name = local.apim_portal_backend_setting
+    }
+  }
+  probe {
+    name                       = "apim-portal-probe"
+    # Used alias when terminating SSL at App Service, as this will actually resolve to App Service (no loop to App Gateway)
+    host                       = local.apim_portal_fqdn
+    path                       = "/signin"
+    # Used when terminating SSL at App Gateway
+    #pick_host_name_from_backend_http_settings = true
+    protocol                   = "Https"
+    interval                   = 30
+    timeout                    = 120
+    unhealthy_threshold        = 8
+    # match {
+    #   body                     = ""
+    #   status_code              = ["200-399","401"]
+    # }
+  }
+
   # TODO
   # Continue from step 10
   # https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway

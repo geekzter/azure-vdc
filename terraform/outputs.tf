@@ -17,12 +17,20 @@ output admin_password {
   value       = local.password
 }
 
-output apim_internal_gateway_url {
-  value       = try(azurerm_api_management.api_gateway.0.gateway_url,null)
+output apim_developer_portal_url {
+  value       = local.apim_portal_url
+}
+
+output apim_gateway_url {
+  value       = local.apim_gw_url
 }
 
 output apim_internal_developer_portal_url {
   value       = try(azurerm_api_management.api_gateway.0.developer_portal_url,null)
+}
+
+output apim_internal_gateway_url {
+  value       = try(azurerm_api_management.api_gateway.0.gateway_url,null)
 }
 
 output apim_internal_management_api_url{
