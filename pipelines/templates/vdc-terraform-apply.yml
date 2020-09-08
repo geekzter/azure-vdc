@@ -736,8 +736,10 @@ stages:
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
-        iaasAppUrl: $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
-        paasAppUrl: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+        iaasAppUrl:    $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
+        paasAppUrl:    $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+        apimGWUrl:     $[ dependencies.Provision.outputs['terraform.apim_gateway_url'] ]
+        apimPortalUrl: $[ dependencies.Provision.outputs['terraform.apim_developer_portal_url'] ]
 
       pool:
         vmImage: 'ubuntu-latest'
@@ -781,6 +783,35 @@ stages:
               Invoke-WebRequest -Uri $(paasAppUrl) -MaximumRetryCount 9
             failOnStderr: true
             pwsh: true
+
+        # Test API Management
+        - ${{ if not(parameters.testMode) }}:
+          - task: PowerShell@2
+            displayName: 'Test API Management Gateway'
+            enabled: $[ variables['TF_VAR_deploy_api_gateway'] ]
+            inputs:
+              targetType: 'inline'
+              script: |
+                # Wait for the WAF to get ready
+                Start-Sleep -Seconds 10
+                
+                # Request page
+                Invoke-WebRequest -Uri $(apimGWUrl) -MaximumRetryCount 9
+              failOnStderr: true
+              pwsh: true
+          - task: PowerShell@2
+            displayName: 'Test API Management Portal'
+            enabled: $[ variables['TF_VAR_deploy_api_gateway'] ]
+            inputs:
+              targetType: 'inline'
+              script: |
+                # Wait for the WAF to get ready
+                Start-Sleep -Seconds 10
+                
+                # Request page
+                Invoke-WebRequest -Uri $(apimPortalUrl) -MaximumRetryCount 9
+              failOnStderr: true
+              pwsh: true
 
   - ${{ if ne(parameters.destroy, 'Never') }}:
     # Destroy infrastructure
