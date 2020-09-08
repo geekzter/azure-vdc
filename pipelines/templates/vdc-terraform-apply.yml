@@ -788,7 +788,7 @@ stages:
         - ${{ if eq(variables.TF_VAR_deploy_api_gateway, 'true') }}:
           - task: PowerShell@2
             displayName: 'Test API Management Gateway'
-            enabled: ${{ if not(parameters.testMode) }}
+            enabled: ${{ not(parameters.testMode) }}
             inputs:
               targetType: 'inline'
               script: |
@@ -801,7 +801,7 @@ stages:
               pwsh: true
           - task: PowerShell@2
             displayName: 'Test API Management Portal'
-            enabled: ${{ if not(parameters.testMode) }}
+            enabled: ${{ not(parameters.testMode) }}
             inputs:
               targetType: 'inline'
               script: |
