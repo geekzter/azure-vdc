@@ -349,10 +349,10 @@ resource azurerm_application_gateway waf {
 
   # API Management Proxy
   dynamic "backend_address_pool" {
-    for_each = range(var.deploy_api_gateway != null ? 1 : 0)
+    for_each = range(var.deploy_api_gateway ? 1 : 0)
     content {
       name                     = local.apim_gw_backend_pool
-      ip_addresses             = azurerm_api_management.api_gateway.0.private_ip_addresses
+      ip_addresses             = try(azurerm_api_management.api_gateway.0.private_ip_addresses,null)
     }
   }
   backend_http_settings {
@@ -367,7 +367,7 @@ resource azurerm_application_gateway waf {
     trusted_root_certificate_names = [var.vanity_certificate_name]
   }
   dynamic "http_listener" {
-    for_each = local.ssl_range
+    for_each = range(var.use_vanity_domain_and_ssl && var.deploy_api_gateway ? 1 : 0)
     content {
       name                     = local.apim_gw_https_listener
       frontend_ip_configuration_name = local.waf_frontend_ip_config
@@ -378,7 +378,7 @@ resource azurerm_application_gateway waf {
     }
   }
   dynamic "request_routing_rule" {
-    for_each = range(var.deploy_api_gateway != null ? 1 : 0)
+    for_each = range(var.use_vanity_domain_and_ssl && var.deploy_api_gateway ? 1 : 0)
     content {
       name                     = "${azurerm_resource_group.vdc_rg.name}-apigw-https-rule"
       rule_type                = "Basic"
@@ -421,7 +421,7 @@ resource azurerm_application_gateway waf {
     trusted_root_certificate_names = [var.vanity_certificate_name]
   }
   dynamic "http_listener" {
-    for_each = local.ssl_range
+    for_each = range(var.use_vanity_domain_and_ssl && var.deploy_api_gateway ? 1 : 0)
     content {
       name                     = local.apim_portal_https_listener
       frontend_ip_configuration_name = local.waf_frontend_ip_config
@@ -432,7 +432,7 @@ resource azurerm_application_gateway waf {
     }
   }
   dynamic "request_routing_rule" {
-    for_each = range(var.deploy_api_gateway != null ? 1 : 0)
+    for_each = range(var.use_vanity_domain_and_ssl && var.deploy_api_gateway ? 1 : 0)
     content {
       name                     = "${azurerm_resource_group.vdc_rg.name}-apiportal-https-rule"
       rule_type                = "Basic"
@@ -457,10 +457,6 @@ resource azurerm_application_gateway waf {
     #   status_code              = ["200-399","401"]
     # }
   }
-
-  # TODO
-  # Continue from step 10
-  # https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway
 
   waf_configuration {
     enabled                    = true
