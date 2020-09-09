@@ -806,7 +806,7 @@ stages:
 
         - task: PowerShell@2
           displayName: 'Test API Management Gateway'
-          enabled: $[eq(variables['TF_VAR_deploy_api_gateway'], 'true')]
+          enabled: $[ eq(variables['TF_VAR_deploy_api_gateway'], 'true') ]
           inputs:
             targetType: 'inline'
             script: |
@@ -819,7 +819,7 @@ stages:
             pwsh: true
         - task: PowerShell@2
           displayName: 'Test API Management Portal'
-          enabled: $(TF_VAR_deploy_api_gateway)
+          enabled: $[ variables['TF_VAR_deploy_api_gateway'] ]
           inputs:
             targetType: 'inline'
             script: |
