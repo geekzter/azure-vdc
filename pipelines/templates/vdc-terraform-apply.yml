@@ -799,6 +799,8 @@ stages:
             Write-Host $[ variables['deployAPIM1'] ]
             Write-Host "5: " -NoNewline
             Write-Host $[ variables['deployAPIM2'] ]
+            Write-Host "6: " -NoNewline
+            Write-Host $(TF_VAR_deploy_api_gateway)
           displayName: 'Debug APIM variable(s)'
           enabled: ${{ parameters.testMode }}
 
