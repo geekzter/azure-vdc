@@ -785,33 +785,43 @@ stages:
             pwsh: true
 
         # Test API Management
-        - ${{ if not(parameters.testMode) }}:
-          - task: PowerShell@2
-            displayName: 'Test API Management Gateway'
-            enabled: ${{ eq(variables.TF_VAR_deploy_api_gateway, 'true') }}
-            inputs:
-              targetType: 'inline'
-              script: |
-                # Wait for the WAF to get ready
-                Start-Sleep -Seconds 10
-                
-                # Request page
-                Invoke-WebRequest -Uri $(apimGWUrl) -MaximumRetryCount 9
-              failOnStderr: true
-              pwsh: true
-          - task: PowerShell@2
-            displayName: 'Test API Management Portal'
-            enabled: ${{ eq(variables.TF_VAR_deploy_api_gateway, 'true') }}
-            inputs:
-              targetType: 'inline'
-              script: |
-                # Wait for the WAF to get ready
-                Start-Sleep -Seconds 10
-                
-                # Request page
-                Invoke-WebRequest -Uri $(apimPortalUrl) -MaximumRetryCount 9
-              failOnStderr: true
-              pwsh: true
+        #- ${{ if not(parameters.testMode) }}:
+        - pwsh: |
+            Write-Host "1: " -NoNewline
+            Write-Host ${{ variables.TF_VAR_deploy_api_gateway }}
+            Write-Host "2: " -NoNewline
+            Write-Host $[ variables['TF_VAR_deploy_api_gateway'] ]
+            Write-Host "3: " -NoNewline
+            Write-Host $env:TF_VAR_DEPLOY_API_GATEWAY
+          displayName: 'Debug APIM variable(s)'
+          enabled: ${{ parameters.testMode }}
+
+        - task: PowerShell@2
+          displayName: 'Test API Management Gateway'
+          enabled: ${{ eq(variables.TF_VAR_deploy_api_gateway, 'true') }}
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Wait for the WAF to get ready
+              Start-Sleep -Seconds 10
+              
+              # Request page
+              Invoke-WebRequest -Uri $(apimGWUrl) -MaximumRetryCount 9
+            failOnStderr: true
+            pwsh: true
+        - task: PowerShell@2
+          displayName: 'Test API Management Portal'
+          enabled: ${{ eq(variables.TF_VAR_deploy_api_gateway, 'true') }}
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Wait for the WAF to get ready
+              Start-Sleep -Seconds 10
+              
+              # Request page
+              Invoke-WebRequest -Uri $(apimPortalUrl) -MaximumRetryCount 9
+            failOnStderr: true
+            pwsh: true
 
   - ${{ if ne(parameters.destroy, 'Never') }}:
     # Destroy infrastructure
