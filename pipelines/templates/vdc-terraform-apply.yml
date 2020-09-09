@@ -788,7 +788,6 @@ stages:
             pwsh: true
 
         # Test API Management
-        #- ${{ if not(parameters.testMode) }}:
         - pwsh: |
             Write-Host "1: " -NoNewline
             Write-Host ${{ variables.TF_VAR_deploy_api_gateway }}
@@ -809,7 +808,8 @@ stages:
 
         - task: PowerShell@2
           displayName: 'Test API Management Gateway'
-          enabled: and(succeeded(), eq(variables.deployAPIM, true))
+          condition: and(succeeded(), eq(variables.deployAPIM, true))
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
             targetType: 'inline'
             script: |
@@ -822,7 +822,8 @@ stages:
             pwsh: true
         - task: PowerShell@2
           displayName: 'Test API Management Portal'
-          enabled: and(succeeded(), eq(variables.deployAPIM, true))
+          condition: and(succeeded(), eq(variables.deployAPIM, true))
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
             targetType: 'inline'
             script: |
