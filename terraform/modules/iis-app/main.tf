@@ -293,6 +293,8 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
     }
   EOF
 
+  # https://api.github.com/repos/PowerShell/powershell/releases/latest
+  # msiexec.exe /package PowerShell-7.0.3-win-x64.msi /quiet ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL=1 ENABLE_PSREMOTING=1 REGISTER_MANIFEST=1
   protected_settings           = <<EOF
     { 
       "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${var.tags["suffix"]},web *> install_agent.log \""
