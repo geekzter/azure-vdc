@@ -736,10 +736,12 @@ stages:
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
-        iaasAppUrl:    $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
-        paasAppUrl:    $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
         apimGWUrl:     $[ dependencies.Provision.outputs['terraform.apim_gateway_url'] ]
         apimPortalUrl: $[ dependencies.Provision.outputs['terraform.apim_developer_portal_url'] ]
+        deployAPIM1:   ${{ variables.TF_VAR_deploy_api_gateway }}
+        deployAPIM2:   $[ variables['TF_VAR_deploy_api_gateway'] ]
+        iaasAppUrl:    $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
+        paasAppUrl:    $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
 
       pool:
         vmImage: 'ubuntu-latest'
@@ -793,6 +795,10 @@ stages:
             Write-Host $[ variables['TF_VAR_deploy_api_gateway'] ]
             Write-Host "3: " -NoNewline
             Write-Host $env:TF_VAR_DEPLOY_API_GATEWAY
+            Write-Host "4: " -NoNewline
+            Write-Host $[ variables['deployAPIM1'] ]
+            Write-Host "5: " -NoNewline
+            Write-Host $[ variables['deployAPIM2'] ]
           displayName: 'Debug APIM variable(s)'
           enabled: ${{ parameters.testMode }}
 
