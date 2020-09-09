@@ -740,6 +740,7 @@ stages:
         apimPortalUrl: $[ dependencies.Provision.outputs['terraform.apim_developer_portal_url'] ]
         deployAPIM1:   ${{ variables.TF_VAR_deploy_api_gateway }}
         deployAPIM2:   $[ variables['TF_VAR_deploy_api_gateway'] ]
+        deployAPIM:    $[eq(variables['TF_VAR_deploy_api_gateway'], 'true')]
         iaasAppUrl:    $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
         paasAppUrl:    $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
 
@@ -801,12 +802,14 @@ stages:
             Write-Host $[ variables['deployAPIM2'] ]
             Write-Host "6: " -NoNewline
             Write-Host $(TF_VAR_deploy_api_gateway)
+            Write-Host "7: " -NoNewline
+            Write-Host $[ variables['deployAPIM'] ]
           displayName: 'Debug APIM variable(s)'
           enabled: ${{ parameters.testMode }}
 
         - task: PowerShell@2
           displayName: 'Test API Management Gateway'
-          enabled: $[ eq(variables['TF_VAR_deploy_api_gateway'], 'true') ]
+          enabled: $[ variables['deployAPIM'] ]
           inputs:
             targetType: 'inline'
             script: |
@@ -819,7 +822,7 @@ stages:
             pwsh: true
         - task: PowerShell@2
           displayName: 'Test API Management Portal'
-          enabled: $[ variables['TF_VAR_deploy_api_gateway'] ]
+          enabled: $[ variables['deployAPIM'] ]
           inputs:
             targetType: 'inline'
             script: |
