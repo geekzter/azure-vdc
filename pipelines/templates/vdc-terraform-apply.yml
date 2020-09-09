@@ -809,7 +809,7 @@ stages:
         - task: PowerShell@2
           displayName: 'Test API Management Gateway'
           condition: and(succeeded(), eq(variables.deployAPIM, true))
-          enabled: ${{ not(parameters.testMode) }}
+          #enabled: ${{ not(parameters.testMode) }}
           inputs:
             targetType: 'inline'
             script: |
@@ -823,7 +823,7 @@ stages:
         - task: PowerShell@2
           displayName: 'Test API Management Portal'
           condition: and(succeeded(), eq(variables.deployAPIM, true))
-          enabled: ${{ not(parameters.testMode) }}
+          #enabled: ${{ not(parameters.testMode) }}
           inputs:
             targetType: 'inline'
             script: |
