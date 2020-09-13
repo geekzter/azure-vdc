@@ -736,6 +736,7 @@ stages:
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
+        apimDemoKey:   $[ dependencies.Provision.outputs['terraform.apim_demo_api_key'] ]
         apimGWUrl:     $[ dependencies.Provision.outputs['terraform.apim_gateway_url'] ]
         apimPortalUrl: $[ dependencies.Provision.outputs['terraform.apim_developer_portal_url'] ]
         deployAPIM:    $[ eq(variables['TF_VAR_deploy_api_gateway'], 'true') ]
@@ -787,31 +788,25 @@ stages:
 
         # Test API Management
         - task: PowerShell@2
-          displayName: 'Test API Management Gateway'
-          condition: and(succeeded(), eq(variables.deployAPIM, true))
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Wait for the WAF to get ready
-              Start-Sleep -Seconds 10
-              
-              # Request page
-              Invoke-WebRequest -Uri $(apimGWUrl) -MaximumRetryCount 9
-            failOnStderr: true
-            pwsh: true
-        - task: PowerShell@2
           displayName: 'Test API Management Portal'
           condition: and(succeeded(), eq(variables.deployAPIM, true))
           enabled: ${{ not(parameters.testMode) }}
           inputs:
             targetType: 'inline'
             script: |
-              # Wait for the WAF to get ready
-              Start-Sleep -Seconds 10
-              
               # Request page
               Invoke-WebRequest -Uri $(apimPortalUrl) -MaximumRetryCount 9
+            failOnStderr: true
+            pwsh: true
+        - task: PowerShell@2
+          displayName: 'Test API Management Gateway'
+          condition: and(succeeded(), eq(variables.deployAPIM, true))
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Call REST Api
+              Invoke-RestMethod -Header @{ "Ocp-Apim-Subscription-Key" = $(apimDemoKey) } -Method Get -Uri $(apimGWUrl)echo/resource?param1=sample -MaximumRetryCount 9
             failOnStderr: true
             pwsh: true
 

@@ -645,6 +645,24 @@ resource azurerm_firewall_application_rule_collection iag_apim_app_rules {
     }
   }
 
+  rule {
+    name                       = "Rule for API Demo's"
+    description                = "Allow API Management HTTP traffic to demo API's"
+
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+
+    target_fqdns               = [
+        "echoapi.cloudapp.net",
+    ]
+
+    protocol {
+        port                   = "80"
+        type                   = "Http"
+    }
+  }
+
 }
 # Rules for API Management
 # https://aka.ms/apim-vnet-common-issues

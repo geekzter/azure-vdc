@@ -1,5 +1,9 @@
 # https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway
 
+locals {
+  deploy_api_gateway           = var.deploy_api_gateway && var.use_vanity_domain_and_ssl
+}
+
 resource azurerm_subnet apim_subnet {
   name                         = "ApiManagement"
   virtual_network_name         = azurerm_virtual_network.hub_vnet.name
@@ -430,6 +434,15 @@ resource azurerm_api_management api_gateway {
     subnet_id                  = azurerm_subnet.apim_subnet.id
   }
 
+  sign_up {
+    enabled                    = true
+    terms_of_service {
+      consent_required         = false
+      enabled                  = false
+      text                     = "ToS text"
+    }
+  }
+
   timeouts {
     #create                     = var.default_create_timeout
     create                     = "${max(90,replace(var.default_create_timeout,"/h|m/",""))}m"
@@ -439,7 +452,7 @@ resource azurerm_api_management api_gateway {
     delete                     = var.default_delete_timeout
   }  
 
-  count                        = (var.deploy_api_gateway && var.use_vanity_domain_and_ssl) ? 1 : 0
+  count                        = local.deploy_api_gateway ? 1 : 0
 
   depends_on                   = [azurerm_subnet_route_table_association.apim_subnet_routes,
                                   azurerm_subnet_network_security_group_association.apim_subnet_nsg,
@@ -462,5 +475,35 @@ resource azurerm_monitor_diagnostic_setting apim_logs {
     }
   }
 
-  count                        = (var.deploy_api_gateway && var.use_vanity_domain_and_ssl) ? 1 : 0
+  count                        = local.deploy_api_gateway ? 1 : 0
+}
+
+# Sample
+data azurerm_api_management_product starter {
+  product_id                   = "Starter"
+  api_management_name          = azurerm_api_management.api_gateway.0.name
+  resource_group_name          = azurerm_api_management.api_gateway.0.resource_group_name
+
+  count                        = local.deploy_api_gateway ? 1 : 0
+}
+resource azurerm_api_management_user demo_user {
+  user_id                      = uuid()
+  api_management_name          = azurerm_api_management.api_gateway.0.name
+  resource_group_name          = azurerm_api_management.api_gateway.0.resource_group_name
+  first_name                   = "Example"
+  last_name                    = "User"
+  email                        = "demouser@nowhere.com"
+  state                        = "active"
+
+  count                        = local.deploy_api_gateway ? 1 : 0
+}
+resource azurerm_api_management_subscription echo_subscription {
+  api_management_name          = azurerm_api_management.api_gateway.0.name
+  resource_group_name          = azurerm_api_management.api_gateway.0.resource_group_name
+  user_id                      = azurerm_api_management_user.demo_user.0.id
+  product_id                   = data.azurerm_api_management_product.starter.0.id
+  display_name                 = "Echo API"
+  state                        = "active"
+
+  count                        = local.deploy_api_gateway ? 1 : 0
 }

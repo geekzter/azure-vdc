@@ -17,6 +17,10 @@ output admin_password {
   value       = local.password
 }
 
+output apim_demo_api_key {
+  value       = try(azurerm_api_management_subscription.echo_subscription.0.primary_key,null)
+}
+
 output apim_developer_portal_url {
   value       = local.apim_portal_url
 }

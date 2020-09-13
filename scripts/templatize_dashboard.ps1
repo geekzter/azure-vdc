@@ -100,7 +100,7 @@ if ($prefix -and $deploymentName -and $suffix) {
 if ($appRGShort) {
     $template = $template -Replace "${appRGShort}", "`$`{paas_app_resource_group_short`}"
 }
-$template = $template -Replace "http[s?]://[\w\.]*apiproxy[\w\.]*/", "`$`{apim_gw_url`}"
+$template = $template -Replace "http[s?]://[\w\.]*apiproxy[^`"]*/", "`$`{apim_gw_url`}"
 $template = $template -Replace "http[s?]://[\w\.]*apiportal[\w\.]*/", "`$`{apim_portal_url`}"
 $template = $template -Replace "http[s?]://[\w\.]*iisapp[\w\.]*/", "`$`{iaas_app_url`}"
 $template = $template -Replace "http[s?]://[\w\.]*webapp[\w\.]*/", "`$`{paas_app_url`}"
