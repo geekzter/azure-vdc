@@ -220,6 +220,31 @@ resource null_resource start_mgmt {
   }
 }
 
+resource azurerm_virtual_machine_extension mgmt_monitor {
+  name                         = "MMAExtension"
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
+  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
+  type                         = "MicrosoftMonitoringAgent"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "workspaceId"            : "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}",
+      "azureResourceId"        : "${azurerm_windows_virtual_machine.mgmt.id}",
+      "stopOnMultipleConnections": "true"
+    }
+  EOF
+  protected_settings = <<EOF
+    { 
+      "workspaceKey"           : "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
+    } 
+  EOF
+
+# count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
+  tags                         = local.tags
+  depends_on                   = [null_resource.start_mgmt]
+}
+
 resource azurerm_virtual_machine_extension mgmt_roles {
   name                         = "ServerRolesConfiguration"
   virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
@@ -250,33 +275,9 @@ resource azurerm_virtual_machine_extension mgmt_roles {
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
-                                  azurerm_private_dns_a_record.aut_storage_blob_dns_record
+                                  azurerm_private_dns_a_record.aut_storage_blob_dns_record,
+                                  azurerm_virtual_machine_extension.mgmt_monitor
                                  ]
-}
-
-resource azurerm_virtual_machine_extension mgmt_monitor {
-  name                         = "MMAExtension"
-  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
-  publisher                    = "Microsoft.EnterpriseCloud.Monitoring"
-  type                         = "MicrosoftMonitoringAgent"
-  type_handler_version         = "1.0"
-  auto_upgrade_minor_version   = true
-  settings                     = <<EOF
-    {
-      "workspaceId"            : "${azurerm_log_analytics_workspace.vcd_workspace.workspace_id}",
-      "azureResourceId"        : "${azurerm_windows_virtual_machine.mgmt.id}",
-      "stopOnMultipleConnections": "true"
-    }
-  EOF
-  protected_settings = <<EOF
-    { 
-      "workspaceKey"           : "${azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key}"
-    } 
-  EOF
-
-# count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
-  tags                         = local.tags
-  depends_on                   = [null_resource.start_mgmt]
 }
 
 resource azurerm_role_assignment vm_admin {
@@ -299,7 +300,7 @@ resource azurerm_virtual_machine_extension mgmt_aadlogin {
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
-                                  azurerm_virtual_machine_extension.mgmt_monitor
+                                  azurerm_virtual_machine_extension.mgmt_roles
                                  ]
 } 
 
@@ -315,7 +316,7 @@ resource azurerm_virtual_machine_extension mgmt_bginfo {
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
-                                  azurerm_virtual_machine_extension.mgmt_monitor
+                                  azurerm_virtual_machine_extension.mgmt_roles
                                  ]
 }
 
@@ -345,7 +346,7 @@ resource azurerm_virtual_machine_extension mgmt_diagnostics {
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
-                                  azurerm_virtual_machine_extension.mgmt_monitor,
+                                  azurerm_virtual_machine_extension.mgmt_roles,
 #                                  azurerm_private_dns_a_record.diag_storage_table_dns_record,
 #                                  azurerm_private_dns_a_record.diag_storage_blob_dns_record,
                                   azurerm_firewall_network_rule_collection.iag_net_outbound_http_rules
@@ -374,7 +375,7 @@ resource azurerm_virtual_machine_extension mgmt_dependency_monitor {
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
-                                  azurerm_virtual_machine_extension.mgmt_monitor
+                                  azurerm_virtual_machine_extension.mgmt_roles
                                  ]
 }
 resource azurerm_virtual_machine_extension mgmt_watcher {
@@ -389,7 +390,7 @@ resource azurerm_virtual_machine_extension mgmt_watcher {
   tags                         = local.tags
   depends_on                   = [
                                   null_resource.start_mgmt,
-                                  azurerm_virtual_machine_extension.mgmt_monitor
+                                  azurerm_virtual_machine_extension.mgmt_roles
                                  ]
 }
 
@@ -437,7 +438,8 @@ SETTINGS
                                   azurerm_firewall_application_rule_collection.iag_app_rules,
 #                                  azurerm_private_dns_a_record.vault_dns_record,
                                   null_resource.start_mgmt,
-                                  null_resource.mgmt_sleep
+                                  null_resource.mgmt_sleep,
+                                  azurerm_virtual_machine_extension.mgmt_roles
                                   ]
 }
 
