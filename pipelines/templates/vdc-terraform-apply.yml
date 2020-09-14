@@ -731,17 +731,23 @@ stages:
         - Deploy
         - DeployEnvironment
         - Provision
+        - ${{ if eq(parameters.reprovision, true) }}:
+          - Reprovision
       displayName: 'Test Applications'
       condition: succeeded()
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
         apimGWUrl:     $[ dependencies.Provision.outputs['terraform.apim_gateway_url'] ]
-        apimDemoKey:   $[ dependencies.Provision.outputs['terraform.apim_demo_api_key'] ]
         apimPortalUrl: $[ dependencies.Provision.outputs['terraform.apim_developer_portal_url'] ]
         deployAPIM:    $[ eq(variables['TF_VAR_deploy_api_gateway'], 'true') ]
         iaasAppUrl:    $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
         paasAppUrl:    $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+        # apim_demo_api_key get's updated on every terraform apply, make sure we get up to date data
+        ${{ if eq(parameters.reprovision, false) }}:
+          apimDemoKey: $[ dependencies.Provision.outputs['terraform.apim_demo_api_key'] ]
+        ${{ if eq(parameters.reprovision, true) }}:
+          apimDemoKey: $[ dependencies.Reprovision.outputs['terraform.apim_demo_api_key'] ]
 
       pool:
         vmImage: 'ubuntu-latest'
