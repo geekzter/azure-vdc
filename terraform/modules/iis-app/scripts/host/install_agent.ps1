@@ -11,7 +11,7 @@ param (
     [parameter(Mandatory=$true)][string]$Project,
     [parameter(Mandatory=$true)][string]$PAT
 ) 
-set-psdebug -Trace 2
+Set-PSDebug -Trace 2 # Trace in the case the extension doesn't successfully load
 $ErrorActionPreference = "Stop"
 Write-Host $MyInvocation.line
 if (!$IsWindows -and ($PSVersionTable.PSEdition -ine "Desktop")) {
