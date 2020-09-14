@@ -5,7 +5,7 @@
 .DESCRIPTION 
     This script is downloaded and executed using the custom script VM extension
 #> 
-#Set-PSDebug -Trace 2 # Trace in the case the extension doesn't successfully load
+#Set-PSDebug -Trace 1 # Trace in the case the extension doesn't successfully load
 
 $privateDNS = "168.63.129.16" # Azure Private DNS
 $publicDNS = @("8.8.8.8","8.8.4.4") # Google Public DNS
