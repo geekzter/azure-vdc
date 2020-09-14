@@ -655,7 +655,7 @@ resource azurerm_virtual_machine_extension app_db_vm_diagnostics {
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Diagnostics"
   type                         = "IaaSDiagnostics"
-  type_handler_version         = "1.17"
+  type_handler_version         = "1.18"
   auto_upgrade_minor_version   = true
 
   settings                     = templatefile("./vmdiagnostics.json", { 
@@ -684,7 +684,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
   type                         = "TeamServicesAgent"
-  type_handler_version         = "1.26"
+  type_handler_version         = "1.27"
   auto_upgrade_minor_version   = true
   settings                     = <<EOF
     {
@@ -771,7 +771,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"
-  type_handler_version         = "9.5"
+  type_handler_version         = "9.10"
   auto_upgrade_minor_version   = true
   settings                     = <<EOF
     {
