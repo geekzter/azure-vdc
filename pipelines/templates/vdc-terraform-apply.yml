@@ -737,6 +737,7 @@ stages:
 
       variables:
         apimDemoKey:   $[ dependencies.Provision.outputs['terraform.apim_demo_api_key'] ]
+        apimDemoUrl:  "$[ dependencies.Provision.outputs['terraform.apim_gateway_url'] ]echo/resource?param1=sample"
         apimGWUrl:     $[ dependencies.Provision.outputs['terraform.apim_gateway_url'] ]
         apimPortalUrl: $[ dependencies.Provision.outputs['terraform.apim_developer_portal_url'] ]
         deployAPIM:    $[ eq(variables['TF_VAR_deploy_api_gateway'], 'true') ]
@@ -767,6 +768,7 @@ stages:
               Start-Sleep -Seconds 10
               
               # Request page
+              Write-Host "Requesting $(iaasAppUrl)..."
               Invoke-WebRequest -Uri $(iaasAppUrl) -MaximumRetryCount 9
             failOnStderr: true
             pwsh: true
@@ -782,6 +784,7 @@ stages:
               Start-Sleep -Seconds 10
               
               # Request page
+              Write-Host "Requesting $(paasAppUrl)..."
               Invoke-WebRequest -Uri $(paasAppUrl) -MaximumRetryCount 9
             failOnStderr: true
             pwsh: true
@@ -795,6 +798,7 @@ stages:
             targetType: 'inline'
             script: |
               # Request page
+              Write-Host "Requesting $(apimPortalUrl)..."
               Invoke-WebRequest -Uri $(apimPortalUrl) -MaximumRetryCount 9
             failOnStderr: true
             pwsh: true
@@ -806,7 +810,8 @@ stages:
             targetType: 'inline'
             script: |
               # Call REST Api
-              Invoke-RestMethod -Header @{ "Ocp-Apim-Subscription-Key" = $(apimDemoKey) } -Method Get -Uri $(apimGWUrl)echo/resource?param1=sample -MaximumRetryCount 9
+              Write-Host "Performing GET request of $(apimDemoUrl) with Header Ocp-Apim-Subscription-Key = $(apimDemoKey)..."
+              Invoke-RestMethod -Header @{ "Ocp-Apim-Subscription-Key" = "$(apimDemoKey)" } -Method Get -Uri $(apimDemoUrl) -MaximumRetryCount 9
             failOnStderr: true
             pwsh: true
 
