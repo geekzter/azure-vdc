@@ -407,7 +407,7 @@ resource azurerm_api_management api_gateway {
   location                     = azurerm_resource_group.vdc_rg.location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   publisher_name               = "Automated VDC"
-  publisher_email              = var.apim_publisher_email
+  publisher_email              = var.admin_login
   sku_name                     = "Developer_1"
 
   hostname_configuration {
@@ -428,7 +428,7 @@ resource azurerm_api_management api_gateway {
   identity {
     type                       = "SystemAssigned"
   }
-  notification_sender_email    = var.apim_publisher_email
+  notification_sender_email    = var.apim_notification_sender_email
   virtual_network_type         = "Internal"
   virtual_network_configuration {
     subnet_id                  = azurerm_subnet.apim_subnet.id
@@ -444,9 +444,7 @@ resource azurerm_api_management api_gateway {
   }
 
   timeouts {
-    #create                     = var.default_create_timeout
     create                     = "${max(90,replace(var.default_create_timeout,"/h|m/",""))}m"
-  # max(90,replace("60m","/h|m/",""))
     update                     = var.default_update_timeout
     read                       = var.default_read_timeout
     delete                     = var.default_delete_timeout
@@ -477,6 +475,15 @@ resource azurerm_monitor_diagnostic_setting apim_logs {
 
   count                        = local.deploy_api_gateway ? 1 : 0
 }
+resource azurerm_api_management_identity_provider_aad subscription {
+  api_management_name          = azurerm_api_management.api_gateway.0.name
+  resource_group_name          = azurerm_api_management.api_gateway.0.resource_group_name
+  client_id                    = var.apim_aad_client_id
+  client_secret                = var.apim_aad_client_secret
+  allowed_tenants              = [data.azurerm_subscription.primary.tenant_id]
+
+  count                        = (local.deploy_api_gateway && var.apim_aad_client_id != null && var.apim_aad_client_secret != null) ? 1 : 0
+}
 
 # Sample
 data azurerm_api_management_product starter {
@@ -492,7 +499,7 @@ resource azurerm_api_management_user demo_user {
   resource_group_name          = azurerm_api_management.api_gateway.0.resource_group_name
   first_name                   = "Example"
   last_name                    = "User"
-  email                        = "demouser@nowhere.com"
+  email                        = "developer@nowhere.com"
   state                        = "active"
 
   count                        = local.deploy_api_gateway ? 1 : 0

@@ -23,6 +23,7 @@ parameters:
   default: Always
   values:
   - Always
+  - Never
   - 'On failure'
   - 'On success'
 - name: unpinTerraformProviders

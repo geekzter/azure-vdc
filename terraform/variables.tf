@@ -149,6 +149,19 @@ variable vso_url {
   default                      = ""
 }
 
+variable apim_aad_client_id {
+  description                  = "Client (Service Principal) ID used for AAD Identity integration"  
+  default                      = null
+}
+variable apim_aad_client_secret {
+  description                  = "Client (Service Principal) Secret used for AAD Identity integration"  
+  default                      = null
+}
+
+variable apim_notification_sender_email {
+  default                      = "noreply@nowhere.com"
+}
+
 variable apim_control_plane_ip_addresses {
 # List of IP addresses: https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet#--control-plane-ip-addresses
 # Get-AzOperationalInsightsIntelligencePack
@@ -212,10 +225,6 @@ variable apim_control_plane_ip_addresses {
     "52.182.32.132",
     "52.181.32.192",
   ]
-}
-
-variable apim_publisher_email {
-  default                      = "nobody@nowhere.com"
 }
 
 # https://docs.microsoft.com/en-us/azure/automation/how-to/region-mappings

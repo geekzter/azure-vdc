@@ -24,6 +24,8 @@ admin_ips = [
     "123.45.67.89"
 ]
 
+apim_aad_client_id             = "00000000-0000-0000-0000-000000000000"
+apim_aad_client_secret         = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 app_devops                     = {
     account                    = "vstsaccount"
     team_project               = "VDC"
