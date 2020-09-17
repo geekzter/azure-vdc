@@ -293,6 +293,8 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
     }
   EOF
 
+  # https://api.github.com/repos/PowerShell/powershell/releases/latest
+  # msiexec.exe /package PowerShell-7.0.3-win-x64.msi /quiet ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL=1 ENABLE_PSREMOTING=1 REGISTER_MANIFEST=1
   protected_settings           = <<EOF
     { 
       "commandToExecute"       : "powershell.exe -ExecutionPolicy Unrestricted -Command \"./install_agent.ps1 -Environment ${local.pipeline_environment} -Organization ${var.app_devops["account"]} -Project ${var.app_devops["team_project"]} -PAT ${var.app_devops["pat"]} -Tags ${var.tags["suffix"]},web *> install_agent.log \""
@@ -325,7 +327,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
 
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_monitor
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
@@ -358,7 +360,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
 
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_monitor
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
@@ -373,7 +375,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   tags                         = var.tags
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_monitor
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment
                                  ]
 }
 # Does not work with AutoLogon
@@ -408,7 +410,7 @@ SETTINGS
   count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_monitor
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment
                                  ]
 }
 
@@ -636,83 +638,6 @@ resource azurerm_virtual_machine_extension app_db_vm_monitor {
 
   depends_on                   = [null_resource.start_db_vm]
 }
-resource azurerm_virtual_machine_extension app_db_vm_aadlogin {
-  name                         = "AADLoginForWindows"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
-  publisher                    = "Microsoft.Azure.ActiveDirectory"
-  type                         = "AADLoginForWindows"
-  type_handler_version         = "1.0"
-  auto_upgrade_minor_version   = true
-
-  count                        = var.deploy_security_vm_extensions ? var.app_db_vm_number : 0
-  tags                         = var.tags
-  depends_on                   = [null_resource.start_db_vm]
-} 
-resource azurerm_virtual_machine_extension app_db_vm_diagnostics {
-  name                         = "Microsoft.Insights.VMDiagnosticsSettings"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
-  publisher                    = "Microsoft.Azure.Diagnostics"
-  type                         = "IaaSDiagnostics"
-  type_handler_version         = "1.17"
-  auto_upgrade_minor_version   = true
-
-  settings                     = templatefile("./vmdiagnostics.json", { 
-    storage_account_name       = data.azurerm_storage_account.diagnostics.name, 
-    virtual_machine_id         = element(azurerm_virtual_machine.app_db_vm.*.id, count.index), 
-    application_insights_key   = var.diagnostics_instrumentation_key
-  })
-
-  protected_settings = <<EOF
-    { 
-      "storageAccountName"     : "${data.azurerm_storage_account.diagnostics.name}",
-      "storageAccountKey"      : "${data.azurerm_storage_account.diagnostics.primary_access_key}",
-      "storageAccountEndPoint" : "https://core.windows.net"
-    } 
-  EOF
-
-  count                        = var.deploy_monitoring_vm_extensions ? var.app_db_vm_number : 0
-  tags                         = var.tags
-  depends_on                   = [
-                                  null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_monitor
-                                 ]
-}
-resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_group" {
-  name                         = "TeamServicesAgentExtension"
-  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
-  publisher                    = "Microsoft.VisualStudio.Services"
-  type                         = "TeamServicesAgent"
-  type_handler_version         = "1.26"
-  auto_upgrade_minor_version   = true
-  settings                     = <<EOF
-    {
-      "VSTSAccountName"        : "${var.app_devops["account"]}",        
-      "TeamProject"            : "${var.app_devops["team_project"]}",
-      "DeploymentGroup"        : "${var.app_devops["db_deployment_group"]}",
-      "AgentName"              : "${local.db_hostname}${count.index+1}",
-      "Tags"                   : "${var.deployment_name}"
-    }
-  EOF
-
-  protected_settings = <<EOF
-    { 
-      "PATToken": "${var.app_devops["pat"]}" 
-    } 
-  EOF
-
-  tags                         = merge(
-    var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
-  )
-
-  count                        = (var.deploy_non_essential_vm_extensions && !var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
-  depends_on                   = [
-                                  null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_monitor
-                                 ]
-}
 # We can only have one CustomScriptExtension extension per VM, this is not added if deploy_security_vm_extensions = true
 resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
   name                         = "PipelineAgentCustomScript"
@@ -748,6 +673,86 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
                                   azurerm_virtual_machine_extension.app_db_vm_monitor
                                  ]
 }
+resource azurerm_virtual_machine_extension app_db_vm_aadlogin {
+  name                         = "AADLoginForWindows"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  publisher                    = "Microsoft.Azure.ActiveDirectory"
+  type                         = "AADLoginForWindows"
+  type_handler_version         = "1.0"
+  auto_upgrade_minor_version   = true
+
+  count                        = var.deploy_security_vm_extensions ? var.app_db_vm_number : 0
+  tags                         = var.tags
+  depends_on                   = [
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
+                                 ]
+} 
+resource azurerm_virtual_machine_extension app_db_vm_diagnostics {
+  name                         = "Microsoft.Insights.VMDiagnosticsSettings"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  publisher                    = "Microsoft.Azure.Diagnostics"
+  type                         = "IaaSDiagnostics"
+  type_handler_version         = "1.18"
+  auto_upgrade_minor_version   = true
+
+  settings                     = templatefile("./vmdiagnostics.json", { 
+    storage_account_name       = data.azurerm_storage_account.diagnostics.name, 
+    virtual_machine_id         = element(azurerm_virtual_machine.app_db_vm.*.id, count.index), 
+    application_insights_key   = var.diagnostics_instrumentation_key
+  })
+
+  protected_settings = <<EOF
+    { 
+      "storageAccountName"     : "${data.azurerm_storage_account.diagnostics.name}",
+      "storageAccountKey"      : "${data.azurerm_storage_account.diagnostics.primary_access_key}",
+      "storageAccountEndPoint" : "https://core.windows.net"
+    } 
+  EOF
+
+  count                        = var.deploy_monitoring_vm_extensions ? var.app_db_vm_number : 0
+  tags                         = var.tags
+  depends_on                   = [
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
+                                 ]
+}
+resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_group" {
+  name                         = "TeamServicesAgentExtension"
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  publisher                    = "Microsoft.VisualStudio.Services"
+  type                         = "TeamServicesAgent"
+  type_handler_version         = "1.27"
+  auto_upgrade_minor_version   = true
+  settings                     = <<EOF
+    {
+      "VSTSAccountName"        : "${var.app_devops["account"]}",        
+      "TeamProject"            : "${var.app_devops["team_project"]}",
+      "DeploymentGroup"        : "${var.app_devops["db_deployment_group"]}",
+      "AgentName"              : "${local.db_hostname}${count.index+1}",
+      "Tags"                   : "${var.deployment_name}"
+    }
+  EOF
+
+  protected_settings = <<EOF
+    { 
+      "PATToken": "${var.app_devops["pat"]}" 
+    } 
+  EOF
+
+  tags                         = merge(
+    var.tags,
+    map(
+      "dummy-dependency",        var.vm_connectivity_dependency
+    )
+  )
+
+  count                        = (var.deploy_non_essential_vm_extensions && !var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
+  depends_on                   = [
+                                  null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
+                                 ]
+}
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
   name                         = "BGInfo"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
@@ -761,7 +766,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
 
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_monitor
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
@@ -769,7 +774,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
   type                         = "DependencyAgentWindows"
-  type_handler_version         = "9.5"
+  type_handler_version         = "9.10"
   auto_upgrade_minor_version   = true
   settings                     = <<EOF
     {
@@ -794,7 +799,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
 
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_monitor
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
@@ -810,7 +815,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
 
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_monitor
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
                                  ]
 }
 resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
@@ -839,7 +844,7 @@ resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
   count                        = !var.use_pipeline_environment && (var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions) ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_monitor
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
                                  ]
 }
 # Does not work with AutoLogon
@@ -874,7 +879,7 @@ SETTINGS
   count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_monitor,
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
                                   azurerm_virtual_machine_extension.app_db_vm_mount_data_disks
                                  ]
 }

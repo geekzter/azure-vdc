@@ -13,12 +13,17 @@ parameters:
   - ci1
   - ci2
   - ci3
+- name: inherit
+  displayName: Inherit state
+  type: boolean
+  default: false
 - name: destroy
   displayName: Destroy infrastructure
   type: string
   default: Always
   values:
   - Always
+  - Never
   - 'On failure'
   - 'On success'
 - name: unpinTerraformProviders
@@ -68,7 +73,7 @@ stages:
   parameters:
     name: 'CI'
     displayName: 'Provision, Deploy, Tear down'
-    inherit: false
+    inherit: ${{ parameters.inherit }}
     provision: true
     reprovision: true
     deploy: true

@@ -1,4 +1,5 @@
 # Feature toggles
+deploy_api_gateway             = true
 deploy_managed_bastion         = false
 deploy_monitoring_vm_extensions = false
 deploy_network_watcher         = false
@@ -23,6 +24,8 @@ admin_ips = [
     "123.45.67.89"
 ]
 
+apim_aad_client_id             = "00000000-0000-0000-0000-000000000000"
+apim_aad_client_secret         = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 app_devops                     = {
     account                    = "vstsaccount"
     team_project               = "VDC"
@@ -40,6 +43,7 @@ resource_prefix                = "demo"
 vanity_certificate_name        = "mydomain-com"
 vanity_certificate_path        = "STAR_mydoman_com.pfx"
 vanity_certificate_password    = "XXXXXXXXXX"
+vanity_root_certificate_cer_path = "RootCA.cer"
 vanity_domainname              = "mydomain.com"
 
 paas_aad_auth_client_id_map    = {

@@ -1,4 +1,10 @@
 #  Feature Toggles
+variable deploy_api_gateway {
+  description                  = "Whether to deploy API Management"
+  default                      = false
+  type                         = bool
+}
+
 variable deploy_managed_bastion {
   description                  = "Whether to deploy the Managed Bastion"
   default                      = false
@@ -92,6 +98,15 @@ variable deployment_name {
   default                      = "" # Empty string defaults to workspace name
 }
 
+# https://azure.microsoft.com/en-us/global-infrastructure/regions/
+# https://azure.microsoft.com/en-us/global-infrastructure/services/?products=monitor,azure-bastion,private-link
+variable location {
+  description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."
+  # These are examples of regions that support all features:
+  # eastus, northeurope, southeastasia, uksouth, westeurope, westus2
+  default                      = "uksouth"
+}
+
 variable tags {
   description                  = "A map of the tags to use for the resources that are deployed"
   type                         = map
@@ -116,6 +131,7 @@ variable build_id {
   description                  = "The ID of the Build Pipeline that deployed this resource, or created the artefacts"
   default                      = "" 
 }
+
 variable release_web_url {
   description                  = "The url of the Release Pipeline that deployed this resource"
   default                      = "" 
@@ -133,13 +149,82 @@ variable vso_url {
   default                      = ""
 }
 
-# https://azure.microsoft.com/en-us/global-infrastructure/regions/
-# https://azure.microsoft.com/en-us/global-infrastructure/services/?products=monitor,azure-bastion,private-link
-variable location {
-  description                  = "The location/region where the virtual network is created. Changing this forces a new resource to be created."
-  # These are examples of regions that support all features:
-  # eastus, northeurope, southeastasia, uksouth, westeurope, westus2
-  default                      = "uksouth"
+variable apim_aad_client_id {
+  description                  = "Client (Service Principal) ID used for AAD Identity integration"  
+  default                      = null
+}
+variable apim_aad_client_secret {
+  description                  = "Client (Service Principal) Secret used for AAD Identity integration"  
+  default                      = null
+}
+
+variable apim_notification_sender_email {
+  default                      = "noreply@nowhere.com"
+}
+
+variable apim_control_plane_ip_addresses {
+# List of IP addresses: https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet#--control-plane-ip-addresses
+# Get-AzOperationalInsightsIntelligencePack
+  default                      = [
+    "104.214.19.224",
+    "52.162.110.80",
+    "52.253.135.58",
+    "40.82.157.167",
+    "51.137.136.0",
+    "40.81.185.8",
+    "40.81.47.216",
+    "51.145.56.125",
+    "40.81.89.24",
+    "52.224.186.99",
+    "51.145.179.78",
+    "52.140.238.179",
+    "40.66.60.111",
+    "52.139.80.117",
+    "20.46.144.85",
+    "191.233.24.179",
+    "40.90.185.46",
+    "102.133.130.197",
+    "52.139.20.34",
+    "40.80.232.185",
+    "13.71.49.1",
+    "13.64.39.16",
+    "20.40.160.107",
+    "20.37.52.67",
+    "20.44.33.246",
+    "13.86.102.66",
+    "20.40.125.155",
+    "51.143.127.203",
+    "52.253.229.253",
+    "52.253.159.160",
+    "20.188.77.119",
+    "20.44.72.3",
+    "52.142.95.35",
+    "52.139.152.27",
+    "20.39.80.2",
+    "51.107.96.8",
+    "20.39.99.81",
+    "20.37.81.41",
+    "51.107.0.91",
+    "102.133.0.79",
+    "51.116.96.0",
+    "51.116.0.0",
+    "51.120.2.185",
+    "51.120.130.134",
+    "139.217.51.16",
+    "139.217.171.176",
+    "40.125.137.220",
+    "40.126.120.30",
+    "40.73.41.178",
+    "40.73.104.4",
+    "52.127.42.160",
+    "52.127.34.192",
+    "52.227.222.92",
+    "13.73.72.21",
+    "52.244.32.39",
+    "52.243.154.118",
+    "52.182.32.132",
+    "52.181.32.192",
+  ]
 }
 
 # https://docs.microsoft.com/en-us/azure/automation/how-to/region-mappings
@@ -159,12 +244,13 @@ variable vdc_config {
   default = {
     vdc_range                  = "10.0.0.0/14"
     hub_range                  = "10.0.0.0/16"
+    hub_apim_subnet            = "10.0.5.0/27"
     hub_bastion_subnet         = "10.0.255.192/27"
     hub_iag_subnet             = "10.0.0.0/26"
-    hub_waf_subnet             = "10.0.1.64/26"
     hub_mgmt_subnet            = "10.0.2.128/26"
-    hub_vpn_subnet             = "10.0.3.224/27"
     hub_paas_subnet            = "10.0.4.0/26"
+    hub_vpn_subnet             = "10.0.3.224/27"
+    hub_waf_subnet             = "10.0.1.64/26"
     iaas_spoke_range           = "10.1.0.0/16"
     iaas_spoke_bastion_subnet  = "10.1.255.192/27"
     iaas_spoke_app_subnet      = "10.1.1.0/24"
@@ -412,6 +498,11 @@ variable vanity_certificate_name {
 
 variable vanity_certificate_path {
   description                  = "The relative path to the SSL certificate PFX file used for vanity url"
+  default                      = null
+}
+
+variable vanity_root_certificate_cer_path {
+  description                  = "The relative path to the root SSL certificate CER file used for AppGW client auth to APIM"
   default                      = null
 }
 

@@ -213,6 +213,12 @@ stages:
             secureFile: '$(TF_VAR_vanity_certificate_path)'
 
         - task: DownloadSecureFile@1
+          displayName: 'Download SSL root certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vanity_root_certificate_cer_path)'
+  
+        - task: DownloadSecureFile@1
           displayName: 'Download VPN root certificate'
           enabled: ${{ not(parameters.testMode) }}
           inputs:
@@ -304,6 +310,12 @@ stages:
           inputs:
             secureFile: '$(TF_VAR_vanity_certificate_path)'
 
+        - task: DownloadSecureFile@1
+          displayName: 'Download SSL root certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vanity_root_certificate_cer_path)'
+  
         - task: DownloadSecureFile@1
           displayName: 'Download VPN root certificate'
           enabled: ${{ not(parameters.testMode) }}
@@ -719,13 +731,23 @@ stages:
         - Deploy
         - DeployEnvironment
         - Provision
+        - ${{ if eq(parameters.reprovision, true) }}:
+          - Reprovision
       displayName: 'Test Applications'
       condition: succeeded()
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
-        iaasAppUrl: $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
-        paasAppUrl: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+        apimGWUrl:     $[ dependencies.Provision.outputs['terraform.apim_gateway_url'] ]
+        apimPortalUrl: $[ dependencies.Provision.outputs['terraform.apim_developer_portal_url'] ]
+        deployAPIM:    $[ eq(variables['TF_VAR_deploy_api_gateway'], 'true') ]
+        iaasAppUrl:    $[ dependencies.Provision.outputs['terraform.iaas_app_url'] ]
+        paasAppUrl:    $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+        # apim_demo_api_key get's updated on every terraform apply, make sure we get up to date data
+        ${{ if eq(parameters.reprovision, false) }}:
+          apimDemoKey: $[ dependencies.Provision.outputs['terraform.apim_demo_api_key'] ]
+        ${{ if eq(parameters.reprovision, true) }}:
+          apimDemoKey: $[ dependencies.Reprovision.outputs['terraform.apim_demo_api_key'] ]
 
       pool:
         vmImage: 'ubuntu-latest'
@@ -751,6 +773,7 @@ stages:
               Start-Sleep -Seconds 10
               
               # Request page
+              Write-Host "Requesting $(iaasAppUrl)..."
               Invoke-WebRequest -Uri $(iaasAppUrl) -MaximumRetryCount 9
             failOnStderr: true
             pwsh: true
@@ -766,7 +789,35 @@ stages:
               Start-Sleep -Seconds 10
               
               # Request page
+              Write-Host "Requesting $(paasAppUrl)..."
               Invoke-WebRequest -Uri $(paasAppUrl) -MaximumRetryCount 9
+            failOnStderr: true
+            pwsh: true
+
+        # Test API Management
+        - task: PowerShell@2
+          displayName: 'Test API Management Portal'
+          condition: and(succeeded(), eq(variables.deployAPIM, true))
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Request page
+              Write-Host "Requesting $(apimPortalUrl)..."
+              Invoke-WebRequest -Uri $(apimPortalUrl) -MaximumRetryCount 9
+            failOnStderr: true
+            pwsh: true
+        - task: PowerShell@2
+          displayName: 'Test API Management Gateway'
+          condition: and(succeeded(), eq(variables.deployAPIM, true))
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Call REST Api
+              $apimDemoUrl = "$(apimGWUrl)echo/resource?param1=sample"
+              Write-Host "Performing GET request of $apimDemoUrl with Header Ocp-Apim-Subscription-Key = $(apimDemoKey)..."
+              Invoke-RestMethod -Header @{ "Ocp-Apim-Subscription-Key" = "$(apimDemoKey)" } -Method Get -Uri $apimDemoUrl -MaximumRetryCount 9
             failOnStderr: true
             pwsh: true
 
@@ -816,6 +867,12 @@ stages:
           inputs:
             secureFile: '$(TF_VAR_vanity_certificate_path)'
 
+        - task: DownloadSecureFile@1
+          displayName: 'Download SSL root certificate'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            secureFile: '$(TF_VAR_vanity_root_certificate_cer_path)'
+  
         - task: DownloadSecureFile@1
           displayName: 'Download VPN root certificate'
           enabled: ${{ not(parameters.testMode) }}

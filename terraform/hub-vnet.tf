@@ -40,7 +40,6 @@ resource azurerm_network_security_group mgmt_nsg {
     destination_address_prefix= "VirtualNetwork"
   }
 }
-
 resource azurerm_network_watcher_flow_log mgmt_nsg {
   network_watcher_name         = local.network_watcher_name
   resource_group_name          = local.network_watcher_resource_group
@@ -57,12 +56,37 @@ resource azurerm_network_watcher_flow_log mgmt_nsg {
 
   traffic_analytics {
     enabled                    = true
+    interval_in_minutes        = 10
     workspace_id               = azurerm_log_analytics_workspace.vcd_workspace.workspace_id
     workspace_region           = local.workspace_location
     workspace_resource_id      = azurerm_log_analytics_workspace.vcd_workspace.id
   }
 
   count                        = var.deploy_network_watcher ? 1 : 0
+}
+resource azurerm_monitor_diagnostic_setting mgmt_nsg_logs {
+  name                         = "${azurerm_network_security_group.mgmt_nsg.name}-logs"
+  target_resource_id           = azurerm_network_security_group.mgmt_nsg.id
+  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
+  log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
+
+  log {
+    category                   = "NetworkSecurityGroupEvent"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  log {
+    category                   = "NetworkSecurityGroupRuleCounter"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
 }
 
 # ******************* Routing ******************* #

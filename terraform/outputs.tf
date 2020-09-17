@@ -17,6 +17,34 @@ output admin_password {
   value       = local.password
 }
 
+output apim_demo_api_key {
+  value       = try(azurerm_api_management_subscription.echo_subscription.0.primary_key,null)
+}
+
+output apim_developer_portal_url {
+  value       = local.apim_portal_url
+}
+
+output apim_gateway_url {
+  value       = local.apim_gw_url
+}
+
+output apim_internal_developer_portal_url {
+  value       = try(azurerm_api_management.api_gateway.0.developer_portal_url,null)
+}
+
+output apim_internal_gateway_url {
+  value       = try(azurerm_api_management.api_gateway.0.gateway_url,null)
+}
+
+output apim_internal_management_api_url{
+  value       = try(azurerm_api_management.api_gateway.0.management_api_url,null)
+}
+
+output apim_private_ip_addresses {
+  value       = try(azurerm_api_management.api_gateway.0.private_ip_addresses,null)
+}
+
 output application_insights_id {
   value       = azurerm_application_insights.vdc_insights.app_id
 }

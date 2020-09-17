@@ -357,9 +357,12 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     # "adl.windows.com",
       "chocolatey.org",
       "crl.microsoft.com",
+      "crl.usertrust.com",
       "go.microsoft.com",
       "mscrl.microsoft.com",
       "ocsp.msocsp.com",
+      "ocsp.sectigo.com",
+      "ocsp.usertrust.com",
       "dl.delivery.mp.microsoft.com", # "Microsoft Edge"
     # "www.microsoft.com",
       "www.msftconnecttest.com"
@@ -571,6 +574,254 @@ resource azurerm_firewall_network_rule_collection iag_net_outbound_rules {
       "UDP",
     ]
   }
+}
+
+# Rules for API Management
+# https://aka.ms/apim-vnet-common-issues
+resource azurerm_firewall_application_rule_collection iag_apim_app_rules {
+  name                         = "${azurerm_firewall.iag.name}-apim-app-rules"
+  azure_firewall_name          = azurerm_firewall.iag.name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  priority                     = 201
+  action                       = "Allow"
+
+  # Allow APIM access to Azure SQL endpoints
+  rule {
+    name                       = "APIM -> SQL Access"
+    description                = "Allow API Management access to Azure SQL endpoints"
+
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+
+    target_fqdns               = [
+      "*"
+    ]
+
+    protocol {
+        port                   = "1433"
+        type                   = "Mssql"
+    }
+  }
+
+  rule {
+    name                       = "Catch-all APIM HTTP rule"
+    description                = "Allow API Management HTTP traffic not covered by one of the documented rules"
+
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+
+    target_fqdns               = [
+        "*.azureedge.net",
+        "*.metrics.nsatc.net",
+        "*.monitoring.azure.com",
+        "client.hip.live.com",
+        "dc.services.visualstudio.com",
+        "partner.hip.live.com",
+    ]
+
+    protocol {
+        port                   = "443"
+        type                   = "Https"
+    }
+  }
+
+  rule {
+    name                       = "APIM Metrics rule"
+    description                = "Allow metrics traffic to port 1186 (HTTP)"
+
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+
+    target_fqdns               = [
+        "*.metrics.nsatc.net"
+    ]
+
+    protocol {
+        port                   = "1886"
+        type                   = "Https"
+    }
+  }
+
+  rule {
+    name                       = "Rule for API Demo's"
+    description                = "Allow API Management HTTP traffic to demo API's"
+
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+
+    target_fqdns               = [
+        "echoapi.cloudapp.net",
+    ]
+
+    protocol {
+        port                   = "80"
+        type                   = "Http"
+    }
+  }
+
+}
+# Rules for API Management
+# https://aka.ms/apim-vnet-common-issues
+data dns_a_record_set apim_smtp_relay1 {
+  host                         = "smtpi-co1.msn.com"
+}
+data dns_a_record_set apim_smtp_relay2 {
+  host                         = "smtpi-ch1.msn.com"
+}
+data dns_a_record_set apim_smtp_relay3 {
+  host                         = "smtpi-db3.msn.com"
+}
+data dns_a_record_set apim_smtp_relay4 {
+  host                         = "smtpi-sin.msn.com"
+}
+resource azurerm_firewall_network_rule_collection iag_net_outbound_apim_rules {
+  name                         = "${azurerm_firewall.iag.name}-apim-out-rules"
+  azure_firewall_name          = azurerm_firewall.iag.name
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  priority                     = 103
+  action                       = "Allow"
+
+  rule {
+    name                       = "AllowOutboundStorage"
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+    destination_ports          = [
+      "443",
+    ]
+    destination_addresses      = [
+      "*"
+    ]
+    protocols                  = [
+      "TCP"
+    ]
+  }
+  
+  rule {
+    name                       = "AllowAzureActiveDirectory"
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+    destination_ports          = [
+      "443",
+    ]
+    destination_addresses      = [
+      "AzureActiveDirectory",
+    ]
+    protocols                  = [
+      "TCP"
+    ]
+  }    
+
+  rule {
+    name                       = "AllowStorage"
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+    destination_ports          = [
+      "443",
+      "445",
+    ]
+    destination_addresses      = [
+      "Storage",
+    ]
+    protocols                  = [
+      "TCP"
+    ]
+  }    
+
+  rule {
+    name                       = "AllowHealthMonitoring"
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+    destination_ports          = [
+      "443",
+      "12000",
+    ]
+    destination_addresses      = [
+      "AzureCloud",
+    ]
+    protocols                  = [
+      "TCP"
+    ]
+  }    
+
+  rule {
+    name                       = "AllowMonitoring"
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+    destination_ports          = [
+      "443",
+      "1886",
+    ]
+    destination_addresses      = [
+      "AzureMonitor",
+    ]
+    protocols                  = [
+      "TCP"
+    ]
+  }    
+
+  rule {
+    name                       = "AllowSQL"
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+    destination_ports          = [
+      "1443",
+    ]
+    destination_addresses      = [
+      "Sql",
+    ]
+    protocols                  = [
+      "TCP"
+    ]
+  }    
+
+  rule {
+    name                       = "AllowEventHub"
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+    destination_ports          = [
+      "443",
+      "5671",
+      "5672",
+    ]
+    destination_addresses      = [
+      "EventHub",
+    ]
+    protocols                  = [
+      "TCP"
+    ]
+  }    
+
+  rule {
+    name                       = "AllowSMTPRelay"
+    source_addresses           = [
+      var.vdc_config["hub_apim_subnet"],
+    ]
+    destination_ports          = [
+      "25",
+      "587",
+      "25028",
+    ]
+    destination_addresses      = concat(
+                                        data.dns_a_record_set.apim_smtp_relay1.addrs,
+                                        data.dns_a_record_set.apim_smtp_relay2.addrs,
+                                        data.dns_a_record_set.apim_smtp_relay3.addrs,
+                                        data.dns_a_record_set.apim_smtp_relay4.addrs
+    )
+    protocols                  = [
+      "TCP"
+    ]
+  }    
 }
 
 # BUG: 'HTTPS request from 10.1.1.5:49775. Action: Deny. Reason: SNI TLS extension was missing.'

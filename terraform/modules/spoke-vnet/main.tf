@@ -215,7 +215,6 @@ resource "azurerm_network_security_group" "spoke_nsg" {
   }
 }
 
-# BUG: Resource is not destroyed
 resource azurerm_network_watcher_flow_log spoke_nsg {
   network_watcher_name         = var.network_watcher_name
   resource_group_name          = var.network_watcher_resource_group_name

@@ -155,30 +155,6 @@ resource "azurerm_log_analytics_solution" "oms_solutions" {
 
 } 
 
-resource "azurerm_monitor_diagnostic_setting" "mgmt_nsg_logs" {
-  name                         = "${azurerm_network_security_group.mgmt_nsg.name}-logs"
-  target_resource_id           = azurerm_network_security_group.mgmt_nsg.id
-  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
-  log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
-
-  log {
-    category                   = "NetworkSecurityGroupEvent"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  log {
-    category                   = "NetworkSecurityGroupRuleCounter"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-}
 resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
   name                         = "${azurerm_virtual_network.hub_vnet.name}-logs"
   target_resource_id           = azurerm_virtual_network.hub_vnet.id
@@ -240,18 +216,20 @@ resource "azurerm_dashboard" "vdc_dashboard" {
 
   dashboard_properties = templatefile("dashboard.tpl",
     {
-      subscription             = data.azurerm_subscription.primary.id
-      prefix                   = var.resource_prefix
-      deployment_name          = local.deployment_name
-      suffix                   = local.suffix
-      subscription_guid        = data.azurerm_subscription.primary.subscription_id
+      apim_gw_url              = "${local.apim_gw_url}echo/resource?param1=sample&subscription-key=${try(azurerm_api_management_subscription.echo_subscription.0.primary_key,"")}"
+      apim_portal_url          = local.apim_portal_url
       appinsights_id           = azurerm_application_insights.vdc_insights.app_id
       build_web_url            = try(var.build_id != "" ? "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build/results?buildId=${var.build_id}" : "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build","https://dev.azure.com")
+      deployment_name          = local.deployment_name
       iaas_app_url             = local.iaas_app_url
-      paas_app_url             = local.paas_app_url
       paas_app_resource_group_short = local.paas_app_resource_group_short
+      paas_app_url             = local.paas_app_url
+      prefix                   = var.resource_prefix
       release_web_url          = try(var.release_web_url != "" ? var.release_web_url : "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_release","https://dev.azure.com")
       shared_rg                = var.shared_resources_group
+      subscription             = data.azurerm_subscription.primary.id
+      subscription_guid        = data.azurerm_subscription.primary.subscription_id
+      suffix                   = local.suffix
       vso_url                  = var.vso_url != "" ? var.vso_url : "https://online.visualstudio.com/"
   })
 }

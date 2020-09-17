@@ -74,6 +74,11 @@ jobs:
         secureFile: '$(TF_VAR_vanity_certificate_path)'
 
     - task: DownloadSecureFile@1
+      displayName: 'Download SSL root certificate'
+      inputs:
+        secureFile: '$(TF_VAR_vanity_root_certificate_cer_path)'
+  
+    - task: DownloadSecureFile@1
       displayName: 'Download VPN root certificate'
       inputs:
         secureFile: '$(TF_VAR_vpn_root_cert_file)'

@@ -9,7 +9,7 @@
             "settings": {
               "content": {
                 "settings": {
-                  "content": "\nThis project contains a hub & spoke Virtual Datacenter deployment. \n<br/>\n<br/>\n<a href='https://portal.azure.com/#@/dashboard/arm${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.portal/dashboards/${appinsights_id}-dashboard' target='_blank'>Application Insights Dashboard</a>\n<br/>\n<a href='https://${prefix}-${deployment_name}-paasapp-${suffix}-appsvc-app.scm.azurewebsites.net' target='_blank'>App Service Kudu Console</a>\n<br/>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Codespace</a>\n",
+                  "content": "\nThis project contains a hub & spoke Virtual Datacenter deployment. \n<br/>\n<br/>\n<a href='${apim_gw_url}' target='_blank'>API Management Gateway</a>\n<br/>\n<a href='${apim_portal_url}' target='_blank'>API Management Portal</a>\n<br/>\n<a href='https://portal.azure.com/#@/dashboard/arm${subscription}/resourcegroups/${prefix}-${deployment_name}-${suffix}/providers/microsoft.portal/dashboards/${appinsights_id}-dashboard' target='_blank'>Application Insights Dashboard</a>\n<br/>\n<a href='https://${prefix}-${deployment_name}-paasapp-${suffix}-appsvc-app.scm.azurewebsites.net' target='_blank'>App Service Kudu Console</a>\n<br/>\n<a href='https://github.com/geekzter/azure-vdc' target='_blank'>GitHub project</a>\n<br/>\n<a href='${iaas_app_url}' target='_blank'>IaaS App</a>\n<br/>\n<a href='${paas_app_url}' target='_blank'>PaaS App</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Build Pipeline</a>\n<br/>\n<a href='${build_web_url}' target='_blank'>Release Pipeline</a>\n<br/>\n<a href='${vso_url}' target='_blank'>Visual Studio Codespace</a>\n",
                   "subtitle": "",
                   "title": "Automated VDC"
                 }
@@ -1350,13 +1350,13 @@
               "value": "Past 24 hours"
             },
             "filteredPartIds": [
-              "StartboardPart-ApplicationMapPart-06b511d5-5472-49d8-903a-5ec12c9e6381",
-              "StartboardPart-MonitorChartPart-06b511d5-5472-49d8-903a-5ec12c9e638f",
-              "StartboardPart-AnalyticsPart-06b511d5-5472-49d8-903a-5ec12c9e6391",
-              "StartboardPart-AnalyticsPart-06b511d5-5472-49d8-903a-5ec12c9e639f",
-              "StartboardPart-AnalyticsPart-06b511d5-5472-49d8-903a-5ec12c9e63a7",
-              "StartboardPart-AnalyticsPart-06b511d5-5472-49d8-903a-5ec12c9e63a9",
-              "StartboardPart-AnalyticsPart-06b511d5-5472-49d8-903a-5ec12c9e63ab"
+              "StartboardPart-ApplicationMapPart-d3947283-21f1-4f64-bba9-ab1b58ebd021",
+              "StartboardPart-MonitorChartPart-d3947283-21f1-4f64-bba9-ab1b58ebd02f",
+              "StartboardPart-AnalyticsPart-d3947283-21f1-4f64-bba9-ab1b58ebd031",
+              "StartboardPart-AnalyticsPart-d3947283-21f1-4f64-bba9-ab1b58ebd03f",
+              "StartboardPart-AnalyticsPart-d3947283-21f1-4f64-bba9-ab1b58ebd047",
+              "StartboardPart-AnalyticsPart-d3947283-21f1-4f64-bba9-ab1b58ebd049",
+              "StartboardPart-AnalyticsPart-d3947283-21f1-4f64-bba9-ab1b58ebd04b"
             ],
             "model": {
               "format": "utc",
