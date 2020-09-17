@@ -355,16 +355,19 @@ resource azurerm_application_gateway waf {
       ip_addresses             = try(azurerm_api_management.api_gateway.0.private_ip_addresses,null)
     }
   }
-  backend_http_settings {
-    name                       = local.apim_gw_backend_setting
-    cookie_based_affinity      = "Disabled"
-    # Used when terminating SSL at App Service
-    host_name                  = local.apim_gw_fqdn
-    port                       = 443
-    probe_name                 = "apim-gw-probe"
-    protocol                   = "Https"
-    request_timeout            = 180
-    trusted_root_certificate_names = [var.vanity_certificate_name]
+  dynamic "backend_http_settings" {
+    for_each = range(var.use_vanity_domain_and_ssl && var.deploy_api_gateway ? 1 : 0)
+    content {
+      name                     = local.apim_gw_backend_setting
+      cookie_based_affinity    = "Disabled"
+      # Used when terminatingSL at App Service
+      host_name                = local.apim_gw_fqdn
+      port                     = 443
+      probe_name               = "apim-gw-probe"
+      protocol                 = "Https"
+      request_timeout          = 180
+      trusted_root_certificate_names = [var.vanity_certificate_name]
+    }
   }
   dynamic "http_listener" {
     for_each = range(var.use_vanity_domain_and_ssl && var.deploy_api_gateway ? 1 : 0)
@@ -406,22 +409,25 @@ resource azurerm_application_gateway waf {
   dynamic "trusted_root_certificate" {
     for_each = range(var.use_vanity_domain_and_ssl && var.deploy_api_gateway ? 1 : 0)
     content {
-      name                       = var.vanity_certificate_name
-      data                       = filebase64(var.vanity_root_certificate_cer_path)
+      name                     = var.vanity_certificate_name
+      data                     = filebase64(var.vanity_root_certificate_cer_path)
     }
   }
 
   # API Management Portal
-  backend_http_settings {
-    name                       = local.apim_portal_backend_setting
-    cookie_based_affinity      = "Disabled"
-    # Used when terminating SSL at App Service
-    host_name                  = local.apim_portal_fqdn
-    port                       = 443
-    probe_name                 = "apim-portal-probe"
-    protocol                   = "Https"
-    request_timeout            = 180
-    trusted_root_certificate_names = [var.vanity_certificate_name]
+  dynamic "backend_http_settings" {
+    for_each = range(var.use_vanity_domain_and_ssl && var.deploy_api_gateway ? 1 : 0)
+    content {
+      name                     = local.apim_portal_backend_setting
+      cookie_based_affinity    = "Disabled"
+      # Used when terminating SSL at App Service
+      host_name                = local.apim_portal_fqdn
+      port                     = 443
+      probe_name               = "apim-portal-probe"
+      protocol                 = "Https"
+      request_timeout          = 180
+      trusted_root_certificate_names = [var.vanity_certificate_name]
+    }
   }
   dynamic "http_listener" {
     for_each = range(var.use_vanity_domain_and_ssl && var.deploy_api_gateway ? 1 : 0)
