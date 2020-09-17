@@ -403,9 +403,12 @@ resource azurerm_application_gateway waf {
     #   status_code              = ["200-399","401"]
     # }
   }
-  trusted_root_certificate {
-    name                       = var.vanity_certificate_name
-    data                       = filebase64(var.vanity_root_certificate_cer_path)
+  dynamic "trusted_root_certificate" {
+    for_each = range(var.use_vanity_domain_and_ssl && var.deploy_api_gateway ? 1 : 0)
+    content {
+      name                       = var.vanity_certificate_name
+      data                       = filebase64(var.vanity_root_certificate_cer_path)
+    }
   }
 
   # API Management Portal

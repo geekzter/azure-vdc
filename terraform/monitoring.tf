@@ -216,7 +216,7 @@ resource "azurerm_dashboard" "vdc_dashboard" {
 
   dashboard_properties = templatefile("dashboard.tpl",
     {
-      apim_gw_url              = "${local.apim_gw_url}echo/resource?param1=sample&subscription-key=${try(azurerm_api_management_subscription.echo_subscription.0.primary_key,null)}"
+      apim_gw_url              = "${local.apim_gw_url}echo/resource?param1=sample&subscription-key=${try(azurerm_api_management_subscription.echo_subscription.0.primary_key,"")}"
       apim_portal_url          = local.apim_portal_url
       appinsights_id           = azurerm_application_insights.vdc_insights.app_id
       build_web_url            = try(var.build_id != "" ? "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build/results?buildId=${var.build_id}" : "https://dev.azure.com/${var.app_devops["account"]}/${var.app_devops["team_project"]}/_build","https://dev.azure.com")
