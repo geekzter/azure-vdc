@@ -275,6 +275,7 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "*.do.dsp.mp.microsoft.com",
       "*.events.data.microsoft.com",
       "*.identity.azure.net", # MSI Sidecar
+      "*.ingestion.msftcloudes.com",
       "*.loganalytics.io",
       "*.microsoftonline-p.com", # AAD Browser login
       "*.monitoring.azure.com",
@@ -311,7 +312,6 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "sts.windows.net",
       "validation-v2.sls.microsoft.com",
       "${azurerm_key_vault.vault.name}.vault.azure.net",
-      "${var.location}.prod.hot.ingestion.msftcloudes.com",
       azurerm_log_analytics_workspace.vcd_workspace.portal_url,
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_storage_account.vdc_diag_storage.primary_table_host
@@ -822,38 +822,6 @@ resource azurerm_firewall_network_rule_collection iag_net_outbound_apim_rules {
       "TCP"
     ]
   }    
-}
-
-# BUG: 'HTTPS request from 10.1.1.5:49775. Action: Deny. Reason: SNI TLS extension was missing.'
-# HACK: Use network rules with DNS provider as a workaround
-# This only allows the IP address looked up at provisioning time. If the IP address changes (this is Traffic Manager), the newly used IP address will not be whitelisted.
-data dns_a_record_set diagnostics_ingestion {
-  host                         = "${var.location}.prod.hot.ingestion.msftcloudes.com"
-  count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
-}
-resource azurerm_firewall_network_rule_collection iag_net_outbound_http_rules {
-  name                         = "${azurerm_firewall.iag.name}-net-out-http-rules"
-  azure_firewall_name          = azurerm_firewall.iag.name
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  priority                     = 102
-  action                       = "Allow"
-
-  rule {
-    name                       = "AllowOutboundToDiagnosticsIngestion"
-
-    source_addresses           = [
-      var.vdc_config["vdc_range"],
-    ]
-    destination_ports          = [
-      "443",
-    ]
-    destination_addresses      = data.dns_a_record_set.diagnostics_ingestion.0.addrs
-    protocols                  = [
-      "TCP",
-    ]
-  }
-
-  count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
 }
 
 /*
