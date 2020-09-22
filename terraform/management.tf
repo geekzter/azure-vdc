@@ -347,9 +347,8 @@ resource azurerm_virtual_machine_extension mgmt_diagnostics {
   depends_on                   = [
                                   null_resource.start_mgmt,
                                   azurerm_virtual_machine_extension.mgmt_roles,
-#                                  azurerm_private_dns_a_record.diag_storage_table_dns_record,
-#                                  azurerm_private_dns_a_record.diag_storage_blob_dns_record,
-                                  azurerm_firewall_network_rule_collection.iag_net_outbound_http_rules
+                                  azurerm_private_dns_a_record.diag_storage_table_dns_record,
+                                  azurerm_private_dns_a_record.diag_storage_blob_dns_record,
                                  ]
 }
 resource azurerm_virtual_machine_extension mgmt_dependency_monitor {
