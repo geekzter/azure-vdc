@@ -28,11 +28,26 @@ data azurerm_container_registry vdc_images {
   count                        = var.container_registry != null ? 1 : 0
 }
 
+data external az_version {
+  program                      = [
+                                 "az",
+                                 "version",
+                                 "--query",
+#                                 "{azure_cli:azure-cli}", # broken
+                                 "{azure_cli:values(@)[2]}",
+                                 "-o",
+                                 "json",
+                                 ]
+}
+
 locals {
   aad_auth_client_id           = var.aad_auth_client_id_map != null ? lookup(var.aad_auth_client_id_map, "${terraform.workspace}_client_id", null) : null
   admin_ips                    = "${tolist(var.admin_ips)}"
   admin_login_ps               = var.admin_login != null ? var.admin_login : "$null"
   admin_object_id_ps           = var.admin_object_id != null ? var.admin_object_id : "$null"
+  az_version                   = data.external.az_version.result.azure_cli
+  az_major_version             = substr(local.az_version,0,1)
+  az_minor_version             = substr(local.az_version,2,2)
   # Last element of resource id is resource name
   integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
   integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
@@ -43,6 +58,8 @@ locals {
   publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   vanity_hostname              = var.vanity_fqdn != null ? element(split(".",var.vanity_fqdn),0) : null
   vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
+  # az webapp log config --application-logging switch has different values 2.12 & above
+  webapp_application_logging   = local.az_major_version >= 2 && local.az_minor_version >= 12 ? "filesystem" : "true"
 }
 
 resource azurerm_resource_group app_rg {
@@ -459,7 +476,7 @@ resource azurerm_app_service paas_web_app {
 
   # Configure more logging with Azure CLI
   provisioner local-exec {
-    command                    = "az webapp log config --ids ${self.id} --application-logging true --detailed-error-messages true --failed-request-tracing true"
+    command                    = "az webapp log config --ids ${self.id} --application-logging ${local.webapp_application_logging} --detailed-error-messages true --failed-request-tracing true"
   }
 
   site_config {
