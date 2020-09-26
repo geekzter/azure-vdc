@@ -16,12 +16,11 @@ resource azurerm_storage_account vdc_diag_storage {
     default_action             = "Deny"
     # This is used for diagnostics only
     bypass                     = [
-                                   # TODO: Instead of AzureServices use Service Endpoints
-                                   #       https://docs.microsoft.com/en-us/azure/network-watcher/frequently-asked-questions#nsg-flow-logs
                                   "AzureServices",
                                   "Logging",
                                   "Metrics"
     ]
+    ip_rules                   = [local.ipprefix]
   }
 
   tags                         = local.tags

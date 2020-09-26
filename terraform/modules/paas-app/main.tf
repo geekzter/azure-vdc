@@ -27,17 +27,9 @@ data azurerm_container_registry vdc_images {
 
   count                        = var.container_registry != null ? 1 : 0
 }
-
-data external az_version {
-  program                      = [
-                                 "az",
-                                 "version",
-                                 "--query",
-#                                 "{azure_cli:azure-cli}", # broken
-                                 "{azure_cli:values(@)[2]}",
-                                 "-o",
-                                 "json",
-                                 ]
+data azurerm_storage_account diagnostics {
+  name                         = local.diagnostics_storage_name
+  resource_group_name          = local.vdc_resource_group_name
 }
 
 locals {
@@ -45,21 +37,17 @@ locals {
   admin_ips                    = "${tolist(var.admin_ips)}"
   admin_login_ps               = var.admin_login != null ? var.admin_login : "$null"
   admin_object_id_ps           = var.admin_object_id != null ? var.admin_object_id : "$null"
-  az_version                   = data.external.az_version.result.azure_cli
-  az_major_version             = substr(local.az_version,0,1)
-  az_minor_version             = substr(local.az_version,2,2)
   # Last element of resource id is resource name
-  integrated_vnet_name         = "${element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)}"
-  integrated_subnet_name       = "${element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)}"
+  diagnostics_storage_name     = element(split("/",var.diagnostics_storage_id),length(split("/",var.diagnostics_storage_id))-1)
+  integrated_vnet_name         = element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)
+  integrated_subnet_name       = element(split("/",var.integrated_subnet_id),length(split("/",var.integrated_subnet_id))-1)
   linux_fx_version             = var.container_registry != null && var.container != null ? "DOCKER|${data.azurerm_container_registry.vdc_images.0.login_server}/${var.container}" : "DOCKER|appsvcsample/python-helloworld:latest"
   resource_group_name_short    = substr(lower(replace(var.resource_group_name,"-","")),0,20)
   password                     = ".Az9${random_string.password.result}"
   publicip                     = chomp(data.http.localpublicip.body)
   publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   vanity_hostname              = var.vanity_fqdn != null ? element(split(".",var.vanity_fqdn),0) : null
-  vdc_resource_group_name      = "${element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)}"
-  # az webapp log config --application-logging switch has different values 2.12 & above
-  webapp_application_logging   = local.az_major_version >= 2 && local.az_minor_version >= 12 ? "filesystem" : "true"
+  vdc_resource_group_name      = element(split("/",var.vdc_resource_group_id),length(split("/",var.vdc_resource_group_id))-1)
 }
 
 resource azurerm_resource_group app_rg {
@@ -396,6 +384,58 @@ locals {
   sql_connection_string        = "Server=tcp:${azurerm_sql_server.app_sqlserver.fully_qualified_domain_name},1433;Database=${azurerm_sql_database.app_sqldb.name};"
 }
 
+resource azurerm_storage_container application_logs {
+  name                         = "applicationlogs"
+  storage_account_name         = local.diagnostics_storage_name
+  container_access_type        = "private"
+
+  depends_on                   = [
+  ]
+}
+data azurerm_storage_account_blob_container_sas application_logs {
+  connection_string            = data.azurerm_storage_account.diagnostics.primary_connection_string
+  container_name               = azurerm_storage_container.application_logs.name
+  https_only                   = true
+
+  start                        = formatdate("YYYY-MM-DD",timestamp())
+  expiry                       = formatdate("YYYY-MM-DD",timeadd(timestamp(),"8760h")) # 1 year from now (365 days)
+
+  permissions {
+    read                       = true
+    add                        = true
+    create                     = true
+    write                      = true
+    delete                     = true
+    list                       = true
+  }
+}
+
+resource azurerm_storage_container http_logs {
+  name                         = "httplogs"
+  storage_account_name         = local.diagnostics_storage_name
+  container_access_type        = "private"
+
+  depends_on                   = [
+  ]
+}
+data azurerm_storage_account_blob_container_sas http_logs {
+  connection_string            = data.azurerm_storage_account.diagnostics.primary_connection_string
+  container_name               = azurerm_storage_container.http_logs.name
+  https_only                   = true
+
+  start                        = formatdate("YYYY-MM-DD",timestamp())
+  expiry                       = formatdate("YYYY-MM-DD",timeadd(timestamp(),"8760h")) # 1 year from now (365 days)
+
+  permissions {
+    read                       = true
+    add                        = true
+    create                     = true
+    write                      = true
+    delete                     = true
+    list                       = true
+  }
+}
+
 resource azurerm_app_service paas_web_app {
   name                         = "${var.resource_group_name}-appsvc-app"
   location                     = azurerm_resource_group.app_rg.location
@@ -453,30 +493,19 @@ resource azurerm_app_service paas_web_app {
   }
 
   logs {
-    # application_logs {
-    #   azure_blob_storage {
-    #     level                    = "Error"
-    #     retention_in_days        = 90
-    #     # there is currently no means of generating Service SAS tokens with the azurerm provider
-    #     sas_url                  = ""
-    #   }
-    # }
-    http_logs {
-      # azure_blob_storage {
-      #   retention_in_days        = 90
-      #   # there is currently no means of generating Service SAS tokens with the azurerm provider
-      #   sas_url                  = ""
-      # }
-      file_system {
-        retention_in_days        = 90
-        retention_in_mb          = 100
+    application_logs {
+      azure_blob_storage {
+        level                  = "Error"
+        retention_in_days      = 90
+        sas_url                = "${azurerm_storage_container.application_logs.id}${data.azurerm_storage_account_blob_container_sas.application_logs.sas}"
       }
     }
-  }
-
-  # Configure more logging with Azure CLI
-  provisioner local-exec {
-    command                    = "az webapp log config --ids ${self.id} --application-logging ${local.webapp_application_logging} --detailed-error-messages true --failed-request-tracing true"
+    http_logs {
+      azure_blob_storage {
+        retention_in_days      = 90
+        sas_url                = "${azurerm_storage_container.http_logs.id}${data.azurerm_storage_account_blob_container_sas.http_logs.sas}"
+      }
+    }
   }
 
   site_config {

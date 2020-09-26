@@ -55,11 +55,10 @@ resource azurerm_virtual_network_gateway vpn_gw {
   }
 
   vpn_client_configuration {
+    aad_tenant                 = local.tenant_url
+    aad_audience               = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
+    aad_issuer                 = local.issuer_url
     address_space              = [var.vpn_range]
-    # root_certificate {
-    #   name                     = var.vpn_root_cert_name
-    #   public_cert_data         = filebase64(var.vpn_root_cert_file) # load cert from file
-    # }
     vpn_client_protocols       = ["OpenVPN"]
   }
 
@@ -72,16 +71,6 @@ resource azurerm_virtual_network_gateway vpn_gw {
 
   count                        = var.deploy_vpn ? 1 : 0
   tags                         = var.tags
-}
-
-resource null_resource vpn_aad {
-  # Enable AAD auth
-  provisioner local-exec {
-    # tenant and issuer are the same url
-    command                    = "az network vnet-gateway aad assign --gateway-name ${azurerm_virtual_network_gateway.vpn_gw.0.name} -g ${azurerm_virtual_network_gateway.vpn_gw.0.resource_group_name} --audience 41b23e61-6c1e-4545-b367-cd054e0ed4b4 --issuer '${local.issuer_url}' --tenant '${local.tenant_url}' --query 'vpnClientConfiguration'"
-  }
-
-  count                        = var.deploy_vpn ? 1 : 0
 }
 
 resource "azurerm_monitor_diagnostic_setting" "vpn_logs" {
