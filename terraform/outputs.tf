@@ -221,10 +221,6 @@ output paas_app_sql_database_connection_string {
   value       = module.paas_app.sql_database_connection_string
 }
 
-output paas_app_sql_server {
-  value       = module.paas_app.sql_server
-}
-
 output paas_app_sql_server_fqdn {
   value       = module.paas_app.sql_server_fqdn
 }
