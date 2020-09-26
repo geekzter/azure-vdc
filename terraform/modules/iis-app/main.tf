@@ -410,7 +410,14 @@ SETTINGS
   count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_web_vm_aadlogin,
+                                  azurerm_virtual_machine_extension.app_web_vm_bginfo,
+                                  azurerm_virtual_machine_extension.app_web_vm_dependency_monitor,
+                                  azurerm_virtual_machine_extension.app_web_vm_diagnostics,
+                                  azurerm_virtual_machine_extension.app_web_vm_monitor,
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_deployment_group,
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_web_vm_watcher
                                  ]
 }
 
@@ -879,8 +886,15 @@ SETTINGS
   count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_db_vm,
+                                  azurerm_virtual_machine_extension.app_db_vm_aadlogin,
+                                  azurerm_virtual_machine_extension.app_db_vm_bginfo,
+                                  azurerm_virtual_machine_extension.app_db_vm_dependency_monitor,
+                                  azurerm_virtual_machine_extension.app_db_vm_diagnostics,
+                                  azurerm_virtual_machine_extension.app_db_vm_monitor,
+                                  azurerm_virtual_machine_extension.app_db_vm_mount_data_disks,
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_deployment_group,
                                   azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
-                                  azurerm_virtual_machine_extension.app_db_vm_mount_data_disks
+                                  azurerm_virtual_machine_extension.app_db_vm_watcher
                                  ]
 }
 
