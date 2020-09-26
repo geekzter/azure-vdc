@@ -492,6 +492,8 @@ data azurerm_api_management_product starter {
   resource_group_name          = azurerm_api_management.api_gateway.0.resource_group_name
 
   count                        = local.deploy_api_gateway ? 1 : 0
+
+  depends_on                   = [azurerm_api_management.api_gateway]
 }
 resource azurerm_api_management_user demo_user {
   user_id                      = uuid()
