@@ -1,8 +1,6 @@
 data "azurerm_client_config" "current" {}
 
 locals {
-  tenant_url                   = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/"
-  issuer_url                   = "https://sts.windows.net/${data.azurerm_client_config.current.tenant_id}/"
   resource_group_name          = element(split("/",var.resource_group_id),length(split("/",var.resource_group_id))-1)
   virtual_network_name         = element(split("/",var.virtual_network_id),length(split("/",var.virtual_network_id))-1)
 }
@@ -55,9 +53,9 @@ resource azurerm_virtual_network_gateway vpn_gw {
   }
 
   vpn_client_configuration {
-    aad_tenant                 = local.tenant_url
+    aad_tenant                 = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/"
     aad_audience               = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
-    aad_issuer                 = local.issuer_url
+    aad_issuer                 = "https://sts.windows.net/${data.azurerm_client_config.current.tenant_id}/"
     address_space              = [var.vpn_range]
     vpn_client_protocols       = ["OpenVPN"]
   }
