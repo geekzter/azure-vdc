@@ -7,7 +7,7 @@
 provider azurerm {
     # Pin Terraform version
     # Pipelines vdc-terraform-apply-ci/cd have a parameter unpinTerraformProviders ('=' -> '~>') to test forward compatibility
-    version = "= 2.28"
+    version = "= 2.29"
     features {
         virtual_machine {
             # Don't do this in production

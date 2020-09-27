@@ -239,7 +239,8 @@ resource azurerm_virtual_machine_extension app_web_vm_diagnostics {
   tags                         = var.tags
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_monitor
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_web_vm_disk_encryption
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_group" {
@@ -327,7 +328,8 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
 
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_web_vm_disk_encryption
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
@@ -360,7 +362,8 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
 
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_web_vm_disk_encryption
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
@@ -375,7 +378,8 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
   tags                         = var.tags
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_web_vm_disk_encryption
                                  ]
 }
 # Does not work with AutoLogon
@@ -410,7 +414,7 @@ SETTINGS
   count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_web_vm,
-                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_web_vm_pipeline_environment,
                                  ]
 }
 
@@ -685,7 +689,8 @@ resource azurerm_virtual_machine_extension app_db_vm_aadlogin {
   tags                         = var.tags
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 } 
 resource azurerm_virtual_machine_extension app_db_vm_diagnostics {
@@ -714,7 +719,8 @@ resource azurerm_virtual_machine_extension app_db_vm_diagnostics {
   tags                         = var.tags
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_group" {
@@ -750,7 +756,8 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
   count                        = (var.deploy_non_essential_vm_extensions && !var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
@@ -766,7 +773,8 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
 
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
@@ -799,7 +807,8 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
 
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 }
 resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
@@ -815,7 +824,8 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
 
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 }
 resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
@@ -844,7 +854,8 @@ resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
   count                        = !var.use_pipeline_environment && (var.deploy_security_vm_extensions || var.deploy_non_essential_vm_extensions) ? var.app_web_vm_number : 0
   depends_on                   = [
                                   null_resource.start_db_vm,
-                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment
+                                  azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
+                                  azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 }
 # Does not work with AutoLogon
@@ -880,7 +891,6 @@ SETTINGS
   depends_on                   = [
                                   null_resource.start_db_vm,
                                   azurerm_virtual_machine_extension.app_db_vm_pipeline_environment,
-                                  azurerm_virtual_machine_extension.app_db_vm_mount_data_disks
                                  ]
 }
 

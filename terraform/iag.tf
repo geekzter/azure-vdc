@@ -296,6 +296,7 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "edge.microsoft.com",
       "enterpriseregistration.windows.net",
       "graph.microsoft.com",
+      "ieonline.microsoft.com",
       "login.microsoftonline.com",
       "management.azure.com",
       "management.core.windows.net",
@@ -310,6 +311,7 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "settings-win.data.microsoft.com",
       "smartscreen-prod.microsoft.com",
       "sts.windows.net",
+      "urs.microsoft.com",
       "validation-v2.sls.microsoft.com",
       "${azurerm_key_vault.vault.name}.vault.azure.net",
       azurerm_log_analytics_workspace.vcd_workspace.portal_url,
@@ -352,7 +354,9 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       var.vdc_config["vpn_range"]
     ]
 
+  # https://docs.microsoft.com/en-us/azure/key-vault/general/whats-new#will-this-affect-me
     target_fqdns               = [
+      "*.d-trust.net",
       "*.digicert.com",
     # "adl.windows.com",
       "chocolatey.org",
@@ -363,6 +367,7 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "ocsp.msocsp.com",
       "ocsp.sectigo.com",
       "ocsp.usertrust.com",
+      "oneocsp.microsoft.com",
       "dl.delivery.mp.microsoft.com", # "Microsoft Edge"
     # "www.microsoft.com",
       "www.msftconnecttest.com"

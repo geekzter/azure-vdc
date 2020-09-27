@@ -225,14 +225,6 @@ output paas_app_sql_server {
   value       = module.paas_app.sql_server
 }
 
-output paas_app_sql_server_endpoint_id {
-  value       = module.paas_app.sql_server_endpoint_id
-}
-
-output paas_app_sql_server_endpoint_fqdn {
-  value       = module.paas_app.sql_server_endpoint_fqdn
-}
-
 output paas_app_sql_server_fqdn {
   value       = module.paas_app.sql_server_fqdn
 }
@@ -299,6 +291,9 @@ output terraform_public_ip_address {
 }
 output terraform_public_ip_prefix {
   value       = local.ipprefixdata.data.prefix
+}
+output vdc_diag_storage {
+  value       = azurerm_storage_account.vdc_diag_storage.name
 }
 output vdc_dns_server {
   value       = azurerm_network_interface.bas_if.private_ip_address
