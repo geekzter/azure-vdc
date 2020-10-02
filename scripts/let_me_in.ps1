@@ -63,46 +63,18 @@ try {
         $ipPrefix = Invoke-RestMethod -Uri https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} -MaximumRetryCount 9 | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
         Write-Host "Public IP prefix is $ipPrefix"
 
-        # Add rule to Azure Firewall
-        $azFWName = $(terraform output "iag_name" 2>$null)
-        if ([string]::isNullOrEmpty($azFWName)) {
-            Write-Host "`nAzure Firewall not found, nothing to get into" -ForegroundColor Yellow
-            exit
-        }
-        $azFWPublicIPAddress = $(terraform output "iag_public_ip" 2>$null)
-        $azFWNATRulesName = "$azFWName-letmein-rules"
-        $mgmtVMAddress = $(terraform output "mgmt_address" 2>$null)
-        $rdpPort = $(terraform output "mgmt_rdp_port" 2>$null)
-        $mgmtVMRuleName = "AllowInboundRDP from $ipPrefix"
-
-        az extension add --name azure-firewall 2>$null
-        $ruleCollection = az network firewall nat-rule collection list -f $azFWName -g $vdcResourceGroup --query "[?name=='$azFWNATRulesName']" -o tsv
-        if ($ruleCollection) {
-            $mgmtVMRule = az network firewall nat-rule list -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup --query "rules[?name=='$mgmtVMRuleName']" 
-
-            if ($mgmtVMRule) {
-                Write-Host "NAT Rule collection $azFWNATRulesName found, rule '$mgmtVMRuleName' already exists"
+        # Add IP prefix to Admin IP Group
+        $adminIPGroup = $(terraform output "admin_ipgroup" 2>$null)
+        az extension add --name ip-group 2>$null
+        if ($adminIPGroup) {
+            if ($(az network ip-group show -n $adminIPGroup -g $vdcResourceGroup --query "contains(ipAddresses,'$ipPrefix')") -ieq "false") {
+                Write-Host "Adding $ipPrefix to admin ip group $adminIPGroup..."
+                az network ip-group update -n $adminIPGroup -g $vdcResourceGroup --add ipAddresses $ipPrefix -o none
             } else {
-                Write-Host "NAT Rule collection $azFWNATRulesName found, adding management VM rule '$mgmtVMRuleName'..."
-                az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $mgmtVMRuleName `
-                                    --protocols TCP `
-                                    --source-addresses $ipPrefix `
-                                    --destination-addresses $azFWPublicIPAddress `
-                                    --destination-ports $rdpPort `
-                                    --translated-port 3389 `
-                                    --translated-address $mgmtVMAddress
+                Write-Information "$ipPrefix is already in admin ip group $adminIPGroup"
             }
         } else {
-            Write-Host "NAT Rule collection $azFWNATRulesName not found, creating with management VM rule '$mgmtVMRuleName '..."
-            az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $mgmtVMRuleName `
-                                --protocols TCP `
-                                --source-addresses $ipPrefix `
-                                --destination-addresses $azFWPublicIPAddress `
-                                --destination-ports $rdpPort `
-                                --translated-port 3389 `
-                                --translated-address $mgmtVMAddress `
-                                --priority 109 `
-                                --action Dnat
+            Write-Warning "Admin IP group not found, not updating Azure Firewall"
         }
     }
 

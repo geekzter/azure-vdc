@@ -15,6 +15,15 @@ locals {
   rdp_port                     = var.rdp_port != null ? var.rdp_port : random_integer.rdp_port.result
 }
 
+resource azurerm_ip_group admin {
+  name                         = "${azurerm_resource_group.vdc_rg.name}-ipgroup-admin"
+  location                     = azurerm_resource_group.vdc_rg.location
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  cidrs                        = local.admin_cidr_ranges
+
+  tags                         = local.tags
+}
+
 resource azurerm_public_ip iag_pip {
   name                         = "${azurerm_resource_group.vdc_rg.name}-iag-pip"
   location                     = azurerm_resource_group.vdc_rg.location
@@ -414,7 +423,7 @@ resource azurerm_firewall_nat_rule_collection iag_nat_rules {
   rule {
     name                       = "AllowInboundRDPtoBastion"
 
-    source_addresses           = local.admin_cidr_ranges
+    source_ip_groups           = [azurerm_ip_group.admin.id]
 
     destination_ports          = [
     # "3389", # Default port
