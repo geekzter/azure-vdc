@@ -74,10 +74,10 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     name                       = "Allow ${module.paas_app.storage_account_name} Storage"
 
     source_addresses           = [
-      "${var.vdc_config["iaas_spoke_app_subnet"]}",
-      "${var.vdc_config["iaas_spoke_data_subnet"]}",
-      "${var.vdc_config["hub_mgmt_subnet"]}",
-      "${var.vdc_config["vpn_range"]}"
+      var.vdc_config["iaas_spoke_app_subnet"],
+      var.vdc_config["iaas_spoke_data_subnet"],
+      var.vdc_config["hub_mgmt_subnet"],
+      var.vdc_config["vpn_range"]
     ]
 
     target_fqdns               = module.paas_app.storage_fqdns
@@ -92,10 +92,10 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     name                       = "Allow ${module.paas_app.eventhub_name} Event Hub HTTPS"
 
     source_addresses           = [
-      "${var.vdc_config["iaas_spoke_app_subnet"]}",
-      "${var.vdc_config["iaas_spoke_data_subnet"]}",
-      "${var.vdc_config["hub_mgmt_subnet"]}",
-      "${var.vdc_config["vpn_range"]}"
+      var.vdc_config["iaas_spoke_app_subnet"],
+      var.vdc_config["iaas_spoke_data_subnet"],
+      var.vdc_config["hub_mgmt_subnet"],
+      var.vdc_config["vpn_range"]
     ]
 
     target_fqdns               = [
@@ -113,10 +113,10 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     name                       = "Allow ${module.paas_app.sql_server} SQL Server TDS"
 
     source_addresses           = [
-      "${var.vdc_config["iaas_spoke_app_subnet"]}",
-      "${var.vdc_config["iaas_spoke_data_subnet"]}",
-      "${var.vdc_config["hub_mgmt_subnet"]}",
-      "${var.vdc_config["vpn_range"]}"
+      var.vdc_config["iaas_spoke_app_subnet"],
+      var.vdc_config["iaas_spoke_data_subnet"],
+      var.vdc_config["hub_mgmt_subnet"],
+      var.vdc_config["vpn_range"]
     ]
 
     target_fqdns               = [
@@ -410,7 +410,7 @@ resource azurerm_firewall_nat_rule_collection iag_nat_rules {
       "81"
     ]
     destination_addresses      = [
-      "${azurerm_public_ip.iag_pip.ip_address}",
+      azurerm_public_ip.iag_pip.ip_address,
     ]
 
     translated_port            = "80"
@@ -427,10 +427,10 @@ resource azurerm_firewall_nat_rule_collection iag_nat_rules {
 
     destination_ports          = [
     # "3389", # Default port
-      "${local.rdp_port}"
+      local.rdp_port
     ]
     destination_addresses      = [
-      "${azurerm_public_ip.iag_pip.ip_address}",
+      azurerm_public_ip.iag_pip.ip_address,
     ]
 
     translated_port            = "3389"

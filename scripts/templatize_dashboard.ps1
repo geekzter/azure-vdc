@@ -41,14 +41,14 @@ try {
 
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
-        $Script:dashboardID    = $(terraform output "dashboard_id"                   2>$null)
-        $Script:appInsightsID  = $(terraform output "application_insights_id"        2>$null)
-        $Script:appRGShort     = $(terraform output "paas_app_resource_group_short"  2>$null)
-        $Script:prefix         = $(terraform output "resource_prefix"                2>$null)
-        $Script:suffix         = $(terraform output "resource_suffix"                2>$null)
-        $Script:deploymentName = $(terraform output "deployment_name"                2>$null)
-        $Script:sharedRegistry = $(terraform output "shared_container_registry"      2>$null)
-        $Script:sharedRG       = $(terraform output "shared_resources_group"         2>$null)
+        $Script:dashboardID    = (GetTerraformOutput "dashboard_id")
+        $Script:appInsightsID  = (GetTerraformOutput "application_insights_id")
+        $Script:appRGShort     = (GetTerraformOutput "paas_app_resource_group_short")
+        $Script:prefix         = (GetTerraformOutput "resource_prefix")
+        $Script:suffix         = (GetTerraformOutput "resource_suffix")
+        $Script:deploymentName = (GetTerraformOutput "deployment_name")
+        $Script:sharedRegistry = (GetTerraformOutput "shared_container_registry")
+        $Script:sharedRG       = (GetTerraformOutput "shared_resources_group")
     }
 
     if ([string]::IsNullOrEmpty($prefix) -or [string]::IsNullOrEmpty($deploymentName) -or [string]::IsNullOrEmpty($suffix)) {

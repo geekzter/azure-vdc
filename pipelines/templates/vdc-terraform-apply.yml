@@ -243,11 +243,11 @@ stages:
 
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
           - bash: |
-              chmod +x *_x?
-              ls -al
+              find . -name *_x? | xargs chmod +x
+              find . -name *_x?
             displayName: 'Make Terraform providers executable'
             enabled: ${{ not(parameters.testMode) }}
-            workingDirectory: $(terraformDirectory)/.terraform/plugins/linux_amd64
+            workingDirectory: $(terraformDirectory)/.terraform/plugins/registry.terraform.io/hashicorp 
 
         - task: AzureCLI@2
           # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
@@ -357,11 +357,11 @@ stages:
 
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
           - bash: |
-              chmod +x *_x?
-              ls -al
+              find . -name *_x? | xargs chmod +x
+              find . -name *_x?
             displayName: 'Make Terraform providers executable'
             enabled: ${{ not(parameters.testMode) }}
-            workingDirectory: $(terraformDirectory)/.terraform/plugins/linux_amd64
+            workingDirectory: $(terraformDirectory)/.terraform/plugins/registry.terraform.io/hashicorp 
 
         # Test for failures that only occur when resources already exist
         - task: AzureCLI@2

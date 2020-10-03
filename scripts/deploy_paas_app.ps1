@@ -310,21 +310,21 @@ if ($useTerraform) {
             $Private:ErrorActionPreference = "Continue"
 
             # Set only if not null
-            $script:AppResourceGroup       ??= $(terraform output "paas_app_resource_group"        2>$null)
-            $script:AppAppServiceName      ??= $(terraform output "paas_app_service_name"          2>$null)
+            $script:AppResourceGroup       ??= (GetTerraformOutput "paas_app_resource_group")
+            $script:AppAppServiceName      ??= (GetTerraformOutput "paas_app_service_name")
 
-            $script:AppAppServiceIdentity  ??= $(terraform output "paas_app_service_msi_name"      2>$null)
-            $script:AppAppServiceClientID  ??= $(terraform output "paas_app_service_msi_client_id" 2>$null)
+            $script:AppAppServiceIdentity  ??= (GetTerraformOutput "paas_app_service_msi_name")
+            $script:AppAppServiceClientID  ??= (GetTerraformOutput "paas_app_service_msi_client_id")
 
-            $script:DBAName                ??= $(terraform output "admin_login"                    2>$null)
-            $script:DBAObjectId            ??= $(terraform output "admin_object_id"                2>$null)
+            $script:DBAName                ??= (GetTerraformOutput "admin_login")
+            $script:DBAObjectId            ??= (GetTerraformOutput "admin_object_id")
 
-            $script:AppUrl                 ??= $(terraform output "paas_app_url"                   2>$null)
-            $script:DevOpsOrgUrl           ??= $(terraform output "devops_org_url"                 2>$null)
-            $script:DevOpsProject          ??= $(terraform output "devops_project"                 2>$null)
-            $script:SqlServer              ??= $(terraform output "paas_app_sql_server"            2>$null)
-            $script:SqlServerFQDN          ??= $(terraform output "paas_app_sql_server_fqdn"       2>$null)
-            $script:SqlDatabase            ??= $(terraform output "paas_app_sql_database"          2>$null)
+            $script:AppUrl                 ??= (GetTerraformOutput "paas_app_url")
+            $script:DevOpsOrgUrl           ??= (GetTerraformOutput "devops_org_url")
+            $script:DevOpsProject          ??= (GetTerraformOutput "devops_project")
+            $script:SqlServer              ??= (GetTerraformOutput "paas_app_sql_server")
+            $script:SqlServerFQDN          ??= (GetTerraformOutput "paas_app_sql_server_fqdn")
+            $script:SqlDatabase            ??= (GetTerraformOutput "paas_app_sql_database")
         }
 
         if ([string]::IsNullOrEmpty($AppAppServiceName)) {

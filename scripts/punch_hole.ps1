@@ -22,15 +22,15 @@ try {
     
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference    = "Continue"
-        $Script:appResourceGroup          = $(terraform output "paas_app_resource_group"                2>$null)
-        $Script:appStorageAccount         = $(terraform output "paas_app_storage_account_name"          2>$null)
-        $Script:appEventHubStorageAccount = $(terraform output "paas_app_eventhub_storage_account_name" 2>$null)
-        $Script:appEventHubNamespace      = $(terraform output "paas_app_eventhub_namespace"            2>$null)
-        $Script:appSQLServer              = $(terraform output "paas_app_sql_server"                    2>$null)
-        $Script:automationStorageAccount  = $(terraform output "automation_storage_account_name"        2>$null)
-        $Script:keyVault                  = $(terraform output "key_vault_name"                         2>$null)
-        $Script:vdcDiagnosticsStorage     = $(terraform output "vdc_diag_storage"                       2>$null)
-        $Script:vdcResourceGroup          = $(terraform output "vdc_resource_group"                     2>$null)
+        $Script:appResourceGroup          = (GetTerraformOutput "paas_app_resource_group")
+        $Script:appStorageAccount         = (GetTerraformOutput "paas_app_storage_account_name")
+        $Script:appEventHubStorageAccount = (GetTerraformOutput "paas_app_eventhub_storage_account_name")
+        $Script:appEventHubNamespace      = (GetTerraformOutput "paas_app_eventhub_namespace")
+        $Script:appSQLServer              = (GetTerraformOutput "paas_app_sql_server")
+        $Script:automationStorageAccount  = (GetTerraformOutput "automation_storage_account_name")
+        $Script:keyVault                  = (GetTerraformOutput "key_vault_name")
+        $Script:vdcDiagnosticsStorage     = (GetTerraformOutput "vdc_diag_storage")
+        $Script:vdcResourceGroup          = (GetTerraformOutput "vdc_resource_group")
 
         $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(az group list --query "[?name=='$appResourceGroup']")))
     }

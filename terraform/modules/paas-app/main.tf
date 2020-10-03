@@ -34,7 +34,7 @@ data azurerm_storage_account diagnostics {
 
 locals {
   aad_auth_client_id           = var.aad_auth_client_id_map != null ? lookup(var.aad_auth_client_id_map, "${terraform.workspace}_client_id", null) : null
-  admin_ips                    = "${tolist(var.admin_ips)}"
+  admin_ips                    = tolist(var.admin_ips)
   admin_login_ps               = var.admin_login != null ? var.admin_login : "$null"
   admin_object_id_ps           = var.admin_object_id != null ? var.admin_object_id : "$null"
   # Last element of resource id is resource name
