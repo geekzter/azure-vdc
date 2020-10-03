@@ -26,8 +26,12 @@ parameters:
   - Never
   - 'On failure'
   - 'On success'
+- name: unpinTerraform
+  displayName: Unpin Terraform version
+  type: boolean
+  default: false
 - name: unpinTerraformProviders
-  displayName: Unpin Terraform providers ('=' -> '~>')
+  displayName: Unpin Terraform provider version
   type: boolean
   default: false
 - name: testMode
@@ -79,5 +83,6 @@ stages:
     deploy: true
     destroy: ${{ parameters.destroy }}
     testMode: ${{ parameters.testMode }}
+    unpinTerraform: ${{ parameters.unpinTerraform }}
     unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
     workspace: ${{ parameters.workspace }}
