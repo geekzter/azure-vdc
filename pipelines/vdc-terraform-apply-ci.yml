@@ -31,7 +31,7 @@ parameters:
   type: boolean
   default: false
 - name: unpinTerraformProviders
-  displayName: Unpin Terraform provider version
+  displayName: Unpin Terraform provider versions
   type: boolean
   default: false
 - name: testMode

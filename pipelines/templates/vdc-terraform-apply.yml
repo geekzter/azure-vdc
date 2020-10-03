@@ -119,13 +119,13 @@ stages:
     value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-iaasapp-$(TF_VAR_resource_suffix)'
   - name: 'paasResourceGroup'
     value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-paasapp-$(TF_VAR_resource_suffix)'
+  - name: 'vdcResourceGroup' 
+    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-$(TF_VAR_resource_suffix)'
   - name: 'terraformVersionRequest'
     ${{ if parameters.unpinTerraform }}:
       value: 'latest'
     ${{ if not(parameters.unpinTerraform) }}:
       value: 'preferred'
-  - name: 'vdcResourceGroup' 
-    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-$(TF_VAR_resource_suffix)'
 
   jobs:
   - job: 'Prepare'
@@ -165,7 +165,7 @@ stages:
             Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
 
             # This will write version info as output variable
-            $(scriptDirectory)/get_tf_version.ps1 -version $[ variables['terraformVersionRequest'] ]
+            $(scriptDirectory)/get_tf_version.ps1 -version $(terraformVersionRequest)
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
