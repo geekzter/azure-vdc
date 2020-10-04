@@ -225,7 +225,6 @@ resource null_resource automation_storage_diagnostic_setting {
   count                        = var.enable_storage_diagnostic_setting ? 1 : 0
 }
 
-
 # Create Private Endpoint for Container Registry (if in the same region)
 data azurerm_container_registry vdc_images {
   name                         = var.shared_container_registry

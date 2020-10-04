@@ -191,6 +191,18 @@ function GetEmailAddress () {
     return $null
 }
 
+function GetTerraformOutput (
+    [parameter(Mandatory=$true)][string]$OutputVariable
+) {
+    $result = $(terraform output $OutputVariable 2>$null)
+    if ($result -match "\[33") {
+        # Terraform warning, return null for missing output
+        return $null
+    } else {
+        return $result
+    }
+}
+
 function PrintCurrentBranch () {
     $branch = GetCurrentBranch
     if (![string]::IsNullOrEmpty($branch)) {
@@ -252,7 +264,7 @@ function SetSuffix () {
     #       Environment variable TF_VAR_resource_suffix will be used for subsequent apply's, including different workspaces
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference = "Continue"
-        $script:resourceSuffix = $(terraform output "resource_suffix" 2>$null)
+        $script:resourceSuffix = (GetTerraformOutput "resource_suffix")
     }
 
     if (![string]::IsNullOrEmpty($resourceSuffix)) {

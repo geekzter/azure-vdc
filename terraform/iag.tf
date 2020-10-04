@@ -15,6 +15,15 @@ locals {
   rdp_port                     = var.rdp_port != null ? var.rdp_port : random_integer.rdp_port.result
 }
 
+resource azurerm_ip_group admin {
+  name                         = "${azurerm_resource_group.vdc_rg.name}-ipgroup-admin"
+  location                     = azurerm_resource_group.vdc_rg.location
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
+  cidrs                        = local.admin_cidr_ranges
+
+  tags                         = local.tags
+}
+
 resource azurerm_public_ip iag_pip {
   name                         = "${azurerm_resource_group.vdc_rg.name}-iag-pip"
   location                     = azurerm_resource_group.vdc_rg.location
@@ -65,10 +74,10 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     name                       = "Allow ${module.paas_app.storage_account_name} Storage"
 
     source_addresses           = [
-      "${var.vdc_config["iaas_spoke_app_subnet"]}",
-      "${var.vdc_config["iaas_spoke_data_subnet"]}",
-      "${var.vdc_config["hub_mgmt_subnet"]}",
-      "${var.vdc_config["vpn_range"]}"
+      var.vdc_config["iaas_spoke_app_subnet"],
+      var.vdc_config["iaas_spoke_data_subnet"],
+      var.vdc_config["hub_mgmt_subnet"],
+      var.vdc_config["vpn_range"]
     ]
 
     target_fqdns               = module.paas_app.storage_fqdns
@@ -83,10 +92,10 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     name                       = "Allow ${module.paas_app.eventhub_name} Event Hub HTTPS"
 
     source_addresses           = [
-      "${var.vdc_config["iaas_spoke_app_subnet"]}",
-      "${var.vdc_config["iaas_spoke_data_subnet"]}",
-      "${var.vdc_config["hub_mgmt_subnet"]}",
-      "${var.vdc_config["vpn_range"]}"
+      var.vdc_config["iaas_spoke_app_subnet"],
+      var.vdc_config["iaas_spoke_data_subnet"],
+      var.vdc_config["hub_mgmt_subnet"],
+      var.vdc_config["vpn_range"]
     ]
 
     target_fqdns               = [
@@ -104,10 +113,10 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     name                       = "Allow ${module.paas_app.sql_server} SQL Server TDS"
 
     source_addresses           = [
-      "${var.vdc_config["iaas_spoke_app_subnet"]}",
-      "${var.vdc_config["iaas_spoke_data_subnet"]}",
-      "${var.vdc_config["hub_mgmt_subnet"]}",
-      "${var.vdc_config["vpn_range"]}"
+      var.vdc_config["iaas_spoke_app_subnet"],
+      var.vdc_config["iaas_spoke_data_subnet"],
+      var.vdc_config["hub_mgmt_subnet"],
+      var.vdc_config["vpn_range"]
     ]
 
     target_fqdns               = [
@@ -401,7 +410,7 @@ resource azurerm_firewall_nat_rule_collection iag_nat_rules {
       "81"
     ]
     destination_addresses      = [
-      "${azurerm_public_ip.iag_pip.ip_address}",
+      azurerm_public_ip.iag_pip.ip_address,
     ]
 
     translated_port            = "80"
@@ -414,14 +423,14 @@ resource azurerm_firewall_nat_rule_collection iag_nat_rules {
   rule {
     name                       = "AllowInboundRDPtoBastion"
 
-    source_addresses           = local.admin_cidr_ranges
+    source_ip_groups           = [azurerm_ip_group.admin.id]
 
     destination_ports          = [
     # "3389", # Default port
-      "${local.rdp_port}"
+      local.rdp_port
     ]
     destination_addresses      = [
-      "${azurerm_public_ip.iag_pip.ip_address}",
+      azurerm_public_ip.iag_pip.ip_address,
     ]
 
     translated_port            = "3389"

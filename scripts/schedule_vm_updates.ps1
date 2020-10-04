@@ -34,21 +34,21 @@ if (!$VMResourceId) {
 
     Invoke-Command -ScriptBlock {
       $Private:ErrorActionPreference = "Continue"
-      $Script:AutomationAccountName  = $(terraform output "automation_account" 2>$null)
+      $Script:AutomationAccountName  = (GetTerraformOutput "automation_account")
       if ([string]::IsNullOrEmpty($AutomationAccountName)) {
         throw "Terraform output automation_account is empty"
       }
 
-      $Script:ResourceGroupName      = $(terraform output "automation_account_resource_group" 2>$null)
+      $Script:ResourceGroupName      = (GetTerraformOutput "automation_account_resource_group")
       if ([string]::IsNullOrEmpty($ResourceGroupName)) {
         throw "Terraform output automation_account_resource_group is empty"
       }
 
-      $vmResourceIdString              = $(terraform output "virtual_machine_ids_string" 2>$null)
+      $vmResourceIdString            = (GetTerraformOutput "virtual_machine_ids_string")
       if ([string]::IsNullOrEmpty($vmResourceIdString)) {
         throw "Terraform output virtual_machine_ids_string is empty"
       }
-      $Script:VMResourceId            = $vmResourceIdString.Split(",")
+      $Script:VMResourceId           = $vmResourceIdString.Split(",")
     }
   } finally {
     $null = SetWorkspace -Workspace $priorWorkspace

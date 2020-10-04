@@ -64,8 +64,12 @@ parameters:
   displayName: Deployment name (middle part resource names)
   type: string
   default: ''
+- name: unpinTerraform
+  displayName: Unpin Terraform version
+  type: boolean
+  default: false
 - name: unpinTerraformProviders
-  displayName: Unpin Terraform providers ('=' -> '~>')
+  displayName: Unpin Terraform provider versions
   type: boolean
   default: false
 - name: vdcArtifactPipeline
@@ -117,6 +121,11 @@ stages:
     value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-paasapp-$(TF_VAR_resource_suffix)'
   - name: 'vdcResourceGroup' 
     value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-$(TF_VAR_resource_suffix)'
+  - name: 'terraformVersionRequest'
+    ${{ if parameters.unpinTerraform }}:
+      value: 'latest'
+    ${{ if not(parameters.unpinTerraform) }}:
+      value: 'preferred'
 
   jobs:
   - job: 'Prepare'
@@ -156,7 +165,7 @@ stages:
             Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
 
             # This will write version info as output variable
-            $(scriptDirectory)/get_tf_version.ps1 -version preferred
+            $(scriptDirectory)/get_tf_version.ps1 -version $(terraformVersionRequest)
           addSpnToEnvironment: true
           useGlobalConfig: true
           failOnStandardError: true
@@ -243,11 +252,11 @@ stages:
 
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
           - bash: |
-              chmod +x *_x?
-              ls -al
+              find . -name *_x? | xargs chmod +x
+              find . -name *_x?
             displayName: 'Make Terraform providers executable'
             enabled: ${{ not(parameters.testMode) }}
-            workingDirectory: $(terraformDirectory)/.terraform/plugins/linux_amd64
+            workingDirectory: $(terraformDirectory)/.terraform/plugins/registry.terraform.io/hashicorp 
 
         - task: AzureCLI@2
           # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
@@ -357,11 +366,11 @@ stages:
 
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
           - bash: |
-              chmod +x *_x?
-              ls -al
+              find . -name *_x? | xargs chmod +x
+              find . -name *_x?
             displayName: 'Make Terraform providers executable'
             enabled: ${{ not(parameters.testMode) }}
-            workingDirectory: $(terraformDirectory)/.terraform/plugins/linux_amd64
+            workingDirectory: $(terraformDirectory)/.terraform/plugins/registry.terraform.io/hashicorp 
 
         # Test for failures that only occur when resources already exist
         - task: AzureCLI@2

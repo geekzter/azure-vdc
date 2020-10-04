@@ -36,11 +36,11 @@ try {
     Push-Location $tfdirectory
     $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
-    $vdcResourceGroup = $(terraform output "vdc_resource_group" 2>$null)
-    $paasAppResourceGroup = $(terraform output "paas_app_resource_group" 2>$null)
+    $vdcResourceGroup = (GetTerraformOutput "vdc_resource_group")
+    $paasAppResourceGroup = (GetTerraformOutput "paas_app_resource_group")
     
     if ($All -or $StartMgmtVM -or $ConnectMgmtVM -or $VpnClient) {
-        $Script:mgmtVMName = $(terraform output "mgmt_name" 2>$null)
+        $Script:mgmtVMName = (GetTerraformOutput "mgmt_name")
         # Start management VM
         if ($mgmtVMName) {
             Write-Host "`nStarting Management & DNS Server (async)" -ForegroundColor Green 
@@ -63,46 +63,18 @@ try {
         $ipPrefix = Invoke-RestMethod -Uri https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} -MaximumRetryCount 9 | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
         Write-Host "Public IP prefix is $ipPrefix"
 
-        # Add rule to Azure Firewall
-        $azFWName = $(terraform output "iag_name" 2>$null)
-        if ([string]::isNullOrEmpty($azFWName)) {
-            Write-Host "`nAzure Firewall not found, nothing to get into" -ForegroundColor Yellow
-            exit
-        }
-        $azFWPublicIPAddress = $(terraform output "iag_public_ip" 2>$null)
-        $azFWNATRulesName = "$azFWName-letmein-rules"
-        $mgmtVMAddress = $(terraform output "mgmt_address" 2>$null)
-        $rdpPort = $(terraform output "mgmt_rdp_port" 2>$null)
-        $mgmtVMRuleName = "AllowInboundRDP from $ipPrefix"
-
-        az extension add --name azure-firewall 2>$null
-        $ruleCollection = az network firewall nat-rule collection list -f $azFWName -g $vdcResourceGroup --query "[?name=='$azFWNATRulesName']" -o tsv
-        if ($ruleCollection) {
-            $mgmtVMRule = az network firewall nat-rule list -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup --query "rules[?name=='$mgmtVMRuleName']" 
-
-            if ($mgmtVMRule) {
-                Write-Host "NAT Rule collection $azFWNATRulesName found, rule '$mgmtVMRuleName' already exists"
+        # Add IP prefix to Admin IP Group
+        $adminIPGroup = (GetTerraformOutput "admin_ipgroup")
+        az extension add --name ip-group 2>$null
+        if ($adminIPGroup) {
+            if ($(az network ip-group show -n $adminIPGroup -g $vdcResourceGroup --query "contains(ipAddresses,'$ipPrefix')") -ieq "false") {
+                Write-Host "Adding $ipPrefix to admin ip group $adminIPGroup..."
+                az network ip-group update -n $adminIPGroup -g $vdcResourceGroup --add ipAddresses $ipPrefix -o none
             } else {
-                Write-Host "NAT Rule collection $azFWNATRulesName found, adding management VM rule '$mgmtVMRuleName'..."
-                az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $mgmtVMRuleName `
-                                    --protocols TCP `
-                                    --source-addresses $ipPrefix `
-                                    --destination-addresses $azFWPublicIPAddress `
-                                    --destination-ports $rdpPort `
-                                    --translated-port 3389 `
-                                    --translated-address $mgmtVMAddress
+                Write-Information "$ipPrefix is already in admin ip group $adminIPGroup"
             }
         } else {
-            Write-Host "NAT Rule collection $azFWNATRulesName not found, creating with management VM rule '$mgmtVMRuleName '..."
-            az network firewall nat-rule create -c $azFWNATRulesName -f $azFWName -g $vdcResourceGroup -n $mgmtVMRuleName `
-                                --protocols TCP `
-                                --source-addresses $ipPrefix `
-                                --destination-addresses $azFWPublicIPAddress `
-                                --destination-ports $rdpPort `
-                                --translated-port 3389 `
-                                --translated-address $mgmtVMAddress `
-                                --priority 109 `
-                                --action Dnat
+            Write-Warning "Admin IP group not found, not updating Azure Firewall"
         }
     }
 
@@ -124,11 +96,11 @@ try {
         if ([string]::IsNullOrEmpty($sqlAADUser)) {
             Write-Host "No valid account found or provided to access AAD and Azure SQL Server, skipping configuration" -ForegroundColor Yellow
         } else {
-            $msiClientId   = $(terraform output paas_app_service_msi_client_id 2>$null)
-            $msiName       = $(terraform output paas_app_service_msi_name      2>$null)
-            $sqlDB         = $(terraform output paas_app_sql_database          2>$null)
-            $sqlServerName = $(terraform output paas_app_sql_server            2>$null)
-            $sqlServerFQDN = $(terraform output paas_app_sql_server_fqdn       2>$null)
+            $msiClientId   = (GetTerraformOutput paas_app_service_msi_client_id)
+            $msiName       = (GetTerraformOutput paas_app_service_msi_name)
+            $sqlDB         = (GetTerraformOutput paas_app_sql_database)
+            $sqlServerName = (GetTerraformOutput paas_app_sql_server)
+            $sqlServerFQDN = (GetTerraformOutput paas_app_sql_server_fqdn)
 
             Write-Information "Determening current Azure Active Directory DBA for SQL Server $sqlServerName..."
             $dba = az sql server ad-admin list -g $paasAppResourceGroup -s $sqlServerName --query "[?login=='${sqlAADUser}']" -o json | ConvertFrom-Json
@@ -155,7 +127,7 @@ try {
     }
 
     if ($All -or $VpnClient) {
-        $gatewayId = $(terraform output vpn_gateway_id 2>$null)
+        $gatewayId = (GetTerraformOutput vpn_gateway_id)
         if ($gatewayId) {
             $vpnPackageUrl = $(az network vnet-gateway vpn-client generate --ids $gatewayId --authentication-method EAPTLS -o tsv)
 
@@ -175,7 +147,7 @@ try {
             $clientconfig = $vpnProfileXml.SelectSingleNode("//*[name()='clientconfig']")
             $dnsservers = $vpnProfileXml.CreateElement("dnsservers", $vpnProfileXml.AzVpnProfile.xmlns)
             $dnsserver = $vpnProfileXml.CreateElement("dnsserver", $vpnProfileXml.AzVpnProfile.xmlns)
-            $dnsserver.InnerText = $(terraform output "vdc_dns_server" 2>$null)
+            $dnsserver.InnerText = (GetTerraformOutput "vdc_dns_server")
             $dnsservers.AppendChild($dnsserver) | Out-Null
             $clientconfig.AppendChild($dnsservers) | Out-Null
             $clientconfig.RemoveAttribute("nil","http://www.w3.org/2001/XMLSchema-instance")
@@ -197,9 +169,9 @@ try {
 
     # TODO: Request JIT access to Management VM, once azurerm Terraform provider supports it
     if ($All -or $ShowCredentials -or $ConnectMgmtVM) {
-        $Script:adminUser = $(terraform output admin_user 2>$null)
-        $Script:adminPassword = $(terraform output admin_password 2>$null)
-        $Script:mgmtVM = "$(terraform output iag_public_ip):$(terraform output mgmt_rdp_port)"
+        $Script:adminUser = (GetTerraformOutput admin_user)
+        $Script:adminPassword = (GetTerraformOutput admin_password)
+        $Script:mgmtVM = "$(GetTerraformOutput iag_public_ip):$(GetTerraformOutput mgmt_rdp_port)"
 
         Write-Host "`nConnection information:" -ForegroundColor Green 
         # Display connectivity info

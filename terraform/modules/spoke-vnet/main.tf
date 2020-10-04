@@ -366,6 +366,13 @@ resource "azurerm_bastion_host" "managed_bastion" {
     public_ip_address_id       = azurerm_public_ip.managed_bastion_pip.0.id
   }
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+
   count                        = var.deploy_managed_bastion ? 1 : 0
 }
 

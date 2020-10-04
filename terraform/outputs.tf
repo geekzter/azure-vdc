@@ -16,6 +16,9 @@ output admin_password {
   description = "VDC Admin password"
   value       = local.password
 }
+output admin_ipgroup {
+  value       = azurerm_ip_group.admin.name
+}
 
 output apim_demo_api_key {
   value       = try(azurerm_api_management_subscription.echo_subscription.0.primary_key,null)
