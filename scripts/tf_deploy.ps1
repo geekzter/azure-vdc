@@ -34,6 +34,7 @@ param (
 
 ### Internal Functions
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) get_tf_version.ps1) -ValidateInstalledVersion
 
 ### Validation
 if (!($Workspace)) { Throw "You must supply a value for Workspace" }

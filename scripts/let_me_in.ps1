@@ -29,6 +29,7 @@ if (!($All -or $ConnectMgmtVM -or $Network -or $ShowCredentials -or $SqlServer -
 }
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) get_tf_version.ps1) -ValidateInstalledVersion
 AzLogin
 
 try {
