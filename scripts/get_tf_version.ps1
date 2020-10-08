@@ -65,7 +65,6 @@ function GetTerraformVersion(
             }
         }
     }
-
 }
 
 if ($Version) {
@@ -79,9 +78,9 @@ if ($ValidateInstalledVersion) {
     $stateVersion = (GetTerraformVersion -Version State)
 
     if ($installedVersion -ne $preferredVersion) {
-        Write-Warning "Installed Terraform version $installedVersion is different from preferred version $preferredVersion specified in terraform/.terraform-version"
+        Write-Warning "Installed Terraform version $installedVersion is different from preferred version $preferredVersion specified in $(Join-Path $tfdirectory .terraform-version) (read by tfenv)"
     }
     if ($stateVersion -and ($installedVersion -lt $stateVersion)) {
-        Write-Warning "Installed Terraform version $installedVersion is lower than state version $stateVersion used to create Terraform state"
+        Write-Warning "Installed Terraform version $installedVersion is older than version $stateVersion used to create Terraform state"
     }
 }
