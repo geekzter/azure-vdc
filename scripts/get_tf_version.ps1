@@ -7,7 +7,7 @@
 #Requires -Version 7
 
 param ( 
-    [parameter(Mandatory=$false)][ValidateSet('Installed','Latest','Preferred')][string]$Version,
+    [parameter(Mandatory=$false)][ValidateSet('Installed','Latest','Preferred','State')][string]$Version,
     [parameter(Mandatory=$false)][switch]$ValidateInstalledVersion,
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
 ) 
@@ -16,7 +16,7 @@ function GetLatestTerraformVersion() {
     return Invoke-WebRequest -Uri https://checkpoint-api.hashicorp.com/v1/check/terraform -UseBasicParsing | Select-Object -ExpandProperty Content | ConvertFrom-Json | Select-Object -ExpandProperty "current_version"
 }
 function GetTerraformVersion(
-    [ValidateSet('Installed','Latest','Preferred')][string]$Version="Installed",
+    [ValidateSet('Installed','Latest','Preferred','State')][string]$Version="Installed",
     [bool]$GeneratePipelineOutput=$false
 ) {   
     switch ($Version) {
@@ -53,6 +53,17 @@ function GetTerraformVersion(
             }
             return $terraformPreferredVersion
         }
+        'State'    {
+            $tfState = terraform state pull | ConvertFrom-Json
+            if ($tfState) {
+                $terraformStateVersion = $tfState.terraform_version
+                if ($GeneratePipelineOutput) {
+                    Write-Host “##vso[task.setvariable variable=Version;isSecret=false;isOutput=true;]$terraformStateVersion"
+                    Write-Host “##vso[task.setvariable variable=StateVersion;isSecret=false;isOutput=true;]$terraformStateVersion"
+                }
+                return $terraformStateVersion
+            }
+        }
     }
 
 }
@@ -65,8 +76,12 @@ if ($Version) {
 if ($ValidateInstalledVersion) {
     $installedVersion = (GetTerraformVersion -Version Installed)
     $preferredVersion = (GetTerraformVersion -Version Preferred)
+    $stateVersion = (GetTerraformVersion -Version State)
 
     if ($installedVersion -ne $preferredVersion) {
         Write-Warning "Installed Terraform version $installedVersion is different from preferred version $preferredVersion specified in terraform/.terraform-version"
+    }
+    if ($stateVersion -and ($installedVersion -lt $stateVersion)) {
+        Write-Warning "Installed Terraform version $installedVersion is lower than state version $stateVersion used to create Terraform state"
     }
 }
