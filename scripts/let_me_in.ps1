@@ -34,6 +34,7 @@ AzLogin
 try {
     # Terraform config
     Push-Location $tfdirectory
+    . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) get_tf_version.ps1) -ValidateInstalledVersion
     $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
     $vdcResourceGroup = (GetTerraformOutput "vdc_resource_group")

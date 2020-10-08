@@ -304,6 +304,7 @@ if ($useTerraform) {
     # Gather data from Terraform
     try {
         Push-Location $tfdirectory
+        . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) get_tf_version.ps1) -ValidateInstalledVersion
         $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
         
         Invoke-Command -ScriptBlock {

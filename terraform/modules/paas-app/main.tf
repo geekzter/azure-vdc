@@ -364,8 +364,8 @@ resource azurerm_app_service_plan paas_plan {
   reserved                     = true
 
   sku {
-    tier                       = "PremiumV2"
-    size                       = "P1v2"
+    tier                       = "PremiumV3"
+    size                       = "P1v3"
   }
 
   tags                         = var.tags

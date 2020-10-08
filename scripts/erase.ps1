@@ -70,6 +70,7 @@ if ($ClearTerraformState -and ($PSCmdlet.ParameterSetName -ieq "Workspace")) {
             }
         }
         Push-Location $tfdirectory
+        . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) get_tf_version.ps1) -ValidateInstalledVersion
         if ($Workspace) {
             $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName      
         }
