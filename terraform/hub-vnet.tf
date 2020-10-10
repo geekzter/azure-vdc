@@ -1,44 +1,46 @@
 # ******************* NSG's ******************* #
 resource azurerm_network_security_group mgmt_nsg {
-  name                        = "${azurerm_resource_group.vdc_rg.name}-mgmt-nsg"
-  location                    = azurerm_resource_group.vdc_rg.location
-  resource_group_name         = azurerm_resource_group.vdc_rg.name
+  name                         = "${azurerm_resource_group.vdc_rg.name}-mgmt-nsg"
+  location                     = azurerm_resource_group.vdc_rg.location
+  resource_group_name          = azurerm_resource_group.vdc_rg.name
 
   security_rule {
-    name                      = "AllowAllTCPfromVPN"
-    priority                  = 104
-    direction                 = "Inbound"
-    access                    = "Allow"
-    protocol                  = "Tcp"
-    source_port_range         = "*"
-    destination_port_range    = "*"
-    source_address_prefix     = var.vdc_config["vpn_range"]
-    destination_address_prefix= var.vdc_config["hub_mgmt_subnet"]
+    name                       = "AllowAllTCPfromVPN"
+    priority                   = 104
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = var.vdc_config["vpn_range"]
+    destination_address_prefix = var.vdc_config["hub_mgmt_subnet"]
   }
   
   security_rule {
-    name                      = "AllowRDPOutbound"
-    priority                  = 105
-    direction                 = "Outbound"
-    access                    = "Allow"
-    protocol                  = "Tcp"
-    source_port_range         = "*"
-    destination_port_range    = "3389"
-    source_address_prefix     = var.vdc_config["hub_mgmt_subnet"]
-    destination_address_prefix= "VirtualNetwork"
+    name                       = "AllowRDPOutbound"
+    priority                   = 105
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefix      = var.vdc_config["hub_mgmt_subnet"]
+    destination_address_prefix = "VirtualNetwork"
   }
 
   security_rule {
-    name                      = "AllowSSHOutbound"
-    priority                  = 106
-    direction                 = "Outbound"
-    access                    = "Allow"
-    protocol                  = "Tcp"
-    source_port_range         = "*"
-    destination_port_range    = "22"
-    source_address_prefix     = var.vdc_config["hub_mgmt_subnet"]
-    destination_address_prefix= "VirtualNetwork"
+    name                       = "AllowSSHOutbound"
+    priority                   = 106
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = var.vdc_config["hub_mgmt_subnet"]
+    destination_address_prefix = "VirtualNetwork"
   }
+
+  tags                         = local.tags
 }
 resource azurerm_network_watcher_flow_log mgmt_nsg {
   network_watcher_name         = local.network_watcher_name
@@ -101,6 +103,8 @@ resource azurerm_route_table viag_route_table {
     next_hop_type             = "VirtualAppliance"
     next_hop_in_ip_address    = azurerm_firewall.iag.ip_configuration.0.private_ip_address
   }
+
+  tags                         = local.tags
 }
 # ******************* VNET ******************* #
 resource azurerm_virtual_network hub_vnet {
@@ -108,6 +112,8 @@ resource azurerm_virtual_network hub_vnet {
   location                    = var.location
   address_space               = [var.vdc_config["hub_range"]]
   resource_group_name         = azurerm_resource_group.vdc_rg.name
+
+  tags                         = local.tags
 }
 
 resource azurerm_subnet iag_subnet {
@@ -238,6 +244,8 @@ resource azurerm_private_dns_zone zone {
   }
   name                         = each.value
   resource_group_name          = azurerm_resource_group.vdc_rg.name
+
+  tags                         = local.tags
 }
 
 resource azurerm_private_dns_zone_virtual_network_link hub_link {
@@ -246,6 +254,8 @@ resource azurerm_private_dns_zone_virtual_network_link hub_link {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   private_dns_zone_name        = each.value.name
   virtual_network_id           = azurerm_virtual_network.hub_vnet.id
+
+  tags                         = local.tags
 }
 
 resource azurerm_dns_cname_record vpn_gateway_cname {

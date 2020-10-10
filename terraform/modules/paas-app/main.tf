@@ -114,8 +114,8 @@ resource azurerm_private_endpoint app_blob_storage_endpoint {
     delete                     = var.default_delete_timeout
   }  
 
-  count                        = var.enable_private_link ? 1 : 0
   tags                         = var.tags
+  count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_private_dns_a_record app_blob_storage_dns_record {
   name                         = azurerm_storage_account.app_storage.name
@@ -123,8 +123,8 @@ resource azurerm_private_dns_a_record app_blob_storage_dns_record {
   resource_group_name          = local.vdc_resource_group_name
   ttl                          = 300
   records                      = [azurerm_private_endpoint.app_blob_storage_endpoint.0.private_service_connection[0].private_ip_address]
-  tags                         = var.tags
 
+  tags                         = var.tags
   count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_private_endpoint app_table_storage_endpoint {
@@ -148,7 +148,6 @@ resource azurerm_private_endpoint app_table_storage_endpoint {
   }  
 
   tags                         = var.tags
-
   count                        = var.enable_private_link ? 1 : 0
   # Create Private Endpoints one at a time
   depends_on                   = [azurerm_private_endpoint.app_blob_storage_endpoint]
@@ -159,8 +158,8 @@ resource azurerm_private_dns_a_record app_table_storage_dns_record {
   resource_group_name          = local.vdc_resource_group_name
   ttl                          = 300
   records                      = [azurerm_private_endpoint.app_table_storage_endpoint.0.private_service_connection[0].private_ip_address]
-  tags                         = var.tags
 
+  tags                         = var.tags
   count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_advanced_threat_protection app_storage {
@@ -258,7 +257,6 @@ resource azurerm_private_endpoint archive_blob_storage_endpoint {
   }  
 
   tags                         = var.tags
-
   count                        = var.enable_private_link ? 1 : 0
   # Create Private Endpoints one at a time
   depends_on                   = [azurerm_private_endpoint.app_table_storage_endpoint]
@@ -269,8 +267,8 @@ resource azurerm_private_dns_a_record archive_blob_storage_dns_record {
   resource_group_name          = local.vdc_resource_group_name
   ttl                          = 300
   records                      = [azurerm_private_endpoint.archive_blob_storage_endpoint.0.private_service_connection[0].private_ip_address]
-  tags                         = var.tags
 
+  tags                         = var.tags
   count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_private_endpoint archive_table_storage_endpoint {
@@ -294,7 +292,6 @@ resource azurerm_private_endpoint archive_table_storage_endpoint {
   }  
 
   tags                         = var.tags
-
   count                        = var.enable_private_link ? 1 : 0
   # Create Private Endpoints one at a time
   depends_on                   = [azurerm_private_endpoint.archive_blob_storage_endpoint]
@@ -305,8 +302,8 @@ resource azurerm_private_dns_a_record archive_table_storage_dns_record {
   resource_group_name          = local.vdc_resource_group_name
   ttl                          = 300
   records                      = [azurerm_private_endpoint.archive_table_storage_endpoint.0.private_service_connection[0].private_ip_address]
-  tags                         = var.tags
 
+  tags                         = var.tags
   count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_advanced_threat_protection archive_storage {
@@ -377,6 +374,8 @@ resource azurerm_user_assigned_identity paas_web_app_identity {
   name                         = "${var.resource_group_name}-appsvc-identity"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
+
+  tags                         = var.tags
 }
 
 locals {
@@ -552,8 +551,8 @@ resource azurerm_dns_cname_record verify_record {
   ttl                          = 300
   record                       = "awverify.${replace(azurerm_app_service.paas_web_app.default_site_hostname,"www.","")}"
 
-  count                        = var.vanity_fqdn != null ? 1 : 0
   tags                         = var.tags
+  count                        = var.vanity_fqdn != null ? 1 : 0
 } 
 resource azurerm_dns_cname_record app_service_alias {
   name                         = "${local.vanity_hostname}-appsvc"
@@ -562,8 +561,8 @@ resource azurerm_dns_cname_record app_service_alias {
   ttl                          = 300
   record                       = azurerm_app_service.paas_web_app.default_site_hostname
 
-  count                        = var.vanity_fqdn != null ? 1 : 0
   tags                         = var.tags
+  count                        = var.vanity_fqdn != null ? 1 : 0
 } 
 resource azurerm_app_service_certificate vanity_ssl {
   name                         = var.vanity_certificate_name
@@ -572,8 +571,8 @@ resource azurerm_app_service_certificate vanity_ssl {
   pfx_blob                     = filebase64(var.vanity_certificate_path)
   password                     = var.vanity_certificate_password
 
-  count                        = var.vanity_fqdn != null ? 1 : 0
   tags                         = var.tags
+  count                        = var.vanity_fqdn != null ? 1 : 0
 }
 resource azurerm_app_service_custom_hostname_binding vanity_domain {
   hostname                     = var.vanity_fqdn
@@ -752,7 +751,6 @@ resource azurerm_eventhub_namespace app_eventhub {
   }
 
   tags                         = var.tags
-
   depends_on                   = [azurerm_app_service_virtual_network_swift_connection.network]
 }
 
@@ -963,7 +961,6 @@ resource azurerm_private_endpoint sqlserver_endpoint {
   }
 
   tags                         = var.tags
-
   count                        = var.enable_private_link ? 1 : 0
   # Create Private Endpoints one at a time
   #depends_on                   = [azurerm_private_endpoint.archive_table_storage_endpoint]

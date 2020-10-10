@@ -60,6 +60,8 @@ resource azurerm_firewall iag {
     subnet_id                  = azurerm_subnet.iag_subnet.id
     public_ip_address_id       = azurerm_public_ip.iag_pip.id
   }
+
+  tags                         = local.tags
 }
 
 # Outbound domain whitelisting

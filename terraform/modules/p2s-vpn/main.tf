@@ -1,18 +1,18 @@
-data "azurerm_client_config" "current" {}
+data azurerm_client_config current {}
 
 locals {
   resource_group_name          = element(split("/",var.resource_group_id),length(split("/",var.resource_group_id))-1)
   virtual_network_name         = element(split("/",var.virtual_network_id),length(split("/",var.virtual_network_id))-1)
 }
 
-resource "azurerm_subnet" "vpn_subnet" {
+resource azurerm_subnet vpn_subnet {
   name                         = "GatewaySubnet"
   resource_group_name          = local.resource_group_name
   virtual_network_name         = local.virtual_network_name
   address_prefixes             = [var.subnet_range]
 }
 
-resource "random_string" "vpn_domain_name_label" {
+resource random_string vpn_domain_name_label {
   length                       = 16
   upper                        = false
   lower                        = true
@@ -20,7 +20,7 @@ resource "random_string" "vpn_domain_name_label" {
   special                      = false
 }
 
-resource "azurerm_public_ip" "vpn_pip" {
+resource azurerm_public_ip vpn_pip {
   name                         = "${local.resource_group_name}-vpn-pip"
   location                     = var.location
   resource_group_name          = local.resource_group_name
@@ -67,11 +67,11 @@ resource azurerm_virtual_network_gateway vpn_gw {
     delete                     = var.default_delete_timeout
   }  
 
-  count                        = var.deploy_vpn ? 1 : 0
   tags                         = var.tags
+  count                        = var.deploy_vpn ? 1 : 0
 }
 
-resource "azurerm_monitor_diagnostic_setting" "vpn_logs" {
+resource azurerm_monitor_diagnostic_setting vpn_logs {
   name                         = "${azurerm_virtual_network_gateway.vpn_gw.0.name}-logs"
   target_resource_id           = azurerm_virtual_network_gateway.vpn_gw.0.id
   storage_account_id           = var.diagnostics_storage_id

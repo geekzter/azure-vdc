@@ -29,7 +29,7 @@ data http localpublicprefix {
 }
 
 # Random password generator
-resource "random_string" "password" {
+resource random_string password {
   length                       = 12
   upper                        = true
   lower                        = true
@@ -41,7 +41,7 @@ resource "random_string" "password" {
 }
 
 # Random resource suffix, this will prevent name collisions when creating resources in parallel
-resource "random_string" "suffix" {
+resource random_string suffix {
   length                       = 4
   upper                        = false
   lower                        = true
@@ -100,14 +100,14 @@ locals {
 }
 
 # Create Azure resource group to be used for VDC resources
-resource "azurerm_resource_group" "vdc_rg" {
+resource azurerm_resource_group vdc_rg {
   name                         = local.vdc_resource_group
   location                     = var.location
 
   tags                         = local.tags
 }
 
-resource "azurerm_role_assignment" "demo_admin" {
+resource azurerm_role_assignment demo_admin {
   scope                        = azurerm_resource_group.vdc_rg.id
   role_definition_name         = "Contributor"
   principal_id                 = var.admin_object_id

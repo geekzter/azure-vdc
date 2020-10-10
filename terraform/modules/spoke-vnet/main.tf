@@ -5,7 +5,7 @@ locals {
   resource_group_name          = element(split("/",var.resource_group_id),length(split("/",var.resource_group_id))-1)
 }
 
-resource "azurerm_virtual_network" "spoke_vnet" {
+resource azurerm_virtual_network spoke_vnet {
   name                         = var.spoke_virtual_network_name
   resource_group_name          = local.resource_group_name
   location                     = var.location
@@ -15,7 +15,7 @@ resource "azurerm_virtual_network" "spoke_vnet" {
   tags                         = var.tags
 }
 
-resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
+resource azurerm_monitor_diagnostic_setting vnet_logs {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-logs"
   target_resource_id           = azurerm_virtual_network.spoke_vnet.id
   storage_account_id           = var.diagnostics_storage_id
@@ -40,7 +40,7 @@ resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
 }
 
 # https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-peering-gateway-transit#resource-manager-to-resource-manager-peering-with-gateway-transit
-resource "azurerm_virtual_network_peering" "spoke_to_hub" {
+resource azurerm_virtual_network_peering spoke_to_hub {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-spoke2hub"
   resource_group_name          = local.resource_group_name
   virtual_network_name         = azurerm_virtual_network.spoke_vnet.name
@@ -55,7 +55,7 @@ resource "azurerm_virtual_network_peering" "spoke_to_hub" {
   depends_on                   = [var.hub_gateway_dependency,azurerm_virtual_network_peering.hub_to_spoke]
 }
 
-resource "azurerm_virtual_network_peering" "hub_to_spoke" {
+resource azurerm_virtual_network_peering hub_to_spoke {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-hub2spoke"
   resource_group_name          = local.resource_group_name
   virtual_network_name         = local.hub_virtual_network_name
@@ -70,7 +70,7 @@ resource "azurerm_virtual_network_peering" "hub_to_spoke" {
   depends_on                   = [var.hub_gateway_dependency]
 }
 
-resource "azurerm_route_table" "spoke_route_table" {
+resource azurerm_route_table spoke_route_table {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-routes"
   resource_group_name          = local.resource_group_name
   location                     = var.location
@@ -87,9 +87,11 @@ resource "azurerm_route_table" "spoke_route_table" {
     next_hop_type              = "VirtualAppliance"
     next_hop_in_ip_address     = var.gateway_ip_address
   }
+
+  tags                         = var.tags
 }
 
-resource "azurerm_network_security_group" "spoke_nsg" {
+resource azurerm_network_security_group spoke_nsg {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-nsg"
   resource_group_name          = local.resource_group_name
   location                     = var.location
@@ -213,6 +215,8 @@ resource "azurerm_network_security_group" "spoke_nsg" {
     source_address_prefix      = "VirtualNetwork"
     destination_address_prefix = "Internet"
   }
+
+  tags                         = var.tags
 }
 
 resource azurerm_network_watcher_flow_log spoke_nsg {
@@ -239,7 +243,7 @@ resource azurerm_network_watcher_flow_log spoke_nsg {
   count                        = var.deploy_network_watcher ? 1 : 0
 }
 
-resource "azurerm_subnet" "subnet" {
+resource azurerm_subnet subnet {
   name                         = element(keys(var.subnets),count.index)
   virtual_network_name         = azurerm_virtual_network.spoke_vnet.name
   resource_group_name          = local.resource_group_name
@@ -270,7 +274,7 @@ resource "azurerm_subnet" "subnet" {
   }  
 }
 
-resource "azurerm_subnet_route_table_association" "subnet_routes" {
+resource azurerm_subnet_route_table_association subnet_routes {
   subnet_id                    = local.subnet_id_map[element(var.enable_routetable_for_subnets,count.index)]
   route_table_id               = azurerm_route_table.spoke_route_table.id
   count                        = length(var.enable_routetable_for_subnets)
@@ -285,7 +289,7 @@ resource "azurerm_subnet_route_table_association" "subnet_routes" {
   depends_on                   = [azurerm_virtual_network_peering.spoke_to_hub]
 }
 
-resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
+resource azurerm_subnet_network_security_group_association subnet_nsg {
   subnet_id                    = element(azurerm_subnet.subnet.*.id,count.index)
   network_security_group_id    = azurerm_network_security_group.spoke_nsg.id
   count                        = length(var.subnets)
@@ -300,7 +304,7 @@ resource "azurerm_subnet_network_security_group_association" "subnet_nsg" {
   depends_on                   = [azurerm_virtual_network_peering.spoke_to_hub]
 }
 
-resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
+resource azurerm_monitor_diagnostic_setting nsg_logs {
   name                         = "${azurerm_network_security_group.spoke_nsg.name}-logs"
   target_resource_id           = azurerm_network_security_group.spoke_nsg.id
   storage_account_id           = var.diagnostics_storage_id
@@ -326,7 +330,7 @@ resource "azurerm_monitor_diagnostic_setting" "nsg_logs" {
 }
 
 # This is the tempale for Managed Bastion, IaaS bastion is defined in management.tf
-resource "azurerm_subnet" "managed_bastion_subnet" {
+resource azurerm_subnet managed_bastion_subnet {
   name                         = "AzureBastionSubnet"
   virtual_network_name         = azurerm_virtual_network.spoke_vnet.name
   resource_group_name          = local.resource_group_name
@@ -345,17 +349,18 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
   count                        = var.deploy_managed_bastion ? 1 : 0
 }
 
-resource "azurerm_public_ip" "managed_bastion_pip" {
+resource azurerm_public_ip managed_bastion_pip {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-managed-bastion-pip"
   location                     = var.location
   resource_group_name          = local.resource_group_name
   allocation_method            = "Static"
   sku                          = "Standard" # Zone redundant
 
+  tags                         = var.tags
   count                        = var.deploy_managed_bastion ? 1 : 0
 }
 
-resource "azurerm_bastion_host" "managed_bastion" {
+resource azurerm_bastion_host managed_bastion {
   name                         = "${replace(azurerm_virtual_network.spoke_vnet.name,"-","")}managedbastion"
   location                     = var.location
   resource_group_name          = local.resource_group_name
@@ -373,10 +378,11 @@ resource "azurerm_bastion_host" "managed_bastion" {
     delete                     = var.default_delete_timeout
   }  
 
+  tags                         = var.tags
   count                        = var.deploy_managed_bastion ? 1 : 0
 }
 
-resource "azurerm_monitor_diagnostic_setting" "bastion_logs" {
+resource azurerm_monitor_diagnostic_setting bastion_logs {
   name                         = "${azurerm_bastion_host.managed_bastion[count.index].name}-logs"
   target_resource_id           = azurerm_bastion_host.managed_bastion[count.index].id
   storage_account_id           = var.diagnostics_storage_id
@@ -394,11 +400,12 @@ resource "azurerm_monitor_diagnostic_setting" "bastion_logs" {
   count                        = var.deploy_managed_bastion ? 1 : 0
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "spoke_link" {
+resource azurerm_private_dns_zone_virtual_network_link spoke_link {
   name                         = "${azurerm_virtual_network.spoke_vnet.name}-zone-link${count.index+1}"
   resource_group_name          = local.resource_group_name
   private_dns_zone_name        = element(var.private_dns_zones,count.index)
   virtual_network_id           = azurerm_virtual_network.spoke_vnet.id
 
+  tags                         = var.tags
   count                        = length(var.private_dns_zones)
 }
