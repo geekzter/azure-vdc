@@ -195,7 +195,7 @@ function GetTerraformOutput (
     [parameter(Mandatory=$true)][string]$OutputVariable
 ) {
     $result = $(terraform output $OutputVariable 2>$null)
-    if ($result -match "\[33") {
+    if ($result -match "\[\d+m") {
         # Terraform warning, return null for missing output
         return $null
     } else {
