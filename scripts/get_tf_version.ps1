@@ -54,7 +54,7 @@ function GetTerraformVersion(
             return $terraformPreferredVersion
         }
         'State'    {
-            $tfState = terraform state pull | ConvertFrom-Json
+            $tfState = terraform state pull 2>$null | ConvertFrom-Json
             if ($tfState) {
                 $terraformStateVersion = $tfState.terraform_version
                 if ($GeneratePipelineOutput) {
@@ -80,7 +80,15 @@ if ($ValidateInstalledVersion) {
     if ($installedVersion -ne $preferredVersion) {
         Write-Warning "Installed Terraform version $installedVersion is different from preferred version $preferredVersion specified in $(Join-Path $tfdirectory .terraform-version) (read by tfenv)"
     }
-    if ($stateVersion -and ($installedVersion -lt $stateVersion)) {
-        Write-Warning "Installed Terraform version $installedVersion is older than version $stateVersion used to create Terraform state"
+    if ($stateVersion) {
+        if ($installedVersion -lt $stateVersion) {
+            Write-Warning "Installed Terraform version $installedVersion is older than version $stateVersion used to create Terraform state"
+        }
+    } else {
+        $stateStdPlusError = $(terraform state pull 2>&1) 
+        if ($stateStdPlusError -match "\[\d+m") {
+            # Escape code in output, Terraform is complaining
+            Write-Warning $stateStdPlusError
+        }
     }
 }
