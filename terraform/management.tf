@@ -477,6 +477,22 @@ resource azurerm_monitor_diagnostic_setting mgmt_vm {
   ]
 }
 
+resource azurerm_dev_test_global_vm_shutdown_schedule mgmt_auto_shutdown {
+  virtual_machine_id           = azurerm_windows_virtual_machine.mgmt.id
+  location                     = azurerm_windows_virtual_machine.mgmt.location
+  enabled                      = true
+
+  daily_recurrence_time        = "2300"
+  timezone                     = var.timezone
+
+  notification_settings {
+    enabled                    = false
+  }
+
+  tags                         = local.tags
+  count                        = var.enable_auto_shutdown ? 1 : 0 
+}
+
 locals {
   virtual_machine_ids          = concat(module.iis_app.virtual_machine_ids, [azurerm_windows_virtual_machine.mgmt.id])
   virtual_machine_ids_string   = join(",",local.virtual_machine_ids)
@@ -499,7 +515,7 @@ resource azurerm_automation_schedule daily {
   frequency                    = "Day"
   interval                     = 1
   # https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms912391(v=winembedded.11)?redirectedfrom=MSDN
-  timezone                     = "Europe/Amsterdam"
+  timezone                     = var.timezone_automation
   start_time                   = timeadd(timestamp(), "1h30m")
   description                  = "Daily schedule"
 }
