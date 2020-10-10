@@ -418,6 +418,22 @@ SETTINGS
                                  ]
 }
 
+resource azurerm_dev_test_global_vm_shutdown_schedule app_web_vm_auto_shutdown {
+  virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
+  location                     = var.location
+  enabled                      = true
+
+  daily_recurrence_time        = "2300"
+  timezone                     = var.timezone
+
+  notification_settings {
+    enabled                    = false
+  }
+
+  tags                         = var.tags
+  count                        = var.enable_auto_shutdown ? var.app_web_vm_number : 0 
+}
+
 # HACK: Use this as the last resource created for a VM, so we can set a destroy action to happen prior to VM (extensions) destroy
 resource azurerm_monitor_diagnostic_setting app_web_vm {
   name                         = "${element(azurerm_virtual_machine.app_web_vm.*.name, count.index)}-diagnostics"
@@ -894,6 +910,22 @@ SETTINGS
                                  ]
 }
 
+resource azurerm_dev_test_global_vm_shutdown_schedule app_db_vm_auto_shutdown {
+  virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
+  location                     = var.location
+  enabled                      = true
+
+  daily_recurrence_time        = "2300"
+  timezone                     = var.timezone
+
+  notification_settings {
+    enabled                    = false
+  }
+
+  tags                         = var.tags
+  count                        = var.enable_auto_shutdown ? var.app_db_vm_number : 0 
+}
+
 # HACK: Use this as the last resource created for a VM, so we can set a destroy action to happen prior to VM (extensions) destroy
 resource azurerm_monitor_diagnostic_setting app_db_vm {
   name                         = "${element(azurerm_virtual_machine.app_db_vm.*.name, count.index)}-diagnostics"
@@ -961,3 +993,4 @@ resource azurerm_monitor_diagnostic_setting db_lb_logs {
     }
   }
 }
+

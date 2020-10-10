@@ -76,6 +76,7 @@ module iis_app {
   app_db_vm_number             = var.app_db_vm_number
   app_subnet_id                = lookup(module.iaas_spoke_vnet.subnet_ids,"app","")
   automation_storage_name      = azurerm_storage_account.vdc_automation_storage.name
+  enable_auto_shutdown         = var.enable_auto_shutdown
   data_subnet_id               = lookup(module.iaas_spoke_vnet.subnet_ids,"data","")
   default_create_timeout       = var.default_create_timeout
   default_update_timeout       = var.default_update_timeout
@@ -95,6 +96,7 @@ module iis_app {
   diagnostics_workspace_key    = azurerm_log_analytics_workspace.vcd_workspace.primary_shared_key
   network_watcher_name         = local.network_watcher_name
   network_watcher_resource_group_name = local.network_watcher_resource_group
+  timezone                     = var.timezone
   use_pipeline_environment     = var.use_pipeline_environment
 }
 

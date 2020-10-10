@@ -132,6 +132,7 @@ variable app_db_image_version {
 variable app_subnet_id {
   description                  = "The id of the subnet to deploy app tier VM's in"
 }
+variable enable_auto_shutdown {}
 variable data_subnet_id {
   description                  = "The id of the subnet to deploy db tier VM's in"
 }
@@ -139,6 +140,7 @@ variable default_create_timeout {}
 variable default_update_timeout {}
 variable default_read_timeout {}
 variable default_delete_timeout {}
+variable timezone {}
 variable vm_connectivity_dependency {
   description                  = "A dummy value that is used to force dependency on network resources"
 }

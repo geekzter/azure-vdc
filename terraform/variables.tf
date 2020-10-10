@@ -46,6 +46,11 @@ variable enable_app_service_aad_auth {
   default                      = false
   type                         = bool
 }
+variable enable_auto_shutdown {
+  description                  = "Whether to enable Auto Shutdown of VM's"
+  default                      = true
+  type                         = bool
+}
 variable enable_storage_diagnostic_setting {
   description                  = "Whether to enable Log Analytics diagnostics settings for storage accounts"
   default                      = false
@@ -482,6 +487,13 @@ variable shared_container_registry_spn_app_id {
 }
 variable shared_container_registry_spn_secret {
   default                      = null
+}
+variable timezone {
+  # https://jackstromberg.com/2017/01/list-of-time-zones-consumed-by-azure/
+  default                      = "W. Europe Standard Time"
+}
+variable timezone_automation {
+  default                      = "Europe/Amsterdam"
 }
 variable update_management_time {
   description                  = "Time of day when OS updates are scheduled (UTC)"
