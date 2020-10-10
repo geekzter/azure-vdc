@@ -5,7 +5,7 @@ locals {
 }
 
 # This is the tempale for Managed Bastion, IaaS bastion is defined in management.tf
-resource "azurerm_subnet" "managed_bastion_subnet" {
+resource azurerm_subnet managed_bastion_subnet {
   name                         = "AzureBastionSubnet"
   virtual_network_name         = local.virtual_network_name
   resource_group_name          = local.resource_group_name
@@ -22,7 +22,7 @@ resource "azurerm_subnet" "managed_bastion_subnet" {
 # TODO: Add NSG
 # https://docs.microsoft.com/en-us/azure/bastion/bastion-nsg
 
-resource "azurerm_public_ip" "managed_bastion_pip" {
+resource azurerm_public_ip managed_bastion_pip {
   name                         = "${local.virtual_network_name}-managed-bastion-pip"
   location                     = var.location
   resource_group_name          = local.resource_group_name
@@ -35,9 +35,11 @@ resource "azurerm_public_ip" "managed_bastion_pip" {
     read                       = var.default_read_timeout
     delete                     = var.default_delete_timeout
   }  
+
+  tags                         = var.tags
 }
 
-resource "azurerm_bastion_host" "managed_bastion" {
+resource azurerm_bastion_host managed_bastion {
   name                         = "${replace(local.virtual_network_name,"-","")}managedbastion"
   location                     = var.location
   resource_group_name          = local.resource_group_name
@@ -55,10 +57,11 @@ resource "azurerm_bastion_host" "managed_bastion" {
     delete                     = var.default_delete_timeout
   }  
 
+  tags                         = var.tags
   count                        = var.deploy_managed_bastion ? 1 : 0
 }
 
-resource "azurerm_monitor_diagnostic_setting" "bastion_logs" {
+resource azurerm_monitor_diagnostic_setting bastion_logs {
   name                         = "${azurerm_bastion_host.managed_bastion[count.index].name}-logs"
   target_resource_id           = azurerm_bastion_host.managed_bastion[count.index].id
   storage_account_id           = var.diagnostics_storage_id

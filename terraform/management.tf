@@ -112,6 +112,8 @@ resource azurerm_disk_encryption_set mgmt_disks {
   identity {
     type                       = "SystemAssigned"
   }
+
+  tags                         = local.tags
 }
 
 resource azurerm_key_vault_access_policy mgmt_disk_encryption_access {
@@ -342,8 +344,8 @@ resource azurerm_virtual_machine_extension mgmt_diagnostics {
     } 
   EOF
 
-  count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
   tags                         = local.tags
+  count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
   depends_on                   = [
                                   null_resource.start_mgmt,
                                   azurerm_virtual_machine_extension.mgmt_roles,
@@ -370,8 +372,8 @@ resource azurerm_virtual_machine_extension mgmt_dependency_monitor {
     } 
   EOF
 
-  count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
   tags                         = local.tags
+  count                        = var.deploy_monitoring_vm_extensions ? 1 : 0
   depends_on                   = [
                                   null_resource.start_mgmt,
                                   azurerm_virtual_machine_extension.mgmt_roles
@@ -385,8 +387,8 @@ resource azurerm_virtual_machine_extension mgmt_watcher {
   type_handler_version         = "1.4"
   auto_upgrade_minor_version   = true
 
-  count                        = var.deploy_network_watcher ? 1 : 0
   tags                         = local.tags
+  count                        = var.deploy_network_watcher ? 1 : 0
   depends_on                   = [
                                   null_resource.start_mgmt,
                                   azurerm_virtual_machine_extension.mgmt_roles
@@ -430,9 +432,8 @@ resource azurerm_virtual_machine_extension mgmt_disk_encryption {
     }
 SETTINGS
 
-  count                        = (!var.use_server_side_disk_encryption && var.deploy_security_vm_extensions) ? 1 : 0
   tags                         = local.tags
-
+  count                        = (!var.use_server_side_disk_encryption && var.deploy_security_vm_extensions) ? 1 : 0
   depends_on                   = [
                                   azurerm_firewall_application_rule_collection.iag_app_rules,
 #                                  azurerm_private_dns_a_record.vault_dns_record,
@@ -487,6 +488,8 @@ resource azurerm_automation_account automation {
   location                     = local.automation_location
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   sku_name                     = "Basic"
+
+  tags                         = local.tags
 }
 
 resource azurerm_automation_schedule daily {

@@ -93,7 +93,6 @@ resource azurerm_private_endpoint vault_endpoint {
   }  
 
   tags                         = local.tags
-
   count                        = var.enable_private_link ? 1 : 0
   depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
@@ -104,6 +103,7 @@ resource azurerm_private_dns_a_record vault_dns_record {
   ttl                          = 300
   records                      = [azurerm_private_endpoint.vault_endpoint.0.private_service_connection[0].private_ip_address]
 
+  tags                         = local.tags
   count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_monitor_diagnostic_setting key_vault_logs {
@@ -259,7 +259,6 @@ resource azurerm_private_endpoint container_registry_endpoint {
   }  
 
   tags                         = local.tags
-
   count                        = var.shared_container_registry != null ? 1 : 0
   depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }

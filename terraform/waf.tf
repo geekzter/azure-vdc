@@ -30,8 +30,8 @@ resource azurerm_dns_cname_record waf_iaas_app_cname {
   record                       = azurerm_public_ip.waf_pip.fqdn
   depends_on                   = [azurerm_public_ip.waf_pip]
 
-  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
   tags                         = local.tags
+  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
 } 
 resource azurerm_dns_cname_record waf_paas_app_cname {
   name                         = "${lower(var.resource_prefix)}${lower(terraform.workspace)}webapp"
@@ -40,8 +40,8 @@ resource azurerm_dns_cname_record waf_paas_app_cname {
   ttl                          = 300
   record                       = azurerm_public_ip.waf_pip.fqdn
 
-  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
   tags                         = local.tags
+  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
 } 
 resource azurerm_dns_cname_record waf_apim_gw_cname {
   name                         = "${lower(var.resource_prefix)}${lower(terraform.workspace)}apiproxy"
@@ -50,8 +50,8 @@ resource azurerm_dns_cname_record waf_apim_gw_cname {
   ttl                          = 300
   record                       = azurerm_public_ip.waf_pip.fqdn
 
-  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
   tags                         = local.tags
+  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
 } 
 
 resource azurerm_dns_cname_record waf_apim_portal_cname {
@@ -61,8 +61,8 @@ resource azurerm_dns_cname_record waf_apim_portal_cname {
   ttl                          = 300
   record                       = azurerm_public_ip.waf_pip.fqdn
 
-  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
   tags                         = local.tags
+  count                        = var.use_vanity_domain_and_ssl ? 1 : 0
 } 
 
 locals {

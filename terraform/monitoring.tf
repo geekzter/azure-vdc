@@ -48,7 +48,6 @@ resource azurerm_private_endpoint diag_blob_storage_endpoint {
   }  
 
   tags                         = local.tags
-
   count                        = var.enable_private_link ? 1 : 0
   depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
@@ -58,8 +57,8 @@ resource azurerm_private_dns_a_record diag_storage_blob_dns_record {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
   records                      = [azurerm_private_endpoint.diag_blob_storage_endpoint.0.private_service_connection[0].private_ip_address]
-  tags                         = var.tags
 
+  tags                         = var.tags
   count                        = var.enable_private_link ? 1 : 0
 }
 resource azurerm_private_endpoint diag_table_storage_endpoint {
@@ -84,7 +83,6 @@ resource azurerm_private_endpoint diag_table_storage_endpoint {
   }  
 
   tags                         = local.tags
-
   count                        = var.enable_private_link ? 1 : 0
   depends_on                   = [azurerm_subnet_route_table_association.shared_paas_subnet_routes]
 }
@@ -94,8 +92,8 @@ resource azurerm_private_dns_a_record diag_storage_table_dns_record {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   ttl                          = 300
   records                      = [azurerm_private_endpoint.diag_table_storage_endpoint.0.private_service_connection[0].private_ip_address]
-  tags                         = var.tags
 
+  tags                         = var.tags
   count                        = var.enable_private_link ? 1 : 0
 }
 
@@ -120,14 +118,13 @@ resource azurerm_log_analytics_workspace vcd_workspace {
   }  
 
   tags                         = local.tags
-
   depends_on                   = [
                                   # HACK: Not an actual dependency, but ensures this is available for flow logs, that are also dependent on this workspace
                                   null_resource.network_watcher 
                                  ]
 }
 
-resource "azurerm_log_analytics_linked_service" "automation" {
+resource azurerm_log_analytics_linked_service automation {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   workspace_name               = azurerm_log_analytics_workspace.vcd_workspace.name
   resource_id                  = azurerm_automation_account.automation.id
@@ -136,7 +133,7 @@ resource "azurerm_log_analytics_linked_service" "automation" {
 }
 
 # List of solutions: https://docs.microsoft.com/en-us/rest/api/loganalytics/workspaces/listintelligencepacks
-resource "azurerm_log_analytics_solution" "oms_solutions" {
+resource azurerm_log_analytics_solution oms_solutions {
   solution_name                 = element(var.vdc_oms_solutions, count.index)
   location                      = azurerm_log_analytics_workspace.vcd_workspace.location
   resource_group_name           = azurerm_resource_group.vdc_rg.name
@@ -149,12 +146,10 @@ resource "azurerm_log_analytics_solution" "oms_solutions" {
   }
 
   count                         = length(var.vdc_oms_solutions)
-
   depends_on                    = [azurerm_log_analytics_linked_service.automation]
-
 } 
 
-resource "azurerm_monitor_diagnostic_setting" "vnet_logs" {
+resource azurerm_monitor_diagnostic_setting vnet_logs {
   name                         = "${azurerm_virtual_network.hub_vnet.name}-logs"
   target_resource_id           = azurerm_virtual_network.hub_vnet.id
   storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
@@ -202,17 +197,10 @@ resource azurerm_application_insights vdc_insights {
   tags                         = local.tags
 }
 
-resource "azurerm_dashboard" "vdc_dashboard" {
+resource azurerm_dashboard vdc_dashboard {
   name                         = "VDC-${local.deployment_name}-${terraform.workspace}"
   resource_group_name          = azurerm_resource_group.vdc_rg.name
   location                     = azurerm_resource_group.vdc_rg.location
-  tags                         = merge(
-    local.tags,
-    map(
-      "hidden-title",           "VDC (${local.deployment_name}/${terraform.workspace})",
-    )
-  )
-
   dashboard_properties = templatefile("dashboard.tpl",
     {
       apim_gw_url              = "${local.apim_gw_url}echo/resource?param1=sample&subscription-key=${try(azurerm_api_management_subscription.echo_subscription.0.primary_key,"")}"
@@ -231,6 +219,13 @@ resource "azurerm_dashboard" "vdc_dashboard" {
       suffix                   = local.suffix
       vso_url                  = var.vso_url != "" ? var.vso_url : "https://online.visualstudio.com/"
   })
+
+  tags                         = merge(
+    local.tags,
+    map(
+      "hidden-title",           "VDC (${local.deployment_name}/${terraform.workspace})",
+    )
+  )
 }
 
 resource azurerm_monitor_action_group main {
@@ -247,6 +242,7 @@ resource azurerm_monitor_action_group main {
     email_address              = var.alert_email
   }
 
+  tags                         = local.tags
   count                        = var.alert_email != null && var.alert_email != "" ? 1 : 0
 }
 

@@ -12,14 +12,14 @@ data azurerm_storage_account diagnostics {
   resource_group_name          = local.vdc_resource_group_name
 }
 
-resource "azurerm_resource_group" "app_rg" {
+resource azurerm_resource_group app_rg {
   name                         = var.resource_group
   location                     = var.location
 
   tags                         = var.tags
 }
 
-resource "azurerm_role_assignment" "demo_admin" {
+resource azurerm_role_assignment demo_admin {
   scope                        = azurerm_resource_group.app_rg.id
   role_definition_name         = "Contributor"
   principal_id                 = var.admin_object_id
@@ -80,7 +80,7 @@ resource azurerm_storage_blob mount_data_disks_script {
   source                       = "${path.module}/scripts/host/mount_data_disks.ps1"
 }
 
-resource "azurerm_network_interface" "app_web_if" {
+resource azurerm_network_interface app_web_if {
   name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}-nic"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -96,7 +96,7 @@ resource "azurerm_network_interface" "app_web_if" {
   tags                         = var.tags
 }
 
-resource "azurerm_virtual_machine" "app_web_vm" {
+resource azurerm_virtual_machine app_web_vm {
   name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -243,7 +243,7 @@ resource azurerm_virtual_machine_extension app_web_vm_diagnostics {
                                   azurerm_virtual_machine_extension.app_web_vm_disk_encryption
                                  ]
 }
-resource "azurerm_virtual_machine_extension" "app_web_vm_pipeline_deployment_group" {
+resource azurerm_virtual_machine_extension app_web_vm_pipeline_deployment_group {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
@@ -315,7 +315,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
                                   azurerm_virtual_machine_extension.app_web_vm_monitor
                                  ]
 }
-resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
+resource azurerm_virtual_machine_extension app_web_vm_bginfo {
   name                         = "BGInfo"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Compute"
@@ -332,7 +332,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_bginfo" {
                                   azurerm_virtual_machine_extension.app_web_vm_disk_encryption
                                  ]
 }
-resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
+resource azurerm_virtual_machine_extension app_web_vm_dependency_monitor {
   name                         = "DAExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
@@ -366,7 +366,7 @@ resource "azurerm_virtual_machine_extension" "app_web_vm_dependency_monitor" {
                                   azurerm_virtual_machine_extension.app_web_vm_disk_encryption
                                  ]
 }
-resource "azurerm_virtual_machine_extension" "app_web_vm_watcher" {
+resource azurerm_virtual_machine_extension app_web_vm_watcher {
   name                         = "AzureNetworkWatcherExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_web_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.NetworkWatcher"
@@ -452,7 +452,7 @@ resource azurerm_monitor_diagnostic_setting app_web_vm {
   ]
 }
 
-resource "azurerm_lb" "app_db_lb" {
+resource azurerm_lb app_db_lb {
   resource_group_name          = azurerm_resource_group.app_rg.name
   name                         = "${azurerm_resource_group.app_rg.name}-db-lb"
   location                     = azurerm_resource_group.app_rg.location
@@ -468,13 +468,13 @@ resource "azurerm_lb" "app_db_lb" {
   tags                         = var.tags
 }
 
-resource "azurerm_lb_backend_address_pool" "app_db_backend_pool" {
+resource azurerm_lb_backend_address_pool app_db_backend_pool {
   name                         = "app_db_vms"
   resource_group_name          = azurerm_resource_group.app_rg.name
   loadbalancer_id              = azurerm_lb.app_db_lb.id
 }
 
-resource "azurerm_lb_rule" "app_db_lb_rule_tds" {
+resource azurerm_lb_rule app_db_lb_rule_tds {
   resource_group_name          = azurerm_resource_group.app_rg.name
   loadbalancer_id              = azurerm_lb.app_db_lb.id
   name                         = "LBRule"
@@ -490,7 +490,7 @@ resource "azurerm_lb_rule" "app_db_lb_rule_tds" {
   depends_on                   = [azurerm_lb_probe.app_db_lb_probe_tds]
 }
 
-resource "azurerm_lb_probe" "app_db_lb_probe_tds" {
+resource azurerm_lb_probe app_db_lb_probe_tds {
   resource_group_name          = azurerm_resource_group.app_rg.name
   loadbalancer_id              = azurerm_lb.app_db_lb.id
   name                         = "TcpProbe"
@@ -500,7 +500,7 @@ resource "azurerm_lb_probe" "app_db_lb_probe_tds" {
   number_of_probes             = var.app_db_vm_number
 }
 
-resource "azurerm_network_interface" "app_db_if" {
+resource azurerm_network_interface app_db_if {
   name                         = "${azurerm_resource_group.app_rg.name}-db-vm${count.index+1}-nic"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -516,14 +516,14 @@ resource "azurerm_network_interface" "app_db_if" {
   tags                         = var.tags
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "app_db_if_backend_pool" {
+resource azurerm_network_interface_backend_address_pool_association app_db_if_backend_pool {
   network_interface_id         = element(azurerm_network_interface.app_db_if.*.id, count.index)
   ip_configuration_name        = element(azurerm_network_interface.app_db_if.*.ip_configuration.0.name, count.index)
   backend_address_pool_id      = azurerm_lb_backend_address_pool.app_db_backend_pool.id
   count                        = var.app_db_vm_number
 }
 
-resource "azurerm_virtual_machine" "app_db_vm" {
+resource azurerm_virtual_machine app_db_vm {
   name                         = "${azurerm_resource_group.app_rg.name}-db-vm${count.index+1}"
   location                     = azurerm_resource_group.app_rg.location
   resource_group_name          = azurerm_resource_group.app_rg.name
@@ -723,7 +723,7 @@ resource azurerm_virtual_machine_extension app_db_vm_diagnostics {
                                   azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 }
-resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_group" {
+resource azurerm_virtual_machine_extension app_db_vm_pipeline_deployment_group {
   name                         = "TeamServicesAgentExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.VisualStudio.Services"
@@ -760,7 +760,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_pipeline_deployment_grou
                                   azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 }
-resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
+resource azurerm_virtual_machine_extension app_db_vm_bginfo {
   name                         = "BGInfo"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Compute"
@@ -777,7 +777,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_bginfo" {
                                   azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 }
-resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
+resource azurerm_virtual_machine_extension app_db_vm_dependency_monitor {
   name                         = "DAExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.Monitoring.DependencyAgent"
@@ -811,7 +811,7 @@ resource "azurerm_virtual_machine_extension" "app_db_vm_dependency_monitor" {
                                   azurerm_virtual_machine_extension.app_db_vm_disk_encryption
                                  ]
 }
-resource "azurerm_virtual_machine_extension" "app_db_vm_watcher" {
+resource azurerm_virtual_machine_extension app_db_vm_watcher {
   name                         = "AzureNetworkWatcherExtension"
   virtual_machine_id           = element(azurerm_virtual_machine.app_db_vm.*.id, count.index)
   publisher                    = "Microsoft.Azure.NetworkWatcher"
@@ -929,7 +929,7 @@ resource azurerm_monitor_diagnostic_setting app_db_vm {
   ]
 }
 
-resource "azurerm_monitor_diagnostic_setting" "db_lb_logs" {
+resource azurerm_monitor_diagnostic_setting db_lb_logs {
   name                         = "${azurerm_lb.app_db_lb.name}-logs"
   target_resource_id           = azurerm_lb.app_db_lb.id
   storage_account_id           = var.diagnostics_storage_id
