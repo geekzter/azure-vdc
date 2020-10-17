@@ -23,6 +23,7 @@ try {
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference    = "Continue"
         $Script:appResourceGroup          = (GetTerraformOutput "paas_app_resource_group")
+        $Script:appService                = (GetTerraformOutput "paas_app_service_name")
         $Script:appStorageAccount         = (GetTerraformOutput "paas_app_storage_account_name")
         $Script:appEventHubStorageAccount = (GetTerraformOutput "paas_app_eventhub_storage_account_name")
         $Script:appEventHubNamespace      = (GetTerraformOutput "paas_app_eventhub_namespace")
@@ -54,6 +55,14 @@ Write-Host "Public IP address is $ipAddress"
 # HACK: We need this to cater for changing public IP addresses e.g. Azure Pipelines Hosted Agents
 $ipPrefix = Invoke-RestMethod -Uri https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} -MaximumRetryCount 9 | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
 Write-Host "Public IP prefix is $ipPrefix"
+
+# App Service Deployment Slot
+if ($appService) {
+    if (-not (az webapp config access-restriction show -s staging -n $appService -g $appResourceGroup --query "ipSecurityRestrictions[?ip_address=='$ipPrefix']" -o tsv)) {
+        Write-Host "Adding rule for Spp Service $appService deployment slot 'staging' to allow prefix $ipPrefix..."
+        az webapp config access-restriction add -s staging -n $appService -g $appResourceGroup --ip-address $ipPrefix -r letmein -p 65000 -o none
+    }
+}
 
 # Punch hole in PaaS Firewalls
 foreach ($storageAccount in @($appStorageAccount,$appEventHubStorageAccount)) {
