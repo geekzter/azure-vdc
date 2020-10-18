@@ -42,18 +42,22 @@ function DeployContainerWebApp () {
 
     $productionMode = $(az webapp config appsettings list -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT'].value" -o tsv)
     # Create staging deployment slot, if it does not exist yet
-    if (!(az webapp deployment slot list -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='$slot']" -o tsv)) {
-        az webapp deployment slot create -n $AppAppServiceName --configuration-source $AppAppServiceName -s $slot -g $AppResourceGroup --query "hostNames"
-        $stagingMode = ($productionMode -eq "Offline" ? "Online" : "Offline")
-        az webapp config appsettings set --settings ASPNETCORE_ENVIRONMENT=$stagingMode -s $slot -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT']"
-    }
+    # if (!(az webapp deployment slot list -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='$slot']" -o tsv)) {
+    #     az webapp deployment slot create -n $AppAppServiceName --configuration-source $AppAppServiceName -s $slot -g $AppResourceGroup --query "hostNames"
+    #     $stagingMode = ($productionMode -eq "Offline" ? "Online" : "Offline")
+    #     az webapp config appsettings set --settings ASPNETCORE_ENVIRONMENT=$stagingMode -s $slot -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT']"
+    # }
 
     if ($productionMode -eq "Offline") {
-        Write-Host "Swapping slots..."
         # Swap slots
-        az webapp deployment slot swap -s $slot -n $AppAppServiceName -g $AppResourceGroup
+        # Write-Host "Swapping slots..."
+        # az webapp deployment slot swap -s $slot -n $AppAppServiceName -g $AppResourceGroup
+
+        # Set online
+        Write-Host "Set ASPNETCORE_ENVIRONMENT=`"Online`"..."
+        az webapp config appsettings set --settings ASPNETCORE_ENVIRONMENT="Online" -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT']"
     } else {
-        Write-Host "Production slot is already online, no swap needed"
+        Write-Host "Production slot is already online, no swap/update needed"
     }
 }
 
