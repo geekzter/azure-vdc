@@ -23,6 +23,7 @@ try {
     }
     
     Invoke-Command -ScriptBlock {
+        Write-Information "Gathering Terraform output..."
         $Private:ErrorActionPreference    = "Continue"
         $Script:appResourceGroup          = (GetTerraformOutput "paas_app_resource_group")
         $Script:appService                = (GetTerraformOutput "paas_app_service_name")
@@ -41,6 +42,8 @@ try {
     if (!$appRGExists -or ([string]::IsNullOrEmpty($appStorageAccount) -and [string]::IsNullOrEmpty($appEventHubNamespace))) {
         Write-Host "Resources have not yet been created, nothing to do"
         exit 
+    } else {
+        Write-Information "Resources exist"
     }
 } finally {
     Pop-Location

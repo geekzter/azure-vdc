@@ -490,6 +490,11 @@ stages:
             scriptType: pscore
             scriptLocation: inlineScript
             inlineScript: |
+              $ErrorActionPreference = "Continue"
+              $InformationPreference = "Continue"
+              $VerbosePreference = "Continue"
+              $DebugPreference = "Continue"
+              Set-PSDebug -Trace 2
               ../scripts/punch_hole.ps1 -UsePreviewApis
             useGlobalConfig: true
             workingDirectory: '$(terraformDirectory)'
