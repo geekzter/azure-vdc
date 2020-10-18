@@ -8,7 +8,9 @@
 #> 
 #Requires -Version 7
 
-param () 
+param (
+    [parameter(Mandatory=$false)][switch]$UsePreviewApis=$false # Use API's that use stderr for support notices
+) 
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
@@ -57,7 +59,7 @@ $ipPrefix = Invoke-RestMethod -Uri https://stat.ripe.net/data/network-info/data.
 Write-Host "Public IP prefix is $ipPrefix"
 
 # App Service Deployment Slot
-if ($appService) {
+if ($appService -and $UsePreviewApis) {
     if (-not (az webapp config access-restriction show -s staging -n $appService -g $appResourceGroup --query "ipSecurityRestrictions[?ip_address=='$ipPrefix']" -o tsv 2>$null)) {
         Write-Host "Adding rule for Spp Service $appService deployment slot 'staging' to allow prefix $ipPrefix..."
         az webapp config access-restriction add -s staging -n $appService -g $appResourceGroup --ip-address $ipPrefix -r letmein -p 65000 -o none 2>&1
