@@ -463,6 +463,27 @@ stages:
             deleteFirewallRule: true
 
         - task: AzureCLI@2
+          displayName: 'Punch hole in App Service slot access restrictiom'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              $ipAddress=$(Invoke-RestMethod -Uri https://ipinfo.io/ip -MaximumRetryCount 9).Trim()
+              Write-Host "Public IP address is $ipAddress"
+              $ipPrefix = Invoke-RestMethod -Uri https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} -MaximumRetryCount 9 | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
+              Write-Host "Public IP prefix is $ipPrefix"
+
+              if (-not (az webapp config access-restriction show -s staging -n $(appServiceName) -g $(paasResourceGroup) --query "ipSecurityRestrictions[?ip_address=='$ipPrefix']" -o tsv 2>$null)) {
+                  Write-Host "Adding rule for App Service $(appServiceName) deployment slot 'staging' to allow prefix $ipPrefix..."
+                  az webapp config access-restriction add -s staging -n $(appServiceName) -g $(paasResourceGroup) --ip-address $ipPrefix -r letmein -p 65000 -o table 2>&1
+              }
+            useGlobalConfig: true
+            workingDirectory: '$(scriptDirectory)'
+            failOnStandardError: false # Using preview extension that outputs support notice as stderr
+
+        - task: AzureCLI@2
           displayName: 'Import database, set permissions (with script) & swap App Service slots'
           enabled: ${{ not(parameters.testMode) }}
           inputs:
