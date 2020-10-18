@@ -58,9 +58,9 @@ Write-Host "Public IP prefix is $ipPrefix"
 
 # App Service Deployment Slot
 if ($appService) {
-    if (-not (az webapp config access-restriction show -s staging -n $appService -g $appResourceGroup --query "ipSecurityRestrictions[?ip_address=='$ipPrefix']" -o tsv)) {
+    if (-not (az webapp config access-restriction show -s staging -n $appService -g $appResourceGroup --query "ipSecurityRestrictions[?ip_address=='$ipPrefix']" -o tsv 2>$null)) {
         Write-Host "Adding rule for Spp Service $appService deployment slot 'staging' to allow prefix $ipPrefix..."
-        az webapp config access-restriction add -s staging -n $appService -g $appResourceGroup --ip-address $ipPrefix -r letmein -p 65000 -o none
+        az webapp config access-restriction add -s staging -n $appService -g $appResourceGroup --ip-address $ipPrefix -r letmein -p 65000 -o none 2>&1
     }
 }
 
