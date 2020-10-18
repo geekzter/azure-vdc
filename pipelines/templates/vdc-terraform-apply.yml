@@ -513,6 +513,7 @@ stages:
               $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
               Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
               ../scripts/punch_hole.ps1 -UsePreviewApis
+            addSpnToEnvironment: true
             useGlobalConfig: true
             workingDirectory: '$(terraformDirectory)'
             failOnStandardError: false # Using preview extension that outputs support notice as stderr
