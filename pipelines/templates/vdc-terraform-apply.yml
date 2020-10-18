@@ -127,13 +127,13 @@ stages:
     ${{ if not(parameters.unpinTerraform) }}:
       value: 'preferred'
   - name: cleanUpOnCancel
-    ${{ if ne(parameters.destroy, 'Always') }}:
+    ${{ if eq(parameters.destroy, 'Always') }}:
       value: true
-    ${{ if ne(parameters.destroy, 'Never') }}:
+    ${{ if eq(parameters.destroy, 'Never') }}:
       value: false
-    ${{ if ne(parameters.destroy, 'On failure') }}:
+    ${{ if eq(parameters.destroy, 'On failure') }}:
       value: true
-    ${{ if ne(parameters.destroy, 'On success') }}:
+    ${{ if eq(parameters.destroy, 'On success') }}:
       value: false
 
   jobs:
