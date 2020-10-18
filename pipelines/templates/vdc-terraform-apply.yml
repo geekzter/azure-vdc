@@ -484,7 +484,7 @@ stages:
 
         - task: AzureCLI@2
           displayName: 'Punch hole in PaaS firewalls'
-          enabled: false
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
