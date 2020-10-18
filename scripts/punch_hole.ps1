@@ -9,7 +9,7 @@
 #Requires -Version 7
 
 param (
-    [parameter(Mandatory=$false)][switch]$UsePreviewApis=$false # Use API's that use stderr for support notices
+    [parameter(Mandatory=$false)][switch]$UsePreviewApis=([string]::IsNullOrEmpty($env:AGENT_VERSION)) # Use API's that use stderr for support notices
 ) 
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
@@ -60,9 +60,15 @@ Write-Host "Public IP prefix is $ipPrefix"
 
 # App Service Deployment Slot
 if ($appService -and $UsePreviewApis) {
-    if (-not (az webapp config access-restriction show -s staging -n $appService -g $appResourceGroup --query "ipSecurityRestrictions[?ip_address=='$ipPrefix']" -o tsv 2>$null)) {
-        Write-Host "Adding rule for App Service $appService deployment slot 'staging' to allow prefix $ipPrefix..."
-        az webapp config access-restriction add -s staging -n $appService -g $appResourceGroup --ip-address $ipPrefix -r letmein -p 65000 -o none 2>&1
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        Write-Debug "App Service $appService exist, checking whether prefix $ipPrefix is already allowed..."
+        if (-not (az webapp config access-restriction show -s staging -n $appService -g $appResourceGroup --query "ipSecurityRestrictions[?ip_address=='$ipPrefix']" -o tsv 2>$null)) {
+            Write-Host "Adding rule for App Service $appService deployment slot 'staging' to allow prefix $ipPrefix..."
+            az webapp config access-restriction add -s staging -n $appService -g $appResourceGroup --ip-address $ipPrefix -r letmein -p 65000 -o none 2>&1
+        } else {
+            Write-Information "App Service $appService staging slot already allows access from prefix $ipPrefix"
+        }
     }
 }
 

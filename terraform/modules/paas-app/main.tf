@@ -37,6 +37,44 @@ locals {
   admin_ips                    = tolist(var.admin_ips)
   admin_login_ps               = var.admin_login != null ? var.admin_login : "$null"
   admin_object_id_ps           = var.admin_object_id != null ? var.admin_object_id : "$null"
+  app_service_default_documents= [
+                                 "default.aspx",
+                                 "default.htm",
+                                 "index.html"
+                                 ]
+  app_service_settings         = {
+    # User assigned ID needs to be provided explicitely, this will be pciked up by the .NET application
+    # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/Data/MyDatabaseContext.cs
+    APP_CLIENT_ID              = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
+    APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
+    APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
+    ASPNETCORE_ENVIRONMENT     = "Offline"
+    ASPNETCORE_URLS            = "http://+:80"
+
+    # Using ACR admin credentials
+    #DOCKER_REGISTRY_SERVER_USERNAME = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_username : ""
+    #DOCKER_REGISTRY_SERVER_PASSWORD = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_password : ""
+    # Using Service Principal credentials
+    # https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal
+    DOCKER_REGISTRY_SERVER_USERNAME = (var.container_registry != null && var.container_registry_spn_app_id != null) != null ? var.container_registry_spn_app_id : ""
+    DOCKER_REGISTRY_SERVER_PASSWORD = (var.container_registry != null && var.container_registry_spn_secret != null) != null ? var.container_registry_spn_secret : ""
+
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false # Required for containers
+
+    WEBSITE_DNS_SERVER         = "168.63.129.16" # Private DNS
+    WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
+    # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#regional-vnet-integration
+    WEBSITE_VNET_ROUTE_ALL     = "1" # Egress via Hub VNet
+  }
+  app_service_settings_staging = merge(
+    {
+    for setting, value in local.app_service_settings : setting => value if setting != "ASPNETCORE_ENVIRONMENT"
+    },
+    map(
+      "ASPNETCORE_ENVIRONMENT", "Online"
+    )
+  )
+
   # Last element of resource id is resource name
   diagnostics_storage_name     = element(split("/",var.diagnostics_storage_id),length(split("/",var.diagnostics_storage_id))-1)
   integrated_vnet_name         = element(split("/",var.integrated_vnet_id),length(split("/",var.integrated_vnet_id))-1)
@@ -442,30 +480,7 @@ resource azurerm_app_service paas_web_app {
   resource_group_name          = azurerm_resource_group.app_rg.name
   app_service_plan_id          = azurerm_app_service_plan.paas_plan.id
 
-  app_settings                 = {
-    # User assigned ID needs to be provided explicitely, this will be pciked up by the .NET application
-    # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/Data/MyDatabaseContext.cs
-    APP_CLIENT_ID              = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
-    APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
-    APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
-    ASPNETCORE_ENVIRONMENT     = "Offline"
-    ASPNETCORE_URLS            = "http://+:80"
-
-    # Using ACR admin credentials
-    #DOCKER_REGISTRY_SERVER_USERNAME = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_username : ""
-    #DOCKER_REGISTRY_SERVER_PASSWORD = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_password : ""
-    # Using Service Principal credentials
-    # https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal
-    DOCKER_REGISTRY_SERVER_USERNAME = (var.container_registry != null && var.container_registry_spn_app_id != null) != null ? var.container_registry_spn_app_id : ""
-    DOCKER_REGISTRY_SERVER_PASSWORD = (var.container_registry != null && var.container_registry_spn_secret != null) != null ? var.container_registry_spn_secret : ""
-
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false # Required for containers
-
-    WEBSITE_DNS_SERVER         = "168.63.129.16" # Private DNS
-    WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
-    # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#regional-vnet-integration
-    WEBSITE_VNET_ROUTE_ALL     = "1" # Egress via Hub VNet
-  }
+  app_settings                 = local.app_service_settings
 
   dynamic "auth_settings" {
     for_each = range(local.aad_auth_client_id != null ? 1 : 0) 
@@ -511,11 +526,7 @@ resource azurerm_app_service paas_web_app {
   site_config {
     always_on                  = true # Better demo experience, no warmup needed
     app_command_line           = ""
-    default_documents          = [
-                                 "default.aspx",
-                                 "default.htm",
-                                 "index.html"
-                                 ]
+    default_documents          = local.app_service_default_documents
   # dotnet_framework_version   = "v4.0"
     ftps_state                 = "Disabled"
 
@@ -709,30 +720,8 @@ resource azurerm_app_service_slot staging {
   resource_group_name          = azurerm_app_service.paas_web_app.resource_group_name
   app_service_plan_id          = azurerm_app_service_plan.paas_plan.id
 
-  app_settings                 = {
-    # User assigned ID needs to be provided explicitely, this will be pciked up by the .NET application
-    # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/Data/MyDatabaseContext.cs
-    APP_CLIENT_ID              = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
-    APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
-    APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
-    ASPNETCORE_ENVIRONMENT     = "Online"
-    ASPNETCORE_URLS            = "http://+:80"
+  app_settings                 = local.app_service_settings_staging
 
-    # Using ACR admin credentials
-    #DOCKER_REGISTRY_SERVER_USERNAME = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_username : ""
-    #DOCKER_REGISTRY_SERVER_PASSWORD = var.container_registry != null ? data.azurerm_container_registry.vdc_images.0.admin_password : ""
-    # Using Service Principal credentials
-    # https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal
-    DOCKER_REGISTRY_SERVER_USERNAME = (var.container_registry != null && var.container_registry_spn_app_id != null) != null ? var.container_registry_spn_app_id : ""
-    DOCKER_REGISTRY_SERVER_PASSWORD = (var.container_registry != null && var.container_registry_spn_secret != null) != null ? var.container_registry_spn_secret : ""
-
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false # Required for containers
-
-    WEBSITE_DNS_SERVER         = "168.63.129.16" # Private DNS
-    WEBSITE_HTTPLOGGING_RETENTION_DAYS = "90"
-    # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet#regional-vnet-integration
-    WEBSITE_VNET_ROUTE_ALL     = "1" # Egress via Hub VNet
-  }
   connection_string {
     name                       = "MyDbConnection"
     type                       = "SQLAzure"
@@ -763,11 +752,7 @@ resource azurerm_app_service_slot staging {
   site_config {
     always_on                  = true # Better demo experience, no warmup needed
     app_command_line           = ""
-    default_documents          = [
-                                 "default.aspx",
-                                 "default.htm",
-                                 "index.html"
-                                 ]
+    default_documents          = local.app_service_default_documents
   # dotnet_framework_version   = "v4.0"
     ftps_state                 = "Disabled"
 

@@ -53,7 +53,7 @@ function DeployContainerWebApp () {
         # Swap slots
         az webapp deployment slot swap -s $slot -n $AppAppServiceName -g $AppResourceGroup
     } else {
-        Write-Warning "Already online, no swap needed"
+        Write-Host "Production slot is already online, no swap needed"
     }
 }
 
