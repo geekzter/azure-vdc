@@ -551,6 +551,7 @@ stages:
               $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
               $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
               $(scriptDirectory)/punch_hole.ps1 -UsePreviewApis
+              cd $(scriptDirectory)
               $(scriptDirectory)/deploy_paas_app.ps1 -All `
                                     -AppResourceGroup $(paasResourceGroup) `
                                     -AppAppServiceName $(appServiceName) `
