@@ -39,6 +39,18 @@ try {
         $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(az group list --query "[?name=='$appResourceGroup']")))
     }
 
+    if ($VerbosePreference -ine "SilentlyContinue") {
+        terraform output
+    }
+    Write-Verbose "az group list --query `"[?name==`'`$appResourceGroup`']`":"
+    if ($VerbosePreference -ine "SilentlyContinue") {
+        az group list --query "[?name=='$appResourceGroup']"
+    }
+    Write-Verbose "`$appResourceGroup: $appResourceGroup"
+    Write-Verbose "`$appRGExists: $appRGExists"
+    Write-Verbose "`$appStorageAccount: $appStorageAccount"
+    Write-Verbose "`$appEventHubNamespace: $appEventHubNamespace"
+
     if (!$appRGExists -or ([string]::IsNullOrEmpty($appStorageAccount) -and [string]::IsNullOrEmpty($appEventHubNamespace))) {
         Write-Host "Resources have not yet been created, nothing to do"
         exit 

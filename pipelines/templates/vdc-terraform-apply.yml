@@ -474,6 +474,8 @@ stages:
             # https://www.terraform.io/docs/backends/types/azurerm.html
             # Use Pipeline Service Principal and Service Connection to set up these variables
             inlineScript: |
+              # List environment variables
+              Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
               $(scriptDirectory)/tf_deploy.ps1 -init 
             addSpnToEnvironment: true
             useGlobalConfig: true
