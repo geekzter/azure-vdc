@@ -157,7 +157,7 @@ output key_vault_name {
 }
 
 output key_vault_url {
-  value       = azurerm_key_vault.vault.vault_uri
+  value       = local.key_vault_fqdn
 }
 
 output location {
