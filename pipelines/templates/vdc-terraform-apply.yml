@@ -126,6 +126,15 @@ stages:
       value: 'latest'
     ${{ if not(parameters.unpinTerraform) }}:
       value: 'preferred'
+  - name: cleanUpOnCancel
+    ${{ if eq(parameters.destroy, 'Always') }}:
+      value: true
+    ${{ if eq(parameters.destroy, 'Never') }}:
+      value: false
+    ${{ if eq(parameters.destroy, 'On failure') }}:
+      value: true
+    ${{ if eq(parameters.destroy, 'On success') }}:
+      value: false
 
   jobs:
   - job: 'Prepare'
@@ -428,6 +437,7 @@ stages:
         storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
         storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
         # Use earlier prepared Terraform config
+        terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
         # SqlAzureDacpacDeployment@1 only runs on Windows
@@ -442,6 +452,71 @@ stages:
             Write-Host "Hello Task"
           displayName: 'Test task'
           enabled: ${{ parameters.testMode }}
+
+        # Assume workspace is empty and re-download secure files
+        - task: TerraformInstaller@0
+          displayName: 'Use preferred Terraform version'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            terraformVersion: '$(terraformVersion)'
+
+        - ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+          # Unpin version e.g. "= 2.17" -> "~> 2.17", but only in CI build
+          - pwsh: |
+              (Get-Content ./provider.tf) -replace "version *= `" *= +(?<eol>[^,]+$)",'version = "~> ${eol}' | Out-File provider.tf
+              Get-Content ./provider.tf
+            displayName: 'Unpin Terraform provider version'
+            enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
+            workingDirectory: '$(terraformDirectory)'
+
+        - task: AzureCLI@2
+          name: terraformConfig
+          displayName: 'Terraform init'
+          condition: succeededOrFailed()
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            # ARM_* environment variables are required by Terraform azurerm provider and backend
+            # https://www.terraform.io/docs/providers/azurerm/index.html
+            # https://www.terraform.io/docs/backends/types/azurerm.html
+            # Use Pipeline Service Principal and Service Connection to set up these variables
+            inlineScript: |
+              # List environment variables
+              Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
+              $(scriptDirectory)/tf_deploy.ps1 -init 
+            addSpnToEnvironment: true
+            useGlobalConfig: true
+            failOnStandardError: true
+            workingDirectory: '$(scriptDirectory)'
+          env:
+            TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
+
+        # - task: AzureCLI@2
+        #   displayName: 'Punch hole in PaaS firewalls'
+        #   enabled: ${{ not(parameters.testMode) }}
+        #   inputs:
+        #     azureSubscription: '$(subscriptionConnection)'
+        #     scriptType: pscore
+        #     scriptLocation: inlineScript
+        #     inlineScript: |
+        #       # $ErrorActionPreference = "Continue"
+        #       # $InformationPreference = "Continue"
+        #       # $VerbosePreference = "Continue"
+        #       # $DebugPreference = "Continue"
+        #       # Set-PSDebug -Trace 2
+        #       $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+        #       $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+        #       $env:ARM_TENANT_ID       ??= $env:tenantId
+        #       $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+        #       $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+        #       # Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
+        #       ../scripts/punch_hole.ps1 -UsePreviewApis
+        #     addSpnToEnvironment: true
+        #     useGlobalConfig: true
+        #     workingDirectory: '$(terraformDirectory)'
+        #     failOnStandardError: false # Using preview extension that outputs support notice as stderr
 
         - pwsh: |
             Invoke-Webrequest -Uri "$(storageUrl)$(storageSAS)" -OutFile $(System.DefaultWorkingDirectory)/database.bacpac
@@ -470,7 +545,14 @@ stages:
             scriptType: pscore
             scriptLocation: inlineScript
             inlineScript: |
-              ./deploy_paas_app.ps1 -All `
+              $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+              $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+              $env:ARM_TENANT_ID       ??= $env:tenantId
+              $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+              $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+              $(scriptDirectory)/punch_hole.ps1 -UsePreviewApis
+              cd $(scriptDirectory)
+              $(scriptDirectory)/deploy_paas_app.ps1 -All `
                                     -AppResourceGroup $(paasResourceGroup) `
                                     -AppAppServiceName $(appServiceName) `
                                     -AppAppServiceIdentity $(appMSIName) `
@@ -483,58 +565,10 @@ stages:
                                     -SqlServer $(appSQLServer) `
                                     -SqlServerFQDN $(appSQLServerFQDN) `
                                     -SqlDatabase $(appSQLDatabase)
+            addSpnToEnvironment: true
             useGlobalConfig: true
-            workingDirectory: '$(scriptDirectory)'
+            workingDirectory: '$(terraformDirectory)'
             failOnStandardError: true
-
-        # # App already pulled as container, just switch offline -> online configuration
-        # - task: AzureAppServiceManage@0
-        #   displayName: 'Swap Online and Offline App Service slots'
-        #   inputs:
-        #     azureSubscription: '$(subscriptionConnection)'
-        #     Action: 'Swap Slots'
-        #     WebAppName: '$(appServiceName)'
-        #     ResourceGroupName: '$(paasResourceGroup)'
-        #     SourceSlot: 'staging'            
-
-        # App pulled as container, below steps are obsolete
-        # # Download PaaS Application Pipeline artifacts
-        # # This consumes artifacts published by this pipeline:
-        # # https://github.com/geekzter/dotnetcore-sqldb-tutorial/blob/master/azure-pipelines.yml
-        # - task: DownloadPipelineArtifact@2
-        #   displayName: 'Download ASP.NET Core App Artifacts'
-        #   enabled: ${{ not(parameters.testMode) }}
-        #   inputs:
-        #     buildType: 'specific'
-        #     project: '$(appArtifectProject)'
-        #     definition: '$(appBuildDefinitionPaaS)'
-        #     specificBuildWithTriggering: true
-        #     buildVersionToDownload: 'latest'
-        #     artifactName: 'aspnetcoresql'
-        #     targetPath: '$(appArtifactDirectory)'
-
-        # # Deploy PaaS Application
-        # - task: AzureWebApp@1
-        #   displayName: 'Deploy ASP.NET Core App'
-        #   enabled: ${{ not(parameters.testMode) }}
-        #   inputs:
-        #     azureSubscription: '$(subscriptionConnection)'
-        #     appType: webApp
-        #     appName: '$(appServiceName)'
-        #     package: '$(appPackage)'
-
-        # # TODO
-        # - task: AzureRmWebAppDeployment@4
-        #   displayName: 'Deploy ASP.NET Core App'
-        #   inputs:
-        #     connectionType: 'AzureRM'
-        #     azureSubscription: '$(subscriptionConnection)'
-        #     appType: 'webAppContainer'
-        #     webAppName: '$(appServiceName)'
-        #     dockerNamespace: '$()'
-        #     dockerRepository: '$()'
-        #     dockerImageTag: 'latest'
-        #     appSettings: '-ASPNETCORE_ENVIRONMENT "Online"'        
 
   - ${{ if eq(parameters.deploy, true) }}:
     # First things first, we need to check whether the environment is ready to deploy to
@@ -957,8 +991,7 @@ stages:
           - Reprovision
       displayName: 'Clean Up'
       # Run if Terraform destroy failed, or the whole pipeline was canceled
-      condition: or(and(ne(dependencies.Destroy.result, 'None'),ne(dependencies.Destroy.result, 'Skipped'),ne(dependencies.Destroy.result, 'Succeeded')), canceled())
-
+      condition: or(and(ne(dependencies.Destroy.result, 'None'),ne(dependencies.Destroy.result, 'Skipped'),ne(dependencies.Destroy.result, 'Succeeded')), and(canceled(),variables.cleanUpOnCancel))
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:

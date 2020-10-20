@@ -8,7 +8,9 @@
 #> 
 #Requires -Version 7
 
-param () 
+param (
+    [parameter(Mandatory=$false)][switch]$UsePreviewApis=([string]::IsNullOrEmpty($env:AGENT_VERSION)) # Use API's that use stderr for support notices
+) 
 
 . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
 
@@ -21,8 +23,10 @@ try {
     }
     
     Invoke-Command -ScriptBlock {
+        Write-Information "Gathering Terraform output..."
         $Private:ErrorActionPreference    = "Continue"
         $Script:appResourceGroup          = (GetTerraformOutput "paas_app_resource_group")
+        $Script:appService                = (GetTerraformOutput "paas_app_service_name")
         $Script:appStorageAccount         = (GetTerraformOutput "paas_app_storage_account_name")
         $Script:appEventHubStorageAccount = (GetTerraformOutput "paas_app_eventhub_storage_account_name")
         $Script:appEventHubNamespace      = (GetTerraformOutput "paas_app_eventhub_namespace")
@@ -35,9 +39,23 @@ try {
         $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(az group list --query "[?name=='$appResourceGroup']")))
     }
 
+    if ($VerbosePreference -ine "SilentlyContinue") {
+        terraform output
+    }
+    Write-Verbose "az group list --query `"[?name==`'`$appResourceGroup`']`":"
+    if ($VerbosePreference -ine "SilentlyContinue") {
+        az group list --query "[?name=='$appResourceGroup']"
+    }
+    Write-Verbose "`$appResourceGroup: $appResourceGroup"
+    Write-Verbose "`$appRGExists: $appRGExists"
+    Write-Verbose "`$appStorageAccount: $appStorageAccount"
+    Write-Verbose "`$appEventHubNamespace: $appEventHubNamespace"
+
     if (!$appRGExists -or ([string]::IsNullOrEmpty($appStorageAccount) -and [string]::IsNullOrEmpty($appEventHubNamespace))) {
         Write-Host "Resources have not yet been created, nothing to do"
         exit 
+    } else {
+        Write-Information "Resources exist"
     }
 } finally {
     Pop-Location
@@ -54,6 +72,20 @@ Write-Host "Public IP address is $ipAddress"
 # HACK: We need this to cater for changing public IP addresses e.g. Azure Pipelines Hosted Agents
 $ipPrefix = Invoke-RestMethod -Uri https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} -MaximumRetryCount 9 | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
 Write-Host "Public IP prefix is $ipPrefix"
+
+# App Service Deployment Slot
+if ($appService -and $UsePreviewApis) {
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        Write-Debug "App Service $appService exist, checking whether prefix $ipPrefix is already allowed..."
+        if (-not (az webapp config access-restriction show -s staging -n $appService -g $appResourceGroup --query "ipSecurityRestrictions[?ip_address=='$ipPrefix']" -o tsv 2>$null)) {
+            Write-Host "Adding rule for App Service $appService deployment slot 'staging' to allow prefix $ipPrefix..."
+            az webapp config access-restriction add -s staging -n $appService -g $appResourceGroup --ip-address $ipPrefix -r letmein -p 65000 -o none 2>&1
+        } else {
+            Write-Information "App Service $appService staging slot already allows access from prefix $ipPrefix"
+        }
+    }
+}
 
 # Punch hole in PaaS Firewalls
 foreach ($storageAccount in @($appStorageAccount,$appEventHubStorageAccount)) {

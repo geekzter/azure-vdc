@@ -71,6 +71,10 @@ resource azurerm_key_vault vault {
 
   tags                         = local.tags
 }
+locals {
+  key_vault_fqdn               = replace(replace(azurerm_key_vault.vault.vault_uri,"https://",""),"/","")
+}
+
 resource azurerm_private_endpoint vault_endpoint {
   name                         = "${azurerm_key_vault.vault.name}-endpoint"
   resource_group_name          = azurerm_virtual_network.hub_vnet.resource_group_name

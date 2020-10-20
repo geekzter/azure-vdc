@@ -323,9 +323,27 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "smartscreen-prod.microsoft.com",
       "sts.windows.net",
       "urs.microsoft.com",
-      "validation-v2.sls.microsoft.com",
-      "${azurerm_key_vault.vault.name}.vault.azure.net",
-      azurerm_log_analytics_workspace.vcd_workspace.portal_url,
+      "validation-v2.sls.microsoft.com"
+    ]
+
+    protocol {
+        port                   = "443"
+        type                   = "Https"
+    }
+  }
+
+  rule {
+    name                       = "Allow VDC Management traffic by url"
+    description                = "Diagnostics, Management, Windows Update"
+
+    source_addresses           = [
+      var.vdc_config["vdc_range"],
+      var.vdc_config["vpn_range"]
+    ]
+
+    target_fqdns               = [
+      local.key_vault_fqdn,
+      # azurerm_log_analytics_workspace.vcd_workspace.portal_url,
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_storage_account.vdc_diag_storage.primary_table_host
     ]

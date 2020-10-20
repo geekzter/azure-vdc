@@ -148,12 +148,16 @@ output iag_nat_rules {
   value       = azurerm_firewall_nat_rule_collection.iag_nat_rules.name
 }
 
+output key_vault_fqdn {
+  value       = "${azurerm_key_vault.vault.name}.vault.azure.net"
+}
+
 output key_vault_name {
   value       = azurerm_key_vault.vault.name
 }
 
 output key_vault_url {
-  value       = azurerm_key_vault.vault.vault_uri
+  value       = local.key_vault_fqdn
 }
 
 output location {
