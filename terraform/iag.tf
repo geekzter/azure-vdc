@@ -342,8 +342,8 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
     ]
 
     target_fqdns               = [
-      "${azurerm_key_vault.vault.name}.vault.azure.net",
-      azurerm_log_analytics_workspace.vcd_workspace.portal_url,
+      # "${azurerm_key_vault.vault.name}.vault.azure.net",
+      # azurerm_log_analytics_workspace.vcd_workspace.portal_url,
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_storage_account.vdc_diag_storage.primary_table_host
     ]
