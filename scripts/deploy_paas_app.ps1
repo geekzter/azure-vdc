@@ -50,12 +50,12 @@ function DeployContainerWebApp () {
 
     if ($productionMode -eq "Offline") {
         # Swap slots
-        Write-Host "Swapping slots..."
-        az webapp deployment slot swap -s $slot -n $AppAppServiceName -g $AppResourceGroup
+        # Write-Host "Swapping slots..."
+        # az webapp deployment slot swap -s $slot -n $AppAppServiceName -g $AppResourceGroup
 
         # Set online
-        # Write-Host "Set ASPNETCORE_ENVIRONMENT=`"Online`"..."
-        # az webapp config appsettings set --settings ASPNETCORE_ENVIRONMENT="Online" -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT']"
+        Write-Host "Set ASPNETCORE_ENVIRONMENT=`"Online`"..."
+        az webapp config appsettings set --settings ASPNETCORE_ENVIRONMENT="Online" -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT']"
     } else {
         Write-Host "Production slot is already online, no swap/update needed"
     }
