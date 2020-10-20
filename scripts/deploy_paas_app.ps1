@@ -314,7 +314,7 @@ if ($useTerraform) {
         Invoke-Command -ScriptBlock {
             $Private:ErrorActionPreference = "Continue"
 
-            # Set only if not null
+            # Set only if null
             $script:AppResourceGroup       ??= (GetTerraformOutput "paas_app_resource_group")
             $script:AppAppServiceName      ??= (GetTerraformOutput "paas_app_service_name")
 
