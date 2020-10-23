@@ -194,12 +194,18 @@ function GetEmailAddress () {
 function GetTerraformOutput (
     [parameter(Mandatory=$true)][string]$OutputVariable
 ) {
-    $result = $(terraform output $OutputVariable 2>$null)
-    if ($result -match "\[\d+m") {
-        # Terraform warning, return null for missing output
-        return $null
-    } else {
-        return $result
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference    = "SilentlyContinue"
+        Write-Verbose "terraform output ${OutputVariable}: evaluating..."
+        $result = $(terraform output $OutputVariable 2>$null)
+        if ($result -match "\[\d+m") {
+            # Terraform warning, return null for missing output
+            Write-Verbose "terraform output ${OutputVariable}: `$null (${result})"
+            return $null
+        } else {
+            Write-Verbose "terraform output ${OutputVariable}: ${result}"
+            return $result
+        }
     }
 }
 

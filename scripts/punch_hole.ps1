@@ -24,7 +24,7 @@ try {
     
     Invoke-Command -ScriptBlock {
         Write-Information "Gathering Terraform output..."
-        $Private:ErrorActionPreference    = "Continue"
+        $Private:ErrorActionPreference    = "SilentlyContinue"
         $Script:appResourceGroup          = (GetTerraformOutput "paas_app_resource_group")
         $Script:appService                = (GetTerraformOutput "paas_app_service_name")
         $Script:appStorageAccount         = (GetTerraformOutput "paas_app_storage_account_name")
@@ -37,11 +37,12 @@ try {
         $Script:vdcResourceGroup          = (GetTerraformOutput "vdc_resource_group")
 
         $Script:appRGExists = (![string]::IsNullOrEmpty($appResourceGroup) -and ($null -ne $(az group list --query "[?name=='$appResourceGroup']")))
+
+        if ($VerbosePreference -ine "SilentlyContinue") {
+            terraform output 2>$null
+        }
     }
 
-    if ($VerbosePreference -ine "SilentlyContinue") {
-        terraform output
-    }
     Write-Verbose "az group list --query `"[?name==`'`$appResourceGroup`']`":"
     if ($VerbosePreference -ine "SilentlyContinue") {
         az group list --query "[?name=='$appResourceGroup']"
