@@ -1,6 +1,14 @@
 #!/usr/bin/env pwsh
 # Runs post create commands to prep Codespace for project
 
+# Determine directory locations (may vary based on what branch has been cloned initially)
+$repoDirectory = (Split-Path (get-childitem diagram.png -Path ~ -Recurse).FullName -Parent)
+$terraformDirectory = Join-Path $repoDirectory "terraform"
+# Get Terraform version as saved in the repo
+$terraformVersion = (Get-Content $terraformDirectory/.terraform-version)
+# This will be the location where we save a PowerShell profile
+$profileTemplate = (Join-Path (Split-Path -Parent -Path $MyInvocation.MyCommand.Path) profile.ps1)
+
 # Update relevant packages
 sudo apt-get update
 #sudo apt-get install --only-upgrade -y azure-cli powershell
@@ -8,13 +16,17 @@ if (!(Get-Command tmux -ErrorAction SilentlyContinue)) {
     sudo apt-get install -y tmux
 }
 
-# Determine directory locations (may vary based on what branch has been cloned initially)
-$repoDirectory = (Split-Path (get-childitem README.md -Path ~ -Recurse).FullName -Parent)
-$terraformDirectory = Join-Path $repoDirectory "terraform"
-# Get Terraform version as saved in the repo
-$terraformVersion = (Get-Content $terraformDirectory/.terraform-version)
-# This will be the location where we save a PowerShell profile
-$profileTemplate = (Join-Path (Split-Path -Parent -Path $MyInvocation.MyCommand.Path) profile.ps1)
+# Use geekzter/bootstrap-os for PowerShell setup
+if (!(Test-Path ~/bootstrap-os)) {
+    git clone https://github.com/geekzter/bootstrap-os.git ~/bootstrap-os
+} else {
+    git -C ~/bootstrap-os pull
+    # This has been run before, upgrade packages this time
+    sudo apt-get upgrade -y
+}
+. ~/bootstrap-os/common/common_setup.ps1 -NoPackages
+. ~/bootstrap-os/common/functions/functions.ps1
+AddorUpdateModule Posh-Git
 
 # Get/update tfenv, for Terraform versioning
 if (!(Get-Command tfenv -ErrorAction SilentlyContinue)) {
@@ -33,16 +45,6 @@ tfenv use $terraformVersion
 Push-Location $terraformDirectory
 terraform init -upgrade
 Pop-Location
-
-# Use geekzter/bootstrap-os for PowerShell setup
-if (!(Test-Path ~/bootstrap-os)) {
-    git clone https://github.com/geekzter/bootstrap-os.git ~/bootstrap-os
-} else {
-    git -C ~/bootstrap-os pull
-}
-. ~/bootstrap-os/common/common_setup.ps1 -NoPackages
-. ~/bootstrap-os/common/functions/functions.ps1
-AddorUpdateModule Posh-Git
 
 # Link PowerShell Profile
 if (!(Test-Path $Profile)) {

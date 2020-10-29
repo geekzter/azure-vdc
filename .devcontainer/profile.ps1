@@ -20,4 +20,5 @@ $env:TF_VAR_vso_url="https://online.visualstudio.com/environment/$env:CLOUDENV_E
 
 Set-Location $repoDirectory
 
+Write-Host "To update Codespace configuration, run $repoDirectory/.devcontainer/createorupdate.ps1"
 Write-Host "To provision infrastructure, use tf_deploy.ps1"
