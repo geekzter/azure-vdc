@@ -16,6 +16,18 @@ $terraformVersion = (Get-Content $terraformDirectory/.terraform-version)
 # This will be the location where we save a PowerShell profile
 $profileTemplate = (Join-Path (Split-Path -Parent -Path $MyInvocation.MyCommand.Path) profile.ps1)
 
+# Use geekzter/bootstrap-os for PowerShell setup
+if (!(Test-Path ~/bootstrap-os)) {
+    git clone https://github.com/geekzter/bootstrap-os.git ~/bootstrap-os
+} else {
+    git -C ~/bootstrap-os pull
+    # This has been run before, upgrade packages
+    sudo apt-get upgrade -y
+}
+. ~/bootstrap-os/common/common_setup.ps1 -NoPackages
+. ~/bootstrap-os/common/functions/functions.ps1
+AddorUpdateModule Posh-Git
+
 # Get/update tfenv, for Terraform versioning
 if (!(Get-Command tfenv -ErrorAction SilentlyContinue)) {
     Write-Host 'Installing tfenv...'
@@ -33,16 +45,6 @@ tfenv use $terraformVersion
 Push-Location $terraformDirectory
 terraform init -upgrade
 Pop-Location
-
-# Use geekzter/bootstrap-os for PowerShell setup
-if (!(Test-Path ~/bootstrap-os)) {
-    git clone https://github.com/geekzter/bootstrap-os.git ~/bootstrap-os
-} else {
-    git -C ~/bootstrap-os pull
-}
-. ~/bootstrap-os/common/common_setup.ps1 -NoPackages
-. ~/bootstrap-os/common/functions/functions.ps1
-AddorUpdateModule Posh-Git
 
 # Link PowerShell Profile
 if (!(Test-Path $Profile)) {
