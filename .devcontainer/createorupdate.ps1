@@ -2,7 +2,7 @@
 # Runs post create commands to prep Codespace for project
 
 # Determine directory locations (may vary based on what branch has been cloned initially)
-$repoDirectory = (Split-Path (get-childitem README.md -Path ~ -Recurse).FullName -Parent)
+$repoDirectory = (Split-Path (get-childitem diagram.png -Path ~ -Recurse).FullName -Parent)
 $terraformDirectory = Join-Path $repoDirectory "terraform"
 # Get Terraform version as saved in the repo
 $terraformVersion = (Get-Content $terraformDirectory/.terraform-version)
