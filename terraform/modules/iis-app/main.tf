@@ -53,7 +53,6 @@ resource azurerm_key_vault_key disk_encryption_key {
   depends_on                   = [var.vm_connectivity_dependency]
 }
 
-
 resource azurerm_storage_container scripts {
   name                         = "iaasappscripts"
   storage_account_name         = var.automation_storage_name
