@@ -30,6 +30,7 @@ resource azurerm_key_vault vault {
                                 "purge",
                                 "set",
     ]
+
   }
 
   # Grant access to admin, if defined

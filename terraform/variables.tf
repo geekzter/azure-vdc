@@ -118,6 +118,7 @@ variable tags {
 
   default = {
     application                = "Automated VDC"
+    project                    = "azure-vdc"
     provisioner                = "terraform"
     shutdown                   = "true"
   }
