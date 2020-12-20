@@ -126,8 +126,8 @@ resource azurerm_log_analytics_workspace vcd_workspace {
 
 resource azurerm_log_analytics_linked_service automation {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
-  workspace_name               = azurerm_log_analytics_workspace.vcd_workspace.name
-  resource_id                  = azurerm_automation_account.automation.id
+  workspace_id                 = azurerm_log_analytics_workspace.vcd_workspace.id
+  read_access_id               = azurerm_automation_account.automation.id
 
   tags                         = local.tags
 }

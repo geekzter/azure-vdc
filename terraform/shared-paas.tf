@@ -8,6 +8,7 @@ resource azurerm_key_vault vault {
   purge_protection_enabled     = true
   sku_name                     = "premium"
   soft_delete_enabled          = true
+  soft_delete_retention_days   = 7
 
   # Grant access to self
   access_policy {
@@ -19,14 +20,17 @@ resource azurerm_key_vault vault {
                                 "get",
                                 "delete",
                                 "list",
+                                "purge",
                                 "wrapkey",
                                 "unwrapkey"
     ]
     secret_permissions         = [
                                 "get",
                                 "delete",
+                                "purge",
                                 "set",
     ]
+
   }
 
   # Grant access to admin, if defined
@@ -40,9 +44,11 @@ resource azurerm_key_vault vault {
                                 "create",
                                 "get",
                                 "list",
+                                "purge",
       ]
 
       secret_permissions       = [
+                                "purge",
                                 "set",
       ]
     }

@@ -20,7 +20,7 @@ steps:
   inputs:
     debugMode: false
 
-- task: NuGetToolInstaller@0
+- task: NuGetToolInstaller@1
 
 - task: NuGetCommand@2
   inputs:

@@ -92,6 +92,7 @@ function Execute-Sql (
     [parameter(Mandatory=$false)][string]$UserName,
     [parameter(Mandatory=$false)][SecureString]$SecurePassword
 ) {
+    Write-Verbose $MyInvocation.line
     if ([string]::IsNullOrEmpty($SqlServerFQDN)) {
         Write-Error "No SQL Server specified" -ForeGroundColor Red
         return 
@@ -198,6 +199,7 @@ function GetTerraformOutput (
         $Private:ErrorActionPreference    = "SilentlyContinue"
         Write-Verbose "terraform output ${OutputVariable}: evaluating..."
         $result = $(terraform output $OutputVariable 2>$null)
+        $result = (($result -replace '^"','') -replace '"$','') # Remove surrounding quotes (Terraform 0.14)
         if ($result -match "\[\d+m") {
             # Terraform warning, return null for missing output
             Write-Verbose "terraform output ${OutputVariable}: `$null (${result})"
