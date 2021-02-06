@@ -6,6 +6,7 @@ terraform {
     http                       = "~> 2.0"
     null                       = "~> 3.0"
     random                     = "~> 3.0"
+    time                       = "~> 0.6"
   }
   required_version             = "~> 0.13"
 }
