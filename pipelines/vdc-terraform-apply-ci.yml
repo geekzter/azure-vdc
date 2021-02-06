@@ -17,6 +17,10 @@ parameters:
   displayName: Inherit state
   type: boolean
   default: false
+- name: deploy
+  displayName: Deploy applications
+  type: boolean
+  default: true
 - name: destroy
   displayName: Destroy infrastructure
   type: string
@@ -80,7 +84,7 @@ stages:
     inherit: ${{ parameters.inherit }}
     provision: true
     reprovision: true
-    deploy: true
+    deploy: ${{ parameters.deploy }}
     destroy: ${{ parameters.destroy }}
     testMode: ${{ parameters.testMode }}
     unpinTerraform: ${{ parameters.unpinTerraform }}
