@@ -1,11 +1,11 @@
 terraform {
   required_providers {
-    azurerm                    = "~> 2.42"
-    dns                        = "~> 2.2"
-    external                   = "~> 1.2"
-    http                       = "~> 1.2"
-    null                       = "~> 2.1"
-    random                     = "~> 2.3"
+    azurerm                    = "~> 2.46"
+    dns                        = "~> 3.0"
+    external                   = "~> 2.0"
+    http                       = "~> 2.0"
+    null                       = "~> 3.0"
+    random                     = "~> 3.0"
   }
   required_version             = "~> 0.13"
 }
