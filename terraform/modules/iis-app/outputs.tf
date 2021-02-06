@@ -1,3 +1,9 @@
+output app_db_image_version {
+  value       = local.app_db_image_version
+}
+output app_web_image_version {
+  value       = local.app_web_image_version
+}
 
 output arm_resource_ids {
   value       = [] #azurerm_network_connection_monitor.devops_watcher.*.id
