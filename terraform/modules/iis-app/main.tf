@@ -100,7 +100,6 @@ data azurerm_platform_image app_web_image_latest {
   publisher                    = var.app_web_image_publisher
   offer                        = var.app_web_image_offer
   sku                          = var.app_web_image_sku
-  version                      = var.app_web_image_version
 }
 
 locals {
@@ -557,7 +556,6 @@ data azurerm_platform_image app_db_image_latest {
   publisher                    = var.app_db_image_publisher
   offer                        = var.app_db_image_offer
   sku                          = var.app_db_image_sku
-  version                      = var.app_db_image_version
 }
 
 locals {
