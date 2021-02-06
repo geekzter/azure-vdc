@@ -485,7 +485,6 @@ resource azurerm_lb app_db_lb {
 
 resource azurerm_lb_backend_address_pool app_db_backend_pool {
   name                         = "app_db_vms"
-  resource_group_name          = azurerm_resource_group.app_rg.name
   loadbalancer_id              = azurerm_lb.app_db_lb.id
 }
 
