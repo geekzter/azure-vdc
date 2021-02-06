@@ -746,11 +746,8 @@ stages:
                 TakeAppOfflineFlag: true
 
             - powershell: |
-                # Write your powershell commands here.
                 Invoke-WebRequest -Uri http://127.0.0.1/default.aspx -UseBasicParsing
-                
-                # Use the environment variables input below to pass secret variables to this script.
-                errorActionPreference: continue
+              errorActionPreference: continue
               displayName: 'Initial Warmup'
               enabled: false
 
