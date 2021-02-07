@@ -24,7 +24,11 @@ parameters:
 - name: deployIaaS
   displayName: Deploy IaaS application
   type: boolean
-  default: true
+  # BUG: 
+  # 20210107
+  # IIS config fails with 'Installation of one or more roles, role services, or features failed. Error: 0x80072f8f'
+  # Turn this off temporarily
+  default: false
 - name: destroy
   displayName: Destroy infrastructure
   type: string
