@@ -24,7 +24,7 @@ parameters:
   type: boolean
   default: true
 - name: deploy
-  displayName: Deploy PaaS application
+  displayName: Deploy applications
   type: boolean
   default: true
 - name: deployIaaS
@@ -748,7 +748,8 @@ stages:
     - job: 'Test'
       dependsOn:
         - Deploy
-        - DeployEnvironment
+        - ${{ if eq(parameters.deployIaaS, true) }}:
+          - DeployEnvironment
         - Provision
         - ${{ if eq(parameters.reprovision, true) }}:
           - Reprovision
@@ -784,7 +785,7 @@ stages:
         # Test IaaS Application
         - task: PowerShell@2
           displayName: 'Test IaaS Application'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: ${{ and(not(parameters.testMode),parameters.deployIaaS) }}
           inputs:
             targetType: 'inline'
             script: |
@@ -847,9 +848,10 @@ stages:
         - Prepare
         - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
           - Provision
+        - ${{ if eq(parameters.deployIaaS, true) }}:
+          - DeployEnvironment
         - ${{ if eq(parameters.deploy, true) }}:
           - Deploy
-          - DeployEnvironment
           - Test
       displayName: 'Destroy Infrastructure with Terraform'
 

@@ -325,7 +325,8 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "smartscreen-prod.microsoft.com",
       "sts.windows.net",
       "urs.microsoft.com",
-      "validation-v2.sls.microsoft.com"
+      "validation-v2.sls.microsoft.com",
+      "vortex.data.microsoft.com"
     ]
 
     protocol {
