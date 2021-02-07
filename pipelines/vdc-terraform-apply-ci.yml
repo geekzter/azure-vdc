@@ -89,6 +89,7 @@ stages:
     provision: true
     reprovision: true
     deploy: ${{ parameters.deploy }}
+    deployIaaS: ${{ parameters.deployIaaS }}
     destroy: ${{ parameters.destroy }}
     testMode: ${{ parameters.testMode }}
     unpinTerraform: ${{ parameters.unpinTerraform }}
