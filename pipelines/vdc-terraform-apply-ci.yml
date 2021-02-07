@@ -18,7 +18,11 @@ parameters:
   type: boolean
   default: false
 - name: deploy
-  displayName: Deploy applications
+  displayName: Deploy PaaS application
+  type: boolean
+  default: true
+- name: deployIaaS
+  displayName: Deploy IaaS application
   type: boolean
   default: true
 - name: destroy
