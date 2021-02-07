@@ -241,7 +241,9 @@ resource azurerm_firewall_application_rule_collection iag_app_rules {
       "version.pm2.io",
       "visualstudio.microsoft.com",
       "xamarin-downloads.azureedge.net",
-      "visualstudio-devdiv-c2s.msedge.net"
+      "visualstudio-devdiv-c2s.msedge.net",
+      "wdc.microsoft.com",
+      "wdcpalt.microsoft.com",
     ]
 
     protocol {
