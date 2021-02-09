@@ -915,6 +915,14 @@ stages:
             enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
             workingDirectory: '$(terraformDirectory)'
 
+        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+          - bash: |
+              find . -name *_x?
+              find . -name *_x? | xargs chmod +x
+            displayName: 'Make Terraform providers executable'
+            enabled: ${{ not(parameters.testMode) }}
+            workingDirectory: $(terraformDirectory)/.terraform/providers/registry.terraform.io/hashicorp 
+
         - task: AzureCLI@2
           name: terraformConfig
           displayName: 'Terraform destroy'
