@@ -956,14 +956,16 @@ stages:
             pwsh: true
             workingDirectory: '$(scriptDirectory)'
 
+        - ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+        # Unpin version e.g. "= 2.17" -> "~> 2.17", but only in CI build
         # Publish Initialized Terraform workspace
         # This workspace can be downloaded as artifacts in a release pipeline. 
         # That release pipeline will than run with tested versions of Terraform and Terraform providers, without the need for 'terraform init'
-        - task: PublishPipelineArtifact@1
-          displayName: 'Publish Initialized Terraform workspace'
-        # enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            artifact: $(vdcArtifactName)
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish Initialized Terraform workspace'
+          # enabled: ${{ not(parameters.testMode) }}
+            inputs:
+              artifact: $(vdcArtifactName)
 
   - ${{ if ne(parameters.destroy, 'Never') }}:
     # Clean up resources, in the event 'terraform destroy' fails   
