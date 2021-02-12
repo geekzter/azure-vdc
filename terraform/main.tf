@@ -85,7 +85,7 @@ locals {
       "deployment-name",         local.deployment_name,
       "environment",             terraform.workspace,
       "prefix",                  var.resource_prefix,
-      "repository",              basename(abspath("${path.root}/..")),
+      "repository",              "azure-vdc",
       "shutdown",                "true",
       "suffix",                  local.suffix,
       "workspace",               terraform.workspace,

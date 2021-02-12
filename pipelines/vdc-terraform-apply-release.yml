@@ -8,6 +8,14 @@ parameters:
   - rel1
   - rel2
   - rel3
+- name: deploy
+  displayName: Deploy applications
+  type: boolean
+  default: true
+- name: deployIaaS
+  displayName: Deploy IaaS application
+  type: boolean
+  default: true
 - name: destroy
   displayName: Destroy infrastructure
   type: string
@@ -55,7 +63,8 @@ stages:
     inherit: true
     provision: true
     reprovision: false
-    deploy: true
+    deploy: ${{ parameters.deploy }}
+    deployIaaS: ${{ parameters.deployIaaS }}
     deploymentName: 'demo'
     destroy: ${{ parameters.destroy }}
     testMode: ${{ parameters.testMode }}

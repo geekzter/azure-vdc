@@ -17,6 +17,14 @@ parameters:
   displayName: Inherit state
   type: boolean
   default: false
+- name: deploy
+  displayName: Deploy applications
+  type: boolean
+  default: true
+- name: deployIaaS
+  displayName: Deploy IaaS application
+  type: boolean
+  default: true
 - name: destroy
   displayName: Destroy infrastructure
   type: string
@@ -80,7 +88,8 @@ stages:
     inherit: ${{ parameters.inherit }}
     provision: true
     reprovision: true
-    deploy: true
+    deploy: ${{ parameters.deploy }}
+    deployIaaS: ${{ parameters.deployIaaS }}
     destroy: ${{ parameters.destroy }}
     testMode: ${{ parameters.testMode }}
     unpinTerraform: ${{ parameters.unpinTerraform }}

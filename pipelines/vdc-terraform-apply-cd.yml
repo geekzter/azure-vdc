@@ -28,6 +28,14 @@ parameters:
   - Always
   - 'On failure'
   - 'On success'
+- name: deploy
+  displayName: Deploy applications
+  type: boolean
+  default: true
+- name: deployIaaS
+  displayName: Deploy IaaS application
+  type: boolean
+  default: true
 - name: releaseDestroy
   displayName: Destroy release infrastructure
   type: string
@@ -67,7 +75,8 @@ stages:
     inherit: false
     provision: true
     reprovision: true
-    deploy: true
+    deploy: ${{ parameters.deploy }}
+    deployIaaS: ${{ parameters.deployIaaS }}
     destroy: ${{ parameters.buildDestroy }}
     resourceSuffix: 'b$(Build.BuildId)'
     testMode: ${{ parameters.testMode }}
@@ -80,7 +89,8 @@ stages:
     inherit: true
     provision: true
     reprovision: false
-    deploy: true
+    deploy: ${{ parameters.deploy }}
+    deployIaaS: ${{ parameters.deployIaaS }}
     deploymentName: 'demo'
     destroy: ${{ parameters.releaseDestroy }}
     testMode: ${{ parameters.testMode }}

@@ -168,7 +168,7 @@ resource azurerm_windows_virtual_machine mgmt {
     publisher                  = "MicrosoftWindowsServer"
     offer                      = var.app_web_image_offer
     sku                        = var.app_web_image_sku
-    version                    = "latest"
+    version                    = var.app_web_image_version
   }
 
   # TODO: Does not work with AzureDiskEncryption VM extension

@@ -7,7 +7,6 @@ resource azurerm_key_vault vault {
   enabled_for_disk_encryption  = true
   purge_protection_enabled     = true
   sku_name                     = "premium"
-  soft_delete_enabled          = true
   soft_delete_retention_days   = 7
 
   # Grant access to self

@@ -95,6 +95,20 @@ resource azurerm_network_interface app_web_if {
   tags                         = var.tags
 }
 
+data azurerm_platform_image app_web_image_latest {
+  location                     = var.location
+  publisher                    = var.app_web_image_publisher
+  offer                        = var.app_web_image_offer
+  sku                          = var.app_web_image_sku
+}
+
+locals {
+  # Workaround for:
+  # BUG: https://github.com/terraform-providers/terraform-provider-azurerm/issues/6745
+  app_web_image_version_latest = element(split("/",data.azurerm_platform_image.app_web_image_latest.id),length(split("/",data.azurerm_platform_image.app_web_image_latest.id))-1)
+  app_web_image_version        = (var.app_web_image_version != null && var.app_web_image_version != "" && var.app_web_image_version != "latest") ? var.app_web_image_version : local.app_web_image_version_latest
+}
+
 resource azurerm_virtual_machine app_web_vm {
   name                         = "${azurerm_resource_group.app_rg.name}-web-vm${count.index+1}"
   location                     = azurerm_resource_group.app_rg.location
@@ -106,10 +120,10 @@ resource azurerm_virtual_machine app_web_vm {
   count                        = var.app_web_vm_number
 
   storage_image_reference {
-    publisher                  = var.app_web_image_publisher
-    offer                      = var.app_web_image_offer
-    sku                        = var.app_web_image_sku
-    version                    = var.app_web_image_version
+    publisher                  = data.azurerm_platform_image.app_web_image_latest.publisher
+    offer                      = data.azurerm_platform_image.app_web_image_latest.offer
+    sku                        = data.azurerm_platform_image.app_web_image_latest.sku
+    version                    = local.app_web_image_version
   }
   # Uncomment this line to delete the OS disk automatically when deleting the VM
   delete_os_disk_on_termination = true
@@ -485,7 +499,6 @@ resource azurerm_lb app_db_lb {
 
 resource azurerm_lb_backend_address_pool app_db_backend_pool {
   name                         = "app_db_vms"
-  resource_group_name          = azurerm_resource_group.app_rg.name
   loadbalancer_id              = azurerm_lb.app_db_lb.id
 }
 
@@ -538,6 +551,20 @@ resource azurerm_network_interface_backend_address_pool_association app_db_if_ba
   count                        = var.app_db_vm_number
 }
 
+data azurerm_platform_image app_db_image_latest {
+  location                     = var.location
+  publisher                    = var.app_db_image_publisher
+  offer                        = var.app_db_image_offer
+  sku                          = var.app_db_image_sku
+}
+
+locals {
+  # Workaround for:
+  # BUG: https://github.com/terraform-providers/terraform-provider-azurerm/issues/6745
+  app_db_image_version_latest  = element(split("/",data.azurerm_platform_image.app_db_image_latest.id),length(split("/",data.azurerm_platform_image.app_db_image_latest.id))-1)
+  app_db_image_version         = (var.app_db_image_version != null && var.app_db_image_version != "" && var.app_db_image_version != "latest") ? var.app_db_image_version : local.app_db_image_version_latest
+}
+
 resource azurerm_virtual_machine app_db_vm {
   name                         = "${azurerm_resource_group.app_rg.name}-db-vm${count.index+1}"
   location                     = azurerm_resource_group.app_rg.location
@@ -549,10 +576,10 @@ resource azurerm_virtual_machine app_db_vm {
   count                        = var.app_db_vm_number
 
   storage_image_reference {
-    publisher                  = var.app_db_image_publisher
-    offer                      = var.app_db_image_offer
-    sku                        = var.app_db_image_sku
-    version                    = var.app_db_image_version
+    publisher                  = data.azurerm_platform_image.app_db_image_latest.publisher
+    offer                      = data.azurerm_platform_image.app_db_image_latest.offer
+    sku                        = data.azurerm_platform_image.app_db_image_latest.sku
+    version                    = local.app_db_image_version
   }
   # Uncomment this line to delete the OS disk automatically when deleting the VM
   delete_os_disk_on_termination = true
