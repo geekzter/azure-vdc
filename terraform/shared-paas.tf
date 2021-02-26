@@ -209,28 +209,21 @@ resource azurerm_advanced_threat_protection vdc_automation_storage {
 # Requires access to private preview of diagnostic log settings for Azure resource type 'microsoft.storage/storageaccounts', feature flag: 'microsoft.insights/diagnosticsettingpreview':
 # https://docs.microsoft.com/en-us/azure/storage/common/monitor-storage
 # BUG: https://github.com/terraform-providers/terraform-provider-azurerm/issues/8275
-# resource azurerm_monitor_diagnostic_setting automation_storage {
-#   name                         = "${azurerm_storage_account.vdc_automation_storage.name}-logs"
-#   target_resource_id           = azurerm_storage_account.vdc_automation_storage.id
-#   storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
-#   log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
+resource azurerm_monitor_diagnostic_setting automation_storage {
+  name                         = "${azurerm_storage_account.vdc_automation_storage.name}-logs"
+  target_resource_id           = "${azurerm_storage_account.vdc_automation_storage.id}/blobServices/default/"
+  storage_account_id           = azurerm_storage_account.vdc_diag_storage.id
+  log_analytics_workspace_id   = azurerm_log_analytics_workspace.vcd_workspace.id
 
-#   log {
-#     category                   = "StorageRead"
-#     enabled                    = true
+  log {
+    category                   = "StorageRead"
+    enabled                    = true
 
-#     retention_policy {
-#       enabled                  = false
-#     }
-#   }
-
-#   count                        = var.enable_storage_diagnostic_setting ? 1 : 0
-# }
-# HACK: workaround for issue https://github.com/terraform-providers/terraform-provider-azurerm/issues/8275
-resource null_resource automation_storage_diagnostic_setting {
-  provisioner "local-exec" {
-    command                    = "az monitor diagnostic-settings create --resource ${azurerm_storage_account.vdc_automation_storage.id}/blobServices/default --name logsbytfaz --storage-account ${azurerm_storage_account.vdc_diag_storage.id} --workspace ${azurerm_log_analytics_workspace.vcd_workspace.id} --logs '[{\"category\": \"StorageRead\",\"enabled\": true}]' "
+    retention_policy {
+      enabled                  = false
+    }
   }
+
   count                        = var.enable_storage_diagnostic_setting ? 1 : 0
 }
 
