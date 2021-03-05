@@ -1037,7 +1037,7 @@ resource azurerm_sql_firewall_rule tfclientipprefix {
 }
 
 resource azurerm_sql_firewall_rule adminclient {
-  name                         = "AdminClientRule${count.index}"
+  name                         = "AdminClientRule${count.index+1}"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
   start_ip_address             = element(local.admin_ips, count.index)
@@ -1144,7 +1144,8 @@ resource null_resource disable_sql_public_network_access {
 
                                   # Wait until all SQL DB resources have been created
                                   azurerm_monitor_diagnostic_setting.sql_database_logs, 
-                                  azurerm_mssql_database_vulnerability_assessment_rule_baseline.baseline
+                                  azurerm_mssql_database_vulnerability_assessment_rule_baseline.master_va2063_baseline,
+                                  azurerm_mssql_database_vulnerability_assessment_rule_baseline.master_va2065_baseline,
                                  ]
 }
 
@@ -1208,34 +1209,116 @@ resource azurerm_sql_database app_sqldb {
   tags                         = var.tags
 } 
 
-resource azurerm_mssql_database_vulnerability_assessment_rule_baseline baseline {
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline app_va1258_baseline {
+  server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
+  database_name                = azurerm_sql_database.app_sqldb.name
+  rule_id                      = "VA1258"
+  baseline_name                = "default"
+  baseline_result {
+    result                     = [
+      var.admin_login
+    ]
+  }
+}
+
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va2063_baseline {
+  server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
+  database_name                = azurerm_sql_database.app_sqldb.name
+  rule_id                      = "VA2063"
+  baseline_name                = "master"
+  baseline_result {
+    result                     = [
+      azurerm_sql_firewall_rule.tfclientip.name,
+      azurerm_sql_firewall_rule.tfclientip.start_ip_address,
+      azurerm_sql_firewall_rule.tfclientip.end_ip_address
+    ]
+  }
+  baseline_result {
+    result                     = [
+      azurerm_sql_firewall_rule.tfclientipprefix.name,
+      azurerm_sql_firewall_rule.tfclientipprefix.start_ip_address,
+      azurerm_sql_firewall_rule.tfclientipprefix.end_ip_address
+    ]
+  }
+  dynamic "baseline_result" {
+    for_each = azurerm_sql_firewall_rule.adminclient
+    content {
+      result                   = [
+        baseline_result.value["name"],
+        baseline_result.value["start_ip_address"],
+        baseline_result.value["end_ip_address"],
+      ]
+    }
+  }
+}
+
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va2065_baseline {
   server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
   database_name                = azurerm_sql_database.app_sqldb.name
   rule_id                      = "VA2065"
   baseline_name                = "master"
   baseline_result {
     result                     = [
-      "tfclientip",
-      local.publicip,
-      local.publicip
+      azurerm_sql_firewall_rule.tfclientip.name,
+      azurerm_sql_firewall_rule.tfclientip.start_ip_address,
+      azurerm_sql_firewall_rule.tfclientip.end_ip_address
     ]
   }
   baseline_result {
     result                     = [
-      "tfclientipprefix",
-      cidrhost(local.publicprefix,0),
-      cidrhost(local.publicprefix,pow(2,32-split("/",local.publicprefix)[1])-1)
+      azurerm_sql_firewall_rule.tfclientipprefix.name,
+      azurerm_sql_firewall_rule.tfclientipprefix.start_ip_address,
+      azurerm_sql_firewall_rule.tfclientipprefix.end_ip_address
     ]
   }
   dynamic "baseline_result" {
-    for_each = local.admin_ips 
+    for_each = azurerm_sql_firewall_rule.adminclient
     content {
       result                   = [
-        "adminclient${index(local.admin_ips,baseline_result.value)+1}",
-        baseline_result.value,
-        baseline_result.value,
+        baseline_result.value["name"],
+        baseline_result.value["start_ip_address"],
+        baseline_result.value["end_ip_address"],
       ]
     }
+  }
+}
+
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline app_va2109_baseline {
+  server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
+  database_name                = azurerm_sql_database.app_sqldb.name
+  rule_id                      = "VA2109"
+  baseline_name                = "default"
+  baseline_result {
+    result                     = [
+      var.admin_login,
+      "db_accessadmin",
+      "EXTERNAL_GROUP",
+      "EXTERNAL"
+    ]
+  }
+  baseline_result {
+    result                     = [
+      var.admin_login,
+      "db_ddladmin",
+      "EXTERNAL_GROUP",
+      "EXTERNAL"
+    ]
+  }
+  baseline_result {
+    result                     = [
+      var.admin_login,
+      "db_owner",
+      "EXTERNAL_GROUP",
+      "EXTERNAL"
+    ]
+  }
+  baseline_result {
+    result                     = [
+      var.admin_login,
+      "db_securityadmin",
+      "EXTERNAL_GROUP",
+      "EXTERNAL"
+    ]
   }
 }
 
