@@ -10,6 +10,7 @@ variable admin_login {}
 variable admin_object_id {}
 variable admin_username {}
 variable aad_auth_client_id_map {}
+variable alert_email {}
 variable app_subnet_id {}
 variable container {}
 variable container_registry {}

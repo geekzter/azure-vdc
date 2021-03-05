@@ -168,6 +168,7 @@ module paas_app {
   admin_login                  = var.admin_login
   admin_object_id              = var.admin_object_id
   admin_username               = var.admin_username
+  alert_email                  = var.alert_email
   app_subnet_id                = lookup(module.paas_spoke_vnet.subnet_ids,"app","")
   management_subnet_ids        = concat(module.paas_spoke_vnet.management_subnet_ids,
                                  [

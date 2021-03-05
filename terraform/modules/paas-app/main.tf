@@ -917,23 +917,77 @@ resource azurerm_monitor_diagnostic_setting eventhub_logs {
 }
 
 ### SQL Database
-
 resource azurerm_sql_server app_sqlserver {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}sqlserver"
   resource_group_name          = azurerm_resource_group.app_rg.name
   location                     = azurerm_resource_group.app_rg.location
   version                      = "12.0"
-# Credentials are mandatory, but password is randmon and declared as output variable
+# Credentials are mandatory, but password is random and declared as output variable
   administrator_login          = var.admin_username
   administrator_login_password = local.password
   
-  # Doesn't support workspace (yet)
-  # extended_auditing_policy {
-  #   storage_account_access_key =
-  #   storage_endpoint           = 
-  # }
+  tags                         = var.tags
+}
+
+resource azurerm_mssql_server_extended_auditing_policy auditing {
+  server_id                    = azurerm_sql_server.app_sqlserver.id
+  storage_endpoint             = azurerm_storage_account.audit_storage.primary_blob_endpoint
+  storage_account_access_key   = azurerm_storage_account.audit_storage.primary_access_key
+  log_monitoring_enabled       = true
+}
+
+resource azurerm_mssql_server_security_alert_policy policy {
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  state                        = "Enabled"
+  storage_endpoint             = azurerm_storage_account.audit_storage.primary_blob_endpoint
+  storage_account_access_key   = azurerm_storage_account.audit_storage.primary_access_key
+}
+
+resource azurerm_storage_account audit_storage {
+  name                         = "${local.resource_group_name_short}adt"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  account_kind                 = "StorageV2"
+  account_tier                 = "Standard"
+  account_replication_type     = var.storage_replication_type
+  enable_https_traffic_only    = true
+ 
+  provisioner "local-exec" {
+    # TODO: Add --auth-mode login once supported
+    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
+  }
+
+  # TODO: Add network rules using Managed Identity, once azurerm supports it
+  #       https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-cli#grant-access-from-azure-resource-instances-preview
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   tags                         = var.tags
+  }
+resource azurerm_storage_container sql_vulnerability {
+  name                         = "sqlvulnerability"
+  storage_account_name         = azurerm_storage_account.audit_storage.name
+  container_access_type        = "private"
+}
+
+resource azurerm_mssql_server_vulnerability_assessment assessment {
+  server_security_alert_policy_id = azurerm_mssql_server_security_alert_policy.policy.id
+  storage_container_path       = "${azurerm_storage_account.audit_storage.primary_blob_endpoint}${azurerm_storage_container.sql_vulnerability.name}/"
+  storage_account_access_key   = azurerm_storage_account.audit_storage.primary_access_key
+
+  recurring_scans {
+    enabled                    = true
+    email_subscription_admins  = true
+    emails = [
+      var.alert_email
+    ]
+  }
 }
 
 resource null_resource enable_sql_public_network_access {
@@ -944,6 +998,11 @@ resource null_resource enable_sql_public_network_access {
   provisioner local-exec {
     command                    = "az sql server update -n ${azurerm_sql_server.app_sqlserver.name} -g ${azurerm_sql_server.app_sqlserver.resource_group_name} --set publicNetworkAccess='Enabled' --query 'publicNetworkAccess' -o tsv"
   }
+
+  depends_on                   = [
+    azurerm_mssql_server_extended_auditing_policy.auditing,
+    azurerm_mssql_server_vulnerability_assessment.assessment
+  ]
 }
 
 resource azurerm_sql_firewall_rule tfclientip {
@@ -1009,7 +1068,10 @@ resource azurerm_sql_virtual_network_rule appservice_subnet {
   }  
 
   count                        = var.enable_private_link && var.disable_public_database_access ? 0 : 1
-  depends_on                   = [azurerm_app_service_virtual_network_swift_connection.network]
+  depends_on                   = [
+    azurerm_app_service_virtual_network_swift_connection.network,
+    null_resource.enable_sql_public_network_access
+  ]
 }
 
 resource azurerm_private_endpoint sqlserver_endpoint {
@@ -1039,8 +1101,7 @@ resource azurerm_private_endpoint sqlserver_endpoint {
 
   tags                         = var.tags
   count                        = var.enable_private_link ? 1 : 0
-  # Create Private Endpoints one at a time
-  #depends_on                   = [azurerm_private_endpoint.archive_table_storage_endpoint]
+  depends_on                   = [null_resource.enable_sql_public_network_access]
 }
 resource azurerm_private_dns_a_record sql_server_dns_record {
   name                         = azurerm_sql_server.app_sqlserver.name
@@ -1051,6 +1112,7 @@ resource azurerm_private_dns_a_record sql_server_dns_record {
 
   count                        = var.enable_private_link ? 1 : 0
   tags                         = var.tags
+  depends_on                   = [null_resource.enable_sql_public_network_access]
 }
 
 resource null_resource disable_sql_public_network_access {
@@ -1067,7 +1129,11 @@ resource null_resource disable_sql_public_network_access {
                                   azurerm_private_dns_a_record.sql_server_dns_record,
                                   azurerm_sql_firewall_rule.tfclientip,
                                   azurerm_sql_firewall_rule.tfclientipprefix,
-                                  null_resource.grant_sql_access
+                                  null_resource.grant_sql_access,
+
+                                  # Wait until all SQL DB resources have been created
+                                  azurerm_monitor_diagnostic_setting.sql_database_logs, 
+                                  azurerm_mssql_database_vulnerability_assessment_rule_baseline.baseline
                                  ]
 }
 
@@ -1122,7 +1188,6 @@ resource azurerm_sql_database app_sqldb {
   server_name                  = azurerm_sql_server.app_sqlserver.name
   edition                      = "Premium"
 
-  # Can be enabled through Azure policy instead
   threat_detection_policy {
     state                      = "Enabled"
   }
@@ -1132,11 +1197,51 @@ resource azurerm_sql_database app_sqldb {
   tags                         = var.tags
 } 
 
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline baseline {
+  server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
+  database_name                = azurerm_sql_database.app_sqldb.name
+  rule_id                      = "VA2065"
+  baseline_name                = "master"
+  baseline_result {
+    result                     = [
+      "tfclientip",
+      local.publicip,
+      local.publicip
+    ]
+  }
+  baseline_result {
+    result                     = [
+      "tfclientipprefix",
+      cidrhost(local.publicprefix,0),
+      cidrhost(local.publicprefix,pow(2,32-split("/",local.publicprefix)[1])-1)
+    ]
+  }
+  dynamic "baseline_result" {
+    for_each = local.admin_ips 
+    content {
+      result                   = [
+        "adminclient${index(local.admin_ips,baseline_result.value)+1}",
+        baseline_result.value,
+        baseline_result.value,
+      ]
+    }
+  }
+}
+
 resource azurerm_monitor_diagnostic_setting sql_database_logs {
   name                         = "SqlDatabase_Logs"
   target_resource_id           = azurerm_sql_database.app_sqldb.id
   storage_account_id           = var.diagnostics_storage_id
   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
+
+  log {
+    category                   = "SQLSecurityAuditEvents"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
 
   log {
     category                   = "SQLInsights"
@@ -1235,4 +1340,17 @@ resource azurerm_monitor_diagnostic_setting sql_database_logs {
       enabled                  = false
     }
   } 
+
+  metric {
+    category                   = "WorkloadManagement"
+
+    retention_policy {
+      enabled                  = false
+    }
+  } 
+
+  depends_on                   = [
+    azurerm_mssql_server_extended_auditing_policy.auditing,
+    # azurerm_mssql_database_extended_auditing_policy.auditing
+  ]
 }
