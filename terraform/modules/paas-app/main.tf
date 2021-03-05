@@ -981,12 +981,23 @@ resource azurerm_mssql_server_vulnerability_assessment assessment {
   storage_container_path       = "${azurerm_storage_account.audit_storage.primary_blob_endpoint}${azurerm_storage_container.sql_vulnerability.name}/"
   storage_account_access_key   = azurerm_storage_account.audit_storage.primary_access_key
 
-  recurring_scans {
-    enabled                    = true
-    email_subscription_admins  = true
-    emails = [
-      var.alert_email
-    ]
+  dynamic "recurring_scans" {
+    for_each = range(var.alert_email != null && var.alert_email != "" ? 0 : 1) 
+    content {
+      enabled                  = true
+      email_subscription_admins= true
+    }
+  }
+
+  dynamic "recurring_scans" {
+    for_each = range(var.alert_email != null && var.alert_email != "" ? 1 : 0) 
+    content {
+      enabled                  = true
+      email_subscription_admins= true
+      emails                   = [
+        var.alert_email
+      ]
+    }
   }
 }
 
