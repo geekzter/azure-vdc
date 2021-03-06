@@ -53,7 +53,7 @@ variable enable_auto_shutdown {
 }
 variable enable_custom_vulnerability_baseline {
   description                  = "Whether to create a customozied baseline in line with created infrastructure"
-  default                      = false
+  default                      = true
   type                         = bool
 }
 variable enable_storage_diagnostic_setting {
