@@ -53,8 +53,6 @@ variables:
   value: 'true'
 - name: 'TF_INPUT'
   value: 0
-- name: 'TF_WORKSPACE'
-  value: 'cip'
 
 jobs:
 - job: 'Plan'
