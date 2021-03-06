@@ -1228,13 +1228,6 @@ resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va
   baseline_name                = "master"
   baseline_result {
     result                     = [
-      azurerm_sql_firewall_rule.tfclientip.name,
-      azurerm_sql_firewall_rule.tfclientip.start_ip_address,
-      azurerm_sql_firewall_rule.tfclientip.end_ip_address
-    ]
-  }
-  baseline_result {
-    result                     = [
       azurerm_sql_firewall_rule.tfclientipprefix.name,
       azurerm_sql_firewall_rule.tfclientipprefix.start_ip_address,
       azurerm_sql_firewall_rule.tfclientipprefix.end_ip_address
@@ -1318,6 +1311,28 @@ resource azurerm_mssql_database_vulnerability_assessment_rule_baseline app_va210
       "db_securityadmin",
       "EXTERNAL_GROUP",
       "EXTERNAL"
+    ]
+  }
+}
+
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va2130_baseline {
+  server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
+  database_name                = azurerm_sql_database.app_sqldb.name
+  rule_id                      = "VA2130"
+  baseline_name                = "master"
+  dynamic "baseline_result" {
+    for_each = range(var.admin_object_id != null ? 1 : 0) 
+    content {
+      result                   = [
+        var.admin_object_id,
+        # "0x00000000000000000000000000000000"
+      ]
+    }
+  }
+  baseline_result {
+    result                     = [
+      var.admin_username,
+      # "0x0000000000000000000000000000000000000000000000000000000000000000"
     ]
   }
 }
