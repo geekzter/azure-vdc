@@ -32,6 +32,9 @@ variable default_delete_timeout {}
 variable disable_public_database_access {
   type                         = bool
 }
+variable enable_custom_vulnerability_baseline {
+  type                         = bool
+}
 variable enable_storage_diagnostic_setting {
   type                         = bool
 }

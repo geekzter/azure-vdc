@@ -999,6 +999,16 @@ resource azurerm_mssql_server_vulnerability_assessment assessment {
       ]
     }
   }
+
+  depends_on                   = [
+    # Wait for these resources to be created, so they are included in the baseline
+    azurerm_sql_active_directory_administrator.dba,
+    azurerm_sql_firewall_rule.adminclient,
+    azurerm_sql_firewall_rule.tfclientip,
+    azurerm_sql_firewall_rule.tfclientipprefix,
+    null_resource.disable_sql_public_network_access,
+    null_resource.grant_sql_access,
+  ]
 }
 
 resource null_resource enable_sql_public_network_access {
@@ -1011,8 +1021,7 @@ resource null_resource enable_sql_public_network_access {
   }
 
   depends_on                   = [
-    azurerm_mssql_server_extended_auditing_policy.auditing,
-    azurerm_mssql_server_vulnerability_assessment.assessment
+    azurerm_mssql_server_extended_auditing_policy.auditing
   ]
 }
 
@@ -1143,10 +1152,8 @@ resource null_resource disable_sql_public_network_access {
                                   null_resource.grant_sql_access,
 
                                   # Wait until all SQL DB resources have been created
-                                  azurerm_monitor_diagnostic_setting.sql_database_logs, 
-                                  azurerm_mssql_database_vulnerability_assessment_rule_baseline.master_va2063_baseline,
-                                  azurerm_mssql_database_vulnerability_assessment_rule_baseline.master_va2065_baseline,
-                                 ]
+                                  azurerm_monitor_diagnostic_setting.sql_database_logs
+  ]
 }
 
 # FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
@@ -1219,6 +1226,8 @@ resource azurerm_mssql_database_vulnerability_assessment_rule_baseline app_va125
       var.admin_login
     ]
   }
+
+  count                        = var.enable_custom_vulnerability_baseline ? 1 : 0
 }
 
 resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va2063_baseline {
@@ -1243,6 +1252,8 @@ resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va
       ]
     }
   }
+
+  count                        = var.enable_custom_vulnerability_baseline ? 1 : 0
 }
 
 resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va2065_baseline {
@@ -1274,6 +1285,8 @@ resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va
       ]
     }
   }
+
+  count                        = var.enable_custom_vulnerability_baseline ? 1 : 0
 }
 
 resource azurerm_mssql_database_vulnerability_assessment_rule_baseline app_va2109_baseline {
@@ -1313,6 +1326,8 @@ resource azurerm_mssql_database_vulnerability_assessment_rule_baseline app_va210
       "EXTERNAL"
     ]
   }
+
+  count                        = var.enable_custom_vulnerability_baseline ? 1 : 0
 }
 
 resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va2130_baseline {
@@ -1335,6 +1350,8 @@ resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va
       # "0x0000000000000000000000000000000000000000000000000000000000000000"
     ]
   }
+
+  count                        = var.enable_custom_vulnerability_baseline ? 1 : 0
 }
 
 resource azurerm_monitor_diagnostic_setting sql_database_logs {

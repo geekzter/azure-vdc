@@ -51,6 +51,11 @@ variable enable_auto_shutdown {
   default                      = true
   type                         = bool
 }
+variable enable_custom_vulnerability_baseline {
+  description                  = "Whether to create a customozied baseline in line with created infrastructure"
+  default                      = false
+  type                         = bool
+}
 variable enable_storage_diagnostic_setting {
   description                  = "Whether to enable Log Analytics diagnostics settings for storage accounts"
   default                      = false

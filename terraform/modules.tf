@@ -187,6 +187,7 @@ module paas_app {
   disable_public_database_access= var.disable_public_database_access
   restrict_public_access= var.restrict_public_access
   enable_aad_auth              = var.enable_app_service_aad_auth
+  enable_custom_vulnerability_baseline = var.enable_custom_vulnerability_baseline
   enable_private_link          = var.enable_private_link
   enable_storage_diagnostic_setting = var.enable_storage_diagnostic_setting
   grant_database_access        = var.grant_database_access
