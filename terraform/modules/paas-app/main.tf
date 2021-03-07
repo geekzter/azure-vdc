@@ -917,23 +917,98 @@ resource azurerm_monitor_diagnostic_setting eventhub_logs {
 }
 
 ### SQL Database
-
 resource azurerm_sql_server app_sqlserver {
   name                         = "${lower(replace(var.resource_group_name,"-",""))}sqlserver"
   resource_group_name          = azurerm_resource_group.app_rg.name
   location                     = azurerm_resource_group.app_rg.location
   version                      = "12.0"
-# Credentials are mandatory, but password is randmon and declared as output variable
+# Credentials are mandatory, but password is random and declared as output variable
   administrator_login          = var.admin_username
   administrator_login_password = local.password
   
-  # Doesn't support workspace (yet)
-  # extended_auditing_policy {
-  #   storage_account_access_key =
-  #   storage_endpoint           = 
-  # }
+  tags                         = var.tags
+}
+
+resource azurerm_mssql_server_extended_auditing_policy auditing {
+  server_id                    = azurerm_sql_server.app_sqlserver.id
+  storage_endpoint             = azurerm_storage_account.audit_storage.primary_blob_endpoint
+  storage_account_access_key   = azurerm_storage_account.audit_storage.primary_access_key
+  log_monitoring_enabled       = true
+}
+
+resource azurerm_mssql_server_security_alert_policy policy {
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  server_name                  = azurerm_sql_server.app_sqlserver.name
+  state                        = "Enabled"
+  storage_endpoint             = azurerm_storage_account.audit_storage.primary_blob_endpoint
+  storage_account_access_key   = azurerm_storage_account.audit_storage.primary_access_key
+}
+
+resource azurerm_storage_account audit_storage {
+  name                         = "${local.resource_group_name_short}adt"
+  location                     = azurerm_resource_group.app_rg.location
+  resource_group_name          = azurerm_resource_group.app_rg.name
+  account_kind                 = "StorageV2"
+  account_tier                 = "Standard"
+  account_replication_type     = var.storage_replication_type
+  enable_https_traffic_only    = true
+ 
+  provisioner "local-exec" {
+    # TODO: Add --auth-mode login once supported
+    command                    = "az storage logging update --account-name ${self.name} --log rwd --retention 90 --services b"
+  }
+
+  # TODO: Add network rules using Managed Identity, once azurerm supports it
+  #       https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-cli#grant-access-from-azure-resource-instances-preview
+
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
 
   tags                         = var.tags
+  }
+resource azurerm_storage_container sql_vulnerability {
+  name                         = "sqlvulnerability"
+  storage_account_name         = azurerm_storage_account.audit_storage.name
+  container_access_type        = "private"
+}
+
+resource azurerm_mssql_server_vulnerability_assessment assessment {
+  server_security_alert_policy_id = azurerm_mssql_server_security_alert_policy.policy.id
+  storage_container_path       = "${azurerm_storage_account.audit_storage.primary_blob_endpoint}${azurerm_storage_container.sql_vulnerability.name}/"
+  storage_account_access_key   = azurerm_storage_account.audit_storage.primary_access_key
+
+  dynamic "recurring_scans" {
+    for_each = range(var.alert_email != null && var.alert_email != "" ? 0 : 1) 
+    content {
+      enabled                  = true
+      email_subscription_admins= true
+    }
+  }
+
+  dynamic "recurring_scans" {
+    for_each = range(var.alert_email != null && var.alert_email != "" ? 1 : 0) 
+    content {
+      enabled                  = true
+      email_subscription_admins= true
+      emails                   = [
+        var.alert_email
+      ]
+    }
+  }
+
+  depends_on                   = [
+    # Wait for these resources to be created, so they are included in the baseline
+    azurerm_sql_active_directory_administrator.dba,
+    azurerm_sql_firewall_rule.adminclient,
+    azurerm_sql_firewall_rule.tfclientip,
+    azurerm_sql_firewall_rule.tfclientipprefix,
+    null_resource.disable_sql_public_network_access,
+    null_resource.grant_sql_access,
+  ]
 }
 
 resource null_resource enable_sql_public_network_access {
@@ -944,6 +1019,10 @@ resource null_resource enable_sql_public_network_access {
   provisioner local-exec {
     command                    = "az sql server update -n ${azurerm_sql_server.app_sqlserver.name} -g ${azurerm_sql_server.app_sqlserver.resource_group_name} --set publicNetworkAccess='Enabled' --query 'publicNetworkAccess' -o tsv"
   }
+
+  depends_on                   = [
+    azurerm_mssql_server_extended_auditing_policy.auditing
+  ]
 }
 
 resource azurerm_sql_firewall_rule tfclientip {
@@ -967,7 +1046,7 @@ resource azurerm_sql_firewall_rule tfclientipprefix {
 }
 
 resource azurerm_sql_firewall_rule adminclient {
-  name                         = "AdminClientRule${count.index}"
+  name                         = "AdminClientRule${count.index+1}"
   resource_group_name          = azurerm_resource_group.app_rg.name
   server_name                  = azurerm_sql_server.app_sqlserver.name
   start_ip_address             = element(local.admin_ips, count.index)
@@ -1009,7 +1088,10 @@ resource azurerm_sql_virtual_network_rule appservice_subnet {
   }  
 
   count                        = var.enable_private_link && var.disable_public_database_access ? 0 : 1
-  depends_on                   = [azurerm_app_service_virtual_network_swift_connection.network]
+  depends_on                   = [
+    azurerm_app_service_virtual_network_swift_connection.network,
+    null_resource.enable_sql_public_network_access
+  ]
 }
 
 resource azurerm_private_endpoint sqlserver_endpoint {
@@ -1039,8 +1121,7 @@ resource azurerm_private_endpoint sqlserver_endpoint {
 
   tags                         = var.tags
   count                        = var.enable_private_link ? 1 : 0
-  # Create Private Endpoints one at a time
-  #depends_on                   = [azurerm_private_endpoint.archive_table_storage_endpoint]
+  depends_on                   = [null_resource.enable_sql_public_network_access]
 }
 resource azurerm_private_dns_a_record sql_server_dns_record {
   name                         = azurerm_sql_server.app_sqlserver.name
@@ -1051,6 +1132,7 @@ resource azurerm_private_dns_a_record sql_server_dns_record {
 
   count                        = var.enable_private_link ? 1 : 0
   tags                         = var.tags
+  depends_on                   = [null_resource.enable_sql_public_network_access]
 }
 
 resource null_resource disable_sql_public_network_access {
@@ -1067,8 +1149,11 @@ resource null_resource disable_sql_public_network_access {
                                   azurerm_private_dns_a_record.sql_server_dns_record,
                                   azurerm_sql_firewall_rule.tfclientip,
                                   azurerm_sql_firewall_rule.tfclientipprefix,
-                                  null_resource.grant_sql_access
-                                 ]
+                                  null_resource.grant_sql_access,
+
+                                  # Wait until all SQL DB resources have been created
+                                  azurerm_monitor_diagnostic_setting.sql_database_logs
+  ]
 }
 
 # FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
@@ -1122,7 +1207,6 @@ resource azurerm_sql_database app_sqldb {
   server_name                  = azurerm_sql_server.app_sqlserver.name
   edition                      = "Premium"
 
-  # Can be enabled through Azure policy instead
   threat_detection_policy {
     state                      = "Enabled"
   }
@@ -1132,11 +1216,158 @@ resource azurerm_sql_database app_sqldb {
   tags                         = var.tags
 } 
 
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline app_va1258_baseline {
+  server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
+  database_name                = azurerm_sql_database.app_sqldb.name
+  rule_id                      = "VA1258"
+  baseline_name                = "default"
+  baseline_result {
+    result                     = [
+      var.admin_login
+    ]
+  }
+
+  count                        = var.enable_custom_vulnerability_baseline ? 1 : 0
+}
+
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va2063_baseline {
+  server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
+  database_name                = azurerm_sql_database.app_sqldb.name
+  rule_id                      = "VA2063"
+  baseline_name                = "master"
+  baseline_result {
+    result                     = [
+      azurerm_sql_firewall_rule.tfclientipprefix.name,
+      azurerm_sql_firewall_rule.tfclientipprefix.start_ip_address,
+      azurerm_sql_firewall_rule.tfclientipprefix.end_ip_address
+    ]
+  }
+  dynamic "baseline_result" {
+    for_each = azurerm_sql_firewall_rule.adminclient
+    content {
+      result                   = [
+        baseline_result.value["name"],
+        baseline_result.value["start_ip_address"],
+        baseline_result.value["end_ip_address"],
+      ]
+    }
+  }
+
+  count                        = var.enable_custom_vulnerability_baseline ? 1 : 0
+}
+
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va2065_baseline {
+  server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
+  database_name                = azurerm_sql_database.app_sqldb.name
+  rule_id                      = "VA2065"
+  baseline_name                = "master"
+  baseline_result {
+    result                     = [
+      azurerm_sql_firewall_rule.tfclientip.name,
+      azurerm_sql_firewall_rule.tfclientip.start_ip_address,
+      azurerm_sql_firewall_rule.tfclientip.end_ip_address
+    ]
+  }
+  baseline_result {
+    result                     = [
+      azurerm_sql_firewall_rule.tfclientipprefix.name,
+      azurerm_sql_firewall_rule.tfclientipprefix.start_ip_address,
+      azurerm_sql_firewall_rule.tfclientipprefix.end_ip_address
+    ]
+  }
+  dynamic "baseline_result" {
+    for_each = azurerm_sql_firewall_rule.adminclient
+    content {
+      result                   = [
+        baseline_result.value["name"],
+        baseline_result.value["start_ip_address"],
+        baseline_result.value["end_ip_address"],
+      ]
+    }
+  }
+
+  count                        = var.enable_custom_vulnerability_baseline ? 1 : 0
+}
+
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline app_va2109_baseline {
+  server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
+  database_name                = azurerm_sql_database.app_sqldb.name
+  rule_id                      = "VA2109"
+  baseline_name                = "default"
+  baseline_result {
+    result                     = [
+      var.admin_login,
+      "db_accessadmin",
+      "EXTERNAL_GROUP",
+      "EXTERNAL"
+    ]
+  }
+  baseline_result {
+    result                     = [
+      var.admin_login,
+      "db_ddladmin",
+      "EXTERNAL_GROUP",
+      "EXTERNAL"
+    ]
+  }
+  baseline_result {
+    result                     = [
+      var.admin_login,
+      "db_owner",
+      "EXTERNAL_GROUP",
+      "EXTERNAL"
+    ]
+  }
+  baseline_result {
+    result                     = [
+      var.admin_login,
+      "db_securityadmin",
+      "EXTERNAL_GROUP",
+      "EXTERNAL"
+    ]
+  }
+
+  count                        = var.enable_custom_vulnerability_baseline ? 1 : 0
+}
+
+resource azurerm_mssql_database_vulnerability_assessment_rule_baseline master_va2130_baseline {
+  server_vulnerability_assessment_id = azurerm_mssql_server_vulnerability_assessment.assessment.id
+  database_name                = azurerm_sql_database.app_sqldb.name
+  rule_id                      = "VA2130"
+  baseline_name                = "master"
+  dynamic "baseline_result" {
+    for_each = range(var.admin_object_id != null ? 1 : 0) 
+    content {
+      result                   = [
+        var.admin_object_id,
+        # "0x00000000000000000000000000000000"
+      ]
+    }
+  }
+  baseline_result {
+    result                     = [
+      var.admin_username,
+      # "0x0000000000000000000000000000000000000000000000000000000000000000"
+    ]
+  }
+
+  count                        = var.enable_custom_vulnerability_baseline ? 1 : 0
+}
+
 resource azurerm_monitor_diagnostic_setting sql_database_logs {
   name                         = "SqlDatabase_Logs"
   target_resource_id           = azurerm_sql_database.app_sqldb.id
   storage_account_id           = var.diagnostics_storage_id
   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
+
+  log {
+    category                   = "SQLSecurityAuditEvents"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
 
   log {
     category                   = "SQLInsights"
@@ -1235,4 +1466,17 @@ resource azurerm_monitor_diagnostic_setting sql_database_logs {
       enabled                  = false
     }
   } 
+
+  metric {
+    category                   = "WorkloadManagement"
+
+    retention_policy {
+      enabled                  = false
+    }
+  } 
+
+  depends_on                   = [
+    azurerm_mssql_server_extended_auditing_policy.auditing,
+    # azurerm_mssql_database_extended_auditing_policy.auditing
+  ]
 }

@@ -53,8 +53,6 @@ variables:
   value: 'true'
 - name: 'TF_INPUT'
   value: 0
-- name: 'TF_WORKSPACE'
-  value: 'cip'
 
 jobs:
 - job: 'Plan'
@@ -121,7 +119,7 @@ jobs:
         scriptType: pscore
         scriptLocation: inlineScript
         inlineScript: |
-          $(scriptDirectory)/tf_deploy.ps1 -init -plan -trace $(trace) -parallelism $(parallelism)
+          $(scriptDirectory)/tf_deploy.ps1 -init -plan -trace $(trace) -parallelism $(parallelism) -nobackend
         addSpnToEnvironment: true
         useGlobalConfig: true
         failOnStandardError: true

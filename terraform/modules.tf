@@ -168,6 +168,7 @@ module paas_app {
   admin_login                  = var.admin_login
   admin_object_id              = var.admin_object_id
   admin_username               = var.admin_username
+  alert_email                  = var.alert_email
   app_subnet_id                = lookup(module.paas_spoke_vnet.subnet_ids,"app","")
   management_subnet_ids        = concat(module.paas_spoke_vnet.management_subnet_ids,
                                  [
@@ -186,6 +187,7 @@ module paas_app {
   disable_public_database_access= var.disable_public_database_access
   restrict_public_access= var.restrict_public_access
   enable_aad_auth              = var.enable_app_service_aad_auth
+  enable_custom_vulnerability_baseline = var.enable_custom_vulnerability_baseline
   enable_private_link          = var.enable_private_link
   enable_storage_diagnostic_setting = var.enable_storage_diagnostic_setting
   grant_database_access        = var.grant_database_access
