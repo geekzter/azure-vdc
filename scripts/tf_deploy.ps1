@@ -166,6 +166,13 @@ try {
     if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_backend_*) -and (Test-Path $varsFile)) {
         # Load variables from file, if it exists and environment variables have not been set
         $varArgs = " -var-file='$varsFile'"
+
+        if ($StickySuffix) {
+            $resourceSuffix = GetSuffix
+            if ($resourceSuffix) {
+                $varArgs += " -var 'resource_suffix=${resourceSuffix}'"
+            }
+        }
     }
 
     if ($Clear) {
@@ -174,10 +181,6 @@ try {
     }
 
     if ($Plan -or $Apply) {
-        if ($StickySuffix) {
-            SetSuffix
-        }
-
         Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform may fail" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1")
 

@@ -266,6 +266,13 @@ function SetWorkspace (
     return $returnObject
 }
 
+function GetSuffix () {
+    Invoke-Command -ScriptBlock {
+        $Private:ErrorActionPreference = "Continue"
+        $script:resourceSuffix = (GetTerraformOutput "resource_suffix")
+    }
+    return $script:resourceSuffix
+}
 function SetSuffix () {
     # Don't change the suffix on plan/apply
     # NOTE: This can cause problems when cycling apply/destroy repeatedly within the same shell lifetime
