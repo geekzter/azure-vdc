@@ -81,7 +81,7 @@ $varsFile           = "$Workspace.tfvars".ToLower()
 
 try {
     Push-Location $tfdirectory
-    . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) get_tf_version.ps1) -ValidateInstalledVersion
+    . (Join-Path $PSScriptRoot get_tf_version.ps1) -ValidateInstalledVersion
 
     # Copy any secret files provided as part of an Azure Pipeline
     foreach ($file in $(Get-ChildItem Env:*SECUREFILEPATH))
@@ -166,13 +166,6 @@ try {
     if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_backend_*) -and (Test-Path $varsFile)) {
         # Load variables from file, if it exists and environment variables have not been set
         $varArgs = " -var-file='$varsFile'"
-
-        if ($StickySuffix) {
-            $resourceSuffix = GetSuffix
-            if ($resourceSuffix) {
-                $varArgs += " -var 'resource_suffix=${resourceSuffix}'"
-            }
-        }
     }
 
     if ($Clear) {
@@ -183,6 +176,15 @@ try {
     if ($Plan -or $Apply) {
         Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform may fail" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1")
+
+        if ($StickySuffix) {
+            $resourceSuffix = GetSuffix
+            if ($resourceSuffix) {
+                $varArgs += " -var 'resource_suffix=${resourceSuffix}'"
+            } else {
+                Write-Warning "Switch -StickySuffix is set, but resource_suffix does not exist in Terraform state"
+            }
+        }
 
         # Create plan
         Invoke "terraform plan $varArgs -parallelism=$Parallelism -out='$planFile'" 
