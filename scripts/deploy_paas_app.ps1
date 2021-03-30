@@ -289,7 +289,7 @@ if (!($All -or $Database -or $Website -or $Restart -or $Test)) {
     exit
 }
 
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 
 
 if (($All -or $Database) -and (!$SqlDatabase -or !$SqlServerFQDN -or !$AppResourceGroup -or !$SqlDatabase -or !$AppAppServiceIdentity -or !$AppAppServiceClientID)) {
@@ -308,7 +308,7 @@ if ($useTerraform) {
     # Gather data from Terraform
     try {
         Push-Location $tfdirectory
-        . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) get_tf_version.ps1) -ValidateInstalledVersion
+        . (Join-Path $PSScriptRoot get_tf_version.ps1) -ValidateInstalledVersion
         $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
         
         Invoke-Command -ScriptBlock {

@@ -23,7 +23,7 @@ param (
     [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
 ) 
 
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 AzLogin
 
 if (!$VMResourceId) {

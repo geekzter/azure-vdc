@@ -21,7 +21,7 @@ param (
 ) 
 
 ### Internal Functions
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 
 $Script:ErrorActionPreference = "Stop"
 if(-not($subscription)) { Throw "You must supply a value for subscription" }

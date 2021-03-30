@@ -33,7 +33,7 @@ param (
 ) 
 
 ### Internal Functions
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 
 ### Validation
 if (!($Workspace)) { Throw "You must supply a value for Workspace" }
@@ -90,7 +90,7 @@ try {
     }
 
     # Some features that require PowerShell can run from PowerShell, override defaults from variables.tf
-    . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) defaults.ps1)
+    . (Join-Path $PSScriptRoot defaults.ps1)
 
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
     foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {

@@ -28,13 +28,13 @@ if (!($All -or $ConnectMgmtVM -or $Network -or $ShowCredentials -or $SqlServer -
     exit
 }
 
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 AzLogin
 
 try {
     # Terraform config
     Push-Location $tfdirectory
-    . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) get_tf_version.ps1) -ValidateInstalledVersion
+    . (Join-Path $PSScriptRoot get_tf_version.ps1) -ValidateInstalledVersion
     $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName
 
     $vdcResourceGroup = (GetTerraformOutput "vdc_resource_group")
@@ -116,7 +116,7 @@ try {
             if ($GrantMSIAccess) {
                 if ($IsWindows) {
                     Write-Information "Adding Managed Identity $msiName to $sqlServerName/$sqlDB..."
-                    $queryFile = (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) grant-msi-database-access.sql)
+                    $queryFile = (Join-Path $PSScriptRoot grant-msi-database-access.sql)
                     $msiSID = ConvertTo-Sid $msiClientId
                     $query = (Get-Content $queryFile) -replace "@msi_name",$msiName -replace "@msi_sid",$msiSID -replace "\-\-.*$",""
                     sqlcmd -S $sqlServerFQDN -d $sqlDB -Q "$query" -G -U $sqlAADUser

@@ -57,7 +57,7 @@ Write-Host $MyInvocation.line -ForegroundColor Green
 
 $application = "Automated VDC"
 
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 
 if ($ClearTerraformState -and ($PSCmdlet.ParameterSetName -ieq "Workspace")) {
     try {
@@ -70,7 +70,7 @@ if ($ClearTerraformState -and ($PSCmdlet.ParameterSetName -ieq "Workspace")) {
             }
         }
         Push-Location $tfdirectory
-        . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) get_tf_version.ps1) -ValidateInstalledVersion
+        . (Join-Path $PSScriptRoot get_tf_version.ps1) -ValidateInstalledVersion
         if ($Workspace) {
             $priorWorkspace = (SetWorkspace -Workspace $Workspace -ShowWorkspaceName).PriorWorkspaceName      
         }

@@ -19,7 +19,7 @@ param (
     [parameter(Mandatory=$false)][SecureString]$SecurePassword=$null
 ) 
 
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 
 $msiSID = ConvertTo-Sid $MSIClientId
 $msiSqlParameters = @{msi_name=$MSIName;msi_sid=$msiSID}
