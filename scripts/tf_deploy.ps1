@@ -33,7 +33,7 @@ param (
 ) 
 
 ### Internal Functions
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 
 ### Validation
 if (!($Workspace)) { Throw "You must supply a value for Workspace" }
@@ -81,7 +81,7 @@ $varsFile           = "$Workspace.tfvars".ToLower()
 
 try {
     Push-Location $tfdirectory
-    . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) get_tf_version.ps1) -ValidateInstalledVersion
+    . (Join-Path $PSScriptRoot get_tf_version.ps1) -ValidateInstalledVersion
 
     # Copy any secret files provided as part of an Azure Pipeline
     foreach ($file in $(Get-ChildItem Env:*SECUREFILEPATH))
@@ -90,7 +90,7 @@ try {
     }
 
     # Some features that require PowerShell can run from PowerShell, override defaults from variables.tf
-    . (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) defaults.ps1)
+    . (Join-Path $PSScriptRoot defaults.ps1)
 
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
     foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
@@ -174,12 +174,17 @@ try {
     }
 
     if ($Plan -or $Apply) {
-        if ($StickySuffix) {
-            SetSuffix
-        }
-
         Write-Host "`nPunch hole in PaaS Firewalls, otherwise terraform may fail" -ForegroundColor Green 
         & (Join-Path (Split-Path -parent -Path $MyInvocation.MyCommand.Path) "punch_hole.ps1")
+
+        if ($StickySuffix) {
+            $resourceSuffix = GetSuffix
+            if ($resourceSuffix) {
+                $varArgs += " -var 'resource_suffix=${resourceSuffix}'"
+            } else {
+                Write-Warning "Switch -StickySuffix is set, but resource_suffix does not exist in Terraform state"
+            }
+        }
 
         # Create plan
         Invoke "terraform plan $varArgs -parallelism=$Parallelism -out='$planFile'" 

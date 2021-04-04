@@ -12,7 +12,7 @@ param (
     [parameter(Mandatory=$false)][switch]$UsePreviewApis=([string]::IsNullOrEmpty($env:AGENT_VERSION)) # Use API's that use stderr for support notices
 ) 
 
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 
 
 # Retrieve Azure resources config using Terraform

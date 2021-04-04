@@ -28,7 +28,7 @@ if (!($All -or $Resources -or $Summary -or $Workspaces)) {
     exit
 }
 
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 
 if ($All -or $Summary -or $Workspaces) {
     # Access Terraform (Azure) backend to get leases for each workspace

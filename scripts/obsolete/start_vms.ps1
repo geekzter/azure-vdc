@@ -21,7 +21,7 @@ param
 if(-not($subscription)) { Throw "You must supply a value for subscription" }
 if(-not($tenantid)) { Throw "You must supply a value for tenant" }
 
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 
 # Log on to Azure if not already logged on
 AzLogin

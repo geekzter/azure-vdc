@@ -20,7 +20,7 @@ param (
 
 
 ### Internal Functions
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 $InputFilePath  = Join-Path $tfdirectory $InputFile
 $OutputFilePath = Join-Path $tfdirectory $OutputFile
 
