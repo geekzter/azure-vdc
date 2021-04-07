@@ -147,7 +147,7 @@ stages:
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
     pool:
-      name: $(pool)
+      name: '$(pool)'
       vmImage: $(vmImage)
 
     workspace:
@@ -190,7 +190,7 @@ stages:
     - deployment: CreateEnvironment
       displayName: Create Environment (if it does not exist yet)
       pool:
-        name: $(pool)
+        name: '$(pool)'
         vmImage: $(vmImage)
       environment: '${{ parameters.workspace }}'
       strategy:
@@ -215,7 +215,7 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        name: $(pool)
+        name: '$(pool)'
         vmImage: $(vmImage)
 
       workspace:
@@ -316,7 +316,7 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        name: $(pool)
+        name: '$(pool)'
         vmImage: $(vmImage)
 
       steps:
@@ -448,7 +448,7 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        name: $(pool)
+        name: '$(pool)'
         # SqlAzureDacpacDeployment@1 only runs on Windows
         vmImage: $(vmImage)
 
@@ -572,7 +572,7 @@ stages:
         timeOutSeconds: 1200
 
       pool:
-        name: $(pool)
+        name: '$(pool)'
         # SqlAzureDacpacDeployment@1 only runs on Windows
         vmImage: $(vmImage)
 
@@ -628,7 +628,7 @@ stages:
 
       ${{ if eq(parameters.testMode, true) }}:
         pool:
-          name: $(pool)
+          name: '$(pool)'
           vmImage: $(vmImage)      
 
       ${{ if eq(parameters.testMode, true) }}:
@@ -777,7 +777,7 @@ stages:
           apimDemoKey: $[ dependencies.Reprovision.outputs['terraform.apim_demo_api_key'] ]
 
       pool:
-        name: $(pool)
+        name: '$(pool)'
         vmImage: $(vmImage)
 
       steps:
@@ -877,7 +877,7 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        name: $(pool)
+        name: '$(pool)'
         vmImage: $(vmImage)
 
       steps:
@@ -996,7 +996,7 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        name: $(pool)
+        name: '$(pool)'
         vmImage: $(vmImage)
 
       workspace:
