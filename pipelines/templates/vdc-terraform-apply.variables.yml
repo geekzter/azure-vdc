@@ -4,6 +4,7 @@ variables:
 
   # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
   # The Terraform VDC project requires quite a number of settings
+- group: 'pipeline'
 - group: 'vdc'
 - group: 'vdc-vanity-domain'
 

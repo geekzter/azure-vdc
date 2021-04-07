@@ -147,7 +147,8 @@ stages:
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
     pool:
-      vmImage: 'ubuntu-latest'
+      name: $(pool)
+      vmImage: $(vmImage)
 
     workspace:
       clean: all
@@ -189,7 +190,8 @@ stages:
     - deployment: CreateEnvironment
       displayName: Create Environment (if it does not exist yet)
       pool:
-        vmImage: 'ubuntu-latest'
+        name: $(pool)
+        vmImage: $(vmImage)
       environment: '${{ parameters.workspace }}'
       strategy:
         runOnce:
@@ -213,7 +215,8 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        vmImage: 'ubuntu-latest'
+        name: $(pool)
+        vmImage: $(vmImage)
 
       workspace:
         clean: all
@@ -313,7 +316,8 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        vmImage: 'ubuntu-latest'
+        name: $(pool)
+        vmImage: $(vmImage)
 
       steps:
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
@@ -444,8 +448,9 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
+        name: $(pool)
         # SqlAzureDacpacDeployment@1 only runs on Windows
-        vmImage: 'ubuntu-latest'
+        vmImage: $(vmImage)
 
       steps:
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
@@ -567,8 +572,9 @@ stages:
         timeOutSeconds: 1200
 
       pool:
+        name: $(pool)
         # SqlAzureDacpacDeployment@1 only runs on Windows
-        vmImage: 'ubuntu-latest'
+        vmImage: $(vmImage)
 
       steps:
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
@@ -622,7 +628,8 @@ stages:
 
       ${{ if eq(parameters.testMode, true) }}:
         pool:
-          vmImage: 'ubuntu-latest'      
+          name: $(pool)
+          vmImage: $(vmImage)      
 
       ${{ if eq(parameters.testMode, true) }}:
         environment:
@@ -770,7 +777,8 @@ stages:
           apimDemoKey: $[ dependencies.Reprovision.outputs['terraform.apim_demo_api_key'] ]
 
       pool:
-        vmImage: 'ubuntu-latest'
+        name: $(pool)
+        vmImage: $(vmImage)
 
       steps:
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
@@ -869,7 +877,8 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        vmImage: 'ubuntu-latest'
+        name: $(pool)
+        vmImage: $(vmImage)
 
       steps:
         - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
@@ -987,7 +996,8 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        vmImage: 'ubuntu-latest'
+        name: $(pool)
+        vmImage: $(vmImage)
 
       workspace:
         clean: all
