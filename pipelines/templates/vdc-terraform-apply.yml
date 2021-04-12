@@ -934,7 +934,6 @@ stages:
 
         - task: AzureCLI@2
           displayName: 'Terraform init'
-          condition: succeededOrFailed()
           enabled: ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
@@ -984,6 +983,7 @@ stages:
         # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
         - task: PowerShell@2
           displayName: 'Save used Terraform version number with tfenv'
+          condition: succeededOrFailed()
           enabled: ${{ not(parameters.testMode) }}
           inputs:
             targetType: filePath
