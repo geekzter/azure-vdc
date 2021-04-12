@@ -932,6 +932,28 @@ stages:
             enabled: ${{ not(parameters.testMode) }}
             workingDirectory: $(terraformDirectory)/.terraform/providers/registry.terraform.io/hashicorp 
 
+        - task: TerraformCLI@0
+          displayName: 'Terraform init'
+          inputs:
+            command: 'init'
+            workingDirectory: '$(terraformDirectory)'
+            backendType: 'azurerm'
+            backendServiceArm: '$(subscriptionConnection)'
+            backendAzureRmResourceGroupName: '$(TF_VAR_BACKEND_RESOURCE_GROUP)'
+            backendAzureRmStorageAccountName: '$(TF_VAR_BACKEND_STORAGE_ACCOUNT)'
+            backendAzureRmContainerName: '$(TF_VAR_BACKEND_STORAGE_CONTAINER)'
+            backendAzureRmKey: 'terraform.tfstate'
+            allowTelemetryCollection: true
+
+        - task: TerraformCLI@0
+          displayName: 'Terraform destroy'
+          inputs:
+            command: 'destroy'
+            workingDirectory: '$(terraformDirectory)'
+            environmentServiceName: '$(subscriptionConnection)'
+            runAzLogin: true
+            allowTelemetryCollection: true
+
         - task: AzureCLI@2
           name: terraformConfig
           displayName: 'Terraform destroy'
