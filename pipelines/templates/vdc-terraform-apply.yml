@@ -932,21 +932,28 @@ stages:
             enabled: ${{ not(parameters.testMode) }}
             workingDirectory: $(terraformDirectory)/.terraform/providers/registry.terraform.io/hashicorp 
 
-        - task: TerraformCLI@0
+        - task: AzureCLI@2
+          name: terraformConfig
           displayName: 'Terraform init'
+          condition: succeededOrFailed()
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
-            command: 'init'
-            workingDirectory: '$(terraformDirectory)'
-            backendType: 'azurerm'
-            backendServiceArm: '$(subscriptionConnection)'
-            backendAzureRmResourceGroupName: '$(TF_VAR_BACKEND_RESOURCE_GROUP)'
-            backendAzureRmStorageAccountName: '$(TF_VAR_BACKEND_STORAGE_ACCOUNT)'
-            backendAzureRmContainerName: '$(TF_VAR_BACKEND_STORAGE_CONTAINER)'
-            backendAzureRmKey: 'terraform.tfstate'
-            allowTelemetryCollection: true
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            # ARM_* environment variables are required by Terraform azurerm provider and backend
+            # https://www.terraform.io/docs/providers/azurerm/index.html
+            # https://www.terraform.io/docs/backends/types/azurerm.html
+            # Use Pipeline Service Principal and Service Connection to set up these variables
+            inlineScript: |
+              $(scriptDirectory)/tf_deploy.ps1 -init -force -trace $(trace) -parallelism $(parallelism)
+            addSpnToEnvironment: true
+            useGlobalConfig: true
+            failOnStandardError: true
+            workingDirectory: '$(scriptDirectory)'
 
         - task: TerraformCLI@0
-          displayName: 'Terraform destroy'
+          displayName: 'Terraform destroy (TerraformCLI@0)'
           inputs:
             command: 'destroy'
             workingDirectory: '$(terraformDirectory)'
