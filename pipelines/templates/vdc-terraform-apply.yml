@@ -933,7 +933,6 @@ stages:
             workingDirectory: $(terraformDirectory)/.terraform/providers/registry.terraform.io/hashicorp 
 
         - task: AzureCLI@2
-          name: terraformConfig
           displayName: 'Terraform init'
           condition: succeededOrFailed()
           enabled: ${{ not(parameters.testMode) }}
@@ -962,7 +961,6 @@ stages:
             allowTelemetryCollection: true
 
         - task: AzureCLI@2
-          name: terraformConfig
           displayName: 'Terraform destroy'
           condition: succeededOrFailed()
           enabled: ${{ not(parameters.testMode) }}
