@@ -421,7 +421,7 @@ stages:
           - Reprovision
       displayName: 'Deploy PaaS Application'
       condition: succeeded()
-      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+      timeoutInMinutes: 60
 
       variables:
         appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
@@ -870,7 +870,7 @@ stages:
       ${{ if eq(parameters.destroy, 'On success') }}:
         condition: succeeded()
 
-      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+      timeoutInMinutes: 120
 
       variables:
         # Use earlier prepared Terraform config
