@@ -3,12 +3,12 @@ terraform {
     # azuread                    = "= 1.3.0"
     azurerm                    = "= 2.51"
     # azurerm                    = "~> 2.55"
-    dns                        = "= 3.1.0"  # "~> 3.1"
-    external                   = "= 2.1.0"  # "~> 2.1"
-    http                       = "= 2.1.0"  # "~> 2.1"
-    null                       = "= 3.1.0"  # "~> 3.1"
-    random                     = "= 3.1.0"  # "~> 3.1"
-    time                       = "= 0.7.0"  # "~> 0.7"
+    dns                        = "~> 3.1"
+    external                   = "~> 2.1"
+    http                       = "~> 2.1"
+    null                       = "~> 3.1"
+    random                     = "~> 3.1"
+    time                       = "~> 0.7"
   }
   required_version             = "~> 0.14"
 }
