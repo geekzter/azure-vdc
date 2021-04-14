@@ -932,32 +932,32 @@ stages:
             enabled: ${{ not(parameters.testMode) }}
             workingDirectory: $(terraformDirectory)/.terraform/providers/registry.terraform.io/hashicorp 
 
-        - task: AzureCLI@2
-          displayName: 'Terraform init'
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            azureSubscription: '$(subscriptionConnection)'
-            scriptType: pscore
-            scriptLocation: inlineScript
-            # ARM_* environment variables are required by Terraform azurerm provider and backend
-            # https://www.terraform.io/docs/providers/azurerm/index.html
-            # https://www.terraform.io/docs/backends/types/azurerm.html
-            # Use Pipeline Service Principal and Service Connection to set up these variables
-            inlineScript: |
-              $(scriptDirectory)/tf_deploy.ps1 -init -upgrade -force -trace $(trace) -parallelism $(parallelism)
-            addSpnToEnvironment: true
-            useGlobalConfig: true
-            failOnStandardError: true
-            workingDirectory: '$(scriptDirectory)'
+        # - task: AzureCLI@2
+        #   displayName: 'Terraform init'
+        #   enabled: ${{ not(parameters.testMode) }}
+        #   inputs:
+        #     azureSubscription: '$(subscriptionConnection)'
+        #     scriptType: pscore
+        #     scriptLocation: inlineScript
+        #     # ARM_* environment variables are required by Terraform azurerm provider and backend
+        #     # https://www.terraform.io/docs/providers/azurerm/index.html
+        #     # https://www.terraform.io/docs/backends/types/azurerm.html
+        #     # Use Pipeline Service Principal and Service Connection to set up these variables
+        #     inlineScript: |
+        #       $(scriptDirectory)/tf_deploy.ps1 -init -upgrade -force -trace $(trace) -parallelism $(parallelism)
+        #     addSpnToEnvironment: true
+        #     useGlobalConfig: true
+        #     failOnStandardError: true
+        #     workingDirectory: '$(scriptDirectory)'
 
-        - task: TerraformCLI@0
-          displayName: 'Terraform destroy (TerraformCLI@0)'
-          inputs:
-            command: 'destroy'
-            workingDirectory: '$(terraformDirectory)'
-            environmentServiceName: '$(subscriptionConnection)'
-            runAzLogin: true
-            allowTelemetryCollection: true
+        # - task: TerraformCLI@0
+        #   displayName: 'Terraform destroy (TerraformCLI@0)'
+        #   inputs:
+        #     command: 'destroy'
+        #     workingDirectory: '$(terraformDirectory)'
+        #     environmentServiceName: '$(subscriptionConnection)'
+        #     runAzLogin: true
+        #     allowTelemetryCollection: true
 
         - task: AzureCLI@2
           displayName: 'Terraform destroy'
