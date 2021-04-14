@@ -618,7 +618,7 @@ stages:
           - Reprovision
       displayName: 'Deploy IaaS Application'
       condition: succeeded()
-      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
+      timeoutInMinutes: 30
 
       variables:
         appArtifactDirectory: '$(Pipeline.Workspace)/aspnet'
