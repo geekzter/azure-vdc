@@ -119,7 +119,7 @@ jobs:
         scriptType: pscore
         scriptLocation: inlineScript
         inlineScript: |
-          $(scriptDirectory)/tf_deploy.ps1 -init -plan -trace $(trace) -parallelism $(parallelism) -nobackend
+          $(scriptDirectory)/tf_deploy.ps1 -init -upgrade -plan -trace $(trace) -parallelism $(parallelism) -nobackend
         addSpnToEnvironment: true
         useGlobalConfig: true
         failOnStandardError: true
