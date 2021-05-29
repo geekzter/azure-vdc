@@ -5,6 +5,7 @@ terraform {
     dns                        = "~> 3.1"
     external                   = "~> 2.1"
     http                       = "~> 2.1"
+    local                      = "~> 2.1"
     null                       = "~> 3.1"
     random                     = "~> 3.1"
     time                       = "~> 0.7"

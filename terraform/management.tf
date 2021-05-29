@@ -1,25 +1,25 @@
 locals {
-  client_config                = map(
-    "environment",               local.deployment_name,
-    "paasappurl",                "https://${module.paas_app.app_service_fqdn}",
-    "portalurl",                 "https://portal.azure.com/#dashboard/arm${azurerm_dashboard.vdc_dashboard.id}",
-    "privatelinkfqdns",          join(",",[
+  mgmt_vm_name                 = "${azurerm_resource_group.vdc_rg.name}-mgmt"
+  mgmt_vm_computer_name        = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"/a|e|i|o|u|y|-/","")),0,11)}mgmt"
+  mgmt_vm_script               = templatefile("${path.root}/../scripts/host/prepare_mgmtvm.ps1", {
+    paas_app_url               = "https://${module.paas_app.app_service_fqdn}"
+    portal_url                 = "https://portal.azure.com/#dashboard/arm${azurerm_dashboard.vdc_dashboard.id}"
+    private_link_fqdns         = join(",",[
       module.paas_app.sql_server_fqdn,
       azurerm_storage_account.vdc_diag_storage.primary_blob_host,
       azurerm_storage_account.vdc_diag_storage.primary_table_host,
       module.paas_app.app_service_fqdn,
       module.paas_app.app_service_scm_fqdn
-    ]),
-    "scmurl",                    "https://${module.paas_app.app_service_scm_fqdn}",
-    "scripturl",                 azurerm_storage_blob.mgmt_prepare_script.url,
-    "sqldatabase",               module.paas_app.sql_database,
-    "sqlserver",                 module.paas_app.sql_server_fqdn,
-    "suffix",                    local.suffix,
-    "workspace",                 terraform.workspace
-  )
+    ])
+    scm_url                    = "https://${module.paas_app.app_service_scm_fqdn}"
+    sql_database               = module.paas_app.sql_database
+    sql_server                 = module.paas_app.sql_server_fqdn
+  })
+}
 
-  mgmt_vm_name                 = "${azurerm_resource_group.vdc_rg.name}-mgmt"
-  mgmt_vm_computer_name        = "${substr(lower(replace(azurerm_resource_group.vdc_rg.name,"/a|e|i|o|u|y|-/","")),0,11)}mgmt"
+resource local_file mgmt_vm_script {
+  content                      = local.mgmt_vm_script
+  filename                     = "${path.root}/../data/${terraform.workspace}/prepare_mgmtvm.ps1"
 }
 
 resource azurerm_network_interface bas_if {
@@ -47,20 +47,26 @@ resource azurerm_network_interface bas_if {
 resource azurerm_storage_container scripts {
   name                         = "scripts"
   storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
-  container_access_type        = "container"
+  container_access_type        = "private"
 
   depends_on                   = [azurerm_storage_account_network_rules.automation_storage_rules]
 }
+data azurerm_storage_account_blob_container_sas scripts {
+  connection_string            = azurerm_storage_account.vdc_automation_storage.primary_connection_string
+  container_name               = azurerm_storage_container.scripts.name
+  https_only                   = true
 
-resource azurerm_storage_blob mgmt_prepare_script {
-  name                         = "prepare_mgmtvm.ps1"
-  storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
-  storage_container_name       = azurerm_storage_container.scripts.name
+  start                        = formatdate("YYYY-MM-DD",timestamp())
+  expiry                       = formatdate("YYYY-MM-DD",timeadd(timestamp(),"8760h")) # 1 year from now (365 days)
 
-  type                         = "Block"
-  source                       = "../scripts/host/prepare_mgmtvm.ps1"
-
-  depends_on                   = [azurerm_storage_account_network_rules.automation_storage_rules]
+  permissions {
+    read                       = true
+    add                        = false
+    create                     = false
+    write                      = false
+    delete                     = false
+    list                       = false
+  }
 }
 
 resource azurerm_storage_blob configure_mgmtvm_roles {
@@ -174,7 +180,7 @@ resource azurerm_windows_virtual_machine mgmt {
   # TODO: Does not work with AzureDiskEncryption VM extension
   additional_unattend_content {
     setting                    = "AutoLogon"
-    content                    = templatefile("../scripts/host/AutoLogon.xml", { 
+    content                    = templatefile("${path.root}/../scripts/host/AutoLogon.xml", { 
       count                    = 99, 
       username                 = var.admin_username, 
       password                 = local.password
@@ -186,12 +192,9 @@ resource azurerm_windows_virtual_machine mgmt {
       username                 = var.admin_username, 
       password                 = local.password, 
       hosts                    = concat(var.app_web_vms,var.app_db_vms),
-      scripturl                = azurerm_storage_blob.mgmt_prepare_script.url,
-      sqlserver                = module.paas_app.sql_server_fqdn
     })
   }
-
-  custom_data                  = base64encode(jsonencode(local.client_config))
+  custom_data                  = base64encode(local.mgmt_vm_script)
 
   # Required for AAD Login
   identity {
@@ -257,8 +260,8 @@ resource azurerm_virtual_machine_extension mgmt_roles {
   settings                     = <<EOF
     {
       "fileUris": [
-                                 "${azurerm_storage_blob.configure_mgmtvm_roles.url}",
-                                 "${azurerm_storage_blob.private_link_zones.url}"
+                                 "${azurerm_storage_blob.configure_mgmtvm_roles.url}${data.azurerm_storage_account_blob_container_sas.scripts.sas}",
+                                 "${azurerm_storage_blob.private_link_zones.url}${data.azurerm_storage_account_blob_container_sas.scripts.sas}"
       ]
     }
   EOF

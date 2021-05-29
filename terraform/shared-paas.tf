@@ -146,7 +146,7 @@ resource azurerm_storage_account vdc_automation_storage {
   account_kind                 = "StorageV2"
   account_tier                 = "Standard"
   account_replication_type     = var.app_storage_replication_type
-  allow_blob_public_access     = true # No secrets to hide, just scripts that are also on GitHub
+  allow_blob_public_access     = false
   enable_https_traffic_only    = true
 
   provisioner "local-exec" {

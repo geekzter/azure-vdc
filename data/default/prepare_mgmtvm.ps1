@@ -10,12 +10,12 @@
 #> 
 
 # Propagate Terraform templatefile() provided variables
-$privateLinkFQDNsConfig = '${private_link_fqdns}'
-$paasAppURL             = '${paas_app_url}'
-$portalURL              = '${portal_url}'
-$scmURL                 = '${scm_url}'
-$sqlDatabase            = '${sql_database}'
-$sqlServer              = '${sql_server}'
+$privateLinkFQDNsConfig = 'vdcdfltpaasapprcbmsqlserver.database.windows.net,vdcdfltrcbmdiagstor.blob.core.windows.net,vdcdfltrcbmdiagstor.table.core.windows.net,vdc-dflt-paasapp-rcbm-appsvc-app.azurewebsites.net,vdc-dflt-paasapp-rcbm-appsvc-app.scm.azurewebsites.net'
+$paasAppURL             = 'https://vdc-dflt-paasapp-rcbm-appsvc-app.azurewebsites.net'
+$portalURL              = 'https://portal.azure.com/#dashboard/arm/subscriptions/84c1a2c7-585a-4753-ad28-97f69618cf12/resourceGroups/vdc-dflt-rcbm/providers/Microsoft.Portal/dashboards/VDC-dflt-default'
+$scmURL                 = 'https://vdc-dflt-paasapp-rcbm-appsvc-app.scm.azurewebsites.net'
+$sqlDatabase            = 'vdcdfltpaasapprcbmsqldb'
+$sqlServer              = 'vdcdfltpaasapprcbmsqlserver.database.windows.net'
 
 # Capture bootstrap command as script
 $localBatchScript = "$env:PUBLIC\setup.cmd"

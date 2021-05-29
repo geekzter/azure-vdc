@@ -222,9 +222,9 @@ resource azurerm_dashboard vdc_dashboard {
 
   tags                         = merge(
     local.tags,
-    map(
-      "hidden-title",           "VDC (${local.deployment_name}/${terraform.workspace})",
-    )
+    {
+      hidden-title             = "VDC (${local.deployment_name}/${terraform.workspace})"
+    }
   )
 }
 
