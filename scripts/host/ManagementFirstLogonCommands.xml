@@ -1,6 +1,6 @@
 <FirstLogonCommands>
     <SynchronousCommand>
-        <CommandLine>cmd.exe /c start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('${scripturl}'))}"</CommandLine>
+        <CommandLine>cmd.exe /c start PowerShell.exe -ExecutionPolicy Bypass -Noexit -Command "&amp; {Copy-Item $env:SystemDrive\AzureData\CustomData.bin $env:PUBLIC\setup.ps1 -Force;&amp; $env:PUBLIC\setup.ps1}"</CommandLine>
         <Description>Bootstrap packages and PowerShell</Description>
         <Order>1</Order>
     </SynchronousCommand>

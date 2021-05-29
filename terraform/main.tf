@@ -81,18 +81,18 @@ locals {
 
   tags                         = merge(
     var.tags,
-    map(
-      "deployment-name",         local.deployment_name,
-      "environment",             terraform.workspace,
-      "prefix",                  var.resource_prefix,
-      "repository",              "azure-vdc",
-      "shutdown",                "true",
-      "suffix",                  local.suffix,
-      "workspace",               terraform.workspace,
-      "release-id",              var.release_id,
-      "release-url",             var.release_web_url,
-      "release-user",            var.release_user_email
-    )
+    {
+      deployment-name          = local.deployment_name
+      environment              = terraform.workspace
+      prefix                   = var.resource_prefix
+      repository               = "azure-vdc"
+      shutdown                 = "true"
+      suffix                   = local.suffix
+      workspace                = terraform.workspace
+      release-id               = var.release_id
+      release-url              = var.release_web_url
+      release-user             = var.release_user_email
+    }
   )
 
   lifecycle                    = {

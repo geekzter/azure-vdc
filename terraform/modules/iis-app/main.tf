@@ -53,12 +53,33 @@ resource azurerm_key_vault_key disk_encryption_key {
   depends_on                   = [var.vm_connectivity_dependency]
 }
 
+data azurerm_storage_account automation {
+  name                         = var.automation_storage_name
+  resource_group_name          = local.vdc_resource_group_name
+}
 resource azurerm_storage_container scripts {
   name                         = "iaasappscripts"
   storage_account_name         = var.automation_storage_name
-  container_access_type        = "container"
+  container_access_type        = "private"
 
   depends_on                   = [var.vm_connectivity_dependency]
+}
+data azurerm_storage_account_blob_container_sas scripts {
+  connection_string            = data.azurerm_storage_account.automation.primary_connection_string
+  container_name               = azurerm_storage_container.scripts.name
+  https_only                   = true
+
+  start                        = formatdate("YYYY-MM-DD",timestamp())
+  expiry                       = formatdate("YYYY-MM-DD",timeadd(timestamp(),"8760h")) # 1 year from now (365 days)
+
+  permissions {
+    read                       = true
+    add                        = false
+    create                     = false
+    write                      = false
+    delete                     = false
+    list                       = false
+  }
 }
 
 resource azurerm_storage_blob install_agent_script {
@@ -163,9 +184,9 @@ resource azurerm_virtual_machine app_web_vm {
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 }
 
@@ -205,9 +226,9 @@ resource azurerm_virtual_machine_extension app_web_vm_monitor {
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 
   count                        = var.app_web_vm_number
@@ -281,9 +302,9 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_deployment_group 
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 
   count                        = (var.use_pipeline_environment || var.app_devops["account"] == null) ? 0 : var.app_web_vm_number
@@ -302,7 +323,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
   settings                     = <<EOF
     {
       "fileUris": [
-                                 "${azurerm_storage_blob.install_agent_script.url}"
+                                 "${azurerm_storage_blob.install_agent_script.url}${data.azurerm_storage_account_blob_container_sas.scripts.sas}"
       ]
     }
   EOF
@@ -317,9 +338,9 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 
   count                        = (var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_web_vm_number : 0
@@ -366,9 +387,9 @@ resource azurerm_virtual_machine_extension app_web_vm_dependency_monitor {
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 
   count                        = var.deploy_monitoring_vm_extensions ? var.app_web_vm_number : 0
@@ -419,9 +440,9 @@ SETTINGS
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 
   count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
@@ -622,9 +643,9 @@ resource azurerm_virtual_machine app_db_vm {
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )  
 
   timeouts {
@@ -674,9 +695,9 @@ resource azurerm_virtual_machine_extension app_db_vm_monitor {
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 
 # count                        = var.deploy_monitoring_vm_extensions ? var.app_db_vm_number : 0
@@ -695,7 +716,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
   settings                     = <<EOF
     {
       "fileUris": [
-                                 "${azurerm_storage_blob.install_agent_script.url}"
+                                 "${azurerm_storage_blob.install_agent_script.url}${data.azurerm_storage_account_blob_container_sas.scripts.sas}"
       ]
     }
   EOF
@@ -708,9 +729,9 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 
   count                        = (!var.deploy_security_vm_extensions && var.deploy_non_essential_vm_extensions && var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
@@ -790,9 +811,9 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_deployment_group {
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 
   count                        = (var.deploy_non_essential_vm_extensions && !var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
@@ -840,9 +861,9 @@ resource azurerm_virtual_machine_extension app_db_vm_dependency_monitor {
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 
   count                        = var.deploy_monitoring_vm_extensions ? var.app_db_vm_number : 0
@@ -880,7 +901,7 @@ resource azurerm_virtual_machine_extension app_db_vm_mount_data_disks {
   settings                     = <<EOF
     {
       "fileUris": [
-                                 "${azurerm_storage_blob.mount_data_disks_script.url}"
+                                 "${azurerm_storage_blob.mount_data_disks_script.url}${data.azurerm_storage_account_blob_container_sas.scripts.sas}"
       ]
     }
   EOF
@@ -924,9 +945,9 @@ SETTINGS
 
   tags                         = merge(
     var.tags,
-    map(
-      "dummy-dependency",        var.vm_connectivity_dependency
-    )
+    {
+      dummy-dependency         = var.vm_connectivity_dependency
+    }
   )
 
   count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0

@@ -70,9 +70,9 @@ locals {
     {
     for setting, value in local.app_service_settings : setting => value if setting != "ASPNETCORE_ENVIRONMENT"
     },
-    map(
-      "ASPNETCORE_ENVIRONMENT", "Online"
-    )
+    {
+      ASPNETCORE_ENVIRONMENT   = "Online"
+    }
   )
 
   # Last element of resource id is resource name
