@@ -122,8 +122,6 @@ variable tags {
   type                         = map
 
   default = {
-    application                = "Automated VDC"
-    provisioner                = "terraform"
     shutdown                   = "true"
   }
 } 
