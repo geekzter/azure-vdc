@@ -62,7 +62,7 @@ pr:
     - '*.vsdx'  
 
 schedules:
-- cron: '0 3 * * *'
+- cron: '0 1 * * *'
   displayName: 'Daily early morning build (UTC)'
   # Run if there are no changes
   always: 'true'
