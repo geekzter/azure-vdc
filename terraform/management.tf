@@ -132,6 +132,13 @@ resource azurerm_key_vault_access_policy mgmt_disk_encryption_access {
                                 "wrapKey",
   ]
 
+  timeouts {
+    create                     = var.default_create_timeout
+    update                     = var.default_update_timeout
+    read                       = var.default_read_timeout
+    delete                     = var.default_delete_timeout
+  }  
+  
   depends_on                   = [azurerm_firewall_application_rule_collection.iag_app_rules]
 }
 
@@ -139,6 +146,7 @@ resource azurerm_role_assignment mgmt_disk_encryption_access {
   scope                        = azurerm_key_vault.vault.id
   role_definition_name         = "Reader"
   principal_id                 = azurerm_disk_encryption_set.mgmt_disks.identity.0.principal_id
+
 }
 
 resource azurerm_windows_virtual_machine mgmt {
