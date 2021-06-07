@@ -130,15 +130,6 @@ stages:
       value: 'latest'
     ${{ if not(parameters.unpinTerraform) }}:
       value: 'preferred'
-  - name: cleanUpOnCancel
-    ${{ if eq(parameters.destroy, 'Always') }}:
-      value: true
-    ${{ if eq(parameters.destroy, 'Never') }}:
-      value: false
-    ${{ if eq(parameters.destroy, 'On failure') }}:
-      value: true
-    ${{ if eq(parameters.destroy, 'On success') }}:
-      value: false
 
   jobs:
   - job: 'Prepare'
@@ -298,6 +289,13 @@ stages:
             TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
             TF_VAR_default_update_timeout: '$(jobTimeOutMinutes)m'
 
+        - pwsh: |
+            Write-Host "Indicating success for job '$(Agent.JobName)'"
+            Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
+          name: provisioningResult
+          displayName: 'Indicate provisioning success'
+          condition: succeeded()
+
   - ${{ if eq(parameters.reprovision, true) }}:
     # Provision again to test for issue's that only come up when resources already exist 
     - job: 'Reprovision'
@@ -409,6 +407,13 @@ stages:
             workingDirectory: '$(scriptDirectory)'
           env:
             TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+
+        - pwsh: |
+            Write-Host "Indicating success for job '$(Agent.JobName)'"
+            Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
+          name: provisioningResult
+          displayName: 'Indicate provisioning success'
+          condition: succeeded()
 
   - ${{ if eq(parameters.deploy, true) }}:
     # Deploy PaaS application 
@@ -848,6 +853,13 @@ stages:
             failOnStderr: true
             pwsh: true
 
+        - pwsh: |
+            Write-Host "Indicating success for job '$(Agent.JobName)'"
+            Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
+          name: testResult
+          displayName: 'Indicate provisioning success'
+          condition: succeeded()
+
   - ${{ if ne(parameters.destroy, 'Never') }}:
     # Destroy infrastructure
     - job: 'Destroy'
@@ -947,10 +959,11 @@ stages:
               $(scriptDirectory)/tf_deploy.ps1 -init -upgrade -destroy -force -trace $(trace) -parallelism $(parallelism)
             addSpnToEnvironment: true
             useGlobalConfig: true
+            workingDirectory: '$(scriptDirectory)'
+            # Ignore failure during destroy, we will clean up anyway
             failOnStandardError: false
             powerShellErrorActionPreference: 'Continue'
             powerShellIgnoreLASTEXITCODE: true
-            workingDirectory: '$(scriptDirectory)'
           env:
             TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
 
@@ -987,9 +1000,15 @@ stages:
           - Provision
         - ${{ if eq(parameters.reprovision, true) }}:
           - Reprovision
+        - ${{ if eq(parameters.deploy, true) }}:
+          - Test
       displayName: 'Clean Up'
-      # Run if Terraform destroy failed, or the whole pipeline was canceled
-      condition: or(and(ne(dependencies.Destroy.result, 'None'),ne(dependencies.Destroy.result, 'Skipped'),ne(dependencies.Destroy.result, 'Succeeded')), and(canceled(),variables.cleanUpOnCancel))
+      ${{ if eq(parameters.destroy, 'Always') }}:
+        condition: or(always(),canceled())
+      ${{ if eq(parameters.destroy, 'On failure') }}:
+        condition: ne(coalesce(dependencies.Test.outputs['testResult.result'],dependencies.Reprovision.outputs['provisioningResult.result'],dependencies.Provision.outputs['provisioningResult.result'],'failed'),'success')
+      ${{ if eq(parameters.destroy, 'On success') }}:
+        condition: eq(coalesce(dependencies.Test.outputs['testResult.result'],dependencies.Reprovision.outputs['provisioningResult.result'],dependencies.Provision.outputs['provisioningResult.result'],'failed'),'success')
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
