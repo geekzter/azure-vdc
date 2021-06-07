@@ -947,6 +947,7 @@ stages:
           displayName: 'Terraform destroy'
           condition: succeededOrFailed()
           enabled: ${{ not(parameters.testMode) }}
+          continueOnError: true # Ignore failure during destroy, we will clean up anyway
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
@@ -960,11 +961,6 @@ stages:
             addSpnToEnvironment: true
             useGlobalConfig: true
             workingDirectory: '$(scriptDirectory)'
-            # Ignore failure during destroy, we will clean up anyway
-            continueOnError: true
-            # failOnStandardError: false
-            # powerShellErrorActionPreference: 'Continue'
-            # powerShellIgnoreLASTEXITCODE: true
           env:
             TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
 

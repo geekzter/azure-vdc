@@ -167,26 +167,24 @@ jobs:
     - task: AzureCLI@2
       name: terraformDestroy
       displayName: 'Terraform destroy'
+      condition: succeededOrFailed()
       enabled: true
+      continueOnError: true # Ignore failure during destroy, we will clean up anyway
       inputs:
         azureSubscription: '$(subscriptionConnection)'
-        scriptType: pscore
+        scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
-          $env:ARM_CLIENT_ID=$servicePrincipalId
-          $env:ARM_CLIENT_SECRET=$servicePrincipalKey
-          $env:ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-          $env:ARM_TENANT_ID=$tenantId
+          export ARM_CLIENT_ID=$servicePrincipalId
+          export ARM_CLIENT_SECRET=$servicePrincipalKey
+          export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          export ARM_TENANT_ID=$tenantId
           terraform version
           terraform destroy -auto-approve
         addSpnToEnvironment: true
         useGlobalConfig: true
+        failOnStandardError: true
         workingDirectory: '$(terraformDirectory)'
-        # Ignore failure during destroy, we will clean up anyway
-        continueOnError: true
-        # failOnStandardError: false
-        # powerShellErrorActionPreference: 'Continue'
-        # powerShellIgnoreLASTEXITCODE: true
       env:
         TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
         TF_VAR_resource_suffix: $(TF_VAR_resource_suffix) # Fix case
