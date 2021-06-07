@@ -183,9 +183,10 @@ jobs:
         useGlobalConfig: true
         workingDirectory: '$(terraformDirectory)'
         # Ignore failure during destroy, we will clean up anyway
-        failOnStandardError: false
-        powerShellErrorActionPreference: 'Continue'
-        powerShellIgnoreLASTEXITCODE: true
+        continueOnError: true
+        # failOnStandardError: false
+        # powerShellErrorActionPreference: 'Continue'
+        # powerShellIgnoreLASTEXITCODE: true
       env:
         TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
         TF_VAR_resource_suffix: $(TF_VAR_resource_suffix) # Fix case

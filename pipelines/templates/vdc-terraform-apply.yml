@@ -961,9 +961,10 @@ stages:
             useGlobalConfig: true
             workingDirectory: '$(scriptDirectory)'
             # Ignore failure during destroy, we will clean up anyway
-            failOnStandardError: false
-            powerShellErrorActionPreference: 'Continue'
-            powerShellIgnoreLASTEXITCODE: true
+            continueOnError: true
+            # failOnStandardError: false
+            # powerShellErrorActionPreference: 'Continue'
+            # powerShellIgnoreLASTEXITCODE: true
           env:
             TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
 
