@@ -181,7 +181,7 @@ jobs:
           terraform destroy -auto-approve
         addSpnToEnvironment: true
         useGlobalConfig: true
-        failOnStandardError: true
+        failOnStandardError: false
         workingDirectory: '$(terraformDirectory)'
       env:
         TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'

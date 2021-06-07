@@ -947,7 +947,9 @@ stages:
               $(scriptDirectory)/tf_deploy.ps1 -init -upgrade -destroy -force -trace $(trace) -parallelism $(parallelism)
             addSpnToEnvironment: true
             useGlobalConfig: true
-            failOnStandardError: true
+            failOnStandardError: false
+            powerShellErrorActionPreference: 'Continue'
+            powerShellIgnoreLASTEXITCODE: true
             workingDirectory: '$(scriptDirectory)'
           env:
             TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
