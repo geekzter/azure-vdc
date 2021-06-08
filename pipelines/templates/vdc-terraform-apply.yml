@@ -390,6 +390,7 @@ stages:
         - task: AzureCLI@2
           name: terraform
           displayName: 'Terraform init and apply (re-entrance test)'
+          continueOnError: true # Treat failure as warning during re-entrance, we should have a testable infrastructure now
           enabled: ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
@@ -946,8 +947,8 @@ stages:
         - task: AzureCLI@2
           displayName: 'Terraform destroy'
           condition: succeededOrFailed()
+          continueOnError: true # Treat failure as warning during destroy, we will clean up anyway
           enabled: ${{ not(parameters.testMode) }}
-          continueOnError: true # Ignore failure during destroy, we will clean up anyway
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore

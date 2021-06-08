@@ -143,6 +143,7 @@ jobs:
     - task: AzureCLI@2
       name: terraformReApply
       displayName: 'Terraform apply (check re-entrance)'
+      continueOnError: true # Treat failure as warning during re-entrance
       enabled: ${{ parameters.testReEntrance }}
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -168,8 +169,8 @@ jobs:
       name: terraformDestroy
       displayName: 'Terraform destroy'
       condition: succeededOrFailed()
+      continueOnError: true # Treat failure as warning during destroy, we will clean up anyway
       enabled: true
-      continueOnError: true # Ignore failure during destroy, we will clean up anyway
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: bash
