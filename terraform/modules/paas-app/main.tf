@@ -19,7 +19,6 @@ data http localpublicprefix {
   url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${local.publicip}"
 }
 
-data azurerm_client_config current {}
 data azurerm_subscription primary {}
 data azurerm_container_registry vdc_images {
   name                         = var.container_registry
@@ -477,7 +476,7 @@ resource azurerm_app_service paas_web_app {
       }
       default_provider         = "AzureActiveDirectory"
       enabled                  = var.enable_aad_auth
-      issuer                   = "https://sts.windows.net/${data.azurerm_client_config.current.tenant_id}/"
+      issuer                   = "https://sts.windows.net/${var.tenant_id}/"
       unauthenticated_client_action = "RedirectToLoginPage"
     }
   }
@@ -1164,7 +1163,7 @@ resource azurerm_sql_active_directory_administrator dba {
 # login                        = "Terraform"
   login                        = var.dba_object_id
   object_id                    = var.dba_object_id
-  tenant_id                    = data.azurerm_client_config.current.tenant_id
+  tenant_id                    = var.tenant_id
 } 
 
 resource null_resource grant_sql_access {

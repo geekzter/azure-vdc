@@ -28,6 +28,7 @@ variable virtual_network_id {
 variable subnet_range {
     description                = "The subnet range for the VPN GW subnet"
 }
+variable tenant_id {}
 variable vpn_range {
     description                = "The client subnet range for VPN"
 }

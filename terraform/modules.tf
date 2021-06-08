@@ -161,6 +161,7 @@ module p2s_vpn {
   
   virtual_network_id           = azurerm_virtual_network.hub_vnet.id
   subnet_range                 = var.vdc_config["hub_vpn_subnet"]
+  tenant_id                    = data.azurerm_client_config.current.tenant_id
   vpn_range                    = var.vdc_config["vpn_range"]
   vpn_root_cert_name           = var.vpn_root_cert_name
   vpn_root_cert_file           = var.vpn_root_cert_file
@@ -278,6 +279,7 @@ module paas_app {
   shared_resources_group       = var.shared_resources_group
   storage_import               = var.paas_app_storage_import
   storage_replication_type     = var.app_storage_replication_type
+  tenant_id                    = data.azurerm_client_config.current.tenant_id
   vanity_certificate_name      = var.vanity_certificate_name
   vanity_certificate_path      = var.vanity_certificate_path
   vanity_certificate_password  = var.vanity_certificate_password

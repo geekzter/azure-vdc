@@ -60,6 +60,7 @@ variable storage_import {
   type                         = bool
 }
 variable storage_replication_type {}
+variable tenant_id {}
 variable vanity_certificate_name {}
 variable vanity_certificate_password {}
 variable vanity_certificate_path {}
