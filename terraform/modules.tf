@@ -11,12 +11,10 @@ module iaas_spoke_vnet {
   default_read_timeout         = var.default_read_timeout
   default_delete_timeout       = var.default_delete_timeout
   deploy_network_watcher       = var.deploy_network_watcher
-  deploy_managed_bastion       = var.deploy_managed_bastion
   dns_servers                  = azurerm_virtual_network.hub_vnet.dns_servers
   enable_routetable_for_subnets = ["app","data"]
   gateway_ip_address           = azurerm_firewall.iag.ip_configuration.0.private_ip_address # Delays provisioning to start after Azure FW is provisioned
 # gateway_ip_address           = cidrhost(var.vdc_config["iag_subnet"], 4) # Azure FW uses the 4th available IP address in the range
-  hub_gateway_dependency       = module.p2s_vpn.gateway_id
   hub_virtual_network_id       = azurerm_virtual_network.hub_vnet.id
   private_dns_zones            = [for z in azurerm_private_dns_zone.zone : z.name]
   service_endpoints            = {
@@ -48,6 +46,7 @@ module iaas_spoke_vnet {
                                  azurerm_private_dns_a_record.diag_storage_table_dns_record,
                                  azurerm_private_dns_a_record.vault_dns_record,
                                  azurerm_storage_account_network_rules.automation_storage_rules,
+                                 module.p2s_vpn
   ]
 }
 
@@ -79,7 +78,6 @@ module paas_spoke_vnet {
   default_update_timeout       = var.default_update_timeout
   default_read_timeout         = var.default_read_timeout
   default_delete_timeout       = var.default_delete_timeout
-  deploy_managed_bastion       = var.deploy_managed_bastion
   deploy_network_watcher       = var.deploy_network_watcher
   dns_servers                  = azurerm_virtual_network.hub_vnet.dns_servers
   enable_routetable_for_subnets = [
@@ -87,7 +85,6 @@ module paas_spoke_vnet {
                                   "data"
                                   ]
   gateway_ip_address           = azurerm_firewall.iag.ip_configuration.0.private_ip_address # Delays provisioning to start after Azure FW is provisioned
-  hub_gateway_dependency       = module.p2s_vpn.gateway_id
   hub_virtual_network_id       = azurerm_virtual_network.hub_vnet.id
   private_dns_zones            = [for z in azurerm_private_dns_zone.zone : z.name]
   service_endpoints            = {
@@ -124,6 +121,7 @@ module paas_spoke_vnet {
                                  azurerm_private_dns_a_record.diag_storage_table_dns_record,
                                  azurerm_private_dns_a_record.vault_dns_record,
                                  azurerm_storage_account_network_rules.automation_storage_rules,
+                                 module.p2s_vpn
   ]
 }
 
@@ -143,8 +141,7 @@ module managed_bastion_hub {
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
 
-  deploy_managed_bastion       = var.deploy_managed_bastion
-
+  count                        = var.deploy_managed_bastion ? 1 : 0
   depends_on                   = [azurerm_firewall.iag]
 }
 
@@ -169,8 +166,7 @@ module p2s_vpn {
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id
 
-  deploy_vpn                   = var.deploy_vpn
-
+  count                        = var.deploy_vpn ? 1 : 0
   depends_on                   = [azurerm_firewall.iag]
 }
 
@@ -250,10 +246,7 @@ module paas_app {
   admin_username               = var.admin_username
   alert_email                  = var.alert_email
   app_subnet_id                = lookup(module.paas_spoke_vnet.subnet_ids,"app","")
-  management_subnet_ids        = concat(module.paas_spoke_vnet.management_subnet_ids,
-                                 [
-                                 azurerm_subnet.mgmt_subnet.id
-  ])
+  management_subnet_ids        = [azurerm_subnet.mgmt_subnet.id]
   container                    = var.paas_app_web_container
   container_registry           = var.shared_container_registry
   container_registry_spn_app_id= var.shared_container_registry_spn_app_id

@@ -10,9 +10,6 @@ variable default_create_timeout {}
 variable default_update_timeout {}
 variable default_read_timeout {}
 variable default_delete_timeout {}
-variable deploy_managed_bastion {
-  type                         = bool
-}
 variable deploy_network_watcher {
   type                         = bool
 }
@@ -20,7 +17,6 @@ variable dns_servers {
   default                      = []
 }
 variable gateway_ip_address {}
-variable hub_gateway_dependency {}
 variable hub_virtual_network_id {}
 variable enable_routetable_for_subnets {
   type                         = list

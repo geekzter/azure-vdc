@@ -600,10 +600,13 @@ resource azurerm_firewall_network_rule_collection iag_net_outbound_rules {
     destination_ports          = [
       "*",
     ]
-    destination_addresses      = [
+    destination_addresses      = var.deploy_vpn ? [
       azurerm_public_ip.iag_pip.ip_address,
       azurerm_public_ip.waf_pip.ip_address,
-      module.p2s_vpn.gateway_ip,
+      module.p2s_vpn.0.gateway_ip,
+    ] : [
+      azurerm_public_ip.iag_pip.ip_address,
+      azurerm_public_ip.waf_pip.ip_address,
     ]
 
     protocols                  = [

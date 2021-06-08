@@ -58,12 +58,11 @@ resource azurerm_bastion_host managed_bastion {
   }  
 
   tags                         = var.tags
-  count                        = var.deploy_managed_bastion ? 1 : 0
 }
 
 resource azurerm_monitor_diagnostic_setting bastion_logs {
-  name                         = "${azurerm_bastion_host.managed_bastion[count.index].name}-logs"
-  target_resource_id           = azurerm_bastion_host.managed_bastion[count.index].id
+  name                         = "${azurerm_bastion_host.managed_bastion.name}-logs"
+  target_resource_id           = azurerm_bastion_host.managed_bastion.id
   storage_account_id           = var.diagnostics_storage_id
   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
@@ -75,6 +74,4 @@ resource azurerm_monitor_diagnostic_setting bastion_logs {
       enabled                  = false
     }
   }
-
-  count                        = var.deploy_managed_bastion ? 1 : 0
 } 

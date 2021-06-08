@@ -26,9 +26,3 @@ variable subnet_range {}
 variable virtual_network_id {
     description                = "The id of the Virtual Network"
 }
-
-variable deploy_managed_bastion {
-  description                  = "Whether to deploy the Managed Bastion (preview)"
-  default                      = true
-  type                         = bool
-}

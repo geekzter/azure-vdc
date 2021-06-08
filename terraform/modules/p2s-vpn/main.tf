@@ -66,12 +66,11 @@ resource azurerm_virtual_network_gateway vpn_gw {
   }  
 
   tags                         = var.tags
-  count                        = var.deploy_vpn ? 1 : 0
 }
 
 resource azurerm_monitor_diagnostic_setting vpn_logs {
-  name                         = "${azurerm_virtual_network_gateway.vpn_gw.0.name}-logs"
-  target_resource_id           = azurerm_virtual_network_gateway.vpn_gw.0.id
+  name                         = "${azurerm_virtual_network_gateway.vpn_gw.name}-logs"
+  target_resource_id           = azurerm_virtual_network_gateway.vpn_gw.id
   storage_account_id           = var.diagnostics_storage_id
   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
@@ -127,6 +126,4 @@ resource azurerm_monitor_diagnostic_setting vpn_logs {
       enabled                  = false
     }
   }
-
-  count                        = var.deploy_vpn ? 1 : 0
 }

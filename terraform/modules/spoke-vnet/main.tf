@@ -51,8 +51,7 @@ resource azurerm_virtual_network_peering spoke_to_hub {
   allow_virtual_network_access = true
   use_remote_gateways          = var.use_hub_gateway
 
-# Dependency must include gateway if use_remote_gateways = true
-  depends_on                   = [var.hub_gateway_dependency,azurerm_virtual_network_peering.hub_to_spoke]
+  depends_on                   = [azurerm_virtual_network_peering.hub_to_spoke]
 }
 
 resource azurerm_virtual_network_peering hub_to_spoke {
@@ -65,9 +64,6 @@ resource azurerm_virtual_network_peering hub_to_spoke {
   allow_gateway_transit        = var.use_hub_gateway
   allow_virtual_network_access = true
   use_remote_gateways          = false
-
-# Dependency must include gateway if use_remote_gateways = true
-  depends_on                   = [var.hub_gateway_dependency]
 }
 
 resource azurerm_route_table spoke_route_table {
@@ -327,77 +323,6 @@ resource azurerm_monitor_diagnostic_setting nsg_logs {
       enabled                  = false
     }
   }
-}
-
-# This is the tempale for Managed Bastion, IaaS bastion is defined in management.tf
-resource azurerm_subnet managed_bastion_subnet {
-  name                         = "AzureBastionSubnet"
-  virtual_network_name         = azurerm_virtual_network.spoke_vnet.name
-  resource_group_name          = local.resource_group_name
-  address_prefixes             = [var.bastion_subnet_range]
-  service_endpoints            = [
-                                 "Microsoft.Web"
-  ]
-
-  timeouts {
-    create                     = var.default_create_timeout
-    update                     = var.default_update_timeout
-    read                       = var.default_read_timeout
-    delete                     = var.default_delete_timeout
-  }  
-
-  count                        = var.deploy_managed_bastion ? 1 : 0
-}
-
-resource azurerm_public_ip managed_bastion_pip {
-  name                         = "${azurerm_virtual_network.spoke_vnet.name}-managed-bastion-pip"
-  location                     = var.location
-  resource_group_name          = local.resource_group_name
-  allocation_method            = "Static"
-  sku                          = "Standard" # Zone redundant
-
-  tags                         = var.tags
-  count                        = var.deploy_managed_bastion ? 1 : 0
-}
-
-resource azurerm_bastion_host managed_bastion {
-  name                         = "${replace(azurerm_virtual_network.spoke_vnet.name,"-","")}managedbastion"
-  location                     = var.location
-  resource_group_name          = local.resource_group_name
-
-  ip_configuration {
-    name                       = "configuration"
-    subnet_id                  = azurerm_subnet.managed_bastion_subnet.0.id
-    public_ip_address_id       = azurerm_public_ip.managed_bastion_pip.0.id
-  }
-
-  timeouts {
-    create                     = var.default_create_timeout
-    update                     = var.default_update_timeout
-    read                       = var.default_read_timeout
-    delete                     = var.default_delete_timeout
-  }  
-
-  tags                         = var.tags
-  count                        = var.deploy_managed_bastion ? 1 : 0
-}
-
-resource azurerm_monitor_diagnostic_setting bastion_logs {
-  name                         = "${azurerm_bastion_host.managed_bastion[count.index].name}-logs"
-  target_resource_id           = azurerm_bastion_host.managed_bastion[count.index].id
-  storage_account_id           = var.diagnostics_storage_id
-  log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
-
-  log {
-    category                   = "BastionAuditLogs"
-    enabled                    = true
-
-    retention_policy {
-      enabled                  = false
-    }
-  }
-
-  count                        = var.deploy_managed_bastion ? 1 : 0
 }
 
 resource azurerm_private_dns_zone_virtual_network_link spoke_link {
