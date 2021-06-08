@@ -93,8 +93,9 @@ try {
     . (Join-Path $PSScriptRoot defaults.ps1)
 
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
-    foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
-        $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
+    foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_STATE_*,TF_VAR_*)) {
+        $prefix = (($tfvar.Name.Split("_")[0,1] | Select-Object -First 2) -Join "_")
+        $properCaseName = $prefix + $tfvar.Name.Replace($prefix,"").ToLowerInvariant()
         Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
     } 
     if (($Trace -gt 0) -or (${env:system.debug} -eq "true")) {
