@@ -131,13 +131,6 @@ resource azurerm_key_vault_access_policy mgmt_disk_encryption_access {
                                 "unwrapKey",
                                 "wrapKey",
   ]
-
-  timeouts {
-    create                     = var.default_create_timeout
-    update                     = var.default_update_timeout
-    read                       = var.default_read_timeout
-    delete                     = var.default_delete_timeout
-  }  
   
   depends_on                   = [azurerm_firewall_application_rule_collection.iag_app_rules]
 }
