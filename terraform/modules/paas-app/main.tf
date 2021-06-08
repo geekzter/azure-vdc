@@ -1156,35 +1156,14 @@ resource null_resource disable_sql_public_network_access {
   ]
 }
 
-# FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
-# HACK: Retrieve user objectId in case it is not exposed in azurerm_client_config.current.object_id
-data external account_info {
-  program                      = [
-                                 "az",
-                                 "ad",
-                                 "signed-in-user",
-                                 "show",
-                                 "--query",
-                                 "{object_id:objectId}",
-                                 "-o",
-                                 "json",
-                                 ]
-  count                        = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? 0 : 1
-}
-
-locals {
-  # FIX: Required for Azure Cloud Shell (azurerm_client_config.current.object_id not populated)
-  dba_object_id                = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? data.azurerm_client_config.current.object_id : data.external.account_info.0.result.object_id
-}
-
 # This is for Terraform acting as the AAD DBA (e.g. to execute change scripts)
 resource azurerm_sql_active_directory_administrator dba {
   # Configure as Terraform identity as DBA
   server_name                  = azurerm_sql_server.app_sqlserver.name
   resource_group_name          = azurerm_resource_group.app_rg.name
 # login                        = "Terraform"
-  login                        = local.dba_object_id
-  object_id                    = local.dba_object_id
+  login                        = var.dba_object_id
+  object_id                    = var.dba_object_id
   tenant_id                    = data.azurerm_client_config.current.tenant_id
 } 
 
