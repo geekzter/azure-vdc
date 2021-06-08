@@ -53,7 +53,7 @@ resource azurerm_firewall iag {
   resource_group_name          = azurerm_resource_group.vdc_rg.name
 
   # Make zone redundant
-  zones                        = [1,2,3]
+  zones                        = [1,2]
 
   ip_configuration {
     name                       = "iag_ipconfig"

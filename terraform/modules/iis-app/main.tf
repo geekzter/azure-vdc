@@ -137,7 +137,7 @@ resource azurerm_virtual_machine app_web_vm {
   vm_size                      = var.app_web_vm_size
   network_interface_ids        = [element(azurerm_network_interface.app_web_if.*.id, count.index)]
   # Make zone redundant
-  zones                        = [(count.index % 3) + 1]
+  zones                        = [(count.index % var.number_of_zones) + 1]
   count                        = var.app_web_vm_number
 
   storage_image_reference {
@@ -593,7 +593,7 @@ resource azurerm_virtual_machine app_db_vm {
   vm_size                      = var.app_db_vm_size
   network_interface_ids        = [element(azurerm_network_interface.app_db_if.*.id, count.index)]
   # Make zone redundant (# VM's > 2, =< 3)
-  zones                        = [(count.index % 3) + 1]
+  zones                        = [(count.index % var.number_of_zones) + 1]
   count                        = var.app_db_vm_number
 
   storage_image_reference {

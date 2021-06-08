@@ -140,6 +140,10 @@ variable default_create_timeout {}
 variable default_update_timeout {}
 variable default_read_timeout {}
 variable default_delete_timeout {}
+variable number_of_zones {
+  default                      = 2
+  type                         = number
+}
 variable timezone {}
 variable vm_connectivity_dependency {
   description                  = "A dummy value that is used to force dependency on network resources"
