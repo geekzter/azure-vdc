@@ -108,3 +108,6 @@ err.out
 *.~*
 ~*.*
 *.log
+
+# Ignore generated files
+data/**
