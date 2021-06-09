@@ -179,7 +179,7 @@ resource azurerm_virtual_machine app_web_vm {
   }  
 
   lifecycle {
-    ignore_changes             = ["storage_image_reference"]
+    ignore_changes             = [storage_image_reference]
   }
 
   tags                         = var.tags
@@ -621,7 +621,7 @@ resource azurerm_virtual_machine app_db_vm {
   }  
 
   lifecycle {
-    ignore_changes             = ["storage_image_reference"]
+    ignore_changes             = [storage_image_reference]
   }
 
   # Fix for BUG: Error waiting for removal of Backend Address Pool Association for NIC
