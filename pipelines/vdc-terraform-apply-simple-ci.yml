@@ -8,6 +8,10 @@ parameters:
     displayName: Test re-entrance
     type: boolean
     default: false
+  - name: unpinTerraformProviders
+    displayName: Unpin Terraform provider versions
+    type: boolean
+    default: false
 
 trigger: none
 
@@ -105,6 +109,17 @@ jobs:
       displayName: 'Use preferred Terraform version'
       inputs:
         terraformVersion: '$(terraformVersion)'
+
+    - ${{ if parameters.unpinTerraformProviders }}:
+      # Unpin version e.g. "= 2.17" -> "~> 2.17", but only in CI build
+      - pwsh: |
+          (Get-Content ./provider.tf) -replace " = `" *= +",' = "~> ' | Out-File provider.tf
+          Get-Content ./provider.tf
+          if (Test-Path .terraform.lock.hcl) {
+            Remove-Item .terraform.lock.hcl -Force
+          }              
+        displayName: 'Unpin Terraform provider version'
+        workingDirectory: '$(terraformDirectory)'
 
     - task: AzureCLI@2
       name: terraformApply
