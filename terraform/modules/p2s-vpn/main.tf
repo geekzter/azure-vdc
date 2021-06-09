@@ -1,5 +1,3 @@
-data azurerm_client_config current {}
-
 locals {
   resource_group_name          = element(split("/",var.resource_group_id),length(split("/",var.resource_group_id))-1)
   virtual_network_name         = element(split("/",var.virtual_network_id),length(split("/",var.virtual_network_id))-1)
@@ -53,9 +51,9 @@ resource azurerm_virtual_network_gateway vpn_gw {
   }
 
   vpn_client_configuration {
-    aad_tenant                 = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/"
+    aad_tenant                 = "https://login.microsoftonline.com/${var.tenant_id}/"
     aad_audience               = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
-    aad_issuer                 = "https://sts.windows.net/${data.azurerm_client_config.current.tenant_id}/"
+    aad_issuer                 = "https://sts.windows.net/${var.tenant_id}/"
     address_space              = [var.vpn_range]
     vpn_client_protocols       = ["OpenVPN"]
   }
@@ -68,12 +66,11 @@ resource azurerm_virtual_network_gateway vpn_gw {
   }  
 
   tags                         = var.tags
-  count                        = var.deploy_vpn ? 1 : 0
 }
 
 resource azurerm_monitor_diagnostic_setting vpn_logs {
-  name                         = "${azurerm_virtual_network_gateway.vpn_gw.0.name}-logs"
-  target_resource_id           = azurerm_virtual_network_gateway.vpn_gw.0.id
+  name                         = "${azurerm_virtual_network_gateway.vpn_gw.name}-logs"
+  target_resource_id           = azurerm_virtual_network_gateway.vpn_gw.id
   storage_account_id           = var.diagnostics_storage_id
   log_analytics_workspace_id   = var.diagnostics_workspace_resource_id
 
@@ -129,6 +126,4 @@ resource azurerm_monitor_diagnostic_setting vpn_logs {
       enabled                  = false
     }
   }
-
-  count                        = var.deploy_vpn ? 1 : 0
 }

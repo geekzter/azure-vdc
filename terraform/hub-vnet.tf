@@ -263,7 +263,7 @@ resource azurerm_dns_cname_record vpn_gateway_cname {
   zone_name                    = data.azurerm_dns_zone.vanity_domain.0.name
   resource_group_name          = data.azurerm_dns_zone.vanity_domain.0.resource_group_name
   ttl                          = 300
-  record                       = module.p2s_vpn.gateway_fqdn
+  record                       = module.p2s_vpn.0.gateway_fqdn
 
   count                        = var.deploy_vpn ? 1 : 0
   tags                         = local.tags

@@ -93,8 +93,9 @@ try {
     . (Join-Path $PSScriptRoot defaults.ps1)
 
     # Convert uppercased Terraform environment variables (Azure Pipeline Agent) to their original casing
-    foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
-        $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
+    foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_STATE_*,TF_VAR_*)) {
+        $prefix = (($tfvar.Name.Split("_")[0,1] | Select-Object -First 2) -Join "_")
+        $properCaseName = $prefix + $tfvar.Name.Replace($prefix,"").ToLowerInvariant()
         Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
     } 
     if (($Trace -gt 0) -or (${env:system.debug} -eq "true")) {
@@ -111,12 +112,12 @@ try {
             $newBackend = (!(Test-Path $backendFile))
             $tfbackendArgs = ""
             if ($newBackend) {
-                if (!$env:TF_VAR_backend_storage_account -or !$env:TF_VAR_backend_storage_container) {
-                    Write-Warning "Environment variables TF_VAR_backend_storage_account and TF_VAR_backend_storage_container must be set when creating a new backend from $backendTemplate"
+                if (!$env:TF_STATE_backend_storage_account -or !$env:TF_STATE_backend_storage_container) {
+                    Write-Warning "Environment variables TF_STATE_backend_storage_account and TF_STATE_backend_storage_container must be set when creating a new backend from $backendTemplate"
                     $fail = $true
                 }
-                if (!($env:TF_VAR_backend_resource_group -or $env:ARM_ACCESS_KEY -or $env:ARM_SAS_TOKEN)) {
-                    Write-Warning "Environment variables ARM_ACCESS_KEY or ARM_SAS_TOKEN or TF_VAR_backend_resource_group (with $identity granted 'Storage Blob Data Contributor' role) must be set when creating a new backend from $backendTemplate"
+                if (!($env:TF_STATE_backend_resource_group -or $env:ARM_ACCESS_KEY -or $env:ARM_SAS_TOKEN)) {
+                    Write-Warning "Environment variables ARM_ACCESS_KEY or ARM_SAS_TOKEN or TF_STATE_backend_resource_group (with $identity granted 'Storage Blob Data Contributor' role) must be set when creating a new backend from $backendTemplate"
                     $fail = $true
                 }
                 if ($fail) {
@@ -133,14 +134,14 @@ try {
                 $tfbackendArgs += " -reconfigure"
             }
 
-            if ($env:TF_VAR_backend_resource_group) {
-                $tfbackendArgs += " -backend-config=`"resource_group_name=${env:TF_VAR_backend_resource_group}`""
+            if ($env:TF_STATE_backend_resource_group) {
+                $tfbackendArgs += " -backend-config=`"resource_group_name=${env:TF_STATE_backend_resource_group}`""
             }
-            if ($env:TF_VAR_backend_storage_account) {
-                $tfbackendArgs += " -backend-config=`"storage_account_name=${env:TF_VAR_backend_storage_account}`""
+            if ($env:TF_STATE_backend_storage_account) {
+                $tfbackendArgs += " -backend-config=`"storage_account_name=${env:TF_STATE_backend_storage_account}`""
             }
-            if ($env:TF_VAR_backend_storage_container) {
-                $tfbackendArgs += " -backend-config=`"container_name=${env:TF_VAR_backend_storage_container}`""
+            if ($env:TF_STATE_backend_storage_container) {
+                $tfbackendArgs += " -backend-config=`"container_name=${env:TF_STATE_backend_storage_container}`""
             }
         }
 
@@ -163,7 +164,7 @@ try {
         $ForceArgs = "-auto-approve"
     }
 
-    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_VAR_backend_*) -and (Test-Path $varsFile)) {
+    if (!(Get-ChildItem Env:TF_VAR_* -Exclude TF_STATE_backend_*,TF_VAR_backend_*) -and (Test-Path $varsFile)) {
         # Load variables from file, if it exists and environment variables have not been set
         $varArgs = " -var-file='$varsFile'"
     }

@@ -8,6 +8,10 @@ parameters:
     displayName: Test re-entrance
     type: boolean
     default: false
+  - name: unpinTerraformProviders
+    displayName: Unpin Terraform provider versions
+    type: boolean
+    default: false
 
 trigger: none
 
@@ -24,7 +28,7 @@ pr:
     - '*.vsdx'  
     
 schedules:
-  - cron: '0 2 * * *'
+  - cron: '0 22 * * *'
     displayName: 'Daily early morning build (UTC)'
     # Run if there are no changes
     always: 'true'
@@ -106,6 +110,17 @@ jobs:
       inputs:
         terraformVersion: '$(terraformVersion)'
 
+    - ${{ if parameters.unpinTerraformProviders }}:
+      # Unpin version e.g. "= 2.17" -> "~> 2.17", but only in CI build
+      - pwsh: |
+          (Get-Content ./provider.tf) -replace " = `" *= +",' = "~> ' | Out-File provider.tf
+          Get-Content ./provider.tf
+          if (Test-Path .terraform.lock.hcl) {
+            Remove-Item .terraform.lock.hcl -Force
+          }              
+        displayName: 'Unpin Terraform provider version'
+        workingDirectory: '$(terraformDirectory)'
+
     - task: AzureCLI@2
       name: terraformApply
       displayName: 'Terraform init & apply'
@@ -143,6 +158,7 @@ jobs:
     - task: AzureCLI@2
       name: terraformReApply
       displayName: 'Terraform apply (check re-entrance)'
+      continueOnError: true # Treat failure as warning during re-entrance
       enabled: ${{ parameters.testReEntrance }}
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -167,6 +183,8 @@ jobs:
     - task: AzureCLI@2
       name: terraformDestroy
       displayName: 'Terraform destroy'
+      condition: succeededOrFailed()
+      continueOnError: true # Treat failure as warning during destroy, we will clean up anyway
       enabled: true
       inputs:
         azureSubscription: '$(subscriptionConnection)'
@@ -194,7 +212,7 @@ jobs:
     - Provision
   displayName: 'Clean Up'
   # Run if Terraform provision or destroy failed, or the whole pipeline was canceled
-  condition: or(ne(dependencies.Provision.result, 'Succeeded'), canceled())
+  condition: always()
   timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
   variables:

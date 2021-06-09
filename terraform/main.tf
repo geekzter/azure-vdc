@@ -80,11 +80,12 @@ locals {
   automation_object_id         = data.azurerm_client_config.current.object_id != null && data.azurerm_client_config.current.object_id != "" ? data.azurerm_client_config.current.object_id : data.external.account_info.0.result.object_id
 
   tags                         = merge(
-    var.tags,
     {
+      application              = "Automated VDC"
       deployment-name          = local.deployment_name
       environment              = terraform.workspace
       prefix                   = var.resource_prefix
+      provisioner              = "terraform"
       repository               = "azure-vdc"
       shutdown                 = "true"
       suffix                   = local.suffix
@@ -92,7 +93,8 @@ locals {
       release-id               = var.release_id
       release-url              = var.release_web_url
       release-user             = var.release_user_email
-    }
+    },
+    var.tags
   )
 
   lifecycle                    = {

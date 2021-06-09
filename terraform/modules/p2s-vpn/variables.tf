@@ -28,6 +28,7 @@ variable virtual_network_id {
 variable subnet_range {
     description                = "The subnet range for the VPN GW subnet"
 }
+variable tenant_id {}
 variable vpn_range {
     description                = "The client subnet range for VPN"
 }
@@ -38,10 +39,4 @@ variable vpn_root_cert_name {
 
 variable vpn_root_cert_file {
   description                  = "The relative path to the certificate CER file used for P2S root"
-}
-
-
-variable deploy_vpn {
-  description                  = "Whether to deploy the point to Site VPN"
-  type                         = bool
 }

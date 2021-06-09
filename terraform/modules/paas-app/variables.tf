@@ -12,6 +12,7 @@ variable admin_username {}
 variable aad_auth_client_id_map {}
 variable alert_email {}
 variable app_subnet_id {}
+variable dba_object_id {}
 variable container {}
 variable container_registry {}
 variable container_registry_spn_app_id {}
@@ -59,6 +60,7 @@ variable storage_import {
   type                         = bool
 }
 variable storage_replication_type {}
+variable tenant_id {}
 variable vanity_certificate_name {}
 variable vanity_certificate_password {}
 variable vanity_certificate_path {}

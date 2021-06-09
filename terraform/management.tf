@@ -131,7 +131,7 @@ resource azurerm_key_vault_access_policy mgmt_disk_encryption_access {
                                 "unwrapKey",
                                 "wrapKey",
   ]
-
+  
   depends_on                   = [azurerm_firewall_application_rule_collection.iag_app_rules]
 }
 
@@ -139,6 +139,7 @@ resource azurerm_role_assignment mgmt_disk_encryption_access {
   scope                        = azurerm_key_vault.vault.id
   role_definition_name         = "Reader"
   principal_id                 = azurerm_disk_encryption_set.mgmt_disks.identity.0.principal_id
+
 }
 
 resource azurerm_windows_virtual_machine mgmt {
@@ -202,6 +203,10 @@ resource azurerm_windows_virtual_machine mgmt {
   }
 
   # Not zone redundant, we'll rely on zone redundant Managed Bastion
+
+  lifecycle {
+    ignore_changes             = [source_image_reference]
+  }
 
   depends_on                   = [
                                   azurerm_firewall_application_rule_collection.iag_app_rules,

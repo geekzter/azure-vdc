@@ -321,7 +321,7 @@ output vpn_gateway_fqdn {
 }
 
 output vpn_gateway_id {
-  value       = module.p2s_vpn.gateway_id
+  value       = var.deploy_vpn ? module.p2s_vpn.0.gateway_id : null
 }
 
 output virtual_machine_ids {
