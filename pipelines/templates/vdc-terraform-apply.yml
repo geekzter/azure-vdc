@@ -867,7 +867,7 @@ stages:
             Write-Host "Indicating success for job '$(Agent.JobName)'"
             Write-Host "##vso[task.setvariable variable=result;isOutput=true]success"
           name: testResult
-          displayName: 'Indicate provisioning success'
+          displayName: 'Indicate test success'
           condition: succeeded()
 
   - ${{ if ne(parameters.destroy, 'Never') }}:
