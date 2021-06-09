@@ -252,6 +252,9 @@ stages:
           - pwsh: |
               (Get-Content ./provider.tf) -replace " = `" *= +",' = "~> ' | Out-File provider.tf
               Get-Content ./provider.tf
+              if (Test-Path .terraform.lock.hcl) {
+                Remove-Item .terraform.lock.hcl -Force
+              }              
             displayName: 'Unpin Terraform provider version'
             enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
             workingDirectory: '$(terraformDirectory)'
@@ -278,7 +281,7 @@ stages:
             # https://www.terraform.io/docs/backends/types/azurerm.html
             # Use Pipeline Service Principal and Service Connection to set up these variables
             inlineScript: |
-              $(scriptDirectory)/tf_deploy.ps1 -init -upgrade -clear:$${{ not(parameters.inherit) }} -stickysuffix:$${{ parameters.inherit }} -apply -force -trace $(trace) -parallelism $(parallelism)
+              $(scriptDirectory)/tf_deploy.ps1 -init -clear:$${{ not(parameters.inherit) }} -stickysuffix:$${{ parameters.inherit }} -apply -force -trace $(trace) -parallelism $(parallelism)
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
@@ -356,6 +359,9 @@ stages:
           - pwsh: |
               (Get-Content ./provider.tf) -replace " = `" *= +",' = "~> ' | Out-File provider.tf
               Get-Content ./provider.tf
+              if (Test-Path .terraform.lock.hcl) {
+                Remove-Item .terraform.lock.hcl -Force
+              }              
             displayName: 'Unpin Terraform provider version'
             enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
             workingDirectory: '$(terraformDirectory)'
@@ -401,7 +407,7 @@ stages:
             # https://www.terraform.io/docs/backends/types/azurerm.html
             # Use Pipeline Service Principal and Service Connection to set up these variables
             inlineScript: |
-              $(scriptDirectory)/tf_deploy.ps1 -init -upgrade -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)
+              $(scriptDirectory)/tf_deploy.ps1 -init -apply -force -stickysuffix -trace $(trace) -parallelism $(parallelism)
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
@@ -479,6 +485,9 @@ stages:
           - pwsh: |
               (Get-Content ./provider.tf) -replace " = `" *= +",' = "~> ' | Out-File provider.tf
               Get-Content ./provider.tf
+              if (Test-Path .terraform.lock.hcl) {
+                Remove-Item .terraform.lock.hcl -Force
+              }              
             displayName: 'Unpin Terraform provider version'
             enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
             workingDirectory: '$(terraformDirectory)'
@@ -499,7 +508,7 @@ stages:
             inlineScript: |
               # List environment variables
               Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
-              $(scriptDirectory)/tf_deploy.ps1 -init -upgrade 
+              $(scriptDirectory)/tf_deploy.ps1 -init
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
@@ -932,6 +941,9 @@ stages:
           - pwsh: |
               (Get-Content ./provider.tf) -replace " = `" *= +",' = "~> ' | Out-File provider.tf
               Get-Content ./provider.tf
+              if (Test-Path .terraform.lock.hcl) {
+                Remove-Item .terraform.lock.hcl -Force
+              }              
             displayName: 'Unpin Terraform provider version'
             enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
             workingDirectory: '$(terraformDirectory)'
