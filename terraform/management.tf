@@ -204,6 +204,10 @@ resource azurerm_windows_virtual_machine mgmt {
 
   # Not zone redundant, we'll rely on zone redundant Managed Bastion
 
+  lifecycle {
+    ignore_changes             = [source_image_reference]
+  }
+
   depends_on                   = [
                                   azurerm_firewall_application_rule_collection.iag_app_rules,
                                   azurerm_key_vault_access_policy.mgmt_disk_encryption_access,
