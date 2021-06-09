@@ -1,7 +1,7 @@
 terraform {
   required_providers {
-    azurerm                    = "= 2.50"
-    # azurerm                    = "~> 2.50, != 2.62"
+    # azurerm                    = "= 2.50"
+    azurerm                    = "~> 2.50, != 2.62.0"
     dns                        = "~> 3.1"
     external                   = "~> 2.1"
     http                       = "~> 2.1"
