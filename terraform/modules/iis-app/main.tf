@@ -49,8 +49,6 @@ resource azurerm_key_vault_key disk_encryption_key {
                                 "verify",
                                 "wrapKey",
   ]
-
-  depends_on                   = [var.vm_connectivity_dependency]
 }
 
 data azurerm_storage_account automation {
@@ -61,8 +59,6 @@ resource azurerm_storage_container scripts {
   name                         = "iaasappscripts"
   storage_account_name         = var.automation_storage_name
   container_access_type        = "private"
-
-  depends_on                   = [var.vm_connectivity_dependency]
 }
 data azurerm_storage_account_blob_container_sas scripts {
   connection_string            = data.azurerm_storage_account.automation.primary_connection_string
@@ -182,12 +178,11 @@ resource azurerm_virtual_machine app_web_vm {
     delete                     = var.default_delete_timeout
   }  
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  lifecycle {
+    ignore_changes             = ["storage_image_reference"]
+  }
+
+  tags                         = var.tags
 }
 
 resource null_resource start_web_vm {
@@ -224,12 +219,7 @@ resource azurerm_virtual_machine_extension app_web_vm_monitor {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  tags                         = var.tags
 
   count                        = var.app_web_vm_number
 
@@ -300,12 +290,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_deployment_group 
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  tags                         = var.tags
 
   count                        = (var.use_pipeline_environment || var.app_devops["account"] == null) ? 0 : var.app_web_vm_number
   depends_on                   = [
@@ -336,12 +321,7 @@ resource azurerm_virtual_machine_extension app_web_vm_pipeline_environment {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  tags                         = var.tags
 
   count                        = (var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_web_vm_number : 0
   depends_on                   = [
@@ -385,12 +365,7 @@ resource azurerm_virtual_machine_extension app_web_vm_dependency_monitor {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  tags                         = var.tags
 
   count                        = var.deploy_monitoring_vm_extensions ? var.app_web_vm_number : 0
 
@@ -438,12 +413,7 @@ resource azurerm_virtual_machine_extension app_web_vm_disk_encryption {
     }
 SETTINGS
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  tags                         = var.tags
 
   count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [
@@ -641,12 +611,7 @@ resource azurerm_virtual_machine app_db_vm {
     type                       = "SystemAssigned"
   }
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )  
+  tags                         = var.tags
 
   timeouts {
     create                     = var.default_create_timeout
@@ -654,6 +619,10 @@ resource azurerm_virtual_machine app_db_vm {
     read                       = var.default_read_timeout
     delete                     = var.default_delete_timeout
   }  
+
+  lifecycle {
+    ignore_changes             = ["storage_image_reference"]
+  }
 
   # Fix for BUG: Error waiting for removal of Backend Address Pool Association for NIC
   depends_on                   = [azurerm_network_interface_backend_address_pool_association.app_db_if_backend_pool]
@@ -693,12 +662,7 @@ resource azurerm_virtual_machine_extension app_db_vm_monitor {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  tags                         = var.tags
 
 # count                        = var.deploy_monitoring_vm_extensions ? var.app_db_vm_number : 0
   count                        = var.app_db_vm_number
@@ -727,12 +691,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_environment {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  tags                         = var.tags
 
   count                        = (!var.deploy_security_vm_extensions && var.deploy_non_essential_vm_extensions && var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
   depends_on                   = [
@@ -809,12 +768,7 @@ resource azurerm_virtual_machine_extension app_db_vm_pipeline_deployment_group {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  tags                         = var.tags
 
   count                        = (var.deploy_non_essential_vm_extensions && !var.use_pipeline_environment && var.app_devops["account"] != null) ? var.app_db_vm_number : 0
   depends_on                   = [
@@ -859,12 +813,7 @@ resource azurerm_virtual_machine_extension app_db_vm_dependency_monitor {
     } 
   EOF
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  tags                         = var.tags
 
   count                        = var.deploy_monitoring_vm_extensions ? var.app_db_vm_number : 0
 
@@ -943,12 +892,7 @@ resource azurerm_virtual_machine_extension app_db_vm_disk_encryption {
     }
 SETTINGS
 
-  tags                         = merge(
-    var.tags,
-    {
-      dummy-dependency         = var.vm_connectivity_dependency
-    }
-  )
+  tags                         = var.tags
 
   count                        = var.deploy_security_vm_extensions ? var.app_web_vm_number : 0
   depends_on                   = [

@@ -50,22 +50,6 @@ module iaas_spoke_vnet {
   ]
 }
 
-locals {
-  vm_agent_dependencies        = concat(module.iaas_spoke_vnet.access_dependencies,
-                                 [
-                                 azurerm_firewall_application_rule_collection.iag_app_rules.id,
-                                 azurerm_firewall_network_rule_collection.iag_net_outbound_rules.id,
-                                 try(azurerm_private_dns_a_record.aut_storage_blob_dns_record.0.id,""),
-                                 try(azurerm_private_dns_a_record.diag_storage_blob_dns_record.0.id,""),
-                                 try(azurerm_private_dns_a_record.diag_storage_table_dns_record.0.id,""),
-                                 try(azurerm_private_dns_a_record.vault_dns_record.0.id,""),
-                                 try(azurerm_storage_account_network_rules.automation_storage_rules.0.id,"")
-  ])
-  # HACK: This value is dependent on all elements of the list being created
-  # vm_connectivity_dependency   = join("|",[for dep in local.vm_agent_dependencies : substr(dep,0,1)])
-  vm_connectivity_dependency   = ""
-}
-
 module paas_spoke_vnet {
   source                       = "./modules/spoke-vnet"
   resource_group_id            = azurerm_resource_group.vdc_rg.id
@@ -215,7 +199,6 @@ module iis_app {
   deploy_security_vm_extensions = var.deploy_security_vm_extensions
   key_vault_id                 = azurerm_key_vault.vault.id
   key_vault_uri                = azurerm_key_vault.vault.vault_uri
-  vm_connectivity_dependency   = local.vm_connectivity_dependency
   diagnostics_instrumentation_key = azurerm_application_insights.vdc_insights.instrumentation_key
   diagnostics_storage_id       = azurerm_storage_account.vdc_diag_storage.id
   diagnostics_workspace_resource_id = azurerm_log_analytics_workspace.vcd_workspace.id

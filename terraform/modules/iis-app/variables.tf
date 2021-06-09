@@ -145,6 +145,3 @@ variable number_of_zones {
   type                         = number
 }
 variable timezone {}
-variable vm_connectivity_dependency {
-  description                  = "A dummy value that is used to force dependency on network resources"
-}
