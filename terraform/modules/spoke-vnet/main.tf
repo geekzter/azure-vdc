@@ -236,6 +236,7 @@ resource azurerm_network_watcher_flow_log spoke_nsg {
     workspace_resource_id      = var.diagnostics_workspace_resource_id
   }
 
+  tags                         = var.tags
   count                        = var.deploy_network_watcher ? 1 : 0
 }
 

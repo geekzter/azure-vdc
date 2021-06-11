@@ -64,6 +64,7 @@ resource azurerm_network_watcher_flow_log mgmt_nsg {
     workspace_resource_id      = azurerm_log_analytics_workspace.vcd_workspace.id
   }
 
+  tags                         = local.tags
   count                        = var.deploy_network_watcher ? 1 : 0
 }
 resource azurerm_monitor_diagnostic_setting mgmt_nsg_logs {
