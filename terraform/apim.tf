@@ -44,6 +44,8 @@ resource azurerm_route_table apim_route_table {
       next_hop_type            = "Internet"
     }
   }
+
+  tags                         = local.tags
 }
 
 resource azurerm_subnet_route_table_association apim_subnet_routes {
@@ -335,6 +337,8 @@ resource azurerm_network_security_group apim_nsg {
     source_address_prefix     = "*"
     destination_address_prefix= "*"
   }
+
+  tags                         = local.tags
 }
 resource azurerm_network_watcher_flow_log apim_nsg {
   network_watcher_name         = local.network_watcher_name
@@ -358,6 +362,7 @@ resource azurerm_network_watcher_flow_log apim_nsg {
     workspace_resource_id      = azurerm_log_analytics_workspace.vcd_workspace.id
   }
 
+  tags                         = local.tags
   count                        = var.deploy_network_watcher ? 1 : 0
 }
 resource azurerm_monitor_diagnostic_setting apim_nsg_logs {
@@ -457,6 +462,7 @@ resource azurerm_api_management api_gateway {
                                   azurerm_firewall_application_rule_collection.iag_apim_app_rules,
                                   azurerm_firewall_network_rule_collection.iag_net_outbound_apim_rules
   ]
+  tags                         = local.tags
 }
 resource azurerm_monitor_diagnostic_setting apim_logs {
   name                         = "${azurerm_api_management.api_gateway.0.name}-logs"
