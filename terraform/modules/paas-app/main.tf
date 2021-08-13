@@ -47,7 +47,7 @@ locals {
     APP_CLIENT_ID              = azurerm_user_assigned_identity.paas_web_app_identity.client_id 
     APPINSIGHTS_INSTRUMENTATIONKEY = var.diagnostics_instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.diagnostics_instrumentation_key}"
-    ASPNETCORE_ENVIRONMENT     = "Offline"
+    ASPNETCORE_ENVIRONMENT     = "Online"
     ASPNETCORE_URLS            = "http://+:80"
 
     # Using ACR admin credentials
@@ -70,7 +70,7 @@ locals {
     for setting, value in local.app_service_settings : setting => value if setting != "ASPNETCORE_ENVIRONMENT"
     },
     {
-      ASPNETCORE_ENVIRONMENT   = "Online"
+      ASPNETCORE_ENVIRONMENT   = "Offline"
     }
   )
 

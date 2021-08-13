@@ -48,7 +48,7 @@ function DeployContainerWebApp () {
     #     az webapp config appsettings set --settings ASPNETCORE_ENVIRONMENT=$stagingMode -s $slot -n $AppAppServiceName -g $AppResourceGroup --query "[?name=='ASPNETCORE_ENVIRONMENT']"
     # }
 
-    if ($productionMode -eq "Offline") {
+    if ($productionMode -ieq "Offline") {
         # Swap slots
         Write-Host "Swapping slots..."
         az webapp deployment slot swap -s $slot -n $AppAppServiceName -g $AppResourceGroup
