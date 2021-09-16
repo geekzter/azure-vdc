@@ -128,6 +128,7 @@ function ImportDatabase (
         Write-Error "No SQL Server specified" -ForeGroundColor Red
         return 
     }
+
     $sqlQueryFile = "check-database-contents.sql"
     $sqlFWRuleName = "AllowAllWindowsAzureIPs"
     # This is no secret
@@ -212,16 +213,18 @@ function ImportDatabase (
     }
 
 }
-function ResetDatabasePassword (
-    [parameter(Mandatory=$false)][string]$SqlServer=$SqlServerFQDN.Split(".")[0],
-    [parameter(Mandatory=$true)][string]$SqlServerFQDN,
-    [parameter(Mandatory=$true)][string]$SqlDatabaseName,
-    [parameter(Mandatory=$true)][string]$ResourceGroup
-) {
+function ResetDatabasePassword {
+    [OutputType([System.Security.SecureString])]
+    param(
+        [parameter(Mandatory=$false)][string]$SqlServer=$SqlServerFQDN.Split(".")[0],
+        [parameter(Mandatory=$true)][string]$SqlServerFQDN,
+        [parameter(Mandatory=$true)][string]$SqlDatabaseName,
+        [parameter(Mandatory=$true)][string]$ResourceGroup
+    )
     # Reset admin password
     Write-Information "Database ${SqlServer}/${SqlDatabaseName}: resetting admin password"
     $dbaPassword = New-Guid | Select-Object -ExpandProperty Guid
-    az sql server update --admin-password $dbaPassword --resource-group $ResourceGroup --name $SqlServer -o none
+    az sql server update --admin-password $dbaPassword --resource-group $ResourceGroup --name $SqlServer -o none | Out-Null
     
     $securePassword = ConvertTo-SecureString $dbaPassword -AsPlainText -Force
     $securePassword.MakeReadOnly()
@@ -346,9 +349,9 @@ if ($All -or $Database) {
     # We don't rely on AAD here as that would require a pre-existing AAD Security Group, 
     #  with both Automation Service Principal and user, to be assigbned as SQL Server AAD Admin
     # Create temporary Database admin password
-    $adminPassword = ResetDatabasePassword -SqlDatabaseName $SqlDatabase -SqlServerFQDN $SqlServerFQDN -ResourceGroup $AppResourceGroup
+    $adminPassword = (ResetDatabasePassword -SqlDatabaseName $SqlDatabase -SqlServerFQDN $SqlServerFQDN -ResourceGroup $AppResourceGroup)
     if ([string]::IsNullOrEmpty($adminPassword)) {
-        Write-Error "Unable to create temporary password" -ForeGroundColor Red
+        Write-Error "Unable to create temporary password"
         exit 
     }
     $adminUser = "vdcadmin"
