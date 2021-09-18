@@ -676,11 +676,6 @@ stages:
         runOnce:
           deploy:
             steps:
-            - pwsh: |
-                Write-Host "Azure Instance Metadata:"
-                Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -NoProxy -Uri "http://169.254.169.254/metadata/instance?api-version=2021-02-01" | ConvertTo-Json -Depth 64
-              displayName: 'Get Azure Instance Metadata'
-
             - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
               - download: ${{parameters.vdcArtifactPipeline}}
                 artifact: $(vdcArtifactName)
