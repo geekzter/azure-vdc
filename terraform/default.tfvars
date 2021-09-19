@@ -1,6 +1,6 @@
 # tf_deploy.ps1 loads <terraform-worksopace>.tfvars
 
-enable_custom_vulnerability_baseline = true
+enable_custom_vulnerability_baseline = false
 
 resource_prefix                = "vdc"
 deployment_name                = "dev"
