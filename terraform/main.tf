@@ -69,8 +69,7 @@ locals {
                                   chomp(data.http.localpublicip.body) 
   ]
   admin_ip_cidr                = [
-                                  "${chomp(data.http.localpublicip.body)}/30", # /32 not allowed in network_rules
-                                  # HACK: Complete prefix required when run from an environment where public ip changes e.g. Azure Pipeline Hosted Agents
+                                  # HACK: Complete prefix required when run from an environment where public ip changes
                                   local.ipprefix
   ] 
   admin_ips                    = setunion(local.admin_ip,var.admin_ips)
