@@ -145,6 +145,8 @@ function ImportDatabase (
 
     # Create SQL Firewall rule for query
     $ipAddress=$(Invoke-RestMethod -Uri https://ipinfo.io/ip -MaximumRetryCount 9).Trim()
+    $ipPrefix = Invoke-RestMethod -Uri https://stat.ripe.net/data/network-info/data.json?resource=${ipAddress} -MaximumRetryCount 9 | Select-Object -ExpandProperty data | Select-Object -ExpandProperty prefix
+
     az sql server firewall-rule create -g $ResourceGroup -s $SqlServer -n "ImportQuery $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress -o none
 
     # Create SQL Firewall rule for import

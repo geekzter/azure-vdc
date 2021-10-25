@@ -19,7 +19,7 @@ data external account_info {
 
 data http localpublicip {
 # Get public IP address of the machine running this terraform template
-  url                          = "http://ipinfo.io/ip"
+  url                          = "https://ipinfo.io/ip"
 # url                          = "https://ipapi.co/ip" 
 }
 
