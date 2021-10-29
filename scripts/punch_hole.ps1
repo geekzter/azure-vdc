@@ -120,6 +120,10 @@ if ($appEventHubNamespace) {
 #     az sql server firewall-rule create -g $appResourceGroup -s $appSQLServer -n "PunchHole $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress -o none
 # }
 if ($keyVault) {
-    Write-Host "Adding rule for Key Vault $keyVault to allow prefix $ipPrefix..."
-    az keyvault network-rule add -g $vdcResourceGroup -n $keyVault --ip-address $ipPrefix -o none
+    if (az keyvault network-rule list -n vdc-dflt-vault-erid -g vdc-dflt-erid --query "ipRules[?value=='$ipPrefix'].value" -o tsv) {
+        Write-Host "Rule for Key Vault $keyVault to allow prefix $ipPrefix already exists"
+    } else {
+        Write-Host "Adding rule for Key Vault $keyVault to allow prefix $ipPrefix..."
+        az keyvault network-rule add -g $vdcResourceGroup -n $keyVault --ip-address $ipPrefix -o none
+    }
 }
