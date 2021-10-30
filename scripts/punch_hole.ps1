@@ -91,8 +91,6 @@ if ($appService -and $UsePreviewApis) {
 # Punch hole in PaaS Firewalls
 foreach ($storageAccount in @($appStorageAccount,$appEventHubStorageAccount)) {
     if ($storageAccount) {
-        Write-Host "Adding rule for Storage Account $storageAccount to allow address $ipAddress..."
-        az storage account network-rule add -g $appResourceGroup --account-name $storageAccount --ip-address $ipAddress -o none
         Write-Host "Adding rule for Storage Account $storageAccount to allow prefix $ipPrefix..."
         az storage account network-rule add -g $appResourceGroup --account-name $storageAccount --ip-address $ipPrefix -o none
         # BUG: If a pipeline agent or VS Codespace is located in the same region as a storage account the request will be routed over Microsoft’s internal IPv6 network. As a result the source IP of the request is not the same as the one added to the Storage Account firewall.
@@ -103,8 +101,6 @@ foreach ($storageAccount in @($appStorageAccount,$appEventHubStorageAccount)) {
 }
 foreach ($storageAccount in @($automationStorageAccount,$vdcDiagnosticsStorage)) {
     if ($storageAccount) {
-        Write-Host "Adding rule for Storage Account $storageAccount to allow address $ipAddress..."
-        az storage account network-rule add -g $vdcResourceGroup --account-name $storageAccount --ip-address $ipAddress -o none
         Write-Host "Adding rule for Storage Account $storageAccount to allow prefix $ipPrefix..."
         az storage account network-rule add -g $vdcResourceGroup --account-name $storageAccount --ip-address $ipPrefix -o none
         # BUG: If a pipeline agent or VS Codespace is located in the same region as a storage account the request will be routed over Microsoft’s internal IPv6 network. As a result the source IP of the request is not the same as the one added to the Storage Account firewall.
@@ -115,8 +111,6 @@ foreach ($storageAccount in @($automationStorageAccount,$vdcDiagnosticsStorage))
 }
 
 if ($appEventHubNamespace) {
-    Write-Host "Adding rule for Event Hub $appEventHubNamespace to allow address $ipAddress..."
-    az eventhubs namespace network-rule add -g $appResourceGroup --namespace-name $appEventHubNamespace --ip-address $ipAddress --action Allow -o none
     Write-Host "Adding rule for Event Hub $appEventHubNamespace to allow prefix $ipPrefix..."
     az eventhubs namespace network-rule add -g $appResourceGroup --namespace-name $appEventHubNamespace --ip-address $ipPrefix --action Allow -o none
 }
@@ -126,8 +120,10 @@ if ($appEventHubNamespace) {
 #     az sql server firewall-rule create -g $appResourceGroup -s $appSQLServer -n "PunchHole $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress -o none
 # }
 if ($keyVault) {
-    Write-Host "Adding rule for Key Vault $keyVault to allow address $ipAddress..."
-    az keyvault network-rule add -g $vdcResourceGroup -n $keyVault --ip-address $ipAddress -o none
-    Write-Host "Adding rule for Key Vault $keyVault to allow prefix $ipPrefix..."
-    az keyvault network-rule add -g $vdcResourceGroup -n $keyVault --ip-address $ipPrefix -o none
+    if (az keyvault network-rule list -n $keyVault -g $vdcResourceGroup --query "ipRules[?value=='$ipPrefix'].value" -o tsv) {
+        Write-Host "Rule for Key Vault $keyVault to allow prefix $ipPrefix already exists"
+    } else {
+        Write-Host "Adding rule for Key Vault $keyVault to allow prefix $ipPrefix..."
+        az keyvault network-rule add -g $vdcResourceGroup -n $keyVault --ip-address $ipPrefix -o none
+    }
 }

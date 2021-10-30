@@ -11,7 +11,7 @@ resource random_string password {
 
 data http localpublicip {
 # Get public IP address of the machine running this terraform template
-  url                          = "http://ipinfo.io/ip"
+  url                          = "https://ipinfo.io/ip"
 # url                          = "https://ipapi.co/ip" 
 }
 data http localpublicprefix {
@@ -1005,7 +1005,6 @@ resource azurerm_storage_container sql_vulnerability {
 #     # Wait for these resources to be created, so they are included in the baseline
 #     azurerm_sql_active_directory_administrator.dba,
 #     azurerm_sql_firewall_rule.adminclient,
-#     azurerm_sql_firewall_rule.tfclientip,
 #     azurerm_sql_firewall_rule.tfclientipprefix,
 #     null_resource.disable_sql_public_network_access,
 #     null_resource.grant_sql_access,
@@ -1025,16 +1024,6 @@ resource null_resource enable_sql_public_network_access {
   depends_on                   = [
     azurerm_mssql_server_extended_auditing_policy.auditing
   ]
-}
-
-resource azurerm_sql_firewall_rule tfclientip {
-  name                         = "TerraformClientIpRule"
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  server_name                  = azurerm_sql_server.app_sqlserver.name
-  start_ip_address             = local.publicip
-  end_ip_address               = local.publicip
-
-  depends_on                   = [null_resource.enable_sql_public_network_access]
 }
 
 resource azurerm_sql_firewall_rule tfclientipprefix {
@@ -1149,7 +1138,6 @@ resource null_resource disable_sql_public_network_access {
   count                        = var.enable_private_link && var.disable_public_database_access ? 1 : 0
   depends_on                   = [
                                   azurerm_private_dns_a_record.sql_server_dns_record,
-                                  azurerm_sql_firewall_rule.tfclientip,
                                   azurerm_sql_firewall_rule.tfclientipprefix,
                                   null_resource.grant_sql_access,
 
@@ -1242,13 +1230,6 @@ resource azurerm_sql_database app_sqldb {
 #   database_name                = azurerm_sql_database.app_sqldb.name
 #   rule_id                      = "VA2065"
 #   baseline_name                = "master"
-#   baseline_result {
-#     result                     = [
-#       azurerm_sql_firewall_rule.tfclientip.name,
-#       azurerm_sql_firewall_rule.tfclientip.start_ip_address,
-#       azurerm_sql_firewall_rule.tfclientip.end_ip_address
-#     ]
-#   }
 #   baseline_result {
 #     result                     = [
 #       azurerm_sql_firewall_rule.tfclientipprefix.name,
