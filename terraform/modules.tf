@@ -236,7 +236,7 @@ module paas_app {
   container_registry_spn_secret= var.shared_container_registry_spn_secret
   database_template_storage_key= var.app_database_template_storage_key
   data_subnet_id               = lookup(module.paas_spoke_vnet.subnet_ids,"data","")
-  dba_object_id                = local.automation_object_id
+  dba_object_id                = data.azurerm_client_config.current.object_id
   default_create_timeout       = var.default_create_timeout
   default_update_timeout       = var.default_update_timeout
   default_read_timeout         = var.default_read_timeout
