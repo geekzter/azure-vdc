@@ -577,6 +577,7 @@ stages:
             useGlobalConfig: true
             workingDirectory: '$(terraformDirectory)'
             failOnStandardError: true
+            retryCountOnTaskFailure: 3
 
   - ${{ if eq(parameters.deployIaaS, true) }}:
     # First things first, we need to check whether the environment is ready to deploy to
