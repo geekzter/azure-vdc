@@ -111,6 +111,7 @@ jobs:
         useGlobalConfig: true
         workingDirectory: '$(scriptDirectory)'
         failOnStandardError: true
+        retryCountOnTaskFailure: 3
       env:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
         TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'

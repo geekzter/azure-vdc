@@ -144,6 +144,7 @@ jobs:
         addSpnToEnvironment: true
         useGlobalConfig: true
         failOnStandardError: true
+        retryCountOnTaskFailure: 3
         workingDirectory: '$(terraformDirectory)'
       env:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
@@ -174,6 +175,7 @@ jobs:
         addSpnToEnvironment: true
         useGlobalConfig: true
         failOnStandardError: true
+        retryCountOnTaskFailure: 3
         workingDirectory: '$(terraformDirectory)'
       env:
         TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
@@ -200,6 +202,7 @@ jobs:
         addSpnToEnvironment: true
         useGlobalConfig: true
         failOnStandardError: true
+        retryCountOnTaskFailure: 3
         workingDirectory: '$(terraformDirectory)'
       env:
         TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
