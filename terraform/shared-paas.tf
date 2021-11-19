@@ -20,6 +20,7 @@ resource azurerm_key_vault vault {
                                 "delete",
                                 "list",
                                 "purge",
+                                "recover",
                                 "wrapkey",
                                 "unwrapkey"
     ]
@@ -27,6 +28,7 @@ resource azurerm_key_vault vault {
                                 "get",
                                 "delete",
                                 "purge",
+                                "recover",
                                 "set",
     ]
 

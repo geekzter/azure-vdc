@@ -24,6 +24,7 @@ provider azurerm {
         key_vault {
             # BUG: "The user, group or application 'appid=00000000-0000-0000-0000-000000000000;oid=00000000-0000-0000-0000-000000000000;numgroups=144;iss=https://sts.windows.net/00000000-0000-0000-0000-000000000000/' does not have keys purge permission on key vault 'vdc-dflt-vault-xxxx'. ""
             purge_soft_delete_on_destroy = false
+            recover_soft_deleted_key_vaults = true
         }
         virtual_machine {
             # Don't do this in production
