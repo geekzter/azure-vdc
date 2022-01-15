@@ -47,6 +47,8 @@ parameters:
   type: boolean
   default: false
 
+name: $(Date:yyyyMMdd)$(Rev:.r)-$(Build.DefinitionVersion)-$(SourceBranchName)-${{ parameters.workspace }}-$(Build.BuildId)
+
 trigger: none
 
 pr:
