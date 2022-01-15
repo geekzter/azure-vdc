@@ -502,7 +502,7 @@ resource azurerm_lb_rule app_db_lb_rule_tds {
   backend_port                 = 1423
   frontend_ip_configuration_name = "LoadBalancerFrontEnd"
   enable_floating_ip           = false
-  backend_address_pool_id      = azurerm_lb_backend_address_pool.app_db_backend_pool.id
+  backend_address_pool_ids     = [azurerm_lb_backend_address_pool.app_db_backend_pool.id]
   idle_timeout_in_minutes      = 5
   probe_id                     = azurerm_lb_probe.app_db_lb_probe_tds.id
 
