@@ -159,8 +159,7 @@ resource azurerm_storage_account vdc_automation_storage {
   tags                         = local.tags
 }
 resource azurerm_storage_account_network_rules automation_storage_rules {
-  resource_group_name          = azurerm_resource_group.vdc_rg.name
-  storage_account_name         = azurerm_storage_account.vdc_automation_storage.name
+  storage_account_id           = azurerm_storage_account.vdc_automation_storage.id
   default_action               = "Deny"
   bypass                       = ["AzureServices"]
 

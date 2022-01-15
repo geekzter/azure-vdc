@@ -224,8 +224,7 @@ resource azurerm_storage_blob app_storage_blob_sample {
 }
 # Remove all rules once storage account has been populated
 resource azurerm_storage_account_network_rules app_storage_rules {
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  storage_account_name         = azurerm_storage_account.app_storage.name
+  storage_account_id           = azurerm_storage_account.app_storage.id
   default_action               = "Deny"
 
   count                        = var.restrict_public_access ? 1 : 0
@@ -346,8 +345,7 @@ resource azurerm_storage_container archive_storage_container {
   container_access_type        = "private"
 }
 resource azurerm_storage_account_network_rules archive_storage_rules {
-  resource_group_name          = azurerm_resource_group.app_rg.name
-  storage_account_name         = azurerm_storage_account.archive_storage.name
+  storage_account_id           = azurerm_storage_account.archive_storage.id
   default_action               = "Deny"
   bypass                       = ["AzureServices"] # Event Hub needs access
   ip_rules                     = [local.publicprefix]
