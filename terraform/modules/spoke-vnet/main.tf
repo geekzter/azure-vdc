@@ -216,6 +216,8 @@ resource azurerm_network_security_group spoke_nsg {
 }
 
 resource azurerm_network_watcher_flow_log spoke_nsg {
+  name                         = "${azurerm_network_security_group.spoke_nsg.name}-log"
+
   network_watcher_name         = var.network_watcher_name
   resource_group_name          = var.network_watcher_resource_group_name
 
