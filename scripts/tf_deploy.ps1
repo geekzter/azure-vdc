@@ -81,7 +81,7 @@ $varsFile           = "$Workspace.tfvars".ToLower()
 
 try {
     Push-Location $tfdirectory
-    . (Join-Path $PSScriptRoot get_tf_version.ps1) -ValidateInstalledVersion
+    # . (Join-Path $PSScriptRoot get_tf_version.ps1) -ValidateInstalledVersion
 
     # Copy any secret files provided as part of an Azure Pipeline
     foreach ($file in $(Get-ChildItem Env:*SECUREFILEPATH))
