@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 <# 
 .SYNOPSIS 
-    Installs and Configures Azure Pipeline Agent on Target
+    Installs and configures Azure Pipeline Agent on target
 #> 
 param ( 
     [parameter(Mandatory=$false)][string]$AgentName=$env:COMPUTERNAME,
@@ -13,13 +13,13 @@ param (
 ) 
 Set-PSDebug -Trace 1 # Trace in the case the extension doesn't successfully load
 $ErrorActionPreference = "Stop"
+$ProgressPreference = 'SilentlyContinue' # Improves batch performance of Invoke-Webrequest in Windows PowerShell
 Write-Host $MyInvocation.line
 if (!$IsWindows -and ($PSVersionTable.PSEdition -ine "Desktop")) {
     Write-Error "This only runs on Windows..."
     exit 1
 }
 
-#$pipelineDirectory = Join-Path $env:HOME pipeline-agent
 $pipelineDirectory = Join-Path $env:ProgramFiles pipeline-agent
 $agentService = "vstsagent.${Organization}.${Environment}.${AgentName}"
 if (Test-Path (Join-Path $pipelineDirectory .agent)) {
@@ -46,7 +46,6 @@ Write-Host "Extracted ${agentPackage}"
 $pipelineWorkDirectory = "$($env:ProgramData)\pipeline-agent\_work"
 $null = New-Item -ItemType Directory -Path $pipelineWorkDirectory -Force
 
-# .\config.cmd --environment --environmentname <environment> --agent $env:COMPUTERNAME --runasservice --work '_work' --url 'https://dev.azure.com/<organization>/' --projectname <project> --auth PAT --token <token> --windowsLogonAccount "NT AUTHORITY\SYSTEM" --addvirtualmachineresourcetags --virtualmachineresourcetags "tag1,tag2"
 # Unattended config
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/v2-windows?view=azure-devops#unattended-config
 # https://github.com/microsoft/azure-pipelines-agent/blob/master/src/Agent.Listener/CommandLine/ConfigureAgent.cs
@@ -64,5 +63,4 @@ Write-Host "Creating agent ${AgentName} and adding it to environment ${Environme
              --unattended
 # Start Service
 Start-Service $agentService
-#Set-Service $agentService -StartupType Automatic # Set's delayed start instead of automatic
 sc.exe config $agentService start=auto
