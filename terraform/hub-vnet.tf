@@ -43,6 +43,8 @@ resource azurerm_network_security_group mgmt_nsg {
   tags                         = local.tags
 }
 resource azurerm_network_watcher_flow_log mgmt_nsg {
+  name                         = "${azurerm_network_security_group.mgmt_nsg.name}-log"
+
   network_watcher_name         = local.network_watcher_name
   resource_group_name          = local.network_watcher_resource_group
 

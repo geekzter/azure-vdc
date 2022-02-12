@@ -341,6 +341,8 @@ resource azurerm_network_security_group apim_nsg {
   tags                         = local.tags
 }
 resource azurerm_network_watcher_flow_log apim_nsg {
+  name                         = "${azurerm_network_security_group.apim_nsg.name}-log"
+
   network_watcher_name         = local.network_watcher_name
   resource_group_name          = local.network_watcher_resource_group
 
